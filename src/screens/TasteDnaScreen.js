@@ -11,7 +11,7 @@ import { useDatabase } from '../data/DatabaseProvider';
 import { loadDnaPage, onCupsChanged } from '../data/repository';
 import { bandOf } from '../data/tasteDna';
 import { requestDnaInfo, requestPush } from '../navigation';
-import { color, shape, space, spacing } from '../theme/tokens';
+import { color, layout, shape, space, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
@@ -38,16 +38,17 @@ import ScreenFrame from './ScreenFrame';
  *            Hidden until a tag has been picked. When 8h brings "What you
  *            keep saying" under it, each block gets its sub-heading ("From
  *            the flavour list" / "In my own words"); alone, it needs none.
- *   footer   8f's bar (ScreenFrame's footer panel) with "How it is built"
- *            alone, which opens 8g (2026-10-30). Try next (8d) is V2; the bar
- *            keeps its place. The link is InlineAction (§1's one tappable-text
- *            style), not the mock's 13pt sentence case (Design Round 17, B3).
  *   Last shift  one line per axis that moved: "Sweetness moved from Lightly
  *            sweet to Medium sweet on Oct 17." Band names, not the mock's "low
  *            to medium" (written before the bands were). The mock's cause
  *            ("after three naturals in August") is not built: there is no rule
  *            for it, and the app doesn't guess (Uryu, 2026-10-21; Design
  *            Round 11, B). A plain section, no frame (Round 11, C).
+ *   How it is built  the page's last item (InlineAction), opening 8g. No
+ *            footer bar in V1 (Design Round 17, B3, 21d): a link to an
+ *            explainer needn't stay in reach, and alone in a bar it looks
+ *            unfinished. The bar comes back with Try next (V2), this link at
+ *            its left.
  *
  * Not built in V1:
  *   - "What you keep saying": My words' counts (8h); it comes with 8h.
@@ -116,12 +117,7 @@ export default function TasteDnaScreen({ onBack }) {
       compact
       title="My taste DNA"
       leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
-      trailing={dna ? <DnaStamp state={dna.state} onPress={() => requestDnaInfo(dna)} /> : undefined}
-      footer={
-        <View style={styles.footer}>
-          <InlineAction label="How it is built" onPress={() => requestPush({ name: 'dnaBuilt' })} />
-        </View>
-      }>
+      trailing={dna ? <DnaStamp state={dna.state} onPress={() => requestDnaInfo(dna)} /> : undefined}>
       {dna ? (
         <View style={styles.body}>
           <View style={styles.head}>
@@ -171,6 +167,9 @@ export default function TasteDnaScreen({ onBack }) {
               ))}
             </View>
           ) : null}
+          <View style={styles.howBuilt}>
+            <InlineAction label="How it is built" onPress={() => requestPush({ name: 'dnaBuilt' })} />
+          </View>
         </View>
       ) : null}
     </ScreenFrame>
@@ -180,9 +179,9 @@ export default function TasteDnaScreen({ onBack }) {
 const styles = StyleSheet.create({
   body: {
     gap: spacing.gap.axis,
+    paddingBottom: layout.screen.bottom,
   },
-  // 8f: the action at the bar's left; Try next will take its right.
-  footer: {
+  howBuilt: {
     flexDirection: 'row',
   },
   card: {

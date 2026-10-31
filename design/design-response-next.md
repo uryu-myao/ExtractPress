@@ -1,5 +1,64 @@
 # Design response — design-missing.md
 
+## Round 17 · How my DNA is built (2026-10-31)
+
+Mock: Turn 20, 21a–21e. 8g as first drawn is superseded.
+
+### A. Report
+1. **OK. Yes, "no results" needs a line**, in the same slot as Round 16's states, with the Add row under it:
+   - location known: **"No cafés within 5 km match. Add it by name below."**
+   - location off: **"No cafés on the map match. Add it by name below."**
+   - My matching cafés still show. The line only shows when the map returned nothing.
+2. **OK, and thank you: the table is right.** All of it is answered in B1. One more problem from the same cause: **15b's body says "At 5 cups it locks in."**, which V1 contradicts. Remove that line, and change "With only a few cups" to **"With only a few notes"** (21e).
+3. **OK.**
+4. **OK**, except 8f's bar (B3).
+
+### B. Answers
+**1. Rules (21b): seven, not five.** Two lines split off from yours.
+
+| Bold line | Under it |
+|---|---|
+| Higher-rated cups weigh more | A 5★ cup counts three times a 3★. Low ratings count too: they record what you tasted, not what you liked. |
+| Recent cups weigh more | A cup counts half as much every three months. Rated the same, today's cup pulls four times as hard as one from six months ago. |
+| Each axis on its own | A cup that skips an axis is left out of it, never counted as the middle. |
+| Roast is the roast you tasted | Only your Roast slider moves it. The roast level on the bag never does. |
+| Flavour tags nudge, sliders decide | Peach leans brighter and sweeter. Tags make up at most a third of an axis. Your own words don't count. |
+| Ten notes per axis to lock in | Ten slider notes on each axis; tags don't count. Once locked in, it stays locked unless you delete cups. |
+| It moves only when your cups do | Logging, editing or deleting a cup moves it. Time alone never does. |
+
+- Roast is its own rule because Uryu wants it on the page. As a bold line, it can be found.
+- "Moves only when your cups do" left the recency rule. That rule is about weight, not timing.
+- "Every three months", not "after": the weight keeps halving.
+- The order: how a cup weighs (1–2), then what it moves (3–5), then when the profile changes (6–7).
+- Your renaming and your list of things left out: **OK.**
+
+**2. My numbers (21a, 21c): drawn.**
+- The heading **"My numbers": OK.**
+- The framed block, one row per axis: the name on the left, the count on the right in tabular figures. "7 more to lock in" goes on its own line under the count, in accent (`text.accent`): it is the only thing on the page that asks for something. "Not noted yet" is muted.
+- "Tags are at their limit here." goes under the row, muted. **Only at the limit.** A share on every row is a number with nothing to do about it.
+- The cups line closes the block, under a 2pt rule, since it covers all rows.
+- The locked-in state (21c): "3 notes" with no second line. **OK as built.**
+
+**3. 8f's footer: drop the bar in V1 (21d).** A raised bar keeps actions in reach while scrolling. A link to an explainer doesn't need that, and one link alone in it looks unfinished. "HOW IT IS BUILT" becomes the page's last item, after Last shift, as an InlineAction. The bar comes back with Try next in V2, with this link at its left. Reserving it now gains nothing.
+
+**4. 15b (21e): confirmed.** It sits left-aligned under the progress box, 2pt below it, above "Got it". Keep the progress box: it is the one line here that changes. Plus A2's copy fix.
+
+### For Code
+- Café sheet: the no-results lines (A1).
+- 15b: remove "At 5 cups it locks in.", and change "few cups" to "few notes".
+- 8g: seven rules, as in B1. My numbers as 21a / 21c.
+- 8f: remove the footer bar. The link goes at the end of the content.
+
+### Built (2026-10-31)
+All four, as answered. Where it differs from 21a–21e:
+- "7 more to lock in": `meta` (12 / 600); 21a draws 12 / 700, which has no style. The counts take a new `text.countTabular` (14 / 600, tabular).
+- My numbers' rows: 21a's 13 padding folds to `inset.listRow` (12), as Round 9's 11 did. The cups line stays `body.sm` (21a: 13).
+- The rule bullet stays `size.dot.bullet` (6); 21b draws 9.
+- 15b's progress box keeps no frame (on device, 2026-10-17); 21e draws it in 2px ink. The link sits 12 under it, as 21e's 2 + its 10 padding.
+- 15b's Locked in copy is still ours (only the early sheet was drawn).
+
+---
+
 ## Round 16 · Barista (2026-10-30)
 
 Mock: Turn 19, 20a–20g.
@@ -53,33 +112,6 @@ Mock: Turn 19, 20a–20g.
 - 6b: Backup copy.
 
 ---
-
-## Round 16 · Barista (2026-10-30)
-
-As received (answers `design-brief-round-16.md`). The mock was changed for A only; everything in B is answered in words.
-
-**A (report)**: One problem, in the mock. 5d's café line ("Fuglen Tomigaya is 250 m away…") was the nearby-café guess A2 rules out. It now reads "Pick it from the map or type its name." 5a's Café details heading now reads SET.
-
-**B (answers)**
-1. Café sheet: confirmed as one list with no headings. Only two additions: the Add row gets a + marker and the line "Saved by name only".
-2. Map states: "Can't search the map right now. Add it by name below." Location off gets an "Open Settings" link. New prompt copy: "Shows the cafés around you first when you pick one. Your location is never stored."
-3. Drink sheet: the placeholder becomes "Drink name", to pair with "Café name".
-4. 2c: remove "What I logged" for Barista cups, as was done for Packaged.
-5. 11a: the café line shows the short address only, with no distance or visit count.
-6. 2b: under Group by Roaster, Barista cups group by café, and cups with no café go under "No café".
-7. Shelf rows: no chevron. They're list items, like Records rows.
-8. Backup row: "Export everything" / "Cups, bags and gear, as JSON". "Back up" would promise a restore that doesn't exist.
-
-2c for a Barista cup still isn't drawn as a full screen. I only answered it in text.
-
-**How it was built (2026-10-30)**
-- A: 5d's line is the empty Café row's meta in 5d's error state only (the mock is 5d; 5a's empty row is undrawn). SET was already built.
-- B1: the + marker was already there (the search sheet's Add row has drawn it since Round 4's sheets); the line is new, the café sheet's only.
-- B2: the "searching" and "location off" lines stay as briefed (not commented). "Open Settings" is an InlineAction after the line, opening the app's page in Settings. The prompt copy needs a new native build to show.
-- B3: 5a's and 11a's drink sheets. "Add a drink" and "Last time here" were not commented; kept.
-- B5: **not built.** No address is stored (`data-model.md`, places: "no screen shows a stored place's address" — this answer makes one). Waits on Uryu (`todo.md` T-15). 11a shows no café meta meanwhile, which matches "no distance or visit count".
-- B6: the café groups take Barista's old place in the tail (after Packaged), in the order of their first cup, "No café" last. Where they go was not said; this keeps Round 10's "Packaged first, then Barista". A café whose name is also a roaster's (Fuglen) gets two groups with the same heading, one in the roasters and one in the tail.
-- B7: as built. B8: built.
 
 ## Round 15 · Search and bag / gear pages (2026-10-28)
 

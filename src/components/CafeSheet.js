@@ -26,7 +26,8 @@ import SearchSheet, { defaultMatch } from './SearchSheet';
  * before. Nothing is stored until the cup is saved (repository placeIdFor).
  *
  * Status lines (B2): searching; can't search ("Add it by name below.", the
- * Add row); location off, ending in "Open Settings".
+ * Add row); location off, ending in "Open Settings"; the map found nothing
+ * (Round 17, A1: "within 5 km" only when the search was kept near).
  *
  * Props
  *   visible, onClose
@@ -43,6 +44,10 @@ const STATUS = {
   searching: 'Searching the map…',
   failed: "Can't search the map right now. Add it by name below.",
   off: "Location is off, so nearby cafés aren't shown.",
+  // The map answered with nothing (Design Round 17, A1); my matches and the
+  // Add row still show under it.
+  noneNear: 'No cafés within 5 km match. Add it by name below.',
+  none: 'No cafés on the map match. Add it by name below.',
 };
 
 const loggedKey = (id) => `p:${id}`;
@@ -139,6 +144,7 @@ export default function CafeSheet({ visible, onClose, selected, onPick }) {
   if (q && !placeSearchAvailable) status = STATUS.failed;
   else if (q && !answered) status = STATUS.searching;
   else if (q && failed) status = STATUS.failed;
+  else if (q && !found.places.length) status = here ? STATUS.noneNear : STATUS.none;
   else if (!q && located?.reason === 'off') status = STATUS.off;
 
   const selectedKey = !selected ? null : selected.id != null ? loggedKey(selected.id) : items.find((i) => i.cafe.externalId && i.cafe.externalId === selected.externalId)?.key ?? null;

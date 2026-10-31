@@ -38,8 +38,8 @@ import Text from './base/Text';
  *
  * Way on (2026-10-30, Uryu): "How it is built" (InlineAction) under the
  * progress box opens 8g. Only where 8g can be pushed: Home's and 8f's sheet
- * (DnaInfoHost), never 5c's, which is inside the Record sheet. PROVISIONAL
- * placement (Design Round 17, B4).
+ * (DnaInfoHost), never 5c's, which is inside the Record sheet. Confirmed in
+ * Design Round 17, B4 (21e): left-aligned under the box, above Got it.
  *
  * Title: display.sm, as every sheet title (§9 Bottom sheet). The mock's 34 is
  * not in the type scale.
@@ -54,18 +54,16 @@ function earlyProgress(dna) {
 }
 
 /**
- * TODO(copy, PROVISIONAL): Design's final copy is TBD (Round 8). 15b's second
- * paragraph ("At 5 cups it locks in … and Try next starts using it") is
- * rewritten to what V1 does: lock-in is 10 slider notes per axis
- * (DNA_TUNING.lockIn), and Try next is V2. The locked copy is ours.
+ * Early: Design Round 17 (A2, 21e): 15b's "At 5 cups it locks in" is gone
+ * (V1 counts ten notes per axis, and the progress box already says what's
+ * left), and "a few cups" became "a few notes".
+ * TODO(copy, PROVISIONAL): the locked copy is ours; Round 17 drew only the
+ * early sheet.
  */
 const COPY = {
   early: {
     title: 'Early signs',
-    body: [
-      'Your profile is built from the axes you note on each cup. With only a few cups, one cup can swing it a lot. Read it as a hint, not a verdict.',
-      `It locks in once every axis you note has ${DNA_TUNING.lockIn} notes. From then on it moves slowly.`,
-    ],
+    body: ['Your profile is built from the axes you note on each cup. With only a few notes, one cup can swing it a lot. Read it as a hint, not a verdict.'],
     progress: earlyProgress,
   },
   locked: {

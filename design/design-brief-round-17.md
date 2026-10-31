@@ -2,6 +2,8 @@
 
 Round 17 · responds to design-response-next.md Round 16 (Barista, 2026-10-30)
 
+**Status**: answered (`design-response-next.md`, "Round 17", 2026-10-31; mock Turn 20, 21a–21e) and built the same day.
+
 Two groups. Reply under "Round 17" in `design-response-next.md`, numbered as in this brief. A is a report: say if you see a problem. B asks for answers. **We are not waiting**: everything in B is built with our provisional version and gets replaced when your answer comes. In the code, each provisional line is marked PROVISIONAL.
 
 **Scope reminder**: this is what Uryu needs to log coffee every day, not a version for other people.

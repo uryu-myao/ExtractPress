@@ -181,6 +181,8 @@ export const textStyle = {
   /** bodySm with tabular numerals: 8l's result heading, whose count changes as you type (Design Round 10, 19). */
   bodySmTabular: { fontFamily: 'Archivo', fontSize: 12, fontWeight: '500', lineHeight: 18, fontVariant: ['tabular-nums'] },
   meta:          { fontFamily: 'Archivo', fontSize: 12, fontWeight: '600', lineHeight: 17 },
+  /** A count read against others in a column: 8g's My numbers, "14 notes" (Design Round 17, 21a; 14 / 600, tabular). */
+  countTabular:  { fontFamily: 'Archivo', fontSize: 14, fontWeight: '600', lineHeight: 21, fontVariant: ['tabular-nums'] },
   /** lineHeight UNDECLARED · 0.08em x 12 */
   labelCaps:     { fontFamily: 'Archivo', fontSize: 12, fontWeight: '700', letterSpacing: 0.96, textTransform: 'uppercase' },
   /** lineHeight UNDECLARED · 0.16em x 10 */

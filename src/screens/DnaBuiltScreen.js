@@ -19,13 +19,19 @@ import { cupsLabel } from './TasteDnaScreen';
  *
  *   header    compact, Back, "How it is built" (8g), as 8f's.
  *   opening   8g's two lines as drawn (display.lg, then body): they hold in V1.
- *   My numbers  not in the mock (Uryu, 2026-10-30; Design Round 17, B2): one
- *            row per axis with its slider notes, then the cups the profile
- *            stands on. Numbers before the rules, never mixed into them.
- *   rules    8g's list look: a 2px ink rule over rows split by dashed
+ *   My numbers  (Uryu, 2026-10-30; drawn in Design Round 17, 21a / 21c) a
+ *            2px frame, one row per axis split by hairlines: the name, the
+ *            count at the right (countTabular, ink; "Not noted yet" muted);
+ *            "N more to lock in" on its own line under the count in accent,
+ *            the one thing here that asks for something; "Tags are at their
+ *            limit here." under the row, muted, only at the limit. The cups
+ *            line closes the block under a 2px ink rule: it covers all rows.
+ *            Numbers before the rules, never mixed into them.
+ *   rules    8g's list look (21b): a 2px ink rule over rows split by dashed
  *            dividerSoft, each a square bullet, a bold line and one line
- *            under it. The words are ours (Round 17, B1): 8g's four
- *            described rules V1 doesn't have (taste-dna.md; Round 17, A2).
+ *            under it. Seven, in Design's words (Round 17, B1): how a cup
+ *            weighs (1–2), what it moves (3–5), when the profile changes
+ *            (6–7). 8g's first four described rules V1 doesn't have.
  *
  * Not built: "Read my words" (My words never shape the profile in V1,
  * gaps.md 31) and "Reset my taste DNA" with its line (V1.5).
@@ -35,10 +41,11 @@ import { cupsLabel } from './TasteDnaScreen';
  */
 
 /**
- * TODO(copy, PROVISIONAL): Design Round 17, B1. Each line is checked against
- * taste-dna.md and DNA_TUNING: 5★ 3.0 / 3★ 1.0 is "three times"; a 90-day
- * half-life halves at three months and quarters at six; wordShareCap 1/3;
- * lockIn 10. Change the words with the numbers.
+ * Design Round 17, B1. Each line holds against taste-dna.md and DNA_TUNING:
+ * 5★ 3.0 / 3★ 1.0 is "three times"; a 90-day half-life halves every three
+ * months, a quarter at six; wordShareCap 1/3; lockIn 10; the bag's roast
+ * level never feeds Roast (taste-dna.md 9); time alone never moves the
+ * profile (check:dna). Change the words with the numbers.
  */
 const RULES = [
   {
@@ -47,11 +54,15 @@ const RULES = [
   },
   {
     title: 'Recent cups weigh more',
-    line: "A cup counts half as much after three months. Rated the same, today's cup pulls four times as hard as one from six months ago. It moves only when your cups do, never with time alone.",
+    line: "A cup counts half as much every three months. Rated the same, today's cup pulls four times as hard as one from six months ago.",
   },
   {
     title: 'Each axis on its own',
-    line: "An axis you skip isn't counted as the middle; it isn't counted. Roast is the roast you tasted, not the one on the bag.",
+    line: 'A cup that skips an axis is left out of it, never counted as the middle.',
+  },
+  {
+    title: 'Roast is the roast you tasted',
+    line: 'Only your Roast slider moves it. The roast level on the bag never does.',
   },
   {
     title: 'Flavour tags nudge, sliders decide',
@@ -59,24 +70,27 @@ const RULES = [
   },
   {
     title: 'Ten notes per axis to lock in',
-    line: "Each axis needs ten slider notes; tags don't count. Once locked, it stays locked, unless you delete cups.",
+    line: "Ten slider notes on each axis; tags don't count. Once locked in, it stays locked unless you delete cups.",
+  },
+  {
+    title: 'It moves only when your cups do',
+    line: 'Logging, editing or deleting a cup moves it. Time alone never does.',
   },
 ];
 
 const notesLabel = (n) => (n === 1 ? '1 note' : `${n} notes`);
 
 /**
- * TODO(copy, PROVISIONAL): Design Round 17, B2. "N more to lock in" only
- * while the profile is Early signs: after the lock, an axis first noted later
- * shows its notes alone, so the page never contradicts the Locked in stamp.
+ * "7 more to lock in" (Design Round 17, B2), only while the profile is Early
+ * signs: after the lock, an axis first noted later shows its notes alone
+ * (21c), so the page never contradicts the Locked in stamp. Null otherwise.
  */
-function axisLine(n, state) {
-  if (n === 0) return 'Not noted yet';
-  if (n >= DNA_TUNING.lockIn || state === 'locked') return notesLabel(n);
-  return `${notesLabel(n)} · ${DNA_TUNING.lockIn - n} more to lock in`;
+function moreLine(n, state) {
+  if (n === 0 || n >= DNA_TUNING.lockIn || state === 'locked') return null;
+  return `${DNA_TUNING.lockIn - n} more to lock in`;
 }
 
-/** "From 47 cups. 2 had nothing noted, so they don't count." (PROVISIONAL, Round 17, B2) */
+/** "From 47 cups. 2 had nothing noted, so they don't count." (Round 17, B2) */
 function cupsLine(counted, idle) {
   const from = counted ? `From ${cupsLabel(counted)}.` : 'No cups count yet.';
   if (!idle) return from;
@@ -86,26 +100,31 @@ function cupsLine(counted, idle) {
 function MyNumbers({ dna, idle }) {
   return (
     <View style={styles.section}>
-      {/* TODO(copy, PROVISIONAL): the heading is ours (Round 17, B2). */}
       <SectionLabel variant="plain" label="My numbers" />
       <View style={styles.card}>
-        {TASTE_AXES.map((a) => {
+        {TASTE_AXES.map((a, i) => {
           const axis = dna.axes[a.key];
-          const line = axisLine(axis.n, dna.state);
+          const count = axis.n ? notesLabel(axis.n) : 'Not noted yet';
+          const more = moreLine(axis.n, dna.state);
           return (
             <View
               key={a.key}
-              style={styles.axis}
+              style={[styles.axis, i > 0 && styles.axisDivided]}
               accessible
-              accessibilityLabel={[a.name, line, axis.capped ? 'Tags are at their limit here' : null].filter(Boolean).join(', ')}>
+              accessibilityLabel={[a.name, count, more, axis.capped ? 'Tags are at their limit here' : null].filter(Boolean).join(', ')}>
               <View style={styles.axisRow}>
                 <Text variant="label" color="primary">
                   {a.name}
                 </Text>
-                <Text variant="meta" color={axis.n ? 'accent' : 'muted'} style={styles.axisValue}>
-                  {line}
+                <Text variant="countTabular" color={axis.n ? 'primary' : 'muted'} style={styles.axisCount}>
+                  {count}
                 </Text>
               </View>
+              {more ? (
+                <Text variant="meta" color="accent" style={styles.more}>
+                  {more}
+                </Text>
+              ) : null}
               {axis.capped ? (
                 <Text variant="bodySm" color="muted">
                   Tags are at their limit here.
@@ -114,10 +133,11 @@ function MyNumbers({ dna, idle }) {
             </View>
           );
         })}
-        <DashedRule token={dashed.dividerSoft} />
-        <Text variant="bodySm" color="secondary">
-          {cupsLine(dna.cups, idle)}
-        </Text>
+        <View style={styles.cups}>
+          <Text variant="bodySm" color="secondary">
+            {cupsLine(dna.cups, idle)}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -183,26 +203,41 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.gap.row,
   },
-  // 8f's axes card: 2px ink on raised.
+  // 21a: 2px ink on raised; the rows carry the padding (21a's 13 folds to
+  // listRow's 12, as Round 9's 11 did).
   card: {
-    gap: spacing.gap.section,
     borderWidth: shape.borderWidth.box,
     borderColor: color.border.strong,
     backgroundColor: color.surface.raised,
-    paddingVertical: spacing.inset.container.v,
-    paddingHorizontal: spacing.inset.container.h,
   },
   axis: {
     gap: spacing.gap.tight,
+    paddingVertical: spacing.inset.listRow.v,
+    paddingHorizontal: spacing.inset.listRow.h,
+  },
+  axisDivided: {
+    borderTopWidth: shape.borderWidth.divider,
+    borderTopColor: color.divider.hairline,
   },
   axisRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: spacing.gap.row,
+    gap: space[12],
   },
-  axisValue: {
+  axisCount: {
     flex: 1,
     textAlign: 'right',
+  },
+  // 21a draws it 12 / 700; meta (12 / 600) is the nearest style.
+  more: {
+    textAlign: 'right',
+  },
+  // 21a: the cups line covers every row, so a 2px ink rule sets it apart.
+  cups: {
+    paddingVertical: spacing.inset.listRow.v,
+    paddingHorizontal: spacing.inset.listRow.h,
+    borderTopWidth: shape.borderWidth.box,
+    borderTopColor: color.border.strong,
   },
   // 8g: a 2px ink rule over the list, no frame around it.
   rules: {
@@ -212,7 +247,7 @@ const styles = StyleSheet.create({
   rule: {
     flexDirection: 'row',
     gap: space[12],
-    paddingVertical: space[16],
+    paddingVertical: space[14],
   },
   bullet: {
     width: size.dot.bullet,
