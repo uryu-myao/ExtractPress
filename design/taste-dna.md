@@ -12,7 +12,7 @@ First read from the screens (2026-10-11), then decided by Uryu the same day. The
    - **Once locked, it stays locked (decided 2026-10-11)**: a first note on a new axis does not un-lock the profile. Worked out on read by walking the counted cups in logged order (no stored flag; `everLocked` in `tasteDna.ts`). Deleting cups can undo a lock, because the walk then never reaches it — the record without those cups never locked.
    - 1b's "3 OF 5 CUPS" (Try next's progress, V2) is not shown at this stage.
 5. **Recompute**: the profile is computed on read (never stored). **5c's change and 8f's shifts are stored at save time** (`cups.dna_change`, migration 3) and never recomputed, so editing a cup or changing the decay does not rewrite history. `gaps.md` 21 closed. Existing cups: replayed once in the migration (`data-model.md`).
-6. **Words → axes: the ten bundled flavour words only.** My words do not shape the profile in V1 ("Read my words" does not exist, i.e. off; `gaps.md` 31). User-added words have no entry. A word is a weak record: an observation at a step value, strength at most 0.4 of one slider record, and it never counts toward lock-in.
+6. **Words → axes: the ten bundled flavour words only.** **My words never shape the profile** (decided 2026-10-31, Uryu; was "not in V1"). It is a division of roles, not a limit: flavour tags are picked from a set and describe the taste; My words is a free memo to read back (Uryu's My words are free memos, close to a diary (brewing reminders, things beyond taste), with no words used over and over). There is no "Read my words" setting. User-added flavour words have no entry. A word is a weak record: an observation at a step value, strength at most 0.4 of one slider record, and it never counts toward lock-in.
    - **Criterion**: when the word comes up, the axis leans predictably, **one way**. Not "they often appear together". The strength follows how sure the association is. (Smoke → bitter fails: dark roasts can be un-bitter.)
    - **The table (final, 2026-10-11)**; Acid ↔ Bitter: 0 = acid:
 
@@ -81,8 +81,8 @@ With the old cups spread over 335–365 days instead, the old share is 60% / 30%
 **Words** (8g "Your words are matched, not read"):
 - "'juicy' maps to acidity and sweetness. Notes stay on your phone."
 - So words act through **a fixed word → axis table**, matched on the phone, never sent anywhere.
-- 8g also has a setting, **"Read my words — Let notes shape the profile"**, and 7a announces "Taste DNA now reads your notes — Your own words feed the profile, not just the sliders."
-- So: **flavour words always count; My words count only with that setting on.**
+- 8g's setting and 7a's / 7b's "Taste DNA now reads your notes" described My words feeding the profile. **Withdrawn 2026-10-31**: My words never count (item 6), and the setting is gone.
+- So: **flavour words always count; My words never do.**
 
 **Locking in**
 - 8g "Ten cups to lock in — Below that it stays provisional, because it would be noise." 9a: "Around ten cups, the profile locks in."
@@ -103,7 +103,7 @@ A shift is an axis crossing into another named band. This needs a history of the
 
 **Display words per axis** (8f): "Bright", "Light-bodied", "Medium sweet", "Light roast"; summary "Bright, juicy, lightly sweet". The summary mixes axis bands and a top word ("juicy").
 
-**Words said most** (8f "What you keep saying"): juicy 9, peach 6, tea-like 5, too roasty 4. These are counts of words, not axes.
+**Words said most** (8f "What you keep saying"): juicy 9, peach 6, tea-like 5, too roasty 4. These are counts of words, not axes. **Not built (2026-10-31)**: it needed 8h; "Flavours I pick most" counts what repeats.
 
 **Reset** (6b, 8g):
 - "Reset my taste DNA — My 147 cups and notes stay. Only the profile is rebuilt." **Replaced (Design Round 12)**: the line reads **"Counts from today. Older cups stay in Records."** Reset means "count from this day" (`settings.reset_at`). For 6b, not built yet.
@@ -124,7 +124,7 @@ A shift is an axis crossing into another named band. This needs a history of the
 | 3 | **Per-axis averaging** | Untouched axes are "left out" (5b) | Average each axis only over cups that noted it (weights renormalised per axis). An axis with no notes shows nothing |
 | 4 | **Lock-in** | Two states; ten cups (8g, 9a) | Ten cups total, or ten rated cups, or ten cups noting each axis? Fix the "Three more cups" line (contradiction 1) |
 | 5 | **Recompute timing** (`gaps.md` 21) | Profile is arithmetic on cups | Compute on read (always current, history moves when old cups are edited) or store snapshots per save (5c's "before / after" and 8f's "shifted 4 days ago" become stable) |
-| 6 | **Words → axes** | A fixed table; "juicy" → acidity + sweetness; flavour words always, My words with the setting | The table itself (the bundled words' groups bright / round / neutral are a start); how strong a word is against a slider value; user-added words with no entry are ignored |
+| 6 | **Words → axes** | A fixed table; "juicy" → acidity + sweetness; flavour words always, My words never (2026-10-31) | The table itself (the bundled words' groups bright / round / neutral are a start); how strong a word is against a slider value; user-added words with no entry are ignored |
 | 7 | **Reset** | Cups stay; the profile is rebuilt | A stored "count from" date? |
 | 8 | **Bands and names** | 8f's names per axis | Where "Bright" / "Medium sweet" start (band edges on 0–100) |
 

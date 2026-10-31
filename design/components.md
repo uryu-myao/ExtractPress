@@ -64,7 +64,7 @@ Pressed, focus, tap affordance, the selection limit and the disabled look of opt
 | 35 | Suggested value row ("Use") | 3c (2) | not started | — | offered | **applied** |
 | 36 | Stat tiles / profile header | 6a 8e | not started | — | static | — |
 | 37 | Avatar edit button | 6d (1, 34×34 at the avatar's corner) | not started | — | default | — (read as a checkbox in the first pass; it is a small icon button) |
-| 38 | Word tag (pressable) | 8f (4, word + count → 8l search) · 8h (11, tap to rename / merge) | not started | with count · without | default (8f's top word drawn 2px ink) | — (built at 44, §1 Tap affordance) 2026-10-09: the top word's 2px frame goes (drift D-23). |
+| 38 | Word tag (pressable) | 8f (4, word + count → 8l search) · 8h (11, tap to rename / merge) | **not built** (8h and 8f's block dropped, 2026-10-31) | with count · without | default (8f's top word drawn 2px ink) | — (built at 44, §1 Tap affordance) 2026-10-09: the top word's 2px frame goes (drift D-23). |
 | 39 | Attribute tag (display) | 6a (3, inside the pressable Taste DNA card) · 8d (2) | not started | — | static | — (never pressable on its own, §1 Tap affordance) |
 | 40 | Destructive row button (framed) | 3e "Remove from my gear" / "Frees 1 slot" · 3g "Delete this bag" / "Not finish — erases it" | not started | glyph + label + note at right, 1.5 `border.muted` frame, below the form card | default | pressed; confirm / undo (`gaps.md` 18). Label ink, not brown (drift D-30). Added 2026-10-09 |
 
@@ -112,6 +112,12 @@ Primitives, not counted: `Text`, `Glyph`, `HardShadow`, `DashedRule`, `DotTextur
   - 8l's Words search lists cups by a word in their note ("9 cups say "juicy"").
 - One sentence does not fit: 8h's "Words appear as chips when you log a cup". No logging screen shows words as chips; read here as "the words you write appear here as chips".
 - So the three looks are not one component: the flavour chip is an input (§1 Colour roles: brown, entered); the word tag (#38) belongs to words. Flavours: capitalised in the data, uppercased on screen by `label.caps`. Words: stored and shown as typed.
+
+**My words is a supporting field (decided 2026-10-31, Uryu)**. The reading above took My words as a vocabulary the user repeats (8h's counts, 8f's "What you keep saying", 7a / 7b, 8g's "Read my words"). Uryu's real notes are free memos, close to a diary: brewing reminders and things beyond the taste, with no words used over and over. So:
+- **Taste is described by the flavour tags**: picked from a finite set, they repeat and can be counted (8f's "Flavours I pick most"). My words is the free space beside them.
+- **My words does three things, unchanged**: written on 5b, read in full on 2c, found by search's Words (a part match on the note).
+- **It is optional and never in the way**: logging fast comes first, and a cup without a note loses nothing. It never feeds Taste DNA (`taste-dna.md` item 6).
+- **Not built, for this reason**: 8h, 8f's "What you keep saying", the word tag (#38), 6a's My words heading, 8g's "Read my words", 7a / 7b's announcement.
 
 **Are the 13 framed cards one component?**
 - The **container** is one: 2px ink on raised, square, no shadow.
@@ -375,7 +381,7 @@ The bundled list is the starting point for 5b's flavour tags (never a whitelist;
 
 - **Open**: the selected chip of a clearable set needs press feedback. Today it does not respond. Its ink fill has no darker tier, so it would take the scale, or a step lighter. To decide when built.
 
-## 8h words: merges live in their own table (policy, 2026-10-10)
+## 8h words: merges live in their own table (policy, 2026-10-10) — **void 2026-10-31: 8h is not built**
 
 - Renaming or merging a word in 8h **never rewrites note text**. Notes stay as the user wrote them (`cups.note`).
 - A separate table holds "this word merges into that one" (and renames). Matching and counting read it. Details are specced with 8h.
@@ -389,7 +395,7 @@ The bundled list is the starting point for 5b's flavour tags (never a whitelist;
 ## Row menus: gear and words are built differently (recorded 2026-10-09)
 
 - **Gear (3b)**: each item has a full page, 3e (Edit gear). The ⋮ sheet only repeated 3e's contents (default, edit, remove), so the ⋮ goes. The row opens 3e directly, with a chevron (drift D-26).
-- **Words (8h)**: the ⋮ stays as drawn.
+- **Words (8h)**: the ⋮ stays as drawn. (Void 2026-10-31: 8h is not built.)
   - The menu's contents are not in the mocks.
   - There is no page behind a word: rename and merge happen in place ("Tap a word to rename it everywhere, or merge it into another").
   - So 8h cannot follow 3b. Its ⋮ is specced when 8h is built.

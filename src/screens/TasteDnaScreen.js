@@ -35,9 +35,9 @@ import ScreenFrame from './ScreenFrame';
  *            their counts, "Peach 12", from the cups the profile counts.
  *            Heading label.caps (Design's word); tags as 8f's word tags (1.5
  *            border.muted on raised, the count in accent). Not pressable.
- *            Hidden until a tag has been picked. When 8h brings "What you
- *            keep saying" under it, each block gets its sub-heading ("From
- *            the flavour list" / "In my own words"); alone, it needs none.
+ *            Hidden until a tag has been picked. Alone on the page: no
+ *            sub-heading (Round 11's pair assumed "What you keep saying";
+ *            asked again in Design Round 18).
  *   Last shift  one line per axis that moved: "Sweetness moved from Lightly
  *            sweet to Medium sweet on Oct 17." Band names, not the mock's "low
  *            to medium" (written before the bands were). The mock's cause
@@ -50,9 +50,10 @@ import ScreenFrame from './ScreenFrame';
  *            unfinished. The bar comes back with Try next (V2), this link at
  *            its left.
  *
- * Not built in V1:
- *   - "What you keep saying": My words' counts (8h); it comes with 8h.
- *     Tapping a word will open 8l's Words search for it.
+ * Not built:
+ *   - "What you keep saying": My words' counts. Never (2026-10-31, Uryu):
+ *     My words are free memos with no repeated words; Flavours I pick most
+ *     carries what repeats.
  *   - the footer's "Try next" (8d): V2.
  *
  * The shift is read from the stored changes (taste-dna.md item 5), so its

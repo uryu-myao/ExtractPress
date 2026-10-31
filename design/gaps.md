@@ -455,7 +455,7 @@ The photo pair sits beside a 76 thumbnail, so 44 would still fit its height.
 The user sees the past rewritten.
 
 **Triggers**:
-- **"Read my words"** (8g) toggled. Out of V1: the setting screen is not in V1, so it cannot be toggled yet.
+- ~~**"Read my words"** (8g) toggled.~~ Gone: the setting was abolished (2026-10-31), My words never shape the profile.
 - **Editing a cup**: in the design. 2c has an edit button (pencil); its destination is not drawn. Changing a past cup's rating or axes moves every later shift.
 - **Deleting a cup**: **not in the design.** No screen offers it (2c: back, edit, share only), so not in V1.
 - A change to the arithmetic in a later release.
@@ -544,7 +544,7 @@ The user sees the past rewritten.
 
 **Now**: no limit (decided). Ordering by use count is expected to sink rarely used words (report 2026-10-10).
 
-**Status**: recorded. 8h, or a limit, later.
+**Status**: recorded. A limit, or a way to prune flavour words, later. (8h was never the way: its rename / merge was for My words, and 8h is not built, 2026-10-31.)
 
 ---
 
@@ -586,12 +586,14 @@ The user sees the past rewritten.
 
 ---
 
-## 31. My words do not shape Taste DNA in V1 (added 2026-10-11)
+## 31. My words do not shape Taste DNA in V1 (added 2026-10-11) — **closed 2026-10-31**
 
 **What**: only the ten bundled flavour words have a word → axis entry. My words (free text) and words users add are not matched in V1: matching free text needs normalising, synonyms and negation ("not too bitter"). "Read my words" (8g) does not exist in V1, which is the same as it being off.
 
 **Copy to adjust when 8g is built**: 8g's "Your words are matched, not read — 'juicy' maps to acidity and sweetness" and 7a's "Taste DNA now reads your notes" describe more than V1 does. Even 8g's example word, "juicy", is not a bundled word, so it has no entry.
 - **8g, built 2026-10-30**: its words line now reads "Flavour tags nudge, sliders decide — Peach leans brighter and sweeter. Tags make up at most a third of an axis. Your own words don't count." (Design Round 17, B1, confirmed). The switch is not built. 7a is still not built.
+
+**Closed 2026-10-31 (Uryu)**: not "in V1" any more. My words never shape the profile, by design: flavour tags describe the taste, My words is a free memo (`taste-dna.md` item 6). "Read my words" is abolished, so V1's behaviour and the rule are the same thing. What's left is copy, not a gap: 8g's "don't count" reads as "not yet", so Design rewrites it as the division of roles (Round 18); 7a / 7b's "Taste DNA now reads your notes" is void (Round 18).
 
 ---
 

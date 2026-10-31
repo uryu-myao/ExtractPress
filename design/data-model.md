@@ -133,7 +133,7 @@ Names as built:
 - Gear: `gear (name, category, maker, settings_note, is_default, photo_uri, added_at)`. A partial unique index allows one default per category.
 - Settings: one row, `drinks_out` (0 / 1) and `coffee_style` (`black` / `with_milk` / `depends`); NULL when first setup was skipped.
 
-Not in it (unchanged decisions): drafts' screen and flow, profile, the other settings, 8h's merge table, remembered filters.
+Not in it (unchanged decisions): drafts' screen and flow, profile, the other settings, remembered filters. (8h's merge table: never, 8h is not built; 2026-10-31.)
 
 ## Planned changes (decided 2026-10-09, not built)
 
@@ -214,9 +214,8 @@ The columns are today's (`schema.ts`); "planned" means already decided above.
 | screen | input | stored in |
 |---|---|---|
 | 6d | photo, Display name (24), How I brew | **none** |
-| 8g | "Read my words" switch | **none** |
 | 8g | Reset my taste DNA ("cups and notes are never deleted") | **none** (needs a reset point) |
-| 8h | Add word, rename, merge, Clean up | **none** (the merge table, proposal above) |
+| 8h | Add word, rename, merge, Clean up | **not built** (2026-10-31: its premise doesn't hold; see "My words and 8h") |
 | 8i | Morning reminder, time, days; Updates & notices; Brewing tips; Bag going stale | **none** |
 | 8m | App language / Follow my phone | **none** |
 | 7a 7b | read state, Mark all read (and the items themselves, kept 60 days) | **none** |
@@ -228,13 +227,12 @@ The columns are today's (`schema.ts`); "planned" means already decided above.
 
 **Derived, no storage needed**:
 - counts, streak, "Logging since", "used in N cups", slots left, "stale", freshness day, Taste DNA;
-- its shifts ("shifted 4 days ago", 5c's "where it sat before") can be recomputed as of a date from cups, as long as the arithmetic is fixed. If it changes (e.g. "Read my words" is toggled), past shifts move. That is a call for later.
+- its shifts ("shifted 4 days ago", 5c's "where it sat before") can be recomputed as of a date from cups, as long as the arithmetic is fixed. If it changes (e.g. a new rating weight), past shifts move. That is a call for later.
 
 **The migration as now known** (in addition to the planned items above):
 - a finish state on bags;
 - a gear table;
 - profile and settings storage;
-- 8h's merge table;
 - notification read state;
 - recent searches;
 - Try next dismissals;
@@ -265,7 +263,7 @@ Which of these are V1 is open (report 2026-10-10).
 
 **Out**:
 - e. Drafts (5d "Keep as draft"): an exception path, designed once the main path runs. **But `cups.rating` becomes nullable in this migration**, because a draft has no rating; dropping NOT NULL later costs more. Taste DNA already ignores unrated cups (8g).
-- f. Profile (6d), settings (8g 8i 8m), notification read state, recent searches, 8h's merge table: outside the loop, V1.5+.
+- f. Profile (6d), settings (8g 8i 8m), notification read state, recent searches: outside the loop, V1.5+.
 - g. Remembered filters / sort (2a 2b 3f 8l): **not stored**, decided. Each launch starts from the defaults. No columns.
 - h. 8j's sending path: outside the loop, but the screen is not built until it is defined (`todo.md`).
 
@@ -324,13 +322,13 @@ Which of these are V1 is open (report 2026-10-10).
 
 - **Why an array, not a join table**: at most 5 per cup, read with the cup. The bundled list lives in code, and history (frequency order) is a `json_each` over cups: hundreds to thousands of rows. Same reasoning as `beans.notes`.
 - **Why the words, not word ids**:
-  - Flavours have **no master table and no rename UI**. 8h's rename / merge belongs to *My words*, a different list (`components.md` "Flavours and words are two kinds of data").
+  - Flavours have **no master table and no rename UI**. (8h's rename / merge was for *My words*, a different list; 8h is not built, 2026-10-31.)
   - Storing the text keeps a cup the fact it was, as with the bag copies.
   - If renaming a flavour is ever wanted, it is an explicit rewrite at that moment (as bag edits are), never a reference.
-- **My words and 8h**:
-  - 8h's words are *matched* from notes (8g: "Your words are matched, not read"). Renaming or merging a word "everywhere" must not rewrite anyone's note text; the note is the user's own writing.
-  - So 8h needs its own small table (a word, and what it merges into), used for matching and counting. The notes stay as typed.
-  - Proposal; specced with 8h.
+- **My words and 8h (decided 2026-10-31, Uryu): 8h is not built, and My words never shape Taste DNA.**
+  - 8h counts, renames and merges words a user writes again and again. Uryu's My words are free memos, close to a diary (brewing reminders, things beyond taste), with no words used over and over. Its premise doesn't hold: this is not "later", it is "not this app's".
+  - Describing taste is the flavour tags' job: picked from a finite set, so they repeat and can be counted (8f's "Flavours I pick most"). My words is the free space beside them. The split was there from the start.
+  - So no merge table, no word extraction, no "Read my words" setting. `cups.note` stays as typed: written on 5b, read in full on 2c, found by search's Words.
 
 ### Cups copy their bag's details at logging
 - When a cup is logged, the bag's details are **copied onto the cup** and stored there. `bean_id` stays as a reference, but **display and Taste DNA read the cup's copies**.

@@ -33,8 +33,9 @@ import { cupsLabel } from './TasteDnaScreen';
  *            weighs (1–2), what it moves (3–5), when the profile changes
  *            (6–7). 8g's first four described rules V1 doesn't have.
  *
- * Not built: "Read my words" (My words never shape the profile in V1,
- * gaps.md 31) and "Reset my taste DNA" with its line (V1.5).
+ * Not built: "Reset my taste DNA" with its line (V1.5). "Read my words" is
+ * abolished (2026-10-31): My words never shape the profile, so it would
+ * switch nothing.
  *
  * The bullet is SectionLabel's (size.dot.bullet, 6); 8g draws 9, which has
  * no token.
@@ -64,6 +65,9 @@ const RULES = [
     title: 'Roast is the roast you tasted',
     line: 'Only your Roast slider moves it. The roast level on the bag never does.',
   },
+  // TODO(copy, PROVISIONAL): "don't count" reads as "not yet". My words never
+  // count, by design: tags are picked to describe the taste, My words is a
+  // memo to read back. Design rewrites it, here or as its own rule (Round 18).
   {
     title: 'Flavour tags nudge, sliders decide',
     line: "Peach leans brighter and sweeter. Tags make up at most a third of an axis. Your own words don't count.",

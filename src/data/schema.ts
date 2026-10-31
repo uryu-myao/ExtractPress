@@ -44,7 +44,7 @@ export const schema = {
      */
     mode: { type: 'TEXT', nullable: false, values: ['made_it', 'barista', 'packaged'] },
     photo_uri: { type: 'TEXT', nullable: true },
-    /** My words (5b): stored as written, never rewritten (8h's merges live elsewhere). */
+    /** My words (5b): a free memo, stored as written, never rewritten; never feeds Taste DNA (2026-10-31). */
     note: { type: 'TEXT', nullable: true },
     /** Flavour tags (5b): the words themselves, in the order chosen, at most 5. Not ids. */
     flavours: { type: 'TEXT', nullable: false, json: 'string[]' },

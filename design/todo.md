@@ -104,10 +104,11 @@ Until 6a is built, Profile's placeholder (`screens/index.js`) holds:
 
 **Updated 2026-10-28 (CSV)**: My data now has 6b's two rows. "Export my cups" is the CSV 6b draws (`data/csv.ts`; one cup a row, 27 columns). The JSON of every table moved to 6b's **Backup** row as **"Export everything" — INTERIM**: 6b's Backup saves by itself ("Last saved today, 08:24"), and this is a manual export of everything, a different thing. It stays until the real backup is built, because it is the only way the bags' and gear's own records (size, default, finished on) get out. Label and sub line ("Export everything" / "Cups, bags and gear, as JSON") are Design's, Round 16 B8: "Back up" would promise a restore that doesn't exist.
 
-## T-9. 8f's "What you keep saying" waits for 8h (recorded 2026-10-21)
+## T-9. 8f's "What you keep saying" waits for 8h (recorded 2026-10-21) — **closed 2026-10-31: not built**
 The block counts **My words** (what the user wrote; `components.md`, Words), not flavour tags (picked from a fixed set). It is not shown until 8h and My words' counts exist. Flavour tags are not a stand-in: under that heading they would pass picked category words off as the user's own words.
 - **Keep for then**: tapping a word opens 8l on the Words scope with that word typed (8l is built, 2026-10-21).
 - "Flavours I pick most" is its own block (Design Round 11, B; built 2026-10-23), above where this one will go. **When 8h comes**: "What you keep saying" goes under it, and each block gets its sub-heading, "From the flavour list" / "In my own words" (body.sm, `text.secondary`).
+- **Closed 2026-10-31 (Uryu)**: 8h is not built (Uryu's My words are free memos, close to a diary (brewing reminders, things beyond taste), with no words used over and over), so neither is this block. "Flavours I pick most" carries what repeats. Whether it still needs Round 11's sub-heading: Design Round 18.
 
 ## T-10. Pressable blocks: one design pass (recorded 2026-10-21, Uryu) — DONE 2026-10-23
 Pressable blocks and rows were each settled on their own, so the app and the boards differ: 2a's cup rows, Home's Recently sipped rows, 2c's "Feeds my taste DNA", 8l's results, 3d's cards, the shelf's Manage row; and 8f's "Last shift", a framed block that is not pressable. Uryu wants one treatment designed for all of them together.

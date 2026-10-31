@@ -44,10 +44,10 @@ import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
  *                Round 14) on that side
  *                (every bag on the shelf, opened or not: "On the shelf",
  *                Design Round 7, 18; no "1 stale": staleness isn't built).
- *                My words is 8h's, out of V1: not shown, so the heading now
- *                holds gear and beans only, which "shelf" means (§1 Words).
- *                When 8h comes, My words gets its own heading, "My words"
- *                (Design Round 11, D1).
+ *                The heading holds gear and beans only, which "shelf" means
+ *                (§1 Words). 6a's My words row is not built, and gets no
+ *                heading of its own (Round 11, D1's "when 8h comes"): 8h is
+ *                not built (2026-10-31).
  *   Taste DNA    6b's section with only "How my DNA is built" (6b's row and
  *                glyph) → 8g (2026-10-30; Design Round 17, A4: OK). 6b is
  *                otherwise not built; "How adventurous" is Try next's

@@ -42,7 +42,7 @@ Status: **done** (built from the mock, checked on the simulator) · **partial** 
 | 8a / 9a / 9b Welcome | out of the token set | not started | designed separately |
 | 8b / 8k Sign-in / account | held | not started | |
 | 7a / 7b Notifications | not now | not started | |
-| 8h My words | not V1 (no word management; `gaps.md` 27) | not started | |
+| 8h My words | **not built: its premise doesn't hold** (Uryu, 2026-10-31) | — | My words are free memos with no repeated words to count, rename or merge. Its jobs are covered: finding a memo (search's Words), what repeats (8f's Flavours I pick most), the memo itself (2c). Also not built: 8f's What you keep saying, 6a's My words heading, Read my words |
 | 8i Reminders · 8j Feedback · 8m Language | not now | not started | |
 | 8l Records search | **yes (2026-10-21, with 2b)** | **built, not yet seen on device** | Words (My words + flavour tags) / Beans / Gear (back 2026-10-22, with 3b / 3e), 4★ and up; results open 2c. No recent searches. Undrawn parts per Design's Round 10 reply (19–23); two headings are ours, in the next brief |
 | 8d / 8e Try next | **out (V2)** | placeholder tab | |
