@@ -10,7 +10,7 @@ First read from the screens (2026-10-11), then decided by Uryu the same day. The
 4. **Lock-in, counted per axis**: an axis locks in at **10 slider records** (flavour words never count toward it). The screens show one state for the whole profile, next to "My taste DNA" (1b, 5c, 6a, 8f); it is **Locked in when every axis with at least one record has 10 or more** (option B). Axes with no record are left out of the judgement. 1b's "N more" counts the axis with the fewest records (copy: Design, D-47).
    - 8f's "From N cups": cups after `reset_at`, rated, with at least one axis noted or one word from the table.
    - **Once locked, it stays locked (decided 2026-10-11)**: a first note on a new axis does not un-lock the profile. Worked out on read by walking the counted cups in logged order (no stored flag; `everLocked` in `tasteDna.ts`). Deleting cups can undo a lock, because the walk then never reaches it — the record without those cups never locked.
-   - 1b's "3 OF 5 CUPS" (Try next's progress, V2) is not shown at this stage.
+   - 1b's "3 OF 5 CUPS" (Try next's progress, V2) is not shown, and its 5 is not a rule (item 10).
 5. **Recompute**: the profile is computed on read (never stored). **5c's change and 8f's shifts are stored at save time** (`cups.dna_change`, migration 3) and never recomputed, so editing a cup or changing the decay does not rewrite history. `gaps.md` 21 closed. Existing cups: replayed once in the migration (`data-model.md`).
 6. **Words → axes: the ten bundled flavour words only.** **My words never shape the profile** (decided 2026-10-31, Uryu; was "not in V1"). It is a division of roles, not a limit: flavour tags are picked from a set and describe the taste; My words is a free memo to read back (Uryu's My words are free memos, close to a diary (brewing reminders, things beyond taste), with no words used over and over). There is no "Read my words" setting. User-added flavour words have no entry. A word is a weak record: an observation at a step value, strength at most 0.4 of one slider record, and it never counts toward lock-in.
    - **Criterion**: when the word comes up, the axis leans predictably, **one way**. Not "they often appear together". The strength follows how sure the association is. (Smoke → bitter fails: dark roasts can be un-bitter.)
@@ -38,7 +38,7 @@ First read from the screens (2026-10-11), then decided by Uryu the same day. The
 7. **Reset**: a stored `reset_at`; only cups after it count. Cups are never deleted; Records keeps all of them. The column comes with the migration; the feature is V1.5 (no settings screen in V1).
 8. **Band names**: the five slider steps, edges at 12.5 / 37.5 / 62.5 / 87.5 (0–12.5 Very bright, … 87.5–100 Very bitter), so input steps and display bands match.
 9. **The bag's roast level does not feed the Roast axis**: it is the roaster's claim, the axis is the drinker's perception.
-10. **Thresholds**: 5 cups = Try next (V2, not shown in V1); 10 = lock-in (D-47).
+10. **Thresholds**: 10 = lock-in (D-47). Try next's opening count is **not decided** (2026-10-31, Uryu): the mocks' 5 has no reason left (below), so it is out of the code and copy until Try next is built (`todo.md` T-14).
 
 ## Properties the arithmetic keeps (verified 2026-10-19, `npm run check:dna`)
 

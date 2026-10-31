@@ -25,7 +25,8 @@ import Text from './base/Text';
  * The stamp is a button (DnaStamp, 15a): it opens 15b's info sheet.
  * No line under the title (Design Round 8, 2026-10-17): what it said moved
  * into the sheet's progress box (DnaInfoSheet).
- * The mock's footer "3 of 5 cups" is Try next's progress (V2): not shown.
+ * The mock's footer "3 of 5 cups" is Try next's progress (V2; its count is
+ * undecided, D-47): not shown.
  * With onOpen, the card's foot is a row, "Open my taste DNA ›" → 8f (Design
  * Round 11, B): label.caps and the shared chevron, its pressed fill out to
  * the card's frame (sides and bottom), as the shelf's Manage rows. A row,

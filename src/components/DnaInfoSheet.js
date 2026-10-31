@@ -32,9 +32,9 @@ import Text from './base/Text';
  *           what the count is for on its own, not leaning on the paragraph
  *           above, whose copy is still provisional.
  *   locked  "From 147 cups." (8f; PROVISIONAL, as on the card before)
- * TODO(V2): the box's first row, "3 of 5 cups" + five cup glyphs, is Try
- * next's threshold — not shown at this stage (design-missing.md 13), so the
- * box holds the sentence alone.
+ * TODO(V2): the mock's first row in the box ("3 of 5 cups" + cup glyphs) is
+ * Try next's progress, whose count is undecided (D-47, todo.md T-14): not
+ * shown, so the box holds the sentence alone.
  *
  * Way on (2026-10-30, Uryu): "How it is built" (InlineAction) under the
  * progress box opens 8g. Only where 8g can be pushed: Home's and 8f's sheet
@@ -58,7 +58,8 @@ function earlyProgress(dna) {
  * (V1 counts ten notes per axis, and the progress box already says what's
  * left), and "a few cups" became "a few notes".
  * TODO(copy, PROVISIONAL): the locked copy is ours; Round 17 drew only the
- * early sheet.
+ * early sheet. Its first sentence is false when an axis is first noted
+ * after the lock (21c); Design Round 18, B9.
  */
 const COPY = {
   early: {

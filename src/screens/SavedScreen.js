@@ -35,8 +35,8 @@ import ScreenFrame from './ScreenFrame';
  *     and Round 12). Kept
  *     when Round 8 removed the card's sub-line: it's this cup's result, not
  *     an explanation
- *   - Try next's "4 of 5 cups" and "One more cup and Try next opens up" are
- *     V2: not shown
+ *   - Try next's progress ("4 of 5 cups", "One more cup and Try next opens
+ *     up") is V2, and its count is undecided (D-47, todo.md T-14): not shown
  * Buttons: "Back to home" (primary) and "See this record" (secondary → 2c).
  */
 const expandEasing = Easing.bezier(...motion.expand.controlPoints);

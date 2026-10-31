@@ -75,7 +75,7 @@ export default function AddBagScreen({ onBack, onAdded }) {
                 name is not a disabled state: the press shows the field's error. */}
             <Button label="Open this bag" onPress={() => addBag(true)} disabled={full || open == null} warnWhenDisabled={full} />
             {/* Added, not opened (2026-10-12): it takes a slot and is opened
-                later from 3d. TODO(copy): the label is ours, for Design. */}
+                later from 3d. Copy confirmed (Design's reply to brief 18). */}
             <Button variant="secondary" label="Add without opening" onPress={() => addBag(false)} disabled={full || open == null} warnWhenDisabled={full} />
             {free != null ? (
               <Text variant="bodySm" color="secondary" style={styles.slots}>
