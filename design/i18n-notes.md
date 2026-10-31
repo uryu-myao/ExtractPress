@@ -14,6 +14,8 @@ Decided strings and translation constraints, recorded ahead of the ja / zh-Hans 
 
 ## Scheduled for the V1.1 i18n pass
 
+- **Nowrap chips** (from `gaps.md` 7, 2026-11-01): fixed-copy chips are `nowrap` (brew methods, maker chips, dates, status labels). Safe in English; in ja / zh, longer labels (e.g. brew methods, "Best rated") would push out of their row. Decide per locale: shorter strings, wrapping, or horizontal scroll. User-supplied names are never `nowrap` (truncation rule, `gaps.md` 1).
+
 Both are recorded in `design-system.md` §11 (OQ-14):
 
 - CJK bold — extend the font-face mapping to (family, weight, lang).

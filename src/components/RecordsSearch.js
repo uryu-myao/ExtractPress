@@ -229,7 +229,9 @@ function Start({ cups, history, onFilter, onSearch, onClear }) {
       </View>
       <View style={styles.group}>
         <SectionLabel variant="plain" label="Rating" />
-        <View style={styles.ratings} accessibilityRole="radiogroup">
+        {/* Each rating starts a search (a button), so no radiogroup around them
+            (gaps 11 audit, 2026-11-01). */}
+        <View style={styles.ratings}>
           {RATINGS.map((r) => (
             <Pressable
               key={r}

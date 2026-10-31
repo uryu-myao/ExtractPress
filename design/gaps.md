@@ -134,6 +134,8 @@ Plus, globally:
 
 **Needs designing**: first-run empty state per list, and whether empty differs from loading.
 
+**Status 2026-11-01 (Uryu): open, narrowed to one thing.** Most V1 surfaces have their empty state now (5a's empty shelf, Records, search, Taste DNA with nothing noted, Home's shelf side, the café sheet's no results; `v1-status.md`, the four V1-path gaps). Left: **a first run as a whole, Home and Profile on a fresh install**, not yet looked at as one. Notifications, Try next and My words are out of V1.
+
 ---
 
 ## 6. Error states exist for one screen only
@@ -150,9 +152,11 @@ Plus, globally:
 
 **Needs designing**: save failure, offline, and per-field inline error, reusing the 5d vocabulary.
 
+**Status 2026-11-01 (Uryu): open.** The save-failure copy is still the stand-in above, and the per-field inline error is undecided. Built since: the café sheet's map states (Round 16 B2).
+
 ---
 
-## 7. Nowrap chips will overflow once the UI is translated
+## 7. Nowrap chips will overflow once the UI is translated — **CLOSED 2026-11-01: moved to `i18n-notes.md`**
 
 **Parts affected**: the 40 `nowrap` uses — **all fixed copy, none user-supplied**: brew-method chips `Filter / Espresso / Cold brew` (12), maker chips `I made it / Barista / Packaged` (12; the mocks still say "Ready-to-drink"), dates `Apr 8 / Apr 7 / Apr 6` (12), status label `Early signs` (4).
 
@@ -163,6 +167,8 @@ Plus, globally:
 **Note (2026-10-06)**: user-supplied names (café, brand, drink, product) are never `nowrap`. They follow the truncation rule in item 1.
 
 **Update (2026-10-04)**: the maker chip "Ready-to-drink" is renamed **"Packaged"** (ja 市販品, zh 市售) (decided 2026-10-04). The three maker chips now fit on one line at 390 / 393pt. Brew-method chips and `Best rated` are unchanged.
+
+**Closed 2026-11-01 (Uryu)**: V1 is English only (8m, language, is not in V1), so this is a translation problem, not a V1 gap. Carried to `i18n-notes.md`, "Scheduled for the V1.1 i18n pass".
 
 ---
 
@@ -203,7 +209,7 @@ Plus, globally:
 
 ---
 
-## 9. The weekday strip's active-day underline is unimplemented
+## 9. The weekday strip's active-day underline is unimplemented — **CLOSED 2026-11-01**
 
 **Parts affected**: the "This week" strip on 1b, 4a, 4b.
 
@@ -215,6 +221,7 @@ Plus, globally:
 
 **Built 2026-10-12 from 1b's export**: the export draws today's underline in ink (2px), so the strip does: today's letter in ink and an ink underline under its date.
 
+**Closed 2026-11-01 (Uryu)**: built 2026-10-12 from 1b's export (above); nothing left open.
 
 ---
 
@@ -232,7 +239,7 @@ Plus, globally:
 
 ---
 
-## 11. Screen-reader roles and states — every component (added 2026-10-07)
+## 11. Screen-reader roles and states — every component (added 2026-10-07) — **CLOSED 2026-11-01 after an audit**
 
 **Parts affected**: every pressable, a separate axis from the visual states.
 
@@ -249,6 +256,13 @@ Plus, globally:
 - plus the selection limit's disabled hint.
 
 **Needs doing**: each component spec lists its role and states; the not-started components (switch, checkbox list, settings row, …) take them from the start.
+
+**Audited 2026-11-01 before closing** (Uryu: a rule in §1 is not proof it is followed; T-6 had found two §1 rules unbuilt, one of them for the screen reader). Every pressable in the live code (30 files; the retired screens left out), pressables first:
+- **Right as built**: Button (button + disabled), IconButton, ClearButton, InlineAction (button + disabled), AddButton, MenuRow (button + disabled), FieldRow (button; text when read only), ItemRow / RecordRow (button only when pressable), FilterToken (×), BottomSheet's scrim ("Dismiss"), RadioList (radiogroup / radio + checked, disabled; Add row a button), CheckboxList (checkbox + checked, disabled; Add row disabled at the limit), SegmentedControl (radio + checked), StarRating (radio + checked), Switch (switch + checked), ShelfTabs and search's result tabs (tab + selected), FooterNav (tab + selected; + a button), AxisSlider (adjustable, value as the step name, increment / decrement / Clear), Home's shelf rows, Gear & beans rows, bag / gear page rows, Profile's Taste DNA card, the Taste DNA stamp and card foot, 2c's "Feeds my taste DNA", search's chips and term rows.
+- **Fixed in the audit**: (1) 5b's flavour chip locked at the limit was disabled but announced as available: its state now carries `disabled`. (2) Search's Rating chips sat in a `radiogroup` though each is a button that starts a search: the group role is gone.
+- **Display only**, checked after: the axis readouts, freshness, the week strip and the page indicator carry labels; badges and change lines are plain text; glyphs are decorative.
+- **Kept as is**: search's Kind row is SegmentedControl (radios, none checked) whose pick becomes the filter; a radio that applies a choice is acceptable.
+New components keep the rule (§1 Tap affordance); this item doesn't stay open for them.
 
 ---
 
@@ -285,6 +299,14 @@ Plus, globally:
 **Also undefined**: how many points an axis must move before 5c shows it. 6 and 4 are examples, not a threshold.
 
 **Needs designing**: the 6 missing phrasings and the threshold. Copy, decided separately from the axis slider spec.
+
+**Status 2026-11-01**: the copy is settled and built (`DnaChangeLines.js`: all 8 phrasings, a move counts once it rounds to 1 point, Design's summary rule; design-missing 12, Round 12, D-54). **Still open: the combinations have not been seen on device.** Dogfood shows the first two by itself; the rest need making on purpose:
+- one axis moved;
+- two moved (both in the summary);
+- three or more moved (the summary names the two largest; check it doesn't read as contradicting the lines under it);
+- an axis's first value ("Starts at …");
+- nothing moved.
+Close once all five are seen.
 
 ---
 
@@ -350,7 +372,7 @@ Plus, globally:
 
 ---
 
-## 17. "Finish bag" has no confirmation and no immediate undo (added 2026-10-09)
+## 17. "Finish bag" has no confirmation and no immediate undo (added 2026-10-09) — **CLOSED 2026-11-01, accepted**
 
 **Parts affected**: 3d's "Finish bag".
 
@@ -365,6 +387,8 @@ Plus, globally:
 **2026-10-14**: 3f wasn't built, so Finish had neither. 3f (minimal) is now in V1 ahead of 3g, restoring the settled recovery; Finish stays unconfirmed (design-missing.md 27–31).
 
 **At this stage (2026-10-12)**: 3f is not built, so **a finished bag cannot be reopened**. Accepted for own use: a slip costs one of five slots; the cups and notes stay. Return here with 3f.
+
+**Closed 2026-11-01 (Uryu): accepted.** A slip costs little: the bag leaves the shelf (one of 5 slots), and its cups and notes stay. The recovery is 3f's Reopen bag, built 2026-10-14 (from Gear & beans' Finished bags; Reopen needs a free slot). No confirmation and no immediate undo. Look again if 3f is ever taken out or reworked.
 
 ---
 
@@ -419,7 +443,7 @@ Plus, globally:
 
 ---
 
-## 19. 36pt buttons fall short of the 44pt tap target (added 2026-10-09)
+## 19. 36pt buttons fall short of the 44pt tap target (added 2026-10-09) — **CLOSED 2026-11-01**
 
 **Parts affected**: the 36-tall compact button. 3e and 3g photo "Replace" / "Remove photo" (1.5 frame, 11px caps); 7a "Mark all read" (1.5 `border.muted`, no fill).
 
@@ -430,6 +454,8 @@ Plus, globally:
 The photo pair sits beside a 76 thumbnail, so 44 would still fit its height.
 
 **Status**: recorded, not decided. The button itself is a Button variant (`components.md` #3), not built.
+
+**Closed 2026-11-01 (Uryu): keep the drawn size, pad the touch to 44 with `hitSlop`.** That is how every small control already built reaches 44: the switch, compact chips, `InlineAction`, text buttons, `FilterToken`. The 36pt buttons named above (3e / 3g's photo Replace / Remove, 7a's Mark all read) are not built yet: they take the same `hitSlop` when they are (photos: the photo report).
 
 ---
 
@@ -502,7 +528,7 @@ The user sees the past rewritten.
 
 ---
 
-## 24. Gear cap: 8 or 3 (added 2026-10-10; facts only, not decided)
+## 24. Gear cap: 8 or 3 (added 2026-10-10; facts only, not decided) — **CLOSED 2026-11-01: 8**
 
 - **8, a total across categories**:
   - 3a "3 / 8 Selected" over its Brewer / Grinder / Kettle / Scale tabs, with "5 slots left";
@@ -515,6 +541,8 @@ The user sees the past rewritten.
   - 8c's 3 could be a smaller cap for first setup only.
   - 6a's "of 3" then contradicts 3a / 3b / 4a.
 - **Bags**: 5 open, everywhere: 3c, 3d, 4b, 6a "4 of 5", and 8j's "my five open bags". The mocks give no reason for 5 or for 8. Bags are consumables with a finish / archive cycle; gear is inventory.
+
+**Closed 2026-11-01 (Uryu): 8**, a total across categories (`GEAR_LIMIT`, as 3a / 3b / 4a and every screen V1 has). The 3 appears only on 8c (first setup) and 6a's mock (whose row V1 shows as "of 8"); neither is in V1. **Check again when first setup (8c) is built**: whether 8c's "up to three" is a smaller first-setup cap or an error.
 
 ---
 
@@ -620,17 +648,21 @@ So a name stays a candidate for as long as any cup carries it. Removing it means
 
 ---
 
-## 32. 2c's share button is not shown (added 2026-10-11)
+## 32. 2c's share button is not shown (added 2026-10-11) — **CLOSED 2026-11-01**
 
 **What**: 2c's header has a share button (an arrow out of a tray), but no mock says what it shares: text, an image, a file. Not shown in V1 (decided 2026-10-11).
 
+**Closed 2026-11-01 (Uryu)**: decided out of V1 (2026-10-11). If sharing is ever wanted, start from what it shares.
+
 ---
 
-## 33. 2c's method line drops "22 clicks" and "My default brewer" (added 2026-10-11)
+## 33. 2c's method line drops "22 clicks" and "My default brewer" (added 2026-10-11) — **CLOSED 2026-11-01**
 
 **What**: 2c's Method meta reads "My default brewer, 22 clicks". Neither is shown in V1:
 - **"22 clicks"** is the grind setting (`cups.grind_setting`, V1.5): there is no input, so it is always empty. **Return here when V1.5 adds the grind input.**
 - **"My default brewer"**: whether the brewer was the default *when the cup was logged* is not stored. Judging it by today's default would not be history.
+
+**Closed 2026-11-01 (Uryu)**: both decided not shown. "22 clicks" is carried by `todo.md` T-11 (the grind setting, with its two other parts); "My default brewer" can't be history without storing it at logging.
 
 ---
 
@@ -647,6 +679,8 @@ So a name stays a candidate for as long as any cup carries it. Removing it means
 **What**: the photo placeholder (Design 10a) is on every thumbnail, but **not** in 2c's photo area. A list thumbnail is small and keeps the row's shape; 2c's area is a quarter of the screen, and the same drawing on every cup would take the largest space while saying nothing.
 
 **Return**: show it when the camera arrives.
+
+**Status 2026-11-01**: open; goes with the photo report (Uryu, next).
 
 ---
 

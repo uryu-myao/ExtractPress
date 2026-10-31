@@ -122,8 +122,10 @@ function Chip({ label, on, search, locked, onPress }) {
       onPress={locked ? (search ? warnLocked : undefined) : onPress}
       disabled={locked && !search}
       // Multi-select: each flavour is a checkbox to a screen reader; Search opens.
+      // A chip locked at the limit says so (gaps 11 audit, 2026-11-01: it was
+      // disabled but announced as available).
       accessibilityRole={search ? 'button' : 'checkbox'}
-      accessibilityState={search ? { disabled: Boolean(locked) } : { checked: on }}
+      accessibilityState={search ? { disabled: Boolean(locked) } : { checked: on, disabled: Boolean(locked) }}
       accessibilityHint={locked ? `Limit reached, ${FLAVOUR_LIMIT} of ${FLAVOUR_LIMIT}. Deselect a flavour to choose another.` : undefined}>
       {({ pressed }) => (
         <View
