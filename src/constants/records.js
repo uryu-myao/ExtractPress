@@ -31,18 +31,22 @@ export const sortLabel = (key) => SORTS.find((s) => s.key === key).label;
 
 /**
  * Cups with no roaster / no brewer go last (Design Round 10, 14), named by
- * what they are: "Packaged", then "Barista". Under Group by Roaster, Barista
- * cups group by café instead, and those with no café (logged before
- * 2026-10-30) go under "No café" (Design Round 16, B6). The café groups take
- * Barista's place in the tail, in the order of their first cup, "No café"
- * last. TODO(Design): Round 16 did not say where they go; this keeps Round
- * 10's "Packaged first, then Barista". An I made it cup can have neither too (a bag
- * with no roaster; a cup logged from an empty shelf, which requires no bag
- * or gear). It is neither of those, so it keeps "No roaster" / "No brewer"
- * and comes first of the three (Uryu, 2026-10-21; Design Round 11, A: OK,
- * the same order after Z).
+ * what they are: "Packaged", then "Barista". An I made it cup can have
+ * neither too (a bag with no roaster; a cup logged from an empty shelf, which
+ * requires no bag or gear). It is neither of those, so it keeps "No roaster"
+ * / "No brewer" and comes first of the three (Uryu, 2026-10-21; Design Round
+ * 11, A: OK, the same order after Z).
+ *
+ * Group by Roaster (Design Round 16, B6): a café is who made the cup, as a
+ * roaster is who made the beans. So a Barista cup groups by its café, and
+ * the café groups stand among the roaster groups by the same rule: in the
+ * order of their first cup under the sort, by name under "Roaster A–Z".
+ * A Barista cup with no café (logged before 2026-10-30) goes under "No
+ * café", next to "No roaster"; Packaged stays last (ROASTER_TAIL).
+ * Group by Brewer keeps one "Barista" group (TAIL).
  */
-const TAIL = { none: 1, packaged: 2, barista: 3, noCafe: 4 };
+const TAIL = { none: 1, packaged: 2, barista: 3 };
+const ROASTER_TAIL = { none: 1, noCafe: 2, packaged: 3 };
 const tailKey = (cup) => (cup.mode === 'made_it' ? 'none' : cup.mode);
 const TAIL_LABEL = { packaged: 'Packaged', barista: 'Barista' };
 const NO_ROASTER = 'No roaster';
@@ -56,11 +60,19 @@ const tailGroup = (cup, noneLabel) => {
   const key = tailKey(cup);
   return { key, label: TAIL_LABEL[key] ?? noneLabel };
 };
-/** Group by Roaster's group for a cup with no roaster: a Barista cup's café (Round 16, B6). */
+/**
+ * Group by Roaster's group for a cup with no roaster (Round 16, B6): a
+ * Barista cup's café, which stands among the roasters (rank 0), else the
+ * tail.
+ */
 const roasterTail = (cup) => {
-  if (cup.mode !== 'barista') return tailGroup(cup, NO_ROASTER);
-  if (!cup.place_name) return { key: 'noCafe', label: NO_CAFE, rank: TAIL.noCafe };
-  return { key: `c:${cup.place_name.toLowerCase()}`, label: cup.place_name, rank: TAIL.barista };
+  if (cup.mode === 'barista') {
+    return cup.place_name
+      ? { key: `c:${cup.place_name.toLowerCase()}`, label: cup.place_name, rank: 0 }
+      : { key: 'noCafe', label: NO_CAFE, rank: ROASTER_TAIL.noCafe };
+  }
+  const { key, label } = tailGroup(cup, NO_ROASTER);
+  return { key, label, rank: ROASTER_TAIL[key] };
 };
 /** 0 for a cup with a roaster, else its place in the tail. */
 const roasterRank = (cup) => (cup.bean_roaster ? 0 : TAIL[tailKey(cup)]);
@@ -83,7 +95,9 @@ const COMPARE = {
  *   - Month groups always follow the date (oldest month first only under
  *     "Oldest first"); "Highest rated" orders cups inside each month only.
  *   - Other groups come in the order their first cup has under the sort;
- *     then No roaster / No brewer, Packaged, Barista (TAIL).
+ *     then No roaster / No brewer, Packaged, Barista (TAIL). Under Group by
+ *     Roaster, cafés stand among the roasters (by name under "Roaster
+ *     A–Z"), then No roaster, No café, Packaged (ROASTER_TAIL).
  *   - "None" is one group with no label.
  */
 export function arrangeCups(cups, sort, group, monthFormat) {
@@ -110,8 +124,10 @@ export function arrangeCups(cups, sort, group, monthFormat) {
     list.sort((a, b) => (sort === 'oldest' ? compareText(a.key, b.key) : compareText(b.key, a.key)));
   } else {
     // Map order is already "first cup under the sort"; only the tail moves
-    // (a stable sort keeps the rest as they are).
-    list.sort((a, b) => a.rank - b.rank);
+    // (a stable sort keeps the rest as they are). Under "Roaster A–Z" the
+    // sort puts café cups after Z, so roasters and cafés go by name here.
+    const byName = group === 'roaster' && sort === 'roaster';
+    list.sort((a, b) => a.rank - b.rank || (byName && a.rank === 0 ? compareText(a.label, b.label) : 0));
   }
   return list.map(({ rank, ...g }) => g);
 }

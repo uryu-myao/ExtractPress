@@ -111,6 +111,8 @@ Mock: Turn 19, 20a–20g.
 - 2b: café groups and "No café".
 - 6b: Backup copy.
 
+**2b corrected 2026-10-31**: built on 2026-10-30 with the café groups after Packaged ("Round 16 did not say where they go"), which B6 does say. Now as B6: cafés stand among the roasters (first cup under the sort; by name under "Roaster A–Z"), then No roaster, No café, Packaged. Group by Brewer keeps one "Barista" group.
+
 ---
 
 ## Round 15 · Search and bag / gear pages (2026-10-28)
