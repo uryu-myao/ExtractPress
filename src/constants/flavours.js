@@ -31,9 +31,11 @@ export const FLAVOUR_LIMIT = 5;
 /**
  * A new word as stored (decided: stored with a capital first letter, shown in
  * caps): spaces trimmed and collapsed, first letter upper-cased, the rest as
- * typed ("black tea" → "Black tea", the bundled list's form).
+ * typed ("black tea" → "Black tea", the bundled list's form). A run of spaces
+ * keeps the kind typed first, so a Japanese name's full-width space stays one
+ * (2026-10-31: "カフェ　ラテ" is not turned into "カフェ ラテ").
  */
 export const normalizeFlavour = (text) => {
-  const t = text.trim().replace(/\s+/g, ' ');
+  const t = text.trim().replace(/\s+/g, (run) => run[0]);
   return t.charAt(0).toUpperCase() + t.slice(1);
 };

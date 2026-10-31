@@ -538,13 +538,36 @@ The user sees the past rewritten.
 
 ---
 
-## 27. Flavour words grow without limit, with no way to prune (added 2026-10-10)
+## 27. Candidates are made from the cups, so a name never leaves while a cup carries it (added 2026-10-10 for flavours; rewritten 2026-11-01)
 
-**What**: Search's "Add \"xxx\"" adds a new flavour word without limit. 8h (rename / merge / clean up) is not in V1. So the user has no way to reduce the words that pile up; in half a year, words used once crowd the candidates.
+**What**: four sheets offer names built from the cups themselves, each with `Add "…"` for a new one:
 
-**Now**: no limit (decided). Ordering by use count is expected to sink rarely used words (report 2026-10-10).
+| Kind | Candidates come from | Can a saved name be fixed on the cup? |
+|---|---|---|
+| Flavour tags (5b) | `cups.flavours` | **No**: flavours are Taste DNA's input, read only in 11a (`taste-dna.md`, Editing a cup). Only deleting the cup removes it |
+| Drinks (Barista) | `cups.drink_type` | Yes, 11a, one cup at a time |
+| Product names (Packaged) | `cups.product_name` | Yes, 11a, one cup at a time |
+| Cafés (Barista) | `places` rows with a cup (`cups.place_id`; the name shown on a cup is its copy, `place_name`) | The cup can be moved to another café in 11a; the place row itself is never renamed |
 
-**Status**: recorded. A limit, or a way to prune flavour words, later. (8h was never the way: its rename / merge was for My words, and 8h is not built, 2026-10-31.)
+So a name stays a candidate for as long as any cup carries it. Removing it means changing every such cup.
+- **How a typo spreads**: picking from the list is the easiest way to fill the field, so a misspelling saved once is picked again, and each pick saves it on one more cup.
+- **Fixing it costs N edits**: 11a fixes one cup; a typo on N cups takes N edits (and a flavour typo can't be fixed at all).
+- **Flavours: the "read only" rule covers only half of the spellings** (Uryu, 2026-11-01). The rating, axes and flavours are read only because a changed input under an unchanged `dna_change` makes the history false. That holds for a flavour's *value* (which word it is), not always for its *spelling*. Taste DNA looks a word up in the bundled table ignoring case (`tasteDna.ts` `wordsOf`), so:
+  - **(a) The fix turns it into a bundled word** ("Jasmin" → "Jasmine"): the typo fed no axis, the fix feeds one, and the profile moves. A rewrite of history; the rule rightly covers it.
+  - **(b) Neither spelling is bundled** ("syrupyy" → "syrupy", both added by the user): neither feeds an axis, so Taste DNA, the profile and every `dna_change` stay exactly as they are. Only the candidate list and what the cup shows change. Fixing it would be harmless.
+  - (A case-only fix, "jasmine" → "Jasmine", is (b) too: the lookup ignores case.)
+  - Today's blanket rule blocks (b) for (a)'s reason. **When renaming across cups is weighed, "flavours can't be edited" is not a stop**: it covers (a) only.
+- **The asymmetry**: flavours are the kind most likely to be mistyped (new words are typed by hand on 5b, and picked on nearly every cup) and the hardest to fix (not in 11a; only deleting the cup).
+- **What is already in place (2026-10-31 / 11-01)**: a name added by mistake and not yet saved goes by itself (pick another; once the cup is saved or discarded it is in no list). New drinks, products and flavours take one written form (spaces, first letter), so case alone doesn't split them (products since 2026-11-01).
+
+**Two ways to solve it, neither decided**:
+- **(a) Rename across cups**, as 3g / 3e do for a bag or gear: an explicit edit that says how far it reaches ("Applies to the N cups already logged from this bag."). A rewrite the user asks for, with its reach shown, is the same kind as 3g's, so it fits "a record is the fact it was" the way 3g does. It would not fit flavours unless their Taste DNA effect is settled first: a renamed word can change which axis it feeds (`taste-dna.md` item 6, the word table).
+- **(b) A table of names hidden from the candidates.** Cups are never touched, but the hidden names then need their own way to be seen and undone, which is a small management screen of its own.
+- Decide between them only after working out how each sits with that principle, per kind.
+
+**Not now (Uryu, 2026-11-01)**: no delete, no rename. Uryu's Packaged and Barista records are still few, and nothing has gone wrong yet; how the lists actually get messy should decide the fix.
+
+**When it counts as happened** (so it doesn't stay "too early" forever): **any one sheet shows 3 or more candidates that are plainly duplicates or misspellings of another** (e.g. "Jasmin" beside "Jasmine", "Oat late" beside "Oat latte", "Fuglen" and "Fuglen Tomigaya" for one place). Check when looking at the sheets in dogfood; on the first sheet that meets it, pick (a) or (b) for that kind.
 
 ---
 

@@ -59,8 +59,8 @@ function cupSummary(defaults, mode, productName) {
  * then the bundled list. With no history yet that is the bundled list's
  * interleaved order; the more you log, the more the five are your own words.
  */
-function shownFlavours(selected, history) {
-  const rest = searchItems(history, []).map((i) => i.key).filter((w) => !selected.includes(w));
+function shownFlavours(selected, history, kept) {
+  const rest = searchItems(history, kept).map((i) => i.key).filter((w) => !selected.includes(w));
   return [...selected.map((w) => ({ word: w, on: true })), ...rest.slice(0, Math.max(0, FLAVOUR_LIMIT - selected.length)).map((w) => ({ word: w, on: false }))];
 }
 
@@ -149,10 +149,11 @@ function Chip({ label, on, search, locked, onPress }) {
 /**
  * The search sheet's words (decided 2026-10-10): words used before (most used,
  * then most recent), then the bundled words not among them, in their order.
- * Words selected in this cup but not in either (just added) lead, so a new
- * word stays visible and can be unticked.
+ * Words added in this cup but not in either lead, newest first, selected or
+ * not: a word added and then unticked stays until the cup is saved or
+ * discarded (Uryu, 2026-11-01; withChosen keeps the other sheets the same).
  */
-function searchItems(history, selected) {
+function searchItems(history, added) {
   const seen = new Set();
   const out = [];
   const push = (word) => {
@@ -162,7 +163,7 @@ function searchItems(history, selected) {
     out.push({ key: word, label: word });
   };
   const known = new Set([...history.map((h) => h.word.toLowerCase()), ...BUNDLED_FLAVOURS.map((f) => f.word.toLowerCase())]);
-  selected.filter((w) => !known.has(w.toLowerCase())).forEach(push);
+  added.filter((w) => !known.has(w.toLowerCase())).forEach(push);
   history.forEach((h) => push(h.word));
   BUNDLED_FLAVOURS.forEach((f) => push(f.word));
   return out;
@@ -171,7 +172,7 @@ function searchItems(history, selected) {
 export default function TastingNoteScreen({ onBack }) {
   const insets = useSafeAreaInsets();
   const db = useDatabase();
-  const { defaults, mode, productName, rating, axes, setAxis, flavours, toggleFlavour, noteRef, setNoteFilled, hasTastingInput, save } = useRecordDraft();
+  const { defaults, mode, productName, rating, axes, setAxis, flavours, toggleFlavour, addFlavour, kept, noteRef, setNoteFilled, hasTastingInput, save } = useRecordDraft();
   const [searching, setSearching] = useState(false);
   const [history, setHistory] = useState([]);
   // Read on open and again whenever the search sheet opens; history only
@@ -262,7 +263,7 @@ export default function TastingNoteScreen({ onBack }) {
         <View style={styles.section}>
           <SectionLabel variant="plain" label="Flavors" status={atLimit ? 'limit' : 'count'} statusLabel={`${flavours.length} of ${FLAVOUR_LIMIT}`} />
           <View style={styles.chips}>
-            {shownFlavours(flavours, history).map((f) => (
+            {shownFlavours(flavours, history, kept.flavours).map((f) => (
               <Chip key={f.word} label={f.word} on={f.on} onPress={() => toggleFlavour(f.word)} />
             ))}
             <Chip label="Search" search locked={atLimit} onPress={() => setSearching(true)} />
@@ -299,11 +300,11 @@ export default function TastingNoteScreen({ onBack }) {
         visible={searching}
         onClose={() => setSearching(false)}
         placeholder="Search flavors"
-        items={searchItems(history, flavours)}
+        items={searchItems(history, [...flavours, ...kept.flavours])}
         selected={flavours}
         limit={FLAVOUR_LIMIT}
         onToggle={toggleFlavour}
-        onAdd={toggleFlavour}
+        onAdd={addFlavour}
         normalize={normalizeFlavour}
       />
     </View>

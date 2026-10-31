@@ -134,10 +134,11 @@ Expo SDK 58 brought react-native-gesture-handler 3, which deprecates the `Gestur
 - **Coupled**: the sheets' lists (PickerSheet, SearchSheet, DnaInfoSheet) import `LegacyScrollView`, which takes turns with the legacy sheet swipe as before. Move them to the new `ScrollView` in the same change as BottomSheet's gesture.
 - **When**: before Gesture Handler removes the builder, or with the next gesture work. One change, checked on device (each swipe, the slider, and a sheet's list scrolling against its swipe).
 
-## T-13. A café's name is read through place_id, not copied onto the cup (recorded 2026-10-30)
+## T-13. A café's name is read through place_id, not copied onto the cup (recorded 2026-10-30) — **done 2026-10-31**
 Bags and gear are copied onto the cup at logging (`bean_*`, `brew_method`, `grinder`): a cup is a fact, and the bag can be edited or deleted. A Barista cup's café is not: 2a / 2c / search / the CSV read `places.name` through `cups.place_id`. Inconsistent, but harmless while a places row never changes — and today none does: no screen edits or deletes a place, `placeIdFor` never renames one (a later visit under a new MapKit name keeps the stored one), and 11a's café edit points the cup at another row rather than changing a row.
 - **It stops being harmless the day** a places row can be renamed (a place edit screen, or refreshing names from MapKit) or deleted (`ON DELETE SET NULL` would strip the café from every cup). Before either, copy the name onto cups (`cups.place_name`, an ALTER TABLE ADD COLUMN with a backfill from places).
 - **Decision**: pending (Uryu, after the 2026-10-30 report).
+- **Done 2026-10-31 (Uryu: the one exception to "a record is the fact it was")**: migration 6 adds `cups.place_name`, copied at logging and when 11a picks another café; existing cups took their place's current name once. `place_id` stays. `cups.bought_at_name` comes with it, always empty in V1 (no way to enter it), so "bought at" needs no migration later; `schema.ts` says why it is empty.
 
 ## T-14. Try next (8d / 8e): what the mocks need that V1 doesn't have (recorded 2026-10-30, read only)
 Read for planning after Barista; nothing built. Full transcript of both boards: the 2026-10-30 report.
@@ -146,8 +147,8 @@ Read for planning after Barista; nothing built. Full transcript of both boards: 
 - **The 5-cup threshold has no reason left** (`taste-dna.md`, Thresholds): decide it with Try next.
 - **Next**: what can be cut so a first Try next stands on V1's data.
 
-## T-15. 11a's café line wants an address that isn't stored (recorded 2026-10-30, Design Round 16 B5)
+## T-15. 11a's café line wants an address that isn't stored (recorded 2026-10-30, Design Round 16 B5) — **decided 2026-10-31: live**
 Design: "the café line shows the short address only, with no distance or visit count". `places` has no address column (decided 2026-10-30, because no screen showed one); this answer is such a screen. Not built; 11a shows no café meta meanwhile.
 - **Option 1, recommended**: migration 6, `places.address TEXT` (ALTER TABLE ADD COLUMN, nullable), written by `placeIdFor` from the map's short address when the row is created. Places typed by hand, and those stored before, have none (no line). Never updated afterwards, as the name.
 - **Option 2**: look the address up live by MapKit id (`MKMapItemRequest`, iOS 18+). No schema change, but it needs the network on every 11a open and a new native call.
-- **Decision**: Uryu.
+- **Decision (Uryu, 2026-10-31): option 2, live.** No `places.address`. Waiting on Design Round 18, B8 (11a when the address can't be fetched: not an error, the name shows, only the address is missing) before building.

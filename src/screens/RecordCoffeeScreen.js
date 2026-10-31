@@ -13,12 +13,12 @@ import Text from '../components/base/Text';
 import CafeSheet from '../components/CafeSheet';
 import PickerSheet from '../components/PickerSheet';
 import RequiredBar from '../components/RequiredBar';
-import SearchSheet from '../components/SearchSheet';
+import SearchSheet, { withChosen } from '../components/SearchSheet';
 import { useRecordDraft } from '../components/RecordDraft';
 import WhenMeta from '../components/WhenMeta';
 import { useDatabase } from '../data/DatabaseProvider';
 import { listDrinkHistory, listGear, listOpenBags, listProductHistory } from '../data/repository';
-import { drinkItems } from '../constants/drinks';
+import { drinkItems, normalizeDrink, normalizeProduct } from '../constants/drinks';
 import { distanceLine, visitLine } from '../constants/places';
 import { color, icon, motion, shape, size, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
@@ -183,8 +183,8 @@ function BaristaFields({ cafe, drink, onPickCafe, onPickDrink, missing }) {
  * SET once named, REQUIRED in 5d's state, where the empty row takes 5d's
  * error look (FieldRow error). Package and Bought at stay out (not at this
  * stage).
- * TODO(copy): "Add a product" (5a's "Add a bag" pattern) and the sheet's
- * placeholder are ours, for Design.
+ * TODO(copy, PROVISIONAL): "Add a product" (5a's "Add a bag" pattern) and
+ * the sheet's placeholder are ours (Design Round 18, B10).
  */
 function PackagedFields({ productName, onPickProduct, missing }) {
   const error = missing && !productName;
@@ -345,10 +345,13 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
     chooseGear,
     productName,
     setProductName,
+    addProduct,
     cafe,
     chooseCafe,
     drink,
     chooseDrink,
+    addDrink,
+    kept,
     rating,
     setRating,
     mode: maker,
@@ -541,22 +544,28 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
         onClose={() => setPicking(null)}
         mode="single"
         placeholder="Product name"
-        items={products.map((p) => ({ key: p.name, label: p.name }))}
+        items={withChosen(
+          products.map((p) => ({ key: p.name, label: p.name })),
+          productName,
+          kept.products
+        )}
         selected={productName}
+        normalize={normalizeProduct}
         onPick={setProductName}
-        onAdd={setProductName}
+        onAdd={addProduct}
       />
-      <CafeSheet visible={picking === 'cafe'} onClose={() => setPicking(null)} selected={cafe} onPick={chooseCafe} />
+      <CafeSheet visible={picking === 'cafe'} onClose={() => setPicking(null)} selected={cafe} kept={kept.cafes} onPick={chooseCafe} />
       {/* "Drink name", to pair with "Café name" (Design Round 16, B3). */}
       <SearchSheet
         visible={picking === 'drink'}
         onClose={() => setPicking(null)}
         mode="single"
         placeholder="Drink name"
-        items={drinks}
+        items={withChosen(drinks, drink.name, kept.drinks)}
         selected={drink.name}
         onPick={chooseDrink}
-        onAdd={chooseDrink}
+        onAdd={addDrink}
+        normalize={normalizeDrink}
       />
     </View>
   );

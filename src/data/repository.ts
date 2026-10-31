@@ -162,21 +162,11 @@ export async function loadProfile(db: SQLiteDatabase): Promise<{ bags: number; c
   return { bags: bags?.n ?? 0, cupTimes: cups.map((c) => c.logged_at) };
 }
 
-/** One cup as 2c shows it: every stored field, with its place names. */
-export type CupRecord = Row<'cups'> & {
-  place_name: string | null;
-  bought_at_name: string | null;
-};
+/** One cup as 2c shows it: every stored field, its place names as copied (migration 6). */
+export type CupRecord = Row<'cups'>;
 
 export async function getCup(db: SQLiteDatabase, id: number): Promise<CupRecord | null> {
-  const row = await db.getFirstAsync<CupRecord & { flavours: string }>(
-    `SELECT c.*, p.name AS place_name, bp.name AS bought_at_name
-       FROM cups c
-       LEFT JOIN places p ON p.id = c.place_id
-       LEFT JOIN places bp ON bp.id = c.bought_at_place_id
-      WHERE c.id = ?`,
-    [id]
-  );
+  const row = await db.getFirstAsync<CupRecord & { flavours: string }>('SELECT * FROM cups WHERE id = ?', [id]);
   return row ? { ...row, flavours: JSON.parse(row.flavours as unknown as string) } : null;
 }
 
@@ -566,12 +556,15 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
       `INSERT INTO cups (rating, mode, note, flavours, axis_acidity, axis_body, axis_roast, axis_sweetness,
                          bag_id, bean_name, bean_roaster, bean_origin, bean_region, bean_process, bean_roast_level, bean_roasted_at,
                          brewer_id, brew_method, grinder_id, grinder,
-                         place_id, drink_type, product_name, bought_at_place_id)
+                         place_id, place_name, drink_type, product_name, bought_at_place_id, bought_at_name)
        SELECT ?, ?, ?, ?, ?, ?, ?, ?,
               b.id, b.name, b.roaster, b.origin, b.region, b.process, b.roast_level, b.roasted_at,
               ?, ?, ?, ?,
-              ?, ?, ?, ?
-         FROM (SELECT 1) LEFT JOIN bags b ON b.id = ?`,
+              p.id, p.name, ?, ?, bp.id, bp.name
+         FROM (SELECT 1)
+         LEFT JOIN bags b ON b.id = ?
+         LEFT JOIN places p ON p.id = ?
+         LEFT JOIN places bp ON bp.id = ?`,
       [
         cup.rating,
         cup.mode,
@@ -585,11 +578,12 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
         madeIt ? cup.brewMethod : null,
         madeIt ? cup.grinderId : null,
         madeIt ? cup.grinder : null,
-        placeId,
         barista ? cup.drinkType : null,
         packaged ? cup.productName : null,
-        packaged ? cup.boughtAtPlaceId : null,
         bagId,
+        // The places' names are copied with their ids (migration 6, T-13).
+        placeId,
+        packaged ? cup.boughtAtPlaceId : null,
       ]
     );
     id = result.lastInsertRowId;
@@ -649,7 +643,7 @@ export type CupEdit = {
 export async function updateCup(db: SQLiteDatabase, id: number, edit: CupEdit): Promise<void> {
   if (edit.loggedAt > Date.now()) throw new Error('A cup cannot be logged in the future.');
   await db.withExclusiveTransactionAsync(async (tx) => {
-    const cup = await tx.getFirstAsync<{ bag_id: number | null; place_id: number | null }>('SELECT bag_id, place_id FROM cups WHERE id = ?', [id]);
+    const cup = await tx.getFirstAsync<{ bag_id: number | null }>('SELECT bag_id FROM cups WHERE id = ?', [id]);
     if (!cup) throw new Error('This cup is no longer stored.');
     if (edit.bagId != null) {
       const bag = await tx.getFirstAsync<{ roasted_at: number | null }>('SELECT roasted_at FROM bags WHERE id = ?', [edit.bagId]);
@@ -664,10 +658,18 @@ export async function updateCup(db: SQLiteDatabase, id: number, edit: CupEdit): 
         [edit.bagId, id]
       );
     }
-    const placeId = edit.cafe === undefined ? cup.place_id : await placeIdFor(tx, edit.cafe);
+    // A café chosen here is copied as at logging (migration 6); an unchanged
+    // one keeps the cup's own name, whatever the place is called now.
+    if (edit.cafe !== undefined) {
+      const placeId = await placeIdFor(tx, edit.cafe);
+      await tx.runAsync('UPDATE cups SET (place_id, place_name) = (SELECT p.id, p.name FROM (SELECT 1) LEFT JOIN places p ON p.id = ?) WHERE id = ?', [
+        placeId,
+        id,
+      ]);
+    }
     await tx.runAsync(
-      'UPDATE cups SET brewer_id = ?, brew_method = ?, grinder_id = ?, grinder = ?, logged_at = ?, note = ?, product_name = ?, place_id = ?, drink_type = ? WHERE id = ?',
-      [edit.brewerId, edit.brewMethod, edit.grinderId, edit.grinder, edit.loggedAt, edit.note, edit.productName, placeId, edit.drinkType, id]
+      'UPDATE cups SET brewer_id = ?, brew_method = ?, grinder_id = ?, grinder = ?, logged_at = ?, note = ?, product_name = ?, drink_type = ? WHERE id = ?',
+      [edit.brewerId, edit.brewMethod, edit.grinderId, edit.grinder, edit.loggedAt, edit.note, edit.productName, edit.drinkType, id]
     );
   });
   notifyCupsChanged();
@@ -779,9 +781,8 @@ export async function listCups(db: SQLiteDatabase): Promise<CupListItem[]> {
     `SELECT c.id, c.logged_at, c.rating, c.mode, c.note, c.flavours, c.drink_type,
             c.bean_name, c.bean_roaster, c.bean_process, c.brew_method, c.grinder,
             c.bag_id, c.brewer_id, c.grinder_id,
-            c.product_name, p.name AS place_name
+            c.product_name, c.place_name
        FROM cups c
-       LEFT JOIN places p ON p.id = c.place_id
       ORDER BY c.logged_at DESC, c.id DESC`
   );
   return rows.map((row) => ({ ...row, flavours: JSON.parse(row.flavours as unknown as string) }));

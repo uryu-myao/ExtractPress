@@ -64,9 +64,11 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/more
 | water_temp_c | REAL | null | made_it · **V1.5, no UI in V1** |
 | ratio | REAL | null | made_it · water : coffee by weight (16 = 1:16) · **V1.5, no UI in V1** |
 | place_id | INTEGER | null | → places · barista; required on Save since 2026-10-30 (earlier Barista cups have none) |
-| drink_type | TEXT | null | barista (e.g. "Flat white") |
-| product_id | INTEGER | null | → products · packaged |
+| place_name | TEXT | null | barista · the café's name **copied at logging** (migration 6, 2026-10-31); 11a copies a newly chosen café's |
+| drink_type | TEXT | null | barista (e.g. "Flat white"); added by hand in the flavour tags' form (spaces collapsed, first letter upper-cased; 2026-10-31) |
+| product_name | TEXT | null | packaged · the name as typed, brand included (migration 4; was `product_id` → products, dropped); added by hand in the flavour tags' form since 2026-11-01 (upper case never lowered) |
 | bought_at_place_id | INTEGER | null | → places · packaged |
+| bought_at_name | TEXT | null | packaged · **always empty in V1** (no way to enter it): the same reference + copy shape for when "bought at" is built (migration 6) |
 
 - **`logged_at` vs `created_at`**: they are separate so a cup can be back-dated (logged in the evening, drunk in the morning). `logged_at` defaults to `created_at`. SQLite cannot default one column from another, and a BEFORE trigger cannot rewrite `NEW`. So the column is nullable in DDL, and an AFTER INSERT trigger fills it whenever it is inserted as NULL. The app never reads a NULL, and the TS type is `number`.
 - **Required fields**: `rating` is the only required *user-supplied content* field. **`mode` is structural**, so it is required too: it decides which mode-specific columns mean anything. A cup without a mode is invalid data, and allowing NULL would force null-handling into every query that branches on it. Everything else the user enters is optional.
@@ -107,8 +109,9 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/more
 - **One table for cafés and stores**: a convenience store and a café differ only by `kind`. Barista cups point at a café (`place_id`); packaged cups point at where they were bought (`bought_at_place_id`).
 - **One row per MapKit place, whatever its kind** (corrected 2026-10-30; this said "the same 7-Eleven can be both", which the table cannot hold: `kind` is not null and `external_id` unique, so a place has one row and one kind). A café picked from the map whose identifier is already stored uses that row as it is, even if it was stored as a `store`. `kind` is the kind of the first cup that stored it; nothing reads it yet. No migration (decided 2026-10-30).
 - **`external_id`** holds the MapKit identifier (`MKMapItem.identifier`, iOS 18+), so a later visit matches the existing place instead of creating a duplicate. It is unique when present. Places typed by hand have none; a typed name matches an earlier typed place with the same name (ignoring case), so a café typed twice has one history.
-- **A places row is created on Save, never on a pick** (`repository.ts` `placeIdFor`): a café picked and not saved leaves nothing behind. **And it is never renamed**: cups read the café's name through `place_id` (it is not copied onto the cup, unlike the bag), so renaming a row would rename it on every past cup. A later visit under a new MapKit name keeps the stored one. 11a's café edit changes which row a cup points at, never a row. Whether to copy the name onto cups as the bag is: open, `todo.md` T-13.
-- **No address column** (decided 2026-10-30): no screen shows a stored place's address; the café sheet shows the map's address from the live result. **Reopened the same day**: Design Round 16, B5 has 11a's café line show the short address, which is a screen that does. Pending, `todo.md` T-15.
+- **A places row is created on Save, never on a pick** (`repository.ts` `placeIdFor`): a café picked and not saved leaves nothing behind. And it is never renamed. A later visit under a new MapKit name keeps the stored one. 11a's café edit changes which row a cup points at, never a row.
+- **The name is copied onto the cup** (`cups.place_name`, migration 6, decided 2026-10-31, `todo.md` T-13), as the bag's and the gear's are: a cup is the fact it was. `place_id` stays (reference + copy). Everything a cup shows reads the copy (2a, 2c, 2b's café groups, search, the CSV); the café sheet lists places by their own name. Existing cups took their place's name once. Packaged's `bought_at_name` has the same shape and stays empty in V1.
+- **No address column** (decided 2026-10-30, kept 2026-10-31): no screen shows a stored place's address; the café sheet shows the map's address from the live result. Design Round 16, B5's 11a café line looks the address up live by the place's MapKit id (Uryu, 2026-10-31, `todo.md` T-15); how 11a looks without it is Design Round 18, B8.
 
 ### products
 

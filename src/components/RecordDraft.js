@@ -4,6 +4,7 @@ import { Alert, Platform } from 'react-native';
 import { FLAVOUR_LIMIT } from '../constants/flavours';
 import { useDatabase } from '../data/DatabaseProvider';
 import { insertCup, lastDrinkAt, loadRecordDefaults } from '../data/repository';
+import { useKept } from './SearchSheet';
 
 /**
  * The one cup being recorded, shared by both steps of the Record sheet: 5a
@@ -121,11 +122,16 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
    * Uryu, 2026-10-30), like any default: saved untouched, it is the record.
    * A drink the user chose stays; one pre-filled from another café goes.
    */
+  // Names added and places picked while logging this cup stay in their
+  // sheets until it is saved or discarded (withChosen, Uryu 2026-11-01).
+  const [kept, keep] = useKept();
   const pickedCafe = useRef(null);
   const chooseCafe = useCallback(
     async (next) => {
       pickedCafe.current = next;
       setCafe(next);
+      // A map place or a typed name is in no list until saved.
+      if (next.id == null) keep('cafes', next);
       let last = null;
       if (next.id != null) {
         try {
@@ -137,9 +143,23 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
       if (pickedCafe.current !== next) return;
       setDrink((prev) => (prev.name && !prev.prefilled ? prev : { name: last, prefilled: last != null }));
     },
-    [db]
+    [db, keep]
   );
   const chooseDrink = useCallback((name) => setDrink({ name, prefilled: false }), []);
+  const addDrink = useCallback(
+    (name) => {
+      keep('drinks', name);
+      chooseDrink(name);
+    },
+    [chooseDrink, keep]
+  );
+  const addProduct = useCallback(
+    (name) => {
+      keep('products', name);
+      setProductName(name);
+    },
+    [keep]
+  );
 
   /** Select / deselect a flavour. Reaching the limit gives one light impact (§1 Selection limit). */
   const toggleFlavour = useCallback((word) => {
@@ -151,6 +171,14 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
       return next;
     });
   }, []);
+
+  const addFlavour = useCallback(
+    (word) => {
+      keep('flavours', word);
+      toggleFlavour(word);
+    },
+    [keep, toggleFlavour]
+  );
 
   const save = useCallback(
     async ({ withNote }) => {
@@ -213,10 +241,13 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
       chooseGear,
       productName,
       setProductName,
+      addProduct,
       cafe,
       chooseCafe,
       drink,
       chooseDrink,
+      addDrink,
+      kept,
       rating,
       setRating,
       mode,
@@ -225,6 +256,7 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
       setAxis,
       flavours,
       toggleFlavour,
+      addFlavour,
       noteRef,
       setNoteFilled,
       hasTastingInput,
@@ -233,7 +265,7 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
       missingFields,
       save,
     }),
-    [axes, cafe, chooseCafe, drink, chooseDrink, defaults, flavours, hasTastingInput, missing, missingFields, mode, productName, rating, required, save, setAxis, toggleFlavour, chooseBag, chooseGear]
+    [axes, cafe, chooseCafe, drink, chooseDrink, addDrink, addProduct, addFlavour, kept, defaults, flavours, hasTastingInput, missing, missingFields, mode, productName, rating, required, save, setAxis, toggleFlavour, chooseBag, chooseGear]
   );
   return <RecordDraftContext.Provider value={value}>{children}</RecordDraftContext.Provider>;
 }

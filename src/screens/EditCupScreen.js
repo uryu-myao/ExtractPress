@@ -14,11 +14,11 @@ import DateSheet from '../components/DateSheet';
 import DiscardSheet from '../components/DiscardSheet';
 import NoteField from '../components/NoteField';
 import PickerSheet from '../components/PickerSheet';
-import SearchSheet from '../components/SearchSheet';
+import SearchSheet, { useKept, withChosen } from '../components/SearchSheet';
 import { dayLine, dayTimeLine } from '../components/WhenMeta';
 import { cupTitle } from '../constants/cups';
 import { formatDay, startOfDay } from '../constants/dates';
-import { drinkItems } from '../constants/drinks';
+import { drinkItems, normalizeDrink, normalizeProduct } from '../constants/drinks';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deleteCup, deleteDropsLockIn, getBag, listDrinkHistory, listGear, listOpenBags, listProductHistory, updateCup } from '../data/repository';
@@ -182,6 +182,8 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
   const [cafe, setCafe] = useState(() => (cup.place_id != null ? { id: cup.place_id, name: cup.place_name, externalId: null, lat: null, lng: null } : null));
   const [drinkType, setDrinkType] = useState(cup.drink_type);
   const [drinks, setDrinks] = useState([]);
+  // Added or picked from the map while editing: kept in their sheets (withChosen).
+  const [kept, keep] = useKept();
   // 'bag' | 'gear' | 'date' | 'delete' | 'discard' | null
   const [sheet, setSheet] = useState(null);
   const [shelf, setShelf] = useState({ bags: [], brewers: [], grinders: [] });
@@ -437,21 +439,42 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
         onClose={() => setSheet(null)}
         mode="single"
         placeholder="Product name"
-        items={products.map((p) => ({ key: p.name, label: p.name }))}
+        items={withChosen(
+          products.map((p) => ({ key: p.name, label: p.name })),
+          productName,
+          kept.products
+        )}
         selected={productName}
+        normalize={normalizeProduct}
         onPick={setProductName}
-        onAdd={setProductName}
+        onAdd={(name) => {
+          keep('products', name);
+          setProductName(name);
+        }}
       />
-      <CafeSheet visible={sheet === 'cafe'} onClose={() => setSheet(null)} selected={cafe} onPick={setCafe} />
+      <CafeSheet
+        visible={sheet === 'cafe'}
+        onClose={() => setSheet(null)}
+        selected={cafe}
+        kept={kept.cafes}
+        onPick={(next) => {
+          if (next.id == null) keep('cafes', next);
+          setCafe(next);
+        }}
+      />
       <SearchSheet
         visible={sheet === 'drink'}
         onClose={() => setSheet(null)}
         mode="single"
         placeholder="Drink name"
-        items={drinks}
+        items={withChosen(drinks, drinkType, kept.drinks)}
         selected={drinkType}
         onPick={setDrinkType}
-        onAdd={setDrinkType}
+        onAdd={(name) => {
+          keep('drinks', name);
+          setDrinkType(name);
+        }}
+        normalize={normalizeDrink}
       />
       <DateSheet
         visible={sheet === 'date'}

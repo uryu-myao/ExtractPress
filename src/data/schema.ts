@@ -103,6 +103,22 @@ export const schema = {
      * it. Cups from before migration 3 were replayed once.
      */
     dna_change: { type: 'TEXT', nullable: true },
+    /**
+     * The café's name, COPIED at logging (migration 6, todo.md T-13): a
+     * reference (place_id) plus the name as it was, the same shape as the
+     * bag and the gear. Renaming a place never rewrites past cups; changing
+     * the café in 11a copies the new one's name. Read this, not places.name,
+     * for what a cup shows.
+     */
+    place_name: { type: 'TEXT', nullable: true },
+    /**
+     * ALWAYS EMPTY IN V1 — on purpose. V1 has no way to enter where a
+     * Packaged cup was bought, so bought_at_place_id and this stay NULL. It is
+     * for when "bought at" is built, and it has the same reference + copy
+     * shape as the bag, the gear and the café. Not a source of truth for
+     * anything until then (the products table was left like that, migration 4).
+     */
+    bought_at_name: { type: 'TEXT', nullable: true },
 
     /*
      * NO PRICE COLUMN — deliberate. A hand-entered price is always partial, and

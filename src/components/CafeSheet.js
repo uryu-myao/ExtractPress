@@ -32,6 +32,10 @@ import SearchSheet, { defaultMatch } from './SearchSheet';
  * Props
  *   visible, onClose
  *   selected   the CafeChoice shown in the row, or null
+ *   kept       CafeChoices picked from the map or typed while logging this cup
+ *              (useKept), newest first: they stay listed until the cup is
+ *              saved or discarded, since MapKit's results change with every
+ *              search and a typed café is in no list
  *   onPick     (CafeChoice & { visits, distance }) => void
  */
 /** Wait this long after a keystroke before asking the map (Apple limits how often an app may search). */
@@ -53,7 +57,7 @@ const STATUS = {
 const loggedKey = (id) => `p:${id}`;
 const mapKey = (place) => `m:${place.id ?? `${place.name}|${place.lat}|${place.lng}`}`;
 
-export default function CafeSheet({ visible, onClose, selected, onPick }) {
+export default function CafeSheet({ visible, onClose, selected, kept = [], onPick }) {
   const db = useDatabase();
   const [logged, setLogged] = useState([]);
   const [located, setLocated] = useState(null);
@@ -147,7 +151,21 @@ export default function CafeSheet({ visible, onClose, selected, onPick }) {
   else if (q && !found.places.length) status = here ? STATUS.noneNear : STATUS.none;
   else if (!q && located?.reason === 'off') status = STATUS.off;
 
-  const selectedKey = !selected ? null : selected.id != null ? loggedKey(selected.id) : items.find((i) => i.cafe.externalId && i.cafe.externalId === selected.externalId)?.key ?? null;
+  // The café this cup holds and the ones picked or typed for it, when no
+  // row is them (on device, 2026-10-31 / 11-01): one typed by hand, or a map
+  // place out of this search's results, is in no list until the cup is
+  // saved. They lead, the cup's own first and marked, as withChosen keeps a
+  // drink or a product.
+  const rowFor = (c) =>
+    items.find((i) => (c.id != null ? i.cafe.id === c.id : c.externalId ? i.cafe.externalId === c.externalId : i.label.toLowerCase() === c.name.toLowerCase()));
+  const keptKey = (c) => `k:${c.externalId ?? c.name.toLowerCase()}`;
+  const lead = [];
+  for (const c of [selected, ...kept].filter(Boolean)) {
+    if (rowFor(c) || lead.some((i) => i.key === keptKey(c))) continue;
+    lead.push({ key: keptKey(c), label: c.name, hint: distanceLine(distanceMetres(here, c)) || undefined, cafe: c });
+  }
+  items.unshift(...lead);
+  const selectedKey = selected ? (rowFor(selected)?.key ?? null) : null;
 
   return (
     <SearchSheet

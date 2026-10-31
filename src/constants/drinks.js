@@ -1,3 +1,19 @@
+import { normalizeFlavour } from './flavours';
+
+/**
+ * A drink added by hand, as stored: the flavour tags' form (Uryu,
+ * 2026-10-31), so "oat  latte" is kept as "Oat latte", like the bundled
+ * "Flat white": spaces trimmed and collapsed, the first letter upper-cased.
+ */
+export const normalizeDrink = normalizeFlavour;
+
+/**
+ * A Packaged product added by hand, in the same form (Uryu, 2026-11-01), so
+ * "boss black" and "Boss black" don't split the product list. Upper case is
+ * never lowered: "BOSS Black" stays as typed.
+ */
+export const normalizeProduct = normalizeFlavour;
+
 /**
  * The bundled drink list: the starting point for a Barista cup's drink,
  * NEVER a whitelist (Uryu, 2026-10-30) — any name can be typed, and what was
