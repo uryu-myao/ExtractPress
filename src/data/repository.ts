@@ -150,16 +150,18 @@ export async function loadDnaBuilt(db: SQLiteDatabase): Promise<{ dna: Dna; idle
 }
 
 /**
- * 6a's personal card: every bag ever added (finished ones too, beside the
- * all-time cup count) and every cup's time (the first gives "Logging
- * since", all of them the week streak).
+ * 6a's personal card: every cup's time (the first gives "Logging since";
+ * the count, Cups), and Bags and Cafés counted as Home counts them
+ * (countBags, countCupCafes; 6a and Home count the same things, Design
+ * Round 21 build questions, 7).
  */
-export async function loadProfile(db: SQLiteDatabase): Promise<{ bags: number; cupTimes: number[] }> {
-  const [bags, cups] = await Promise.all([
-    db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM bags'),
+export async function loadProfile(db: SQLiteDatabase): Promise<{ bags: number; cafes: number; cupTimes: number[] }> {
+  const [bags, cafes, cups] = await Promise.all([
+    countBags(db),
+    countCupCafes(db),
     db.getAllAsync<{ logged_at: number }>('SELECT logged_at FROM cups ORDER BY logged_at'),
   ]);
-  return { bags: bags?.n ?? 0, cupTimes: cups.map((c) => c.logged_at) };
+  return { bags, cafes, cupTimes: cups.map((c) => c.logged_at) };
 }
 
 /** One cup as 2c shows it: every stored field, its place names as copied (migration 6). */
@@ -759,8 +761,7 @@ export async function countCups(db: SQLiteDatabase): Promise<number> {
   return row?.n ?? 0;
 }
 
-/** Which cup this is, counting from the first logged (5c's "Cup 4"). */
-/** When each cup since `from` was logged: 1b's week count and strip. */
+/** When each cup since `from` was logged: 1b's This month count and month strip. */
 export async function cupTimesSince(db: SQLiteDatabase, from: number): Promise<number[]> {
   const rows = await db.getAllAsync<{ logged_at: number }>('SELECT logged_at FROM cups WHERE logged_at >= ?', [from]);
   return rows.map((r) => r.logged_at);
@@ -779,6 +780,37 @@ export async function cupOrdinal(db: SQLiteDatabase, id: number): Promise<number
 export async function listCups(db: SQLiteDatabase): Promise<CupListItem[]> {
   const rows = await db.getAllAsync<CupListItem>(
     `SELECT c.id, c.logged_at, c.rating, c.mode, c.note, c.flavours, c.drink_type,
+/**
+ * 1b's and 6a's Bags: every bag I've added — sealed, open or finished —
+ * plus each deleted bag my cups still name (bag_id set NULL; counted by its
+ * copied bean_name + bean_roaster + bean_roasted_at, so the same coffee
+ * bought twice is two bags; a null date is a value like any other). Uryu,
+ * 2026-11-06: someone who adds a sealed bag has two bags, not one, so this
+ * replaces Design Round 21's "bags across my cups" (sent back to Design).
+ * Counts of records: Taste DNA's reset_at doesn't apply.
+ */
+export async function countBags(db: SQLiteDatabase): Promise<number> {
+  const row = await db.getFirstAsync<{ n: number }>(
+    `SELECT (SELECT COUNT(*) FROM bags)
+          + (SELECT COUNT(*) FROM (SELECT 1 FROM cups WHERE mode = 'made_it' AND bag_id IS NULL AND bean_name IS NOT NULL
+                                    GROUP BY bean_name, bean_roaster, bean_roasted_at)) AS n`
+  );
+  return row?.n ?? 0;
+}
+
+/**
+ * 1b's and 6a's Cafés (Design Round 21, 23c; build questions, 7): the distinct cafés my cups point at
+ * (cups.place_id, places.kind = 'cafe'). Where a Packaged cup was bought
+ * (bought_at_place_id) doesn't count. Not reset with Taste DNA.
+ */
+export async function countCupCafes(db: SQLiteDatabase): Promise<number> {
+  const row = await db.getFirstAsync<{ n: number }>(
+    `SELECT COUNT(DISTINCT c.place_id) AS n FROM cups c JOIN places p ON p.id = c.place_id WHERE p.kind = 'cafe'`
+  );
+  return row?.n ?? 0;
+}
+
+/** Which cup this is, counting from the first logged (5c's "Cup 4"). */
             c.bean_name, c.bean_roaster, c.bean_process, c.brew_method, c.grinder,
             c.bag_id, c.brewer_id, c.grinder_id,
             c.product_name, c.place_name

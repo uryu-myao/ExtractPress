@@ -48,6 +48,15 @@ const SHAPES = {
   pencil: [<Path key="a" d="M4 20h4l10-10-4-4L4 16z" />, <Path key="b" d="M14 6l4 4" />],
   // 6b's "How my DNA is built" (the six-point asterisk), verbatim.
   asterisk: [<Path key="a" d="M12 3v18" />, <Path key="b" d="M5 8l14 8" />, <Path key="c" d="M19 8L5 16" />],
+  // Home's This month (Design Round 21, 23b), verbatim, at icon.sm. Bags there is beanBag above (Round 21 build questions, 1).
+  calendar: [<Rect key="r" x="4" y="5" width="16" height="16" />, <Path key="p" d="M4 10h16M9 3v4M15 3v4" />],
+  // Cafés, Home's and 6a's (Design Round 21, 23b; the door is final, build questions 2), verbatim.
+  store: [
+    <Path key="a" d="M3 9l1.5-5h15L21 9" />,
+    <Path key="b" d="M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z" />,
+    <Path key="c" d="M5 12.5V20h14v-7.5" />,
+    <Path key="d" d="M10 20v-5h4v5" />,
+  ],
 };
 
 export const GLYPH_NAMES = Object.keys(SHAPES);

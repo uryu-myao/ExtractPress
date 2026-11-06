@@ -14,10 +14,10 @@ export default function AxisSliderPage() {
     <HarnessPage>
       <HarnessGroup title="operable (drag, tap, Clear)">
         <HarnessCase label="empty — muted square resting at Balanced (a placeholder)">
-          <AxisSlider from={SWEET.from} to={SWEET.to} steps={SWEET.steps} value={empty} onChange={setEmpty} />
+          <AxisSlider axis={SWEET.key} from={SWEET.from} to={SWEET.to} steps={SWEET.steps} value={empty} onChange={setEmpty} />
         </HarnessCase>
         <HarnessCase label="entered — accent square, Clear; touch scales it">
-          <AxisSlider from={BODY.from} to={BODY.to} steps={BODY.steps} value={entered} onChange={setEntered} />
+          <AxisSlider axis={BODY.key} from={BODY.from} to={BODY.to} steps={BODY.steps} value={entered} onChange={setEntered} />
         </HarnessCase>
       </HarnessGroup>
     </HarnessPage>

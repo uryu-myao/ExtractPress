@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
-import AxisReadout from '../components/base/AxisReadout';
+import AxisReadout, { AxisPoles } from '../components/base/AxisReadout';
 import Button from '../components/base/Button';
 import Text from '../components/base/Text';
-import { NOTHING_MOVED, changeLines, changeSummary } from '../components/DnaChangeLines';
+import { DnaChangeTags, changeSentence, changeTags } from '../components/DnaChange';
 import DnaInfoSheet from '../components/DnaInfoSheet';
 import { DnaStamp } from '../components/TasteDnaCard';
 import { TASTE_AXES } from '../constants/tasteAxes';
@@ -18,23 +18,23 @@ import ScreenFrame from './ScreenFrame';
  * save (over the steps, fading in over motion.expand), until one of its two
  * buttons closes the sheet.
  *
- * From the mock: eyebrow "Cup N · logged HH:MM", title "Noted.", then the
- * Taste DNA card — "My taste DNA" with the profile's state stamp (15a: it
- * opens 15b's sheet, here inside the Record sheet, over 5c), the moved
- * axes, each an AxisReadout (computed: §9's ghost at the profile's value
- * before, the value after; both neutral, decided 2026-10-11) with its line
- * under it. Read from the cup's stored dna_change, never recomputed.
- *   - only axes that moved (rounding to >= 1 point) or got their first value,
- *     largest first (DnaChangeLines); nothing moved: Design's line, then
- *     all four axes where they stand (decided on device 2026-10-13: the line
- *     alone doesn't show what "where it was" is). As Home's card: an axis
- *     never noted is the empty track with "Not noted yet".
- *   - "Where it sat before": the legend for the ghost, when there is one
- *   - the summary sentence, under the title: "This cup pushed you ‹phrases›."
- *     (the two largest moves; Design's phrase table, design-missing.md 12,
- *     and Round 12). Kept
- *     when Round 8 removed the card's sub-line: it's this cup's result, not
- *     an explanation
+ * From the mock (5c; Design Round 21, 23e / 23f): eyebrow "Cup N · logged
+ * HH:MM", title "Noted.", then the Taste DNA card — "My taste DNA" with the
+ * profile's state stamp (15a: it opens 15b's sheet, here inside the Record
+ * sheet, over 5c), then, read from the cup's stored dna_change, never
+ * recomputed (DnaChange):
+ *   - the sentence: "This cup pushed you ‹phrases›." (the two largest
+ *     moves), "My taste DNA has its first ‹Axis› reading." (first values
+ *     only), or Design's "stays where it was" line (nothing moved)
+ *   - the change tags, one per axis that moved (≥ 1 point) or got its first
+ *     value, in the axes' order; none when nothing moved
+ *   - "Where it sat before": the legend for the ghost, when an axis moved
+ *   - all four axes in the fixed order (23e draws four; the moved-axes-only
+ *     list, largest first, is gone with the per-axis lines), each an
+ *     AxisReadout (computed: §9's ghost at the profile's value before, the
+ *     value after in the axis's colour). As Home's card: an axis never
+ *     noted is the empty track with "Not noted yet". A cup with no
+ *     dna_change shows the profile as it stands.
  *   - Try next's progress ("4 of 5 cups", "One more cup and Try next opens
  *     up") is V2, and its count is undecided (D-47, todo.md T-14): not shown
  * Buttons: "Back to home" (primary) and "See this record" (secondary → 2c).
@@ -61,9 +61,8 @@ export default function SavedScreen({ id, onHome, onSeeRecord }) {
   }, [db, id, fade]);
 
   const change = data?.cup?.dna_change ? JSON.parse(data.cup.dna_change) : null;
-  const lines = changeLines(change);
-  const anyBefore = lines.some((l) => change.before[l.key]?.value != null);
-  const summary = changeSummary(lines);
+  const tags = changeTags(change);
+  const anyBefore = tags.some((t) => t.size);
 
   return (
     <Animated.View style={[styles.fill, { opacity: fade }]}>
@@ -85,11 +84,10 @@ export default function SavedScreen({ id, onHome, onSeeRecord }) {
               </Text>
               <DnaStamp state={data.dna.state} onPress={() => setInfo(true)} />
             </View>
-            {summary ? (
-              <Text variant="body" color="muted">
-                {summary}
-              </Text>
-            ) : null}
+            <Text variant="body" color="muted">
+              {changeSentence(tags)}
+            </Text>
+            {tags.length ? <DnaChangeTags tags={tags} /> : null}
             {anyBefore ? (
               <View style={styles.legend}>
                 <View style={styles.legendMark} />
@@ -98,59 +96,26 @@ export default function SavedScreen({ id, onHome, onSeeRecord }) {
                 </Text>
               </View>
             ) : null}
-            {lines.length ? (
-              <View style={styles.axes}>
-                {lines.map((l) => {
-                  const axis = TASTE_AXES.find((a) => a.key === l.key);
-                  return (
-                    <View key={l.key} style={styles.axis}>
-                      <View style={styles.poles}>
-                        <Text variant="labelCaps" color="muted">
-                          {axis.from}
-                        </Text>
-                        <Text variant="labelCaps" color="muted">
-                          {axis.to}
-                        </Text>
-                      </View>
-                      <AxisReadout
-                        value={change.after[l.key].value}
-                        previous={change.before[l.key]?.value ?? null}
-                        accessibilityLabel={`${axis.from} to ${axis.to}. ${l.text}`}
-                      />
-                      <Text variant="meta" color="accent">
-                        {l.text}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            ) : (
-              <>
-                <Text variant="body" color="muted">
-                  {NOTHING_MOVED}
-                </Text>
-                <View style={styles.axes}>
-                  {TASTE_AXES.map((axis) => {
-                    // The stored profile after this cup; data.dna if the cup has none.
-                    const value = (change ? change.after[axis.key]?.value : data.dna.axes[axis.key].value) ?? null;
-                    const band = value == null ? null : axis.steps[bandOf(value)];
-                    return (
-                      <View key={axis.key} style={styles.axis}>
-                        <View style={styles.poles}>
-                          <Text variant="labelCaps" color="muted">
-                            {axis.from}
-                          </Text>
-                          <Text variant="labelCaps" color="muted">
-                            {axis.to}
-                          </Text>
-                        </View>
-                        <AxisReadout value={value} accessibilityLabel={`${axis.from} to ${axis.to}, ${band ?? 'not noted'}`} />
-                      </View>
-                    );
-                  })}
-                </View>
-              </>
-            )}
+            <View style={styles.axes}>
+              {TASTE_AXES.map((axis) => {
+                // The stored profile after this cup; data.dna if the cup has none.
+                const value = (change ? change.after[axis.key]?.value : data.dna.axes[axis.key].value) ?? null;
+                const band = value == null ? null : axis.steps[bandOf(value)];
+                // The ghost only where a tag says the axis moved: under 1 point it would thicken the marker.
+                const moved = tags.some((t) => t.key === axis.key && t.size);
+                return (
+                  <View key={axis.key} style={styles.axis}>
+                    <AxisPoles axis={axis} />
+                    <AxisReadout
+                      axis={axis.key}
+                      value={value}
+                      previous={moved ? change.before[axis.key].value : null}
+                      accessibilityLabel={`${axis.from} to ${axis.to}, ${band ?? 'not noted'}`}
+                    />
+                  </View>
+                );
+              })}
+            </View>
           </View>
         </ScreenFrame>
       ) : null}
@@ -196,9 +161,5 @@ const styles = StyleSheet.create({
   },
   axis: {
     gap: spacing.gap.row,
-  },
-  poles: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
 });

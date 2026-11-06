@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
-import AxisReadout from '../components/base/AxisReadout';
+import AxisReadout, { AxisPoles } from '../components/base/AxisReadout';
 import Badge from '../components/base/Badge';
 import BottomSheet from '../components/base/BottomSheet';
 import Button from '../components/base/Button';
@@ -105,15 +105,9 @@ function AsLogged({ cup }) {
             const value = cup[`axis_${axis.key}`];
             return (
               <View key={axis.key} style={styles.axis}>
-                <View style={styles.poles}>
-                  <Text variant="labelCaps" color="muted">
-                    {axis.from}
-                  </Text>
-                  <Text variant="labelCaps" color="muted">
-                    {axis.to}
-                  </Text>
-                </View>
+                <AxisPoles axis={axis} />
                 <AxisReadout
+                  axis={axis.key}
                   tone="entered"
                   value={value}
                   accessibilityLabel={`${axis.from} to ${axis.to}, ${value == null ? 'not noted' : axis.steps[Math.round(value / 25)]}`}
@@ -534,10 +528,6 @@ const styles = StyleSheet.create({
   },
   axis: {
     gap: spacing.gap.row,
-  },
-  poles: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   flavours: {
     flexDirection: 'row',

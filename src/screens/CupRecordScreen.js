@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
-import AxisReadout from '../components/base/AxisReadout';
+import AxisReadout, { AxisPoles } from '../components/base/AxisReadout';
 import Badge from '../components/base/Badge';
 import FieldRow from '../components/base/FieldRow';
 import Chevron from '../components/base/Chevron';
@@ -8,7 +8,7 @@ import Glyph from '../components/base/Glyph';
 import IconButton from '../components/base/IconButton';
 import SectionLabel from '../components/base/SectionLabel';
 import Text from '../components/base/Text';
-import DnaChangeLines from '../components/DnaChangeLines';
+import DnaChange from '../components/DnaChange';
 import { whenLine } from '../components/WhenMeta';
 import { MODE_LABEL, NONE, cupTitle, tidyNote } from '../constants/cups';
 import { daysBetween } from '../constants/dates';
@@ -43,8 +43,10 @@ import ScreenFrame from './ScreenFrame';
  * fill bleeds to the screen's edges (state.pressed.row). Not the mock's
  * dashed frame: §8 keeps dashed for empty states.
  *
- * "Where it sat" draws this cup's own values: AxisReadout's entered (brown)
- * tone — the only place it is used (§9).
+ * "Where it sat" draws this cup's own values: AxisReadout's entered tone
+ * (the axis colour's fill, a brown marker; Design Round 21, 23g), as 11a.
+ * "Feeds my taste DNA" holds the sentence and the change tags (23g), from
+ * the stored dna_change, so they match what 5c showed at save time.
  */
 /** "Blue Bottle · day 7 when brewed": day only with a roast date, never negative. */
 function subtitle(cup) {
@@ -179,15 +181,9 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
                 const value = cup[`axis_${axis.key}`];
                 return (
                   <View key={axis.key} style={styles.axis}>
-                    <View style={styles.poles}>
-                      <Text variant="labelCaps" color="muted">
-                        {axis.from}
-                      </Text>
-                      <Text variant="labelCaps" color="muted">
-                        {axis.to}
-                      </Text>
-                    </View>
+                    <AxisPoles axis={axis} />
                     <AxisReadout
+                      axis={axis.key}
                       tone="entered"
                       value={value}
                       accessibilityLabel={`${axis.from} to ${axis.to}, ${value == null ? 'not noted' : axis.steps[Math.round(value / 25)]}`}
@@ -232,7 +228,7 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
             </Text>
             <Chevron />
           </View>
-          <DnaChangeLines change={change} />
+          <DnaChange change={change} />
         </Pressable>
       </View>
     </ScreenFrame>
@@ -300,10 +296,6 @@ const styles = StyleSheet.create({
   },
   axis: {
     gap: spacing.gap.row,
-  },
-  poles: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   flavours: {
     flexDirection: 'row',

@@ -1,5 +1,82 @@
 # Design response — design-missing.md
 
+## Round 21 · build questions (2026-11-06)
+
+Answers to "Round 21 built: what didn't map" in `design-brief-next.md`. Mock: 23b, 23c, 23g and 6a are edited in place; `handoff-round21.md` is corrected.
+
+1. **One coffee-bag glyph: 6a's `beanBag`.** Use it for the Bags stat too, and drop `coffeeBag`. Two different bags for the same thing (the bags on my shelf) would read as two things. 23b / 23c now draw 6a's shape; `assets/icons/beanBag.svg` (my new shape) is withdrawn.
+2. **`store`: the mock's version is final** — with the door, `currentColor`. The file I sent has the same paths as 23b; what reached you was not that file (a downloaded copy also picked up a `<metadata>` block, so something along the way rewrote it). Take these paths, or the copy in the project's `assets/icons/store.svg`:
+   `M3 9l1.5-5h15L21 9` · `M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z` · `M5 12.5V20h14v-7.5` · `M10 20v-5h4v5`
+3. **`bag_id`, and yes, add `bean_roasted_at` to the fallback key** (name + roaster + roasted date; a null date is a value like any other). "bean_id" in the handoff was my error.
+4. **5c: all four axes, fixed order. Confirmed.** The card is the Taste DNA card, and §9 keeps its four rows so its height never changes. "Only the moved axes, largest first" was the old per-axis lines' rule; the tags took that job.
+5. **Four digits: the numeral wins.** The total is the one number the block exists for, so it never shrinks or wraps. In order:
+   - the stat column hugs its content instead of a fixed 150;
+   - the numeral ↔ column gap drops from `space[20]` to `space[12]`;
+   - if it still doesn't fit, the three stats move under the numeral as one row (icon, label, value, ×3), above the strip.
+   Not drawn yet; I'll draw it when the first dogfood log nears 1,000.
+6. **2c: `gap.row` (8). Accepted;** 23g fixed.
+7. **6a: yes, the reason reaches 6a.** "Week streak" becomes **Cafés** (ink, not brown: it's a plain count like the other two), so 6a and Home count the same things: Cups, Bags, Cafés. 6a's "Logging since Jan 2026 · 34 weeks" already says how long, without scoring gaps. 6a edited.
+8. **Reset: Uryu's call** (asked separately).
+9. **Month strip, screen reader** (yours, not in the handoff): read as one element: **"6 days with a cup this month, out of 8 so far."** Then the stats as their own elements. Don't list days.
+
+---
+
+## Round 21 · Taste DNA colour, change tags, Home's top block (2026-11-06)
+
+Mock: Turn 22 (23a–23h) is new. Nothing earlier is edited; 23a–23h supersede the axis drawing on 4a / 1b / 5c / 2c / 8f / 11a and the per-axis lines on 5c / 2c. The Coffee Days screenshots did not reach me; this is worked from the brief.
+
+### 1. Axis colours (23a)
+**Four new values, identity only.** `color.axis.*`, in `tokens/colors.css` with the rule beside them.
+
+| axis | token | hex | name | on track / card / paper |
+|---|---|---|---|---|
+| Acid ↔ Bitter | `color.axis.acidity` | #7C7D0F | Citron | 3.08 / 4.28 / 3.78 |
+| Body | `color.axis.body` | #614A87 | Plum | 5.21 / 7.24 / 6.40 |
+| Roast | `color.axis.roast` | #9D3D36 | Ember | 4.69 / 6.52 / 5.75 |
+| Sweetness | `color.axis.sweetness` | #AE5A84 | Rose | 3.22 / 4.47 / 3.95 |
+
+- **They join the star, outside §1's three roles.** They say which axis and nothing else: not good or bad, not entered or computed, not in force. **Used nowhere else** — no chart, chip, category or emphasis outside the four axes. **Never as text**; labels stay `text.muted`.
+- **Not from the palette**, because every free hue there already has a job (brown entered, blue in force, gold the star, greens ink and freshness, neutrals computed). Borrowing one would say that job.
+- **Suited to the axis**: citron (citrus; the olive holds the bitter end), plum (weight, as in "full-bodied"), ember (heat; red, because brown means entered), rose (ripe fruit; never on Bitter).
+- **As a set**: one muted ink weight. Pairwise ΔE00 20–58; weakest under deuteranopia Acid / Roast 11.7, where labels and fixed order carry identity.
+- **§9's measurement**: the neutral fill was 1.67:1 on the track; these are 3.08–5.21:1, all over 3:1. **The coloured fill can carry the reading** (direction and how far). **The marker stays**: at 50 there is no fill, near 50 a sliver is not a reading, and the marker now carries the role.
+- **Fill = which axis, marker = what kind of value.** Computed: marker `text.muted` (unchanged). Entered (2c, 11a): marker `border.accent`. §9's brown fill on 2c is retired.
+- **The key**: 12 × 4 (the meter's height) before the left pole on every axis, so the axis stays named at 50 or when not noted.
+- **5b**: only the key, hung 20pt left of the 260 track (Low / High sweetness still fits as measured). Handle, track and dots unchanged, so brown keeps meaning "entered". Roast's key is ΔE00 18.5 from the handle's brown.
+- **5c's ghost**: unchanged (`border.muted` fill and marker underneath); the current fill is the axis colour on top.
+- **8f**: the fixed order, Acid, Body, Roast, Sweetness. The mock's Sweetness-above-Roast was drift.
+
+### 2. Change tags (23e, 23f)
+- **Tag**: key + `‹pole label› +N`, `label.eyebrow`, `badge.bg.neutral` / `badge.fg.neutral`. N is always positive: the pole carries the direction. Uses the pole labels printed on the axes.
+- **Order**: the axes' fixed order, matching the readouts.
+- **Light body +4 / Light roast +5**: the problem does not return. It came from comparatives without nouns; a tag always carries the full pole name, and the keys differ.
+- **First value**: tag `Starts at ‹step name›`, no number. Left out of the sentence, as before.
+- **Only first values**: the sentence becomes "My taste DNA has its first ‹axis› reading." ("first Roast and Sweetness readings").
+- **Nothing moved**: no tags; the current line unchanged. Under 1 point: no tag (the sentence's own threshold).
+- **The summary sentence survives.** It is the only place the result is said in words, it reads first, and it ranks (tags keep axis order). Its phrases are unchanged ("-bodied", "toward … roasts").
+- **Removed**: the "Moved N points toward ‹pole›" lines under each axis.
+
+### 3. Home's top block (23b, 23c)
+- **Total**: `numeral.hero` 96, as asked. The This week panel, its weekday strip and "A slow start is still a start." go.
+- **Month strip**: a 6pt square per day (`size.dot.bullet`). Cup day brown (as the weekday strip), past day without `border.muted`, days to come `border.subtle`, today underlined. No label.
+- **Stats** (right column, beside the numeral), each with a 16pt icon: calendar, bag, storefront (Cafés: a storefront, since a cup would read as a cup count):
+  - **This month**: cups since the 1st.
+  - **Bags**: distinct bags across my cups; a deleted bag counts through its cups' copy (bean name + roaster). Not origins: no form asks for origin yet.
+  - **Cafés**: distinct cafés my Barista cups point at (`places.kind = cafe`). Stores don't count. 0 shows as 0.
+  - **No week streak.** No rule exists, and I'd not write one: a streak counts what you missed, against Home's tone.
+- **Gain: 32pt** (DNA card 398 → 366; block 189 → 157). The numeral and its label are 103 of it. More would mean a smaller numeral, which has no text style between 96 and 40, so it's a decision for you.
+- No Try next row and no "3 of 5 cups" on the card (V2, as 21d).
+
+### For Code
+Full spec with a token check: `handoff-round21.md`.
+- `color.axis.{acidity,body,roast,sweetness}`: AxisReadout fill and the 12 × 4 key only; AxisSlider gets the key only. Note them as identity colours in §1 and §2.
+- AxisReadout: entered tone keeps the `border.accent` marker; fill = axis colour in both tones.
+- 5c / 2c: tags replace the per-axis lines; sentence kept; "first ‹axis› reading" for first-only; no tag under 1 point.
+- Home: new top block (23b); the stats' counting rules (23c).
+- 8f: fixed axis order.
+
+---
+
 ## Round 17 · How my DNA is built (2026-10-31)
 
 Mock: Turn 20, 21a–21e. 8g as first drawn is superseded.

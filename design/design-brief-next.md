@@ -17,3 +17,10 @@ Please confirm the label, or say what fits better (your 20a / 20f draw "Done").
 
 Under Group by Roaster, cafés now stand among the roasters (Round 16, B6, fixed 2026-10-31). A café and a roaster can share a name: Fuglen is both a café and the roaster of its beans. They are two groups today, both headed "Fuglen". Should they be one group, or stay two (and if two, how are they told apart)?
 
+## Bags counts every bag added, not only bags across my cups (2026-11-06, Uryu)
+
+Overturns Round 21's 23c rule for Bags ("distinct bags across my cups"). **Why the old rule no longer holds**: someone who has just added a sealed bag thinks "I have two bags", and Home said 1. "Bags" without a qualifier reads as the bags you have had, and 6a already counted it that way (Round 11, D5: "counting every bag ever added"). When build question 7 said "6a and Home count the same things", the two still counted Bags differently; now both use one rule (`countBags`):
+- every bag in the app: sealed, open or finished;
+- plus each deleted bag my cups still name, by its copied bean name + roaster + roast date (your build-question 3 key).
+
+A bag deleted before any cup used it is gone from the count. Home and 6a re-read on any shelf change, so a new bag shows at once. Confirm, or say what the stat should mean.

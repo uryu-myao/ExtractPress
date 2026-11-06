@@ -82,7 +82,7 @@ const Axes = memo(function Axes({ axes, setAxis }) {
 /** One axis; memoised so committing one leaves the other three alone. */
 const AxisRow = memo(function AxisRow({ axis, value, setAxis }) {
   const onChange = useCallback((v) => setAxis(axis.key, v), [axis.key, setAxis]);
-  return <AxisSlider from={axis.from} to={axis.to} steps={axis.steps} value={value} onChange={onChange} />;
+  return <AxisSlider axis={axis.key} from={axis.from} to={axis.to} steps={axis.steps} value={value} onChange={onChange} />;
 });
 
 /**

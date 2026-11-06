@@ -3,7 +3,7 @@ import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { bandOf } from '../data/tasteDna';
 import { color, motion, shape, size, space, spacing, state as pressState } from '../theme/tokens';
-import AxisReadout from './base/AxisReadout';
+import AxisReadout, { AxisPoles } from './base/AxisReadout';
 import Badge from './base/Badge';
 import Chevron from './base/Chevron';
 import Text from './base/Text';
@@ -13,8 +13,9 @@ import Text from './base/Text';
  * itself is not pressable: Design Round 11, C's framed block that is not
  * pressable, since its stamp is a button). From the mock: "My taste DNA" (display.sm,
  * accent) with the state's stamp beside it, the header row centred, then the
- * four axes — pole labels over an AxisReadout (§9; replaces the mock's dashed
- * display rail and needle).
+ * four axes — pole labels (AxisPoles, the axis's key first) over an
+ * AxisReadout in the axis's colour (§9; Design Round 21, 23b), in the fixed
+ * axis order, here and on 8f.
  *
  * State, one for the whole profile (taste-dna.md item 4, option B):
  *   early   "Early signs" — Badge accent (the mock's #F1E3D6 / #8A4602; its
@@ -87,15 +88,8 @@ export function DnaAxes({ dna, bands = false, style }) {
         const band = value == null ? null : axis.steps[bandOf(value)];
         return (
           <View key={axis.key} style={styles.axis}>
-            <View style={styles.poles}>
-              <Text variant="labelCaps" color="muted">
-                {axis.from}
-              </Text>
-              <Text variant="labelCaps" color="muted">
-                {axis.to}
-              </Text>
-            </View>
-            <AxisReadout value={value} accessibilityLabel={`${axis.from} to ${axis.to}, ${band ?? 'not noted'}`} />
+            <AxisPoles axis={axis} />
+            <AxisReadout axis={axis.key} value={value} accessibilityLabel={`${axis.from} to ${axis.to}, ${band ?? 'not noted'}`} />
             {bands && band ? (
               <Text variant="meta" color="muted" importantForAccessibility="no" accessibilityElementsHidden>
                 {band}
@@ -190,9 +184,5 @@ const styles = StyleSheet.create({
   },
   axis: {
     gap: spacing.gap.row,
-  },
-  poles: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
 });

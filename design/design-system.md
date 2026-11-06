@@ -149,6 +149,11 @@ Non-negotiable, and each one is a measured fact rather than a preference.
   - Stars are a sign that already means something across cultures, and the gold is part of that sign.
   - Turning them brown for uniformity would cost recognisability.
   - This is not an exception: the star brings its own vocabulary.
+- **The four taste axes have identity colours, `color.axis.*`, outside the three roles (Design Round 21, 23a; 2026-11-06).**
+  - Acid ↔ Bitter `#7C7D0F`, Body `#614A87`, Roast `#9D3D36`, Sweetness `#AE5A84`. They join the star: they say *which axis* and nothing else, not entered or computed, not in force, not good or bad.
+  - **Used for the four axes only**: AxisReadout's fill and its 12 × 4 key, AxisSlider's key, the change tags' key. No chart, chip, category or emphasis elsewhere. **Never as text**: labels stay `text.muted`.
+  - Not taken from the palette, because every free hue there already has a job.
+  - On a readout the fill says which axis; **the marker says what kind of value** (computed `text.muted`, entered `border.accent`).
 - **Why three (2026-10-08)**: "selected = ink" was imprecise.
   - 5b's selected flavour tags are brown in the mock (`badge.bg.accent` fill, `border.accent` frame and label), and stay brown.
   - They are not an exception to the selection rule. They belong to another role, the user's own input, like the axis's entered handle (accent fill).
@@ -352,6 +357,16 @@ Only one hairline tier exists in the whole product.
 | `color.icon.accent` | `#9E5202` | absorbed `#8A4602`(icon-stroke) |
 | `color.icon.onAction` | `#FFFFFF` | absorbed `#F4EDEA`(icon-stroke) |
 | `color.icon.rating` | `#C9821A` | 8 screens — **fill, not stroke**; rating stars only |
+
+### Taste axes (identity; Design Round 21, 23a, 2026-11-06)
+The four axes only, never as text (§1 Colour roles). Contrast on track / card / ground.
+
+| token | value | contrast |
+|---|---|---|
+| `color.axis.acidity` | `#7C7D0F` | 3.08 / 4.28 / 3.78 |
+| `color.axis.body` | `#614A87` | 5.21 / 7.24 / 6.40 |
+| `color.axis.roast` | `#9D3D36` | 4.69 / 6.52 / 5.75 |
+| `color.axis.sweetness` | `#AE5A84` | 3.22 / 4.47 / 3.95 |
 
 ### Action
 | token | value | notes |
@@ -1054,11 +1069,13 @@ The display of computed values: 1b / 4a / 4b (the profile), 5c (the change after
 | part | value | from beanFreshness |
 |---|---|---|
 | track | `size.meter.track` (4), `surface.muted` | same |
-| fill | **from 50 to the value**, `border.medium` | changed: it fills from the left there, in freshness colours |
-| marker | 2 × 14, `text.muted`, at the value | same geometry (todayMarker); neutral colour |
+| fill | **from 50 to the value**, the axis's `color.axis.*` (Round 21; was `border.medium`) | changed: it fills from the left there, in freshness colours |
+| marker | 2 × 14 at the value: computed `text.muted`, entered `border.accent` | same geometry (todayMarker) |
+| key | 12 × 4 (`size.axis.key`) in the axis colour, `gap.row` before the left pole label (`AxisPoles`), on every readout, also at 50 and when not noted | — |
 | ticks | **none** | — |
 | gradient | **none** | — |
 
+- **Round 21 (2026-11-06) supersedes the two tones' fills below.** The fill is the axis's colour in both tones (3.08–5.21:1 on the track, so it can carry direction and distance); the tone sets **the marker only**: computed `text.muted`, entered `border.accent`. 2c's brown fill is retired. 5c's ghost is unchanged (`border.muted`, under the coloured fill). The marker stays: at 50 there is no fill, and the role lives on it. The "Moved N points" lines below are replaced by change tags (`DnaChange.js`, `Badge` with the axis key).
 - **Two tones (2026-10-11)**, by §1 Colour roles:
   - **computed** (1b / 4a / 4b / 8f, and **5c**, whose before / after are the profile: both computed, so both neutral; decided 2026-10-11): fill `border.medium`, marker `text.muted` — the table above. 5c's movement reads weakly by design (the fill only helps); the line "Moved N points toward ‹pole›" carries it. Check on a device; do not fix it with colour first.
   - **entered — 2c only** ("Where it sat": the values entered for that one cup): fill `color.icon.accent` (#9E5202, the entered slider handle's fill; 4.04:1 on the track), marker `color.border.accent` (#8A4602, the selected flavour chip's frame; 5.0:1 on the track, 6.95:1 on a card). Same 4pt shape, so it is still plainly not operable; an inoperable slider was rejected because its shape invites a drag.
@@ -1341,3 +1358,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-10-27 — Design Round 14 built: Home's shelf (17a / 17b) and Gear & beans (17c / 17d, 3b and 3d merged). New tokens `size.thumbnail.compact` (44; D-51 settled for Home), `size.statusColumn` (84: the mini bar, and the status column's least width; it grows with "Last · …"), `component.pageIndicator` (24 / 10, ink / `border.muted`, `size.meter.track`, gap `space.4`). Tab label and count `labelCaps`, status word and slot label `meterLabel`, gear line 2 `bodySm`; tab gap `space.20`. Bean status uses `component.beanFreshness` (Round 7). On device (Uryu): Gear & beans' two sides start under the tab's underline, gear with no first-row rule, beans' first card `gap.section` under it; the underlines fade with the scroll, and the slot count crossfades over `motion.expand`.
 - 2026-10-27 — Design Round 15: Round 14's bean colour table withdrawn (Round 7 stands); Home's shelf: "Sealed" alone for a sealed bag, an empty column without a roast date, both after Resting; kettle and scale empty; §3.1 adds `shelf` (1 line, Home's shelf rows only); 1b's "See all" takes the › (was →); `inset.controlCompact` / `gap.controlCompact` carry a "use for" note. Addendum: C8 as built accepted (17c / 17d follow: no gear first-row rule, 46 thumbnails, beans 12 under the underline); Home's shelf rows stay unpressable; › goes to another place, → is the next step in the same sheet (5a keeps it).
 - 2026-10-31 — Design Round 17 built (8g, 21a–21e): §3 `text.countTabular` (14 / 600, tabular) for My numbers' counts. 21a's "7 more to lock in" (12 / 700) takes `meta` (12 / 600), and its 9pt rule bullet keeps `size.dot.bullet` (6): neither has a style or a size of its own.
+- 2026-11-06 — Design Round 21 built (23a–23h). New tokens: `color.axis.{acidity,body,roast,sweetness}` (identity, the four axes only, never text; §1, §2), `size.axis.key` (12 × 4), `size.statColumn` (150, Home's stat column; not the shelf's `statusColumn`). AxisReadout: fill in the axis colour, marker by role, the key on every readout (`AxisPoles`); AxisSlider: the key only, hung outside the 260 track. 5c / 2c: change tags replace the per-axis lines. Home: the This week panel goes; total, three stats (glyphs `calendar`, `store` new, Bags takes 6a's `beanBag`; `icon.sm`) and a month strip (`size.dot.bullet`, today's underline square + 2 × `borderWidth.box`, derived). Build questions (same day): the stat column hugs its content from a four-digit total; 6a's Week streak becomes Cafés (ink). Bags (Home and 6a, `countBags`): every bag added plus deleted bags my cups still name (by name + roaster + roast date); Uryu, overturning 23c's "bags across my cups", sent back to Design.

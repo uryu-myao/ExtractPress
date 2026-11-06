@@ -3,12 +3,12 @@ import { StyleSheet, View } from 'react-native';
 import Button from '../components/base/Button';
 import RecordRow from '../components/base/RecordRow';
 import Text from '../components/base/Text';
-import HomeStats, { weekStart } from '../components/HomeStats';
+import HomeStats, { monthStart } from '../components/HomeStats';
 import ShelfBlock from '../components/ShelfBlock';
 import TasteDnaCard from '../components/TasteDnaCard';
 import { MODE_BADGE, cupTitle } from '../constants/cups';
 import { useDatabase } from '../data/DatabaseProvider';
-import { countCups, cupTimesSince, listCups, loadTasteDna, onCupsChanged } from '../data/repository';
+import { countBags, countCupCafes, countCups, cupTimesSince, listCups, loadTasteDna, onCupsChanged, onShelfChanged } from '../data/repository';
 import { requestDnaInfo, requestOpenCup, requestPush, requestShell } from '../navigation';
 import { layout, space, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
@@ -18,7 +18,8 @@ import ScreenFrame from './ScreenFrame';
  *   - title: a greeting by part of day — 1b's "Good morning"; "Good
  *     afternoon" / "Good evening" ours, confirmed (Design Round 7); eyebrow
  *     "MoreCoffee"
- *   - HomeStats: cups total, this week (count + strip)
+ *   - HomeStats: cups total; This month, Bags, Cafés; the month strip
+ *     (Design Round 21, 23b)
  *   - "Record a coffee" (primary) → the Record sheet, as the bar's +
  *   - the Taste DNA card; its stamp opens 15b's sheet (over the bar, so
  *     AppShell hosts it: DnaInfoHost); its foot row "Open my taste DNA ›"
@@ -29,12 +30,12 @@ import ScreenFrame from './ScreenFrame';
  *   - My gear / My beans (Round 14, 17a / 17b: three rows a side, swiped
  *     or tabbed; "See all gear & beans ›" opens 17c / 17d on that side)
  * Not shown: Try next's box (V2), the line under the counts (dropped for V1,
- * Design Round 10, C10).
+ * Design Round 10, C10; gone in Round 21's 23b too).
  *
  * Screens opened from Home — Gear & beans (17c / 17d), 3c (Add a bag), 3a
  * (Add gear) — are pushed over Home and the bottom bar (ShellStack; their mocks
  * draw no bar). Back or a swipe from the left edge returns.
- * Everything is read on open and again whenever a cup is saved.
+ * Everything is read on open and again whenever a cup or the shelf changes.
  */
 /**
  * The greeting by the hour (Design Round 7, 16): morning before 12:00,
@@ -56,13 +57,19 @@ export default function HomeTabScreen() {
   useEffect(() => {
     const load = () => {
       const now = Date.now();
-      Promise.all([loadTasteDna(db), countCups(db), cupTimesSince(db, weekStart(now)), listCups(db)]).then(
-        ([dna, total, week, cups]) => setData({ dna, total, week, recent: cups.slice(0, 3), now }),
+      Promise.all([loadTasteDna(db), countCups(db), cupTimesSince(db, monthStart(now)), countBags(db), countCupCafes(db), listCups(db)]).then(
+        ([dna, total, month, bags, cafes, cups]) => setData({ dna, total, month, bags, cafes, recent: cups.slice(0, 3), now }),
         (error) => console.error('[home] could not read', error)
       );
     };
     load();
-    return onCupsChanged(load);
+    // The shelf too: adding a bag changes Bags without touching a cup.
+    const offCups = onCupsChanged(load);
+    const offShelf = onShelfChanged(load);
+    return () => {
+      offCups();
+      offShelf();
+    };
   }, [db]);
 
 
@@ -72,7 +79,7 @@ export default function HomeTabScreen() {
       <ScreenFrame scroll title={greeting} eyebrow="MoreCoffee">
         {data ? (
           <View style={styles.body}>
-            <HomeStats total={data.total} cupTimes={data.week} now={data.now} />
+            <HomeStats total={data.total} monthCupTimes={data.month} bags={data.bags} cafes={data.cafes} now={data.now} />
             <Button label="Record a coffee" onPress={() => requestShell({ record: true })} />
             <TasteDnaCard dna={data.dna} onStampPress={() => requestDnaInfo(data.dna)} onOpen={() => push('dna')} />
             {data.recent.length ? (

@@ -88,6 +88,21 @@ export const color = {
   },
   /** Modal sheet scrim. The page behind it also drops to opacity 0.45. */
   scrim: 'rgba(39, 61, 34, 0.42)',
+  /**
+   * The four taste axes' identity colours (Design Round 21, 23a). Used for
+   * the four taste axes only (AxisReadout's fill and key, AxisSlider's key,
+   * the change tags' key), never as text, never for anything else. They say
+   * which axis and nothing more: not good or bad, not entered or computed
+   * (the marker says that), not in force. Outside §1's three roles, like
+   * icon.rating. Contrast on track / card / ground: 3.08–5.21 / 4.28–7.24 /
+   * 3.78–6.40.
+   */
+  axis: {
+    acidity: '#7C7D0F',
+    body: '#614A87',
+    roast: '#9D3D36',
+    sweetness: '#AE5A84',
+  },
 } as const;
 
 /** Mechanism-bound state colors (class A: promoted regardless of frequency). */
@@ -316,6 +331,13 @@ export const size = {
   statusColumn: 84,
   avatar: 88,
   /**
+   * Home's top block (Design Round 21, 23b): the stat column (This month,
+   * Bags, Cafés) beside the hero numeral. Fixed until the total reaches four
+   * digits, then it hugs its content (build questions, 5). Not the shelf's
+   * statusColumn above.
+   */
+  statColumn: 150,
+  /**
    * tabBar.height: the bar's row above the home-indicator inset. 56 since
    * 2026-10-18, to carry the tab names under the glyphs: the 40 slot box with
    * 8 above and below (glyph 20 + gap.tight + tabLabel 12 = 36, centred in
@@ -337,7 +359,9 @@ export const size = {
    * handle = rail − 8. Stops are (260 − 2·2 − 2·2 − 26) / 4 = 56.5pt apart and
    * stop 0 sits 17 in from the track's outer edge. dot: the 5 stop marks.
    */
-  axis: { rail: 34, railWidth: 260, inset: 2, handle: { w: 26, h: 26 }, dot: 6 },
+   * key: the axis's colour key before its left pole label (Design Round 21,
+   * 23a), on every readout, slider and change tag; h is meter.track.
+  axis: { rail: 34, railWidth: 260, inset: 2, handle: { w: 26, h: 26 }, dot: 6, key: { w: 12, h: 4 } },
   meter: { track: 4 },
   marker: { line: { w: 2, h: 14 } },
   dot: { bullet: 6 },

@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { color, size, space, textStyle } from '../../theme/tokens';
+import { color, size, space, spacing, textStyle } from '../../theme/tokens';
 import Text from './Text';
 
 /**
@@ -8,17 +8,21 @@ import Text from './Text';
  * operable like the 5b slider.
  *
  *   track   size.meter.track (4), surface.muted
- *   fill    from 50 to the value (helps only)
- *   marker  size.marker.line (2 × 14) at the value — it carries the value
+ *   fill    from 50 to the value, in the axis's color.axis.* (Design Round
+ *           21, 23a): it says which axis, and, over 3:1 on the track, it
+ *           carries direction and distance
+ *   marker  size.marker.line (2 × 14) at the value
  *   no ticks, no gradient; at exactly 50 only the marker shows ("balanced")
  *
- * tone (§1 Colour roles: computed = neutral, entered = brown; 2026-10-11):
+ * Fill = which axis, marker = what kind of value. tone sets the marker only
+ * (§1 Colour roles, Round 21):
  *   computed  a value worked out from records (1b / 4a / 4b / 8f, 5c):
- *             fill border.medium (1.67:1), marker text.muted (4.45:1)
- *   entered   a value the user entered for one cup (2c "Where it sat"):
- *             fill icon.accent (the entered slider handle's fill, 4.04:1),
+ *             marker text.muted
+ *   entered   a value the user entered for one cup (2c "Where it sat", 11a):
  *             marker border.accent (the selected flavour chip's frame,
- *             5.0:1). Same shape: still read-only.
+ *             6.95:1 on a card). Same shape: still read-only. §9's brown
+ *             fill is retired.
+ * The marker stays: at 50 there is no fill, and the role lives on it.
  *
  * previous (5c): the earlier value, drawn under the current one in
  * border.muted — its fill from 50 and a 2 × 14 border.muted marker (§9).
@@ -36,28 +40,53 @@ import Text from './Text';
  * height and a card of readouts never changes height. Shown on raised cards
  * (Taste DNA card, 2c), which the patch matches.
  *
- * Props: value 0–100 or null, tone, previous, accessibilityLabel
+ * The pole labels above it are AxisPoles, with the axis's AxisKey before the
+ * left one, so the axis stays named at 50 and when not noted.
+ *
+ * Props: axis (a TASTE_AXES key), value 0–100 or null, tone, previous,
+ * accessibilityLabel
  */
-const TONES = {
-  computed: { fill: color.border.medium, marker: color.text.muted },
-  entered: { fill: color.icon.accent, marker: color.border.accent },
+const MARKER = {
+  computed: color.text.muted,
+  entered: color.border.accent,
 };
 const GHOST = color.border.muted;
 
 const span = (v) => ({ left: `${Math.min(50, v)}%`, width: `${Math.abs(v - 50)}%` });
 
-export default function AxisReadout({ value, tone = 'computed', previous = null, accessibilityLabel }) {
-  const t = TONES[tone];
+/** The axis's 12 × 4 colour key (Round 21): decorative, so never read out. */
+export function AxisKey({ axis, style }) {
+  return <View style={[styles.key, { backgroundColor: color.axis[axis] }, style]} importantForAccessibility="no" accessibilityElementsHidden />;
+}
+
+/** "[key] Acid ……… Bitter": the pole labels over a readout, the key gap.row before the left one. */
+export function AxisPoles({ axis }) {
+  return (
+    <View style={styles.poles}>
+      <View style={styles.from}>
+        <AxisKey axis={axis.key} />
+        <Text variant="labelCaps" color="muted">
+          {axis.from}
+        </Text>
+      </View>
+      <Text variant="labelCaps" color="muted">
+        {axis.to}
+      </Text>
+    </View>
+  );
+}
+
+export default function AxisReadout({ axis, value, tone = 'computed', previous = null, accessibilityLabel }) {
   const has = value != null;
   const emptyWords = tone === 'entered' ? 'Not noted' : 'Not noted yet';
   return (
     <View style={styles.box} accessible accessibilityLabel={accessibilityLabel}>
       <View style={styles.track}>
         {previous != null ? <View style={[styles.fill, span(previous), { backgroundColor: GHOST }]} /> : null}
-        {has ? <View style={[styles.fill, span(value), { backgroundColor: t.fill }]} /> : null}
+        {has ? <View style={[styles.fill, span(value), { backgroundColor: color.axis[axis] }]} /> : null}
       </View>
       {previous != null ? <View style={[styles.marker, { left: `${previous}%`, backgroundColor: GHOST }]} /> : null}
-      {has ? <View style={[styles.marker, { left: `${value}%`, backgroundColor: t.marker }]} /> : null}
+      {has ? <View style={[styles.marker, { left: `${value}%`, backgroundColor: MARKER[tone] }]} /> : null}
       {has ? null : (
         <View style={styles.emptyLabel} pointerEvents="none">
           <Text variant="meta" color="muted" style={styles.patch}>
@@ -70,6 +99,19 @@ export default function AxisReadout({ value, tone = 'computed', previous = null,
 }
 
 const styles = StyleSheet.create({
+  poles: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  from: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.gap.row,
+  },
+  key: {
+    width: size.axis.key.w,
+    height: size.axis.key.h,
+  },
   box: {
     // meta's line height: the slot an empty row's label needs, kept by every row.
     height: textStyle.meta.lineHeight,

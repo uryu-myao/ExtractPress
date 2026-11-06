@@ -5,7 +5,6 @@ import DashedRule from '../components/base/DashedRule';
 import Chevron from '../components/base/Chevron';
 import MenuRow from '../components/base/MenuRow';
 import Text from '../components/base/Text';
-import { weekStreak } from '../components/HomeStats';
 import { GEAR_LIMIT } from '../constants/gear';
 import { daysBetween } from '../constants/dates';
 import { TASTE_AXES } from '../constants/tasteAxes';
@@ -28,8 +27,12 @@ import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
  *   card         the personal card without its identity row: 6d holds the
  *                name and avatar, and the "Home brewer" badge has no rule
  *                (Design Round 11, D2). What V1 has: "Logging since ‹month› ·
- *                N weeks" (the first cup) over Cups / Bags / Week streak.
- *                Bags: every bag ever added. Week streak: ours (weekStreak).
+ *                N weeks" (the first cup) over Cups / Bags / Cafés.
+ *                Bags and Cafés: Home's counts (loadProfile), Cafés ink
+ *                like the other two. Cafés replaced the
+ *                Week streak (Design Round 21 build questions, 7: a streak
+ *                counts what you missed; "Logging since" already says how
+ *                long).
  *   Taste DNA    a link to 8f, the whole card (6a; Design Round 11, C: the
  *                one framed block that is pressable). Its stamp is a plain
  *                Badge, no ⓘ, no tap of its own: no button in a button
@@ -75,10 +78,10 @@ function sinceLine(first, now) {
   return weeks > 0 ? `${since} · ${weeks === 1 ? '1 week' : `${weeks} weeks`}` : since;
 }
 
-function Stat({ value, label, accent = false, first = false }) {
+function Stat({ value, label, first = false }) {
   return (
     <View style={[styles.stat, !first && styles.statDivided]} accessible accessibilityLabel={`${value} ${label}`}>
-      <Text variant="displaySm" color={accent ? 'accent' : 'primary'}>
+      <Text variant="displaySm" color="primary">
         {String(value)}
       </Text>
       <Text variant="labelEyebrow" color="muted">
@@ -105,7 +108,7 @@ function PersonalCard({ profile, now }) {
       <View style={styles.stats}>
         <Stat first value={profile.cupTimes.length} label="Cups" />
         <Stat value={profile.bags} label="Bags" />
-        <Stat accent value={weekStreak(profile.cupTimes, now)} label="Week streak" />
+        <Stat value={profile.cafes} label="Cafés" />
       </View>
     </View>
   );

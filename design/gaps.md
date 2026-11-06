@@ -310,6 +310,8 @@ Close once all five are seen.
 
 ---
 
+
+**Status 2026-11-06 (Design Round 21)**: the per-axis lines are gone. Each moved axis is a tag, `‹pole label› +N` (always positive; the pole carries the direction), a first value `Starts at ‹step›`; the summary sentence stays, and "first ‹Axis› reading(s)" covers first values alone (`DnaChange.js`). The combinations above still need seeing on device, now as tags.
 ## 14. Taste axis: Clear's touch slop over the track's bottom right — accepted (added 2026-10-08, accepted 2026-10-09)
 
 **Parts affected**: `AxisSlider` on 5b (entered axes, where Clear shows). Not a scrolling problem: the only text button outside the dev harness is this Clear.
