@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   frame: {
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
   },
 });

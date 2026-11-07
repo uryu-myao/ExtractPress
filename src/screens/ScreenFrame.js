@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.gutter,
     backgroundColor: color.surface.raised,
     borderTopWidth: shape.borderWidth.box,
-    borderTopColor: color.border.strong,
+    borderTopColor: color.border.container,
   },
   footerError: {
     borderTopColor: state.error.border,

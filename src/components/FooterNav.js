@@ -12,9 +12,10 @@ const { slot, addSlot, glyph, addLift, icon: iconColor } = component.tabBar;
 
 /**
  * Bottom bar (design-system.md §9, revised 2026-10-05) carrying the tab bar.
- * Full screen width on the bottom edge, no hard shadow: its 2px ink top rule is
- * the boundary. The source's floating, shadowed 90% bar read as a deliberate
- * object on an empty mock but as noise over a full list.
+ * Full screen width on the bottom edge, no hard shadow: its 2px top rule is
+ * the boundary (border.container: chrome is quiet, Design Round 22). The
+ * source's floating, shadowed 90% bar read as a deliberate object on an empty
+ * mock but as noise over a full list.
  *
  * No fade above the rule: it covered the content just above the bar (removed
  * on review, 2026-10-05). Below the size.tabBar.height row, padding clears the
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
   },
   bar: {
     borderTopWidth: shape.borderWidth.box,
-    borderTopColor: color.border.strong,
+    borderTopColor: color.border.container,
     backgroundColor: color.surface.raised,
   },
   row: {

@@ -7,8 +7,8 @@ import Text from './Text';
 /**
  * A settings-list row (6a's My shelf, 6b's My data; 2026-10-21):
  * [glyph] label (over an optional sub line) [value] [chevron].
- * Rows stack in one 2px ink frame on raised, with no item dividers (Design
- * Round 9); the frame is the caller's.
+ * Rows stack in one 2px frame on raised (border.container, Design Round 22),
+ * with no item dividers (Design Round 9); the frame is the caller's.
  *
  *   label  label (15 / 700), ink
  *   sub    body.sm, muted ("147 cups as CSV, notes included")

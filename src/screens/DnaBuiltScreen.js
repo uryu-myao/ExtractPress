@@ -25,9 +25,9 @@ import { cupsLabel } from './TasteDnaScreen';
  *            "N more to lock in" on its own line under the count in accent,
  *            the one thing here that asks for something; "Tags are at their
  *            limit here." under the row, muted, only at the limit. The cups
- *            line closes the block under a 2px ink rule: it covers all rows.
+ *            line closes the block under a 2px rule: it covers all rows.
  *            Numbers before the rules, never mixed into them.
- *   rules    8g's list look (21b): a 2px ink rule over rows split by dashed
+ *   rules    8g's list look (21b): a 2px rule over rows split by dashed
  *            dividerSoft, each a square bullet, a bold line and one line
  *            under it. Seven, in Design's words (Round 17, B1): how a cup
  *            weighs (1–2), what it moves (3–5), when the profile changes
@@ -207,11 +207,11 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.gap.row,
   },
-  // 21a: 2px ink on raised; the rows carry the padding (21a's 13 folds to
+  // 21a: 2px on raised (border.container since Design Round 22); the rows carry the padding (21a's 13 folds to
   // listRow's 12, as Round 9's 11 did).
   card: {
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
   },
   axis: {
@@ -236,17 +236,19 @@ const styles = StyleSheet.create({
   more: {
     textAlign: 'right',
   },
-  // 21a: the cups line covers every row, so a 2px ink rule sets it apart.
+  // 21a: the cups line covers every row, so a 2px rule sets it apart (quiet
+  // as the frame it sits in, Design Round 22: width says what it is).
   cups: {
     paddingVertical: spacing.inset.listRow.v,
     paddingHorizontal: spacing.inset.listRow.h,
     borderTopWidth: shape.borderWidth.box,
-    borderTopColor: color.border.strong,
+    borderTopColor: color.border.container,
   },
-  // 8g: a 2px ink rule over the list, no frame around it.
+  // 8g: a 2px rule over the list, no frame around it; quiet, a list block's
+  // edge (Design Round 22).
   rules: {
     borderTopWidth: shape.borderWidth.box,
-    borderTopColor: color.border.strong,
+    borderTopColor: color.border.container,
   },
   rule: {
     flexDirection: 'row',

@@ -138,7 +138,7 @@ export default function TasteDnaCard({ dna, onStampPress, onOpen }) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
     paddingVertical: spacing.inset.container.v,
     paddingHorizontal: spacing.inset.container.h,

@@ -63,7 +63,8 @@ import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
  *                T-8): 6b's Backup saves by itself; this is a manual export
  *                until it is built.
  *
- * Each section: label.eyebrow heading (muted) over a 2px ink frame on raised;
+ * Each section: label.eyebrow heading (muted) over a 2px frame on raised
+ * (border.container: quiet, Design Round 22, 24b; the chevrons say "opens");
  * rows are MenuRow.
  * Pressable blocks follow Design Round 11, C (todo.md T-10): MenuRow's rows
  * end in the shared chevron; the Taste DNA card is the app's one framed
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
   },
   frame: {
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
   },
   rowPressed: {

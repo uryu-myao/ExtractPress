@@ -32,6 +32,18 @@ Non-negotiable, and each one is a measured fact rather than a preference.
 - **Border style is binary: `solid` or `dashed`.** No dotted, no double.
 - Shadows are **hard**: blur 0, isotropic offset (x = y), single ink colour. No soft or directional shadows exist.
 
+### Border colour: who gets ink (added 2026-11-07, Design Round 22, 24b)
+- **Width says what an edge is (Shape above: 2 = a box's outline, 1.5 = an internal divider or a weak frame). Colour says whether the box acts.** The two are independent: every frame keeps its width.
+- **Control → ink** (`border.strong`). A box whose whole body is the thing you press and which holds nothing but its own label, glyph or value; it acts where it is (commits, types, toggles, sets, adds).
+- **Container → quiet** (`border.container`, an alias of `border.muted`, 2px). A box that encloses information or other things — including a whole card or row block that leads to another screen. Leading somewhere is the chevron's job (§1 Tap affordance), not the frame's.
+- **Chrome edges → quiet** (`border.container`): the bottom bar's top rule, a fixed foot panel's top rule, a sheet's top edge.
+- **Unchanged**: options, error frames and `state.error.shadow`, badges and stamps, thumbnails' 1.5 edge, hairlines, every dashed line (§8).
+- **The test**: does it act where it is, holding only its own label? Ink. Does it hold things, or go somewhere? Quiet.
+- **Shadows follow controls only.** A container never carries one.
+- **Pressed**: unchanged (§1 Pressed). No frame changes colour on press, pale or ink.
+- Ink: Button (primary, secondary, with their `HardShadow`), IconButton, text and search fields, Switch, unchecked checkbox and radio markers, AddButton, steppers, 5b's Search opener; the slider keeps §9's `text.secondary` track. Quiet: every card (Taste DNA on Home / 5c / 8f / 6a, bag cards, the star card, Where it sat, 8g's My numbers and rule list), form sections and picker / search frames, Profile's groups, Edit cup / Edit gear sections, the bottom bar, the foot panel (ScreenFrame's footer, SaveBar), BottomSheet's top edge.
+- Contrast: `border.container` is 1.60:1 on ground, 1.82:1 on raised. That is the reference's level (1.55:1); don't go lighter.
+
 ### Type
 - **Two families only**: `Archivo` (sans) and `Instrument Serif` (serif).
 - **Three weights only: 500 / 600 / 700. Regular (400) does not exist in this design — 0 occurrences across 30 screens. The lightest weight is 500. Do not use 400 on new screens.** Body copy is set at 500 deliberately.
@@ -211,7 +223,7 @@ Non-negotiable, and each one is a measured fact rather than a preference.
   - 12 are fill + a 2px ink frame: 3a and 8m checked boxes, 3e's switch (D-20), 6d "Home brewer", 8i's five weekdays, 8j "An idea", 8l "Words".
   - The segmented options are an ink fill with no frame: 2a "All", 2b "Month", 3a "Brewer", 3c "Light", 3e "Grinder", 3f "Newest", 3g "Light" (added 2026-10-09), 5d "Barista", 5e "Ready-to-drink".
   - Not options: 3b / 4a "Default" and 8d "This week" are 9px badges.
-  - A 2px ink outline on the card colour is a pressable control or a frame: icon buttons, My gear / My beans, switch knobs, **unchecked checkboxes and unselected radio markers** (decided 2026-10-12, as 3a draws them; 8c's `border.muted` box is the disabled look, not the unchecked one).
+  - A 2px ink outline on the card colour is a pressable control: icon buttons, switch knobs, **unchecked checkboxes and unselected radio markers**; a frame that holds things is 2px `border.container` since Design Round 22 (§1 Border colour) (decided 2026-10-12, as 3a draws them; 8c's `border.muted` box is the disabled look, not the unchecked one).
   - Keep it that way. The one exception, 8f's "juicy 9", is drift D-23.
 - **A label that cannot be pressed looks like a Badge**: tinted fill, no `border.muted` outline, badge sizes.
 - **Except one display form, the attribute tag** (8d "Blackcurrant"; 6a's "Acidity high" until 2026-10-21): a 1.5 `border.muted` outline on no fill, padding 7/9, 11px label. It is never pressable on its own; on 8d it describes a suggestion and leads nowhere. 6a now shows its band names as Badges (Design Round 11, D6): outline tags would read as options inside a card that is a button.
@@ -324,6 +336,7 @@ Grouped by role. Every hex is a value that qualified **inside that role** (≥3 
 | `color.border.subtle` | `#E4D6CC` | 18 screens; the weakest divider |
 | `color.border.medium` | `#B3A69E` | 5 screens; the AxisReadout fill, the 5c ghost / delta (and the retiring display axis) |
 | `color.border.accent` | `#8A4602` | tinted badges and brown-bordered chips |
+| `color.border.container` | `#C8BCB4` | alias of `border.muted` (Design Round 22): a container's 2px frame and chrome edges (§1 Border colour) |
 
 `color.border.muted` / `soft` / `subtle` all qualify independently (Gate A, ΔE00 3.07–3.63). They are three real tiers.
 
@@ -781,7 +794,7 @@ Section heading = a `size.dot.bullet` square (`marker.required` / `marker.option
 - This holds wherever they appear (list rows, field values, pickers); the full name is reached on the detail screen.
 
 ### Card
-`2px solid color.border.strong` on `color.surface.raised`, `inset.container`, internal groups separated by `gap.section`, meta separated by `divider.soft`. No radius, no shadow unless it is a control.
+`2px solid color.border.container` (ink until Design Round 22; §1 Border colour) on `color.surface.raised`, `inset.container`, internal groups separated by `gap.section`, meta separated by `divider.soft`. No radius, no shadow unless it is a control.
 
 ### Notice (13a / 13b, Design Round 5, 2026-10-13)
 A one-line confirmation above the bottom bar, today only after a delete: **"‹cup title› deleted."** (the title by 2a's rule, `cupTitle`).
@@ -1359,3 +1372,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-10-27 — Design Round 15: Round 14's bean colour table withdrawn (Round 7 stands); Home's shelf: "Sealed" alone for a sealed bag, an empty column without a roast date, both after Resting; kettle and scale empty; §3.1 adds `shelf` (1 line, Home's shelf rows only); 1b's "See all" takes the › (was →); `inset.controlCompact` / `gap.controlCompact` carry a "use for" note. Addendum: C8 as built accepted (17c / 17d follow: no gear first-row rule, 46 thumbnails, beans 12 under the underline); Home's shelf rows stay unpressable; › goes to another place, → is the next step in the same sheet (5a keeps it).
 - 2026-10-31 — Design Round 17 built (8g, 21a–21e): §3 `text.countTabular` (14 / 600, tabular) for My numbers' counts. 21a's "7 more to lock in" (12 / 700) takes `meta` (12 / 600), and its 9pt rule bullet keeps `size.dot.bullet` (6): neither has a style or a size of its own.
 - 2026-11-06 — Design Round 21 built (23a–23h). New tokens: `color.axis.{acidity,body,roast,sweetness}` (identity, the four axes only, never text; §1, §2), `size.axis.key` (12 × 4), `size.statColumn` (150, Home's stat column; not the shelf's `statusColumn`). AxisReadout: fill in the axis colour, marker by role, the key on every readout (`AxisPoles`); AxisSlider: the key only, hung outside the 260 track. 5c / 2c: change tags replace the per-axis lines. Home: the This week panel goes; total, three stats (glyphs `calendar`, `store` new, Bags takes 6a's `beanBag`; `icon.sm`) and a month strip (`size.dot.bullet`, today's underline square + 2 × `borderWidth.box`, derived). Build questions (same day): the stat column hugs its content from a four-digit total; 6a's Week streak becomes Cafés (ink). Bags (Home and 6a, `countBags`): every bag added plus deleted bags my cups still name (by name + roaster + roast date); Uryu, overturning 23c's "bags across my cups", sent back to Design.
+- 2026-11-07 — Design Round 22 built (24b; 24d not applied): §1 Border colour — controls keep `border.strong`, containers and chrome edges go to `border.container` (new alias of `border.muted`, same hex; `border.control` proposed too, not added: controls already say `border.strong`). 22 frames moved; widths unchanged. 8d's shadow: 8d isn't built.

@@ -14,7 +14,7 @@ import { color, layout, motion, shape, space, spacing } from '../theme/tokens';
  * inset grows with it and nothing is covered (the end actions stay
  * reachable).
  *
- * The panel is ScreenFrame's footer: raised, a box-wide ink rule on top,
+ * The panel is ScreenFrame's footer: raised, a box-wide border.container rule on top (Design Round 22),
  * space.20 over its content, the home indicator's inset under it.
  *
  * Props: visible, children (the Save button, its line)
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.gutter,
     backgroundColor: color.surface.raised,
     borderTopWidth: shape.borderWidth.box,
-    borderTopColor: color.border.strong,
+    borderTopColor: color.border.container,
   },
   content: {
     gap: spacing.gap.row,

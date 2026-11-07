@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   card: {
     marginTop: space[20],
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
     // inset.container (14 / 16), as StarRating's card: drift D-18, decided
     // 2026-10-10 (the mocks' 20 / 18 is the drift, not the token).

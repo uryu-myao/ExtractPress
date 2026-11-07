@@ -45,6 +45,14 @@ export const color = {
     subtle: '#E4D6CC',
     medium: '#B3A69E',
     accent: '#8A4602',
+    /**
+     * Alias of border.muted (Design Round 22, 24b): the 2px frame of a box
+     * that holds things or leads elsewhere — cards, form sections, list
+     * blocks, a sheet's top edge — and chrome edges (the bottom bar's and a
+     * foot panel's top rule). A control's frame stays border.strong. Its own
+     * name because border.muted also means "unselected" and "disabled".
+     */
+    container: '#C8BCB4',
   },
   badge: {
     bg: {

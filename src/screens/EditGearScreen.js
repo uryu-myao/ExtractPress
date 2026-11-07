@@ -36,7 +36,7 @@ import ScreenFrame from './ScreenFrame';
  *              ItemCups, "Cups with this grinder · N", 5 rows, "All N cups ›";
  *              none: "No cups with this grinder yet." and "Log a cup with it
  *              ›" (Log a cup with this gear preselected)
- *   details    "Details", then the card (2px ink frame on raised): Name
+ *   details    "Details", then the card (2px border.container on raised): Name
  *              (required, BagForm's Field), Maker ("Optional"); for a brewer
  *              or grinder, under a dashed rule, "My default grinder" /
  *              "Preselected on every new cup." and the Switch (it turns off
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
     paddingVertical: spacing.inset.container.v,
     paddingHorizontal: spacing.inset.container.h,
