@@ -4,6 +4,7 @@ import Text from '../components/base/Text';
 import ScreenFrame from '../screens/ScreenFrame';
 import { spacing } from '../theme/tokens';
 import { inTransaction, openDatabase } from './migrate';
+import { sweepPhotos } from './photos';
 
 const DatabaseContext = createContext(null);
 
@@ -50,6 +51,9 @@ export default function DatabaseProvider({ children }) {
           }
         }
         if (!cancelled) setState({ db, error: null });
+        // Photo files no row points at (a deleted bag's), and pending leftovers.
+        // Not awaited: the app doesn't wait on housekeeping.
+        if (Platform.OS !== 'web') sweepPhotos(db);
       } catch (error) {
         console.error('[db] failed to open', error);
         if (!cancelled) setState({ db: null, error });

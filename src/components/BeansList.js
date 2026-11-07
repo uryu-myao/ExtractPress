@@ -83,7 +83,7 @@ export default function BeansList({ bags, finished, onAddBag, onFinished, onEdit
               style={({ pressed }) => [styles.info, pressed && styles.rowPressed]}>
               <View style={styles.infoText}>
                 <View style={styles.top}>
-                  <PhotoPlaceholder size={size.field.height} />
+                  <PhotoPlaceholder size={size.field.height} photo={bag.photo_uri} />
                   <View style={styles.text}>
                     <View style={styles.nameRow}>
                       <Text variant="title" truncate="name" style={styles.name}>

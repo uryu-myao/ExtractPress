@@ -117,7 +117,7 @@ function MadeItFields({ defaults, onAddBag, onAddGear, onPick }) {
     <Section label="From my shelf" status={filled ? 'prefilled' : undefined} plain={!filled}>
       <View style={styles.card}>
         {bag ? (
-          <FieldRow swatch label="Bag" value={bag.name} meta={bagMeta(bag)} onPress={() => onPick('bag')} />
+          <FieldRow swatch photo={bag.photo_uri} label="Bag" value={bag.name} meta={bagMeta(bag)} onPress={() => onPick('bag')} />
         ) : (
           <FieldRow swatch label="Bag" value="Add a bag" placeholder onPress={onAddBag} />
         )}
@@ -494,7 +494,7 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
         closeOnPick
         sections={[
           {
-            items: shelf.bags.map((b) => ({ key: b.id, label: b.name, meta: bagMeta(b), swatch: true })),
+            items: shelf.bags.map((b) => ({ key: b.id, label: b.name, meta: bagMeta(b), swatch: true, photo: b.photo_uri })),
             selected: defaults.bag?.id ?? null,
             onPick: (id) => chooseBag(shelf.bags.find((b) => b.id === id)),
             add: {

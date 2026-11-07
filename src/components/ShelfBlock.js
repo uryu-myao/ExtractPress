@@ -159,16 +159,16 @@ function BeanRow({ bag, first, onPress }) {
     const f = freshnessOf(bag.roasted_at);
     if (f) status = <Status word={FRESHNESS_WORDS[f.state]} wordColor={component.beanFreshness[f.state].label} track={f} />;
   }
-  return <Row first={first} name={bag.name} meta={meta} status={status} onPress={onPress} />;
+  return <Row first={first} name={bag.name} meta={meta} status={status} photo={bag.photo_uri} onPress={onPress} />;
 }
 
-function Row({ first, name, badge, meta, status, onPress }) {
+function Row({ first, name, badge, meta, status, photo, onPress }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       style={({ pressed }) => [styles.row, first && styles.rowFirst, pressed && styles.rowPressed]}>
-      <PhotoPlaceholder size={size.thumbnail.compact} />
+      <PhotoPlaceholder size={size.thumbnail.compact} photo={photo} />
       <View style={styles.text}>
         <View style={styles.nameRow}>
           <Text variant="label" truncate="shelf" style={styles.name}>

@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Keyboard, StyleSheet, View } from 'react-native';
 import BagForm from '../components/BagForm';
 import DateSheet from '../components/DateSheet';
+import PhotoSheet from '../components/PhotoSheet';
 import Button from '../components/base/Button';
 import IconButton from '../components/base/IconButton';
 import Text from '../components/base/Text';
 import { useRecordDraftIfAny } from '../components/RecordDraft';
 import { useDatabase } from '../data/DatabaseProvider';
+import { deletePhoto, dropPhoto, keepPhoto } from '../data/photos';
 import { OPEN_BAG_LIMIT, countOpenBags, insertBag } from '../data/repository';
 import { spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
@@ -21,6 +23,10 @@ import ScreenFrame from './ScreenFrame';
  * back to 5a. "Add without opening" stores it unopened (it takes a slot; 3d
  * opens it later). onAdded, when given, replaces Back after a save (Home → 3d). The name is the only required field. At 5 open bags the button
  * is disabled and the line under it says why (3c's copy).
+ *
+ * Photo (2026-11-01, bags first): 3c's slot over the fields opens PhotoSheet;
+ * the chosen photo (already styled) waits in the cache and is kept only when
+ * the bag is added. Leaving without adding drops it.
  */
 export default function AddBagScreen({ onBack, onAdded }) {
   const db = useDatabase();
@@ -32,6 +38,12 @@ export default function AddBagScreen({ onBack, onAdded }) {
   // name, the field says it is required. Typing a name ends it.
   const [nameMissing, setNameMissing] = useState(false);
   const [open, setOpen] = useState(null);
+  // A prepared photo (data/photos.ts), not kept until the bag is added.
+  const [photo, setPhoto] = useState(null);
+  const [photoSheet, setPhotoSheet] = useState(false);
+  const pending = useRef(null);
+  pending.current = photo;
+  useEffect(() => () => pending.current && dropPhoto(pending.current.id), []);
 
   useEffect(() => {
     let alive = true;
@@ -50,12 +62,23 @@ export default function AddBagScreen({ onBack, onAdded }) {
       setNameMissing(true);
       return;
     }
+    let kept = null;
     try {
-      const bag = await insertBag(db, { name, roaster: form.roaster.trim() || null, roastedAt: form.roastedAt, open: opened });
+      if (photo) {
+        await keepPhoto(photo.id);
+        kept = photo.id;
+        pending.current = null;
+      }
+      const bag = await insertBag(db, { name, roaster: form.roaster.trim() || null, roastedAt: form.roastedAt, open: opened, photo: kept });
       // Only an opened bag can be the cup's bag.
       if (opened) chooseBag?.(bag);
       (onAdded ?? onBack)();
     } catch (error) {
+      // A photo kept for a bag that wasn't added would be an orphan.
+      if (kept) {
+        deletePhoto(kept);
+        setPhoto(null);
+      }
       console.error('[bag] could not add', error);
       Alert.alert("This bag wasn't added", `What you typed is still here. ${String(error?.message ?? error)}`);
     }
@@ -96,8 +119,32 @@ export default function AddBagScreen({ onBack, onAdded }) {
             Keyboard.dismiss();
             setPicking(true);
           }}
+          photo={{
+            uri: photo?.uri ?? null,
+            onPress: () => {
+              Keyboard.dismiss();
+              setPhotoSheet(true);
+            },
+          }}
         />
       </ScreenFrame>
+      <PhotoSheet
+        visible={photoSheet}
+        onClose={() => setPhotoSheet(false)}
+        onChosen={(next) => {
+          if (photo) dropPhoto(photo.id);
+          setPhoto(next);
+          setPhotoSheet(false);
+        }}
+        onRemove={
+          photo
+            ? () => {
+                dropPhoto(photo.id);
+                setPhoto(null);
+              }
+            : undefined
+        }
+      />
       <DateSheet
         visible={picking}
         onClose={() => setPicking(false)}

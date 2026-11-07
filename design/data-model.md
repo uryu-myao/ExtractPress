@@ -33,6 +33,14 @@ A versioned `schema_migrations (version, name, applied_at)` table, not a single 
 - Enumerations: `TEXT` with a `CHECK (col IN (...))`. `schema.ts` holds the same list, and the TS types are unions of it.
 - References: `ON DELETE SET NULL`. Deleting a bean or a place never deletes the cups that mention it.
 
+## Photos (2026-11-01)
+
+- **Files, not rows.** A photo is two JPEGs in `Documents/photos/`: `<id>.jpg`, the original (upright, long side 1200, only its capture date kept in the metadata), and `<id>-styled.jpg`, the copy the app shows (the house style, `src/constants/photoStyle.js`). A row keeps only `<id>` in its `photo_uri` (bags now; gear and cups later), **a basename, not a URI**: the app's container path changes on every reinstall and update. `data/photos.ts` derives both paths.
+- **Both or neither**: the native render writes the original, then the styled copy, and removes the original if the styled copy fails. A photo is prepared in the cache and moved into `Documents/photos/` only when its row is saved.
+- **Cleanup**: on launch, kept files no row points at (a deleted bag's) and leftovers in the cache are removed (`sweepPhotos`).
+- **The style can change**: originals are kept, so `restyleAll()` re-makes every styled copy. Not automatic: changing `PHOTO_STYLE` leaves the kept photos in the old style until it is run.
+- **In the backup** with the database (below). "Export everything" exports the ids, not the photos.
+
 ## WAL and backups (found 2026-10-20)
 
 The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/morecoffee.db` (expo-sqlite's default directory), which iCloud and Finder backups include. Nothing sets `NSURLIsExcludedFromBackupKey`.
@@ -328,6 +336,7 @@ Which of these are V1 is open (report 2026-10-10).
   - Flavours have **no master table and no rename UI**. (8h's rename / merge was for *My words*, a different list; 8h is not built, 2026-10-31.)
   - Storing the text keeps a cup the fact it was, as with the bag copies.
   - If renaming a flavour is ever wanted, it is an explicit rewrite at that moment (as bag edits are), never a reference.
+  - **Localisation (recorded 2026-11-06, Uryu):** translating the bundled flavour tags needs a move to storing them by id, or the bundled tags are not translated. Stored as text, a translated tag misses the word → axis map (matched by string) and the picker lists both the English and the translated tag. The bundled drink names (`BUNDLED_DRINKS`, stored as text in `cups.drink_type`) are the same. Moving later means a data migration; decided when the release build's localisation starts (`v1-status.md`).
 - **My words and 8h (decided 2026-10-31, Uryu): 8h is not built, and My words never shape Taste DNA.**
   - 8h counts, renames and merges words a user writes again and again. Uryu's My words are free memos, close to a diary (brewing reminders, things beyond taste), with no words used over and over. Its premise doesn't hold: this is not "later", it is "not this app's".
   - Describing taste is the flavour tags' job: picked from a finite set, so they repeat and can be counted (8f's "Flavours I pick most"). My words is the free space beside them. The split was there from the start.

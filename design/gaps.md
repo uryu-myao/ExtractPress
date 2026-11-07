@@ -684,6 +684,8 @@ So a name stays a candidate for as long as any cup carries it. Removing it means
 
 **Status 2026-11-01**: open; goes with the photo report (Uryu, next).
 
+**Size, for deciding cup photos (measured 2026-11-01)**: each photo is kept twice, the original at 1200 px and its styled copy (`photoStyle.js`). A real photo comes to roughly 250–400 KB as the original and 400–600 KB styled (a dither makes the JPEG about 1.8× larger; a generated label measured 153 / 265 KB). **A photo on every cup at two cups a day is about 0.6–0.7 GB a year**: an upper bound (not every cup will have one), but the order to know. Bags and gear come to about 25 MB a year. Photos live in `Documents/photos/`, inside the iCloud / Finder backup, as the database does. **When cup photos are decided, report whether they can be kept out of the backup** (and what is then lost on a restore); not looked into yet.
+
 ---
 
 ## 36. Placeholder text is under the contrast floor (added 2026-10-23)

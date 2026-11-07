@@ -320,8 +320,9 @@ export const size = {
   /**
    * list: the list row (2a). summary: the one-cup summary row (5b).
    * compact: Home's shelf rows (Round 14, 17a / 17b; settles D-51 for Home).
+   * photoField: a form's photo slot, 3c's (and 3e / 3g's) 76 square, 2026-11-01.
    */
-  thumbnail: { list: 66, summary: 40, compact: 44 },
+  thumbnail: { list: 66, summary: 40, compact: 44, photoField: 76 },
   /**
    * Home's shelf rows, the status column on the right (Round 14, 17a / 17b):
    * the mini freshness bar's width, and the column's least width. The column
@@ -329,7 +330,6 @@ export const size = {
    * 12, 2025" measure 90 and 101 in bodySm, so a fixed 84 would not hold them.
    */
   statusColumn: 84,
-  avatar: 88,
   /**
    * Home's top block (Design Round 21, 23b): the stat column (This month,
    * Bags, Cafés) beside the hero numeral. Fixed until the total reaches four
@@ -337,6 +337,7 @@ export const size = {
    * statusColumn above.
    */
   statColumn: 150,
+  avatar: 88,
   /**
    * tabBar.height: the bar's row above the home-indicator inset. 56 since
    * 2026-10-18, to carry the tab names under the glyphs: the 40 slot box with
@@ -358,9 +359,9 @@ export const size = {
    * "Switch and the axis handle"): border 2 + inset 2 on each side, so
    * handle = rail − 8. Stops are (260 − 2·2 − 2·2 − 26) / 4 = 56.5pt apart and
    * stop 0 sits 17 in from the track's outer edge. dot: the 5 stop marks.
-   */
    * key: the axis's colour key before its left pole label (Design Round 21,
    * 23a), on every readout, slider and change tag; h is meter.track.
+   */
   axis: { rail: 34, railWidth: 260, inset: 2, handle: { w: 26, h: 26 }, dot: 6, key: { w: 12, h: 4 } },
   meter: { track: 4 },
   marker: { line: { w: 2, h: 14 } },

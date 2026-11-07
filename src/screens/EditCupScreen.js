@@ -296,7 +296,7 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
             <Section label="From my shelf">
               <View style={styles.card}>
                 {bag ? (
-                  <FieldRow swatch label="Bag" value={bag.name} meta={bagMeta(bag)} onPress={() => setSheet('bag')} />
+                  <FieldRow swatch photo={bag.photo_uri} label="Bag" value={bag.name} meta={bagMeta(bag)} onPress={() => setSheet('bag')} />
                 ) : (
                   <FieldRow swatch label="Bag" value="No bag noted" placeholder onPress={() => setSheet('bag')} />
                 )}
@@ -393,6 +393,7 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
                   // 23: only this cup's own bag can be a finished one here.
                   meta: b.finished_at != null ? [`Finished ${formatDay(b.finished_at)}`, meta].filter(Boolean).join(' · ') : meta,
                   swatch: true,
+                  photo: b.photo_uri,
                   disabled: after,
                   disabledHint: after ? 'Roasted after this cup' : undefined,
                 };

@@ -26,7 +26,8 @@ import Text from './base/Text';
  * (decided 2026-10-18, Uryu), and a framed box would read as a marker.
  *
  * Props
- *   items     [{ key, label, meta?, swatch?, badge?, disabled?, disabledHint? }]
+ *   items     [{ key, label, meta?, swatch?, photo?, badge?, disabled?, disabledHint? }]
+ *             photo: a photo's id for the swatch (data/photos.ts)
  *             badge: an inline Badge after the name ("Default", as 4a).
  *             disabled: §1's disabled look (marker border.muted, label
  *             text.muted), no press; its meta line must say why (§1: a
@@ -58,7 +59,7 @@ export default function RadioList({ items, selected, onPick, add, framed = true 
             accessibilityLabel={item.meta ? `${item.label}, ${item.meta}` : item.label}
             style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
             <View style={[styles.marker, off && styles.markerOff]}>{on ? <View style={styles.mark} /> : null}</View>
-            {item.swatch ? <PhotoPlaceholder size={size.field.height} /> : null}
+            {item.swatch ? <PhotoPlaceholder size={size.field.height} photo={item.photo} /> : null}
             <View style={styles.text}>
               <View style={styles.nameRow}>
                 <Text variant="title" color={on ? 'primary' : off ? 'muted' : 'secondary'} truncate="name">

@@ -53,7 +53,8 @@ export async function countOpenBags(db: SQLiteDatabase): Promise<number> {
 }
 
 /** What 3c's Bag form hands over (minimal set: name required, the rest optional). */
-export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; open: boolean };
+/** photo: a kept photo's id (data/photos.ts), or null. */
+export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; open: boolean; photo?: string | null };
 
 /**
  * Add a bag: opened now (3c "Open this bag"), or not yet (3c "Add without
@@ -63,11 +64,12 @@ export type NewBag = { name: string; roaster: string | null; roastedAt: number |
  */
 export async function insertBag(db: SQLiteDatabase, bag: NewBag): Promise<Bag> {
   if ((await countOpenBags(db)) >= OPEN_BAG_LIMIT) throw new Error(`All ${OPEN_BAG_LIMIT} slots are taken. Finish a bag to free one up.`);
-  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, opened_at) VALUES (?, ?, ?, ?)', [
+  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, opened_at, photo_uri) VALUES (?, ?, ?, ?, ?)', [
     bag.name,
     bag.roaster,
     bag.roastedAt,
     bag.open ? Date.now() : null,
+    bag.photo ?? null,
   ]);
   const row = await db.getFirstAsync<Bag & { notes: string }>('SELECT * FROM bags WHERE id = ?', [result.lastInsertRowId]);
   if (!row) throw new Error('The bag was not stored.');
@@ -288,6 +290,17 @@ export async function updateBag(db: SQLiteDatabase, id: number, edit: BagEdit): 
  * keep their copies of its details (the copy rule); only their link goes
  * (bag_id → NULL by the foreign key), so Taste DNA is unchanged.
  */
+/**
+ * A bag's photo (the bag page, 19a; 2026-11-02): a kept photo's id, or null to
+ * remove it. Returns the one it replaces, whose files the caller deletes.
+ */
+export async function setBagPhoto(db: SQLiteDatabase, id: number, photo: string | null): Promise<string | null> {
+  const before = await db.getFirstAsync<{ photo_uri: string | null }>('SELECT photo_uri FROM bags WHERE id = ?', [id]);
+  await db.runAsync('UPDATE bags SET photo_uri = ? WHERE id = ?', [photo, id]);
+  notifyShelfChanged();
+  return before?.photo_uri ?? null;
+}
+
 export async function deleteBag(db: SQLiteDatabase, id: number): Promise<void> {
   await db.runAsync('DELETE FROM bags WHERE id = ?', [id]);
   notifyShelfChanged();
@@ -767,19 +780,6 @@ export async function cupTimesSince(db: SQLiteDatabase, from: number): Promise<n
   return rows.map((r) => r.logged_at);
 }
 
-export async function cupOrdinal(db: SQLiteDatabase, id: number): Promise<number> {
-  const row = await db.getFirstAsync<{ n: number }>(
-    `SELECT COUNT(*) AS n FROM cups c, (SELECT logged_at, id FROM cups WHERE id = ?) t
-      WHERE c.logged_at < t.logged_at OR (c.logged_at = t.logged_at AND c.id <= t.id)`,
-    [id]
-  );
-  return row?.n ?? 0;
-}
-
-/** Every cup, newest first (by when it was drunk, then by insertion). */
-export async function listCups(db: SQLiteDatabase): Promise<CupListItem[]> {
-  const rows = await db.getAllAsync<CupListItem>(
-    `SELECT c.id, c.logged_at, c.rating, c.mode, c.note, c.flavours, c.drink_type,
 /**
  * 1b's and 6a's Bags: every bag I've added — sealed, open or finished —
  * plus each deleted bag my cups still name (bag_id set NULL; counted by its
@@ -811,6 +811,19 @@ export async function countCupCafes(db: SQLiteDatabase): Promise<number> {
 }
 
 /** Which cup this is, counting from the first logged (5c's "Cup 4"). */
+export async function cupOrdinal(db: SQLiteDatabase, id: number): Promise<number> {
+  const row = await db.getFirstAsync<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM cups c, (SELECT logged_at, id FROM cups WHERE id = ?) t
+      WHERE c.logged_at < t.logged_at OR (c.logged_at = t.logged_at AND c.id <= t.id)`,
+    [id]
+  );
+  return row?.n ?? 0;
+}
+
+/** Every cup, newest first (by when it was drunk, then by insertion). */
+export async function listCups(db: SQLiteDatabase): Promise<CupListItem[]> {
+  const rows = await db.getAllAsync<CupListItem>(
+    `SELECT c.id, c.logged_at, c.rating, c.mode, c.note, c.flavours, c.drink_type,
             c.bean_name, c.bean_roaster, c.bean_process, c.brew_method, c.grinder,
             c.bag_id, c.brewer_id, c.grinder_id,
             c.product_name, c.place_name

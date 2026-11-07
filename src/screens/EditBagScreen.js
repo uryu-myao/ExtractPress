@@ -4,6 +4,7 @@ import BagForm from '../components/BagForm';
 import BeanFreshness from '../components/BeanFreshness';
 import DateSheet from '../components/DateSheet';
 import DiscardSheet from '../components/DiscardSheet';
+import PhotoSheet from '../components/PhotoSheet';
 import ItemCups, { useFilteredCups } from '../components/ItemCups';
 import SaveBar from '../components/SaveBar';
 import BottomSheet from '../components/base/BottomSheet';
@@ -16,7 +17,8 @@ import Text from '../components/base/Text';
 import { formatDay, startOfDay } from '../constants/dates';
 import { bagFilter } from '../constants/search';
 import { useDatabase } from '../data/DatabaseProvider';
-import { deleteBag, finishBag, updateBag } from '../data/repository';
+import { deletePhoto, keepPhoto } from '../data/photos';
+import { deleteBag, finishBag, setBagPhoto, updateBag } from '../data/repository';
 import { requestPush, requestShell } from '../navigation';
 import { color, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
@@ -33,7 +35,7 @@ import ScreenFrame from './ScreenFrame';
  *   facts      under the title, each after its label (labelEyebrow muted,
  *              then the value in body): "ROASTER Blue Bottle  SIZE 250 g"
  *              (Uryu, 2026-10-28; 19a draws a bare "Blue Bottle · 250 g")
- *   status     the photo (a placeholder: no camera yet), then beanFreshness
+ *   status     the photo, then beanFreshness
  *              stacked (19a: the day and state over the bar) from the roast
  *              date being edited, and "Roasted Mar 30 ·
  *              opened Apr 6". Sealed: 3d's sealed line. Finished: "Finished
@@ -62,6 +64,12 @@ import ScreenFrame from './ScreenFrame';
  *   Opened on   from the roast date to the first cup (no cups: today).
  * Leaving with edits asks first (Round 4's sheet; the bag's own body).
  * Delete: 11b's sheet with "bag" (Round 6, 36); back with 13b's notice.
+ * Photo (2026-11-02, Uryu): the status block's square is the photo and the
+ * way to change it: it opens PhotoSheet (take, choose, remove; the same
+ * sheet as 3c's, PROVISIONAL until Design Round 19). With none, "No photo
+ * yet. Tap to add one." beside it (19c's line). A change applies at once,
+ * not through the Save bar: the sheet's "Use this photo" is its own confirm,
+ * as Finish is. The replaced photo's files go with it.
  */
 const countFormat = new Intl.NumberFormat('en-US');
 
@@ -76,6 +84,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   // 'roasted' | 'opened' | 'discard' | 'delete' | null
   const [sheet, setSheet] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [photoSheet, setPhotoSheet] = useState(false);
 
   const cupCount = cups?.length ?? 0;
   const firstCupAt = cups?.length ? cups[cups.length - 1].logged_at : null;
@@ -93,6 +102,22 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     });
   }, [guardLeave, dirty, busy]);
   const leave = () => onBack({ force: true });
+
+  // A new photo is kept, set on the bag, and the old one's files removed;
+  // null removes the photo.
+  const changePhoto = async (next) => {
+    setPhotoSheet(false);
+    try {
+      if (next) await keepPhoto(next.id);
+      const before = await setBagPhoto(db, stored.id, next?.id ?? null);
+      deletePhoto(before);
+      setStored((s) => ({ ...s, photo_uri: next?.id ?? null }));
+    } catch (error) {
+      if (next) deletePhoto(next.id);
+      console.error('[3g] could not change the photo', error);
+      Alert.alert("The photo wasn't changed", String(error?.message ?? error));
+    }
+  };
 
   // Limits. The first cup's day and today are whole days (the sheets pick days).
   const today = startOfDay(new Date());
@@ -181,8 +206,20 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
             ) : null}
 
             <View style={styles.status}>
-              {/* TODO(photos): the bag's photo once photos can be added. */}
-              <PhotoPlaceholder size={size.thumbnail.list} />
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setPhotoSheet(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={stored.photo_uri ? 'Bag photo, change or remove' : 'Add a photo of the bag'}>
+                {({ pressed }) => (
+                  <View>
+                    <PhotoPlaceholder size={size.thumbnail.list} photo={stored.photo_uri} />
+                    {pressed ? <View style={styles.photoPressed} /> : null}
+                  </View>
+                )}
+              </Pressable>
               <View style={styles.statusText}>
                 {finished ? (
                   <Text variant="meterLabel" color="muted">
@@ -198,6 +235,11 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
                     {dates}
                   </Text>
                 ) : null}
+                {stored.photo_uri ? null : (
+                  <Text variant="bodySm" color="muted">
+                    No photo yet. Tap to add one.
+                  </Text>
+                )}
               </View>
             </View>
 
@@ -282,6 +324,12 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
         ) : null}
       </SaveBar>
 
+      <PhotoSheet
+        visible={photoSheet}
+        onClose={() => setPhotoSheet(false)}
+        onChosen={changePhoto}
+        onRemove={stored.photo_uri ? () => changePhoto(null) : undefined}
+      />
       <DateSheet
         visible={sheet === 'roasted'}
         onClose={() => setSheet(null)}
@@ -365,6 +413,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[14],
+  },
+  // The photo has a surface, so pressed darkens it (§1), never opacity.
+  photoPressed: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: state.pressed.row,
   },
   statusText: {
     flex: 1,

@@ -47,6 +47,14 @@
         }
       ],
       [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Take a photo of a bag or a piece of gear. It stays on your phone.",
+          "photosPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "ios": {

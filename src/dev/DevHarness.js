@@ -9,6 +9,7 @@ import ButtonPage from './pages/ButtonPage';
 import AddButtonPage from './pages/AddButtonPage';
 import FieldRowPage from './pages/FieldRowPage';
 import IconButtonPage from './pages/IconButtonPage';
+import PhotoStylePage from './pages/PhotoStylePage';
 import RecordRowPage from './pages/RecordRowPage';
 import SectionLabelPage from './pages/SectionLabelPage';
 import SegmentedControlPage from './pages/SegmentedControlPage';
@@ -33,6 +34,7 @@ const PAGES = [
   { key: 'axisSlider', title: 'AxisSlider · dashes', Page: AxisSliderPage },
   { key: 'axisReadout', title: 'AxisReadout', Page: AxisReadoutPage },
   { key: 'recordRow', title: 'Badge · RecordRow', Page: RecordRowPage },
+  { key: 'photoStyle', title: 'Photo style (lab)', Page: PhotoStylePage },
 ];
 
 export default function DevHarness() {

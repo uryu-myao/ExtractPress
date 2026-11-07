@@ -43,6 +43,12 @@ export const schema = {
      * anything. The UI's internal "mine" becomes "made_it" when it is wired up.
      */
     mode: { type: 'TEXT', nullable: false, values: ['made_it', 'barista', 'packaged'] },
+    /**
+     * A PHOTO'S ID, NOT A URI (2026-11-01, despite the name): the basename
+     * both files follow from, Documents/photos/<id>.jpg (the original) and
+     * <id>-styled.jpg (what the app shows); data/photos.ts. Never a full path:
+     * the app's container moves on every reinstall and update.
+     */
     photo_uri: { type: 'TEXT', nullable: true },
     /** My words (5b): a free memo, stored as written, never rewritten; never feeds Taste DNA (2026-10-31). */
     note: { type: 'TEXT', nullable: true },
@@ -155,6 +161,12 @@ export const schema = {
     /** NULL = open (takes one of the 5 slots); set = finished, in 3f. Reopen clears it. */
     finished_at: { type: 'INTEGER', nullable: true },
     size_g: { type: 'INTEGER', nullable: true },
+    /**
+     * A PHOTO'S ID, NOT A URI (2026-11-01, despite the name): the basename
+     * both files follow from, Documents/photos/<id>.jpg (the original) and
+     * <id>-styled.jpg (what the app shows); data/photos.ts. Never a full path:
+     * the app's container moves on every reinstall and update.
+     */
     photo_uri: { type: 'TEXT', nullable: true },
   },
 
@@ -168,6 +180,12 @@ export const schema = {
     settings_note: { type: 'TEXT', nullable: true },
     /** 0 / 1. 5a pre-fills the default brewer and grinder. */
     is_default: { type: 'INTEGER', nullable: false },
+    /**
+     * A PHOTO'S ID, NOT A URI (2026-11-01, despite the name): the basename
+     * both files follow from, Documents/photos/<id>.jpg (the original) and
+     * <id>-styled.jpg (what the app shows); data/photos.ts. Never a full path:
+     * the app's container moves on every reinstall and update.
+     */
     photo_uri: { type: 'TEXT', nullable: true },
     added_at: { type: 'INTEGER', nullable: false },
   },
