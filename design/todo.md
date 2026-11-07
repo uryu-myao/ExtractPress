@@ -146,6 +146,7 @@ Read for planning after Barista; nothing built. Full transcript of both boards: 
 - **What it does need and V1 lacks**: a static table from origin / process to the axes ("Kenya pushes acidity further than Ethiopia"; none exists, only `BUNDLED_FLAVOURS`); My words counts ("you wrote "juicy" nine times"; T-9, 8h); water temperature and grind history (`water_temp_c`, `grind_setting`: V1.5 columns with no UI; T-11); half-star ratings ("Rated 4.5"; V1 is whole stars); 6b's "How adventurous" (Safe / Stretch / Surprise) and 6d's "How I brew" (which set its tone; 6b / 6d are not built). 8e's "Log a cup with this plan" pre-fills 28 clicks / 92° / 1:16, which 5a can't enter.
 - **The 5-cup threshold has no reason left** (`taste-dna.md`, Thresholds): decide it with Try next.
 - **Next**: what can be cut so a first Try next stands on V1's data.
+- **Proposal 2026-11-07**: `try-next-v1.md` (what V1's data can make, thresholds per kind, no 8e). Waiting on Uryu.
 
 ## T-15. 11a's café line wants an address that isn't stored (recorded 2026-10-30, Design Round 16 B5) — **decided 2026-10-31: live**
 Design: "the café line shows the short address only, with no distance or visit count". `places` has no address column (decided 2026-10-30, because no screen showed one); this answer is such a screen. Not built; 11a shows no café meta meanwhile.

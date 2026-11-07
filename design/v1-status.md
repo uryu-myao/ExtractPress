@@ -24,6 +24,7 @@ Scope test (2026-10-11): can Uryu use it every day himself? His cups are mostly 
 The rows below marked "not now" for these belong to this stage.
 
 **Store release by the end of December 2026 (decided 2026-11-07, Uryu).** Just over 7 weeks. Which of the release-build items above go in is decided item by item (pending: Try next's tab, how much of 6b, notifications, 5a's photo entry).
+What the store needs besides features: `release-checklist.md`.
 
 Not in V1:
 - localisation (Chinese, Japanese): **1.1**. It reopens the typesetting decisions above and Design becomes the bottleneck. Looked at again only if time is left at the end.
