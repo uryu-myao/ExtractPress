@@ -72,7 +72,7 @@ export const SEARCH_PLACEHOLDER = 'Cups, beans, gear, words';
  *   typing   (text not yet searched; 18c) up to 3 hits (thumbnail, the kind
  *            first in the meta line, ›: they open that thing), a hairline,
  *            then the terms (magnifier, typed part in ink, the rest muted, no
- *            ›: they search). No headings.
+ *            ›: they search). No headings. Neither: "Nothing matches “xyz”."
  *   results  (text searched: the keyboard's Search, or a term; 18d) five
  *            tabs, Home's tab on a hairline: ALL (no count), CUPS, WORDS,
  *            BEANS, GEAR, a 0 kept so the row never moves. ALL's sections:
@@ -288,6 +288,16 @@ function Start({ cups, history, onFilter, onSearch, onClear }) {
 function Typing({ query, hits, terms, onSearch, onBag, onGear, onCup }) {
   const q = query.toLowerCase();
   const open = (hit) => (hit.type === 'bag' ? onBag(hit.item) : hit.type === 'gear' ? onGear(hit.item) : onCup(hit.item.id));
+  // No hit and no term: say so now, as 18d would after Search, rather than
+  // leave the page blank (Uryu, 2026-11-05).
+  // TODO(design): 18c draws no empty state; this borrows 18d's line.
+  if (!hits.length && !terms.length) {
+    return (
+      <Text variant="body" color="secondary">
+        {nothingMatches(query)}
+      </Text>
+    );
+  }
   return (
     <View>
       {hits.map((hit) => (
