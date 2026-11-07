@@ -36,7 +36,8 @@ import ScreenFrame from './ScreenFrame';
  *     noted is the empty track with "Not noted yet". A cup with no
  *     dna_change shows the profile as it stands.
  *   - Try next's progress ("4 of 5 cups", "One more cup and Try next opens
- *     up") is V2, and its count is undecided (D-47, todo.md T-14): not shown
+ *     up") is dropped (2026-11-07): Try next has no cup count to reach, each
+ *     suggestion has its own condition (try-next-v1.md). Not shown.
  * Buttons: "Back to home" (primary) and "See this record" (secondary → 2c).
  */
 const expandEasing = Easing.bezier(...motion.expand.controlPoints);

@@ -153,3 +153,8 @@ Design: "the café line shows the short address only, with no distance or visit 
 - **Option 1, recommended**: migration 6, `places.address TEXT` (ALTER TABLE ADD COLUMN, nullable), written by `placeIdFor` from the map's short address when the row is created. Places typed by hand, and those stored before, have none (no line). Never updated afterwards, as the name.
 - **Option 2**: look the address up live by MapKit id (`MKMapItemRequest`, iOS 18+). No schema change, but it needs the network on every 11a open and a new native call.
 - **Decision (Uryu, 2026-10-31): option 2, live.** No `places.address`. Waiting on Design Round 18, B8 (11a when the address can't be fetched: not an error, the name shows, only the address is missing) before building.
+
+## T-16. Export before the account or the bundle ID changes (recorded 2026-11-07, planner)
+**Before** the first build signed by the paid team goes onto Uryu's iPhone, and again before the bundle ID changes with the new name: on the phone, Profile → **Export my cups** (CSV) and **Export everything** (JSON). Keep both files off the phone (Files / iCloud Drive / Mac).
+- **Why**: whether the records survive is unknown. iOS keeps an app's data per bundle ID. A new bundle ID is a new app with an empty database. The same bundle ID signed by a different team may refuse to install over the old build until it is deleted, and deleting it deletes the records.
+- **The files keep the records, not the app's state**: V1 has **no import**, so neither file can be read back into the app. Also, the JSON holds photo ids, not the photos. If the records must come back into the store build, an import has to be built first (not planned), or the switch has to keep the data container (same bundle ID, same team).

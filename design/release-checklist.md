@@ -8,26 +8,26 @@ Target: on the store by the end of December 2026 (`v1-status.md`). This lists wh
 
 | Item | State | Notes |
 |---|---|---|
-| Apple Developer Program | ❌ (most likely) | This Mac holds one signing identity, "Apple Development: myao.jpn@gmail.com", and device builds expire after 7 days: that is free provisioning (a Personal Team, `Y57C6973DT`). The App Store needs the paid program (USD 99 a year). **Enrol now**: approval can take from a day to a couple of weeks. |
+| Apple Developer Program | ⏳ applied (2026-11-07), approval pending. Was: | This Mac holds one signing identity, "Apple Development: myao.jpn@gmail.com", and device builds expire after 7 days: that is free provisioning (a Personal Team, `Y57C6973DT`). The App Store needs the paid program (USD 99 a year). **Enrol now**: approval can take from a day to a couple of weeks. |
 | Distribution certificate | ❌ | "Apple Distribution". Xcode's automatic signing makes it once the paid team exists. |
 | App Store provisioning profile | ❌ | Made by automatic signing, the same way. |
 | App ID / bundle ID | ⚠️ | `com.uryumyao.MoreCoffee-App`, not yet registered under a paid team. **It can never change after the first upload**, so decide now. Keeping it means the store build can install over Uryu's current build; whether his records survive the switch from the Personal Team to the paid team is unverified, so **export the CSV first**. |
-| App Store Connect app record | ❌ | Name, primary language (English), bundle ID, SKU. |
+| App Store Connect app record | ❌ **not until the name is decided** | Name, primary language (English), bundle ID, SKU. The bundle ID can't change after the first upload. |
 
 ## 2. The binary
 
 | Item | State | Notes |
 |---|---|---|
 | Release build | ✅ builds | Release for device built 2026-11-07 (0 errors, 2 warnings). Install failed only because the phone disconnected. Archiving and uploading are untried: they need distribution signing. |
-| Display name | ⚠️ | `CFBundleDisplayName` is **"MoreCoffee-App"** (from `app.json` `name`), and that is what the home screen shows. Make it "MoreCoffee". The App Store name (up to 30 characters) is checked for availability when the record is made. |
+| Display name | ✅ 2026-11-07 | "MoreCoffee" (was "MoreCoffee-App"). The final name is decided later: `rename-plan.md`. **No App Store Connect record until then.** |
 | Version / build | ✅ | 1.0.0 (1). Raise the build number on every upload. |
 | App icon | ❌ | `assets/icon.png` is **Expo's template** (grey grid and circles). It is the right size: 1024×1024 with no alpha, and a single 1024 is enough now because Xcode makes the other sizes. A real icon is needed: square corners in the file, with no transparency. |
 | Launch screen | ❌ | `assets/splash.png` is also Expo's template. The background is already `#F4EDEA`. |
-| iPad | ⚠️ **decide** | `supportsTablet: true`: the app is offered as an iPad app, review tests it on iPad, iPad screenshots become required, and the iPad Info.plist allows all four orientations. The design is phone-only. **Set it to false before the first submission. A device family can't be dropped in a later update.** With false, iPads run the iPhone layout. |
-| Export compliance | ❌ | Add `ITSAppUsesNonExemptEncryption = false` (`ios.config.usesNonExemptEncryption: false` in `app.json`), or App Store Connect asks on every build. The app does no encryption of its own. |
+| iPad | ✅ 2026-11-07: `supportsTablet: false`, the device family is iPhone only. Was: | `supportsTablet: true`: the app is offered as an iPad app, review tests it on iPad, iPad screenshots become required, and the iPad Info.plist allows all four orientations. The design is phone-only. **Set it to false before the first submission. A device family can't be dropped in a later update.** With false, iPads run the iPhone layout. |
+| Export compliance | ✅ 2026-11-07: `ios.config.usesNonExemptEncryption: false` in `app.json` sets it. Was: | Add `ITSAppUsesNonExemptEncryption = false` (`ios.config.usesNonExemptEncryption: false` in `app.json`), or App Store Connect asks on every build. The app does no encryption of its own. |
 | Privacy manifest | ✅ | `PrivacyInfo.xcprivacy`: no collected data types, `NSPrivacyTracking` false, and reasons given for the UserDefaults, file-timestamp and boot-time APIs. |
 | Dev seed data | ✅ **verified** | A production export's source map lists the app's 126 modules, and `src/data/dev/seed.ts` is not among them. It cannot run in Release because it isn't in the bundle. (The opt-in `EXPO_PUBLIC_DEV_SEED=1` only applies under `__DEV__`.) |
-| Dev harness | ⚠️ unreachable but shipped | `SHOW_DEV_HARNESS = __DEV__ && EXPO_PUBLIC_DEV_HARNESS === '1'` is false in Release, and nothing else imports `src/dev/`, so no path reaches it. But `App.js` imports `DevHarness` at the top, so its **16 modules** (the Photo style lab, the AxisSlider page and the rest) are in the bundle. Fix: `require()` it inside the branch, as the seed does. A three-line change. |
+| Dev harness | ✅ 2026-11-07: `require()`d inside the branch, so the production bundle went from 126 app modules to 110, none from `src/dev/`. Was: unreachable but shipped. | `SHOW_DEV_HARNESS = __DEV__ && EXPO_PUBLIC_DEV_HARNESS === '1'` is false in Release, and nothing else imports `src/dev/`, so no path reaches it. But `App.js` imports `DevHarness` at the top, so its **16 modules** (the Photo style lab, the AxisSlider page and the rest) are in the bundle. Fix: `require()` it inside the branch, as the seed does. A three-line change. |
 | Retired screens | ✅ | HomeScreen, CoffeeListScreen, AddCoffeeScreen and the other old screens are not in the bundle. |
 | Placeholder content | ❌ | The Try next tab says **"This screen is being rebuilt."** App Review rejects placeholder content (Guideline 2.1). It goes, whichever way Uryu decides Try next. Check every other row for a dead end too (6b, 6c). |
 
@@ -35,7 +35,7 @@ Target: on the store by the end of December 2026 (`v1-status.md`). This lists wh
 
 | Key | Text now | |
 |---|---|---|
-| `NSCameraUsageDescription` | "Take a photo of a bag or a piece of gear. It stays on your phone." | ⚠️ **gear photos are out of V1**, and review checks that the text matches what the app does. Suggest: "Take a photo of a bag of beans. It stays on your phone." |
+| `NSCameraUsageDescription` | "Take a photo of a bag of beans. It stays on your phone." | ✅ 2026-11-07 (was "…a bag or a piece of gear…": gear photos are out of V1) |
 | `NSLocationWhenInUseUsageDescription` | "Shows the cafés around you first when you pick one. Your location is never stored." | ✅ |
 | Photo library | none | ✅ choosing from the library uses the system picker, which needs no permission (`photosPermission: false`) |
 | Microphone, motion, Always location | none | ✅ turned off in the plugins |
@@ -59,3 +59,5 @@ Target: on the store by the end of December 2026 (`v1-status.md`). This lists wh
 2. Once enrolled: make the app record and archive, then upload to **TestFlight** and install it on Uryu's phone (this also answers whether his records survive).
 3. In parallel: the icon and launch screen (Design), the privacy policy and support pages, the metadata text.
 4. In the last two weeks: screenshots from the final build, then submit. Review usually takes a day or two; allow for one rejection round.
+
+Icon and launch screen: Uryu supplies them. The steps and file specs are in `rename-plan.md`, "Replacing the icon and launch screen".

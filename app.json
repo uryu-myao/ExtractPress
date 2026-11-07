@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "MoreCoffee-App",
+    "name": "MoreCoffee",
     "slug": "MoreCoffee-App",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,9 +10,12 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.uryumyao.MoreCoffee-App",
-      "appleTeamId": "Y57C6973DT"
+      "appleTeamId": "Y57C6973DT",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -49,7 +52,7 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Take a photo of a bag or a piece of gear. It stays on your phone.",
+          "cameraPermission": "Take a photo of a bag of beans. It stays on your phone.",
           "photosPermission": false,
           "microphonePermission": false
         }

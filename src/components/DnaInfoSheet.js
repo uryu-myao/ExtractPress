@@ -32,9 +32,9 @@ import Text from './base/Text';
  *           what the count is for on its own, not leaning on the paragraph
  *           above, whose copy is still provisional.
  *   locked  "From 147 cups." (8f; PROVISIONAL, as on the card before)
- * TODO(V2): the mock's first row in the box ("3 of 5 cups" + cup glyphs) is
- * Try next's progress, whose count is undecided (D-47, todo.md T-14): not
- * shown, so the box holds the sentence alone.
+ * The mock's first row in the box ("3 of 5 cups" + cup glyphs) was Try
+ * next's progress: dropped (2026-11-07), Try next has no cup count to reach
+ * (try-next-v1.md). The box holds the sentence alone.
  *
  * Way on (2026-10-30, Uryu): "How it is built" (InlineAction) under the
  * progress box opens 8g. Only where 8g can be pushed: Home's and 8f's sheet
