@@ -8,7 +8,38 @@ Scope test (2026-10-11): can Uryu use it every day himself? His cups are mostly 
 
 **In scope since 2026-10-14, after the above**: 3f (minimal: list + Reopen bag), then 3g (minimal: name, roaster, roasted on). Questions: design-missing.md 27–38.
 
-**Not now**: 8n · 8c · 8o · 7a · 7b · 8i · 8m · 8j · 6b (except its How my DNA is built and My data rows) · 6c · 6d. Barista came in 2026-10-30 (Uryu: dogfood café cups), and 8g the same day (8f's footer led nowhere; Try next stands on it). 8h is not built at all (its premise doesn't hold, 2026-10-31). The Try next tab stays a placeholder (decided before release); Profile is 6a's upper part (2026-10-21).
+**Not now** (all of them the release build, below): 8n · 8c · 8o · 7a · 7b · 8i · 8m · 8j · 6b (except its How my DNA is built and My data rows) · 6c · 6d. Barista came in 2026-10-30 (Uryu: dogfood café cups), and 8g the same day (8f's footer led nowhere; Try next stands on it). 8h is not built at all (its premise doesn't hold, 2026-10-31). The Try next tab stays a placeholder (decided before release); Profile is 6a's upper part (2026-10-21).
+
+**The release build, one stage (recorded 2026-11-06, Uryu).** What Uryu doesn't need to use the app himself, and what is all needed at once when it is handed to other people. Taken as one stage, so building any one of them first shows the rest:
+- localisation (Chinese, Japanese) **and its typesetting decisions**: Archivo and Instrument Serif have no CJK glyphs, the 14 composite text styles' line heights were measured on Archivo, and the 4 upper-case styles lose their hierarchy in CJK. So this is designing the Japanese version, not translating. Its first item is the survey of what that takes (not done now). The flavour-tag / drink-name storage this touches: `data-model.md`, flavour tags
+- Welcome (8a / 9a / 9b)
+- first setup (8n / 8c / 8o); `settings.setup_done` already exists
+- the rest of 6b (settings, Reset, a real Backup)
+- 6c (help, legal)
+- 6d (edit profile)
+- 8i reminders (needs a native module for local notifications)
+- 8j feedback (how it is sent is undecided)
+- 7a / 7b notifications
+
+The rows below marked "not now" for these belong to this stage.
+
+**Store release by the end of December 2026 (decided 2026-11-07, Uryu).** Just over 7 weeks. Which of the release-build items above go in is decided item by item (pending: Try next's tab, how much of 6b, notifications, 5a's photo entry).
+
+Not in V1:
+- localisation (Chinese, Japanese): **1.1**. It reopens the typesetting decisions above and Design becomes the bottleneck. Looked at again only if time is left at the end.
+- stickers: 1.5 or later
+- the grind setting (`todo.md` T-11, all three places)
+- 8h (its premise doesn't hold; decided 2026-10-31)
+- gear photos
+- cleaning up candidates (`gaps.md` 27)
+
+Half in:
+- photos: bags only. Cup photos are decided separately.
+
+Accepted as they are:
+- `gaps.md` 26, 29, 36 and 30. 26 / 29 / 36 share one root, D-44: a field's text is 16 / 700, placeholder and value alike. One 16 / 500 style might solve all three; tried in the polish week, and if it doesn't, they stay as they are.
+
+**Until then (2026-11-06)**: nothing in V1's scope is left unstarted, and no new features are built. The work is: fixes for what Uryu finds on device; 19a / 19c when his rework comes; the gear illustrations when they are decided; Design's answers when they come. Waiting on Uryu's input: Try next (once there are enough cups), the photo style (after his real shots), tidying the candidate lists (gaps 27, once they actually get messy).
 
 **Next to fall due (recorded 2026-10-20; met: 2b and search are built and seen on device): 2b (sort) and 8l (search)**, the next deadline we set ourselves after the five-bag problem. Dogfood has a few dozen cups today, so scrolling 2a still reaches them; at two a day that is several hundred within three months, and older cups stop being reachable. Home (1b / 4a / 4b) is already done, so this is the next thing to review.
 
@@ -25,7 +56,7 @@ Checked against the code 2026-11-01; Design's open questions are in `design-brie
 | 5c Saved — what the cup changed | yes | **done** | over the steps after a save, from the stored `dna_change`: the sentence, then change tags (Round 21, 23e / 23f: `‹pole› +N`, "Starts at …"), then all four axes in their colours (the per-axis "Moved N points" lines are gone, 2026-11-06); copy Design's (design-missing 12; summary Round 12; nothing-moved D-54; first-only sentence Round 21). Try next's progress not shown (V2; its count undecided, D-47) |
 | 5d Missing required fields | yes | **done** | what is required per mode: the rating; the bag and method when the shelf fills them (I made it); the café (Barista: "Which café?" / "Pick it from the map or type its name.", Round 16 A1); the product (Packaged). Copy: Round 9's two-field wording |
 | 5e Packaged | **yes (minimal)** | **done** (2026-10-15) | one Product row: the name as typed (one written form since 2026-11-01), from a search sheet over past products with Add "‹typed›"; also editable in 11a. No brand (Design Round 7), container or store (`bought_at_name` exists, always empty). Migration 4. "Add a product" / "Product name" asked of Design (Round 18, B10) |
-| 3c Add a bag | yes | **partial (minimal)** | name, roaster, roast date. Not: roast level, size, photo, origin / region / process, "Reuse a past bag" |
+| 3c Add a bag | yes | **partial (minimal)** | name, roaster, roast date, **a photo** (2026-11-01: camera or library, shown styled before it is kept; the sheet and its words PROVISIONAL, Design Round 19). Bag photos show on Home's shelf, Gear & beans, Finished bags and the bag picker; the bag page (19a) waits on Uryu's rework. Not: roast level, size, origin / region / process, "Reuse a past bag" |
 | 3a Add gear | yes | **partial (minimal)** | 8c's generic list. Not: catalogue, search, models, "Not listed" |
 | Bag / gear picker (no mock) | yes | **done** | from 5a |
 | 1b / 4a / 4b Home | **yes** | **done** | greeting, cups total + This month / Bags / Cafés + the month strip (Round 21, 23b / 23c, 2026-11-06; the This week panel is gone), Record a coffee, Taste DNA card, recently sipped (→ 2c, See all → Records), the shelf (17a / 17b, Round 14: My gear / My beans pages; rows open the bag / gear page; an empty side's add button under the first row's rule, 2026-10-30). Taste DNA card's foot row "Open my taste DNA ›" → 8f. **Shelf seen on device** (2026-10-31). Not shown: Try next box (V2), the slow-start line (dropped, Round 10 C10) |
@@ -36,16 +67,16 @@ Checked against the code 2026-11-01; Design's open questions are in `design-brie
 | 3b / 3d → Gear & beans (17c / 17d) | **yes** | **done** | Round 14 merged 3b and 3d into Gear & beans (two pages, slot count). Round 15: rows open the gear page (19c, was 3e) and the bag page (19a, was 3g). **Seen on device** (2026-10-31). Uryu is reworking 19a / 19c's emphasis himself: not touched until his version comes |
 | 3d Finish bag | **yes** | **done** | Finish bag on the bag page; no confirm and no undo (gaps 17, accepted 2026-11-01): 3f's Reopen is the recovery |
 | 19a / 19c bag and gear pages · 3f Finished bags | **yes** | **done** | 19a / 19c (Round 15, Turn 19): name as title, details, freshness, the last 5 cups, "All N cups ›", "Log a cup with it ›", Finish / Delete; a Save bar after the first edit; edits to name / roaster apply to the cups already logged ("Applies to the N cups…"). 3f: list, Reopen, the 5 / 5 line, the reopened notice |
-| 6a / 6b / 6c Profile | **6a upper part: yes (2026-10-21)**; 6b: two parts | **6a upper part built**; **6b's built rows seen on device** (2026-10-31); 6c not started | personal card without name / avatar / badge (6d): "Logging since" over Cups / Bags / Cafés (Cafés replaced our Week streak, Design Round 21 build questions 7; Bags and Cafés counted as Home counts them, 2026-11-06); Taste DNA card → 8f; My shelf: My gear / My beans → Gear & beans; 6b's Taste DNA section with only "How my DNA is built" → 8g (Round 17 A4); 6b's My data: "Export my cups" (CSV) and "Export everything" (JSON, interim, T-8). Not: Edit (6d), "1 stale". No My words heading (8h is not built) |
-| 6d Edit profile | not now | not started | |
+| 6a / 6b / 6c Profile | **6a upper part: yes (2026-10-21)**; 6b: two parts (the rest of 6b and 6c: release build) | **6a upper part built**; **6b's built rows seen on device** (2026-10-31); 6c not started | personal card without name / avatar / badge (6d): "Logging since" over Cups / Bags / Cafés (Cafés replaced our Week streak, Design Round 21 build questions 7; Bags and Cafés counted as Home counts them, 2026-11-06); Taste DNA card → 8f; My shelf: My gear / My beans → Gear & beans; 6b's Taste DNA section with only "How my DNA is built" → 8g (Round 17 A4); 6b's My data: "Export my cups" (CSV) and "Export everything" (JSON, interim, T-8). Not: Edit (6d), "1 stale". No My words heading (8h is not built) |
+| 6d Edit profile | release build | not started | |
 | 8f My taste DNA | **yes (2026-10-21)** | **built, not yet seen on device** | stamp (ⓘ → 15b, with "How it is built" at its foot), the summary line, "From N cups · shifted N days ago" (with nothing noted, "Rate a cup and note one taste to start."), four axes with band names, "Flavours I pick most" (top 4 tags), Last shift as a plain section (Round 11 C; 21d draws a frame again, D-60, Round 18 B6), "How it is built" as the last item (Round 17). From 6a's card, 2c's "Feeds my taste DNA" and Home's card foot. Not built: "What you keep saying" (8h dropped, 2026-10-31); Try next's footer (V2) |
 | 8g How my DNA is built | **yes (2026-10-30)** | **built, not yet seen on device** | Design Round 17 (21a–21e, 2026-10-31): 8g's opening lines; My numbers (per axis notes, "N more to lock in" while Early signs, tags at their limit, the cups line); seven rules in Design's words. From 8f's last item (no footer bar in V1), 6b's row on Profile, 15b's way on (Home, 8f; not 5c). Not: Read my words, Reset |
-| 8n / 8c / 8o First setup | not now | not started | `settings.setup_done` ready; 8o reuses the Bag form |
-| 8a / 9a / 9b Welcome | out of the token set | not started | designed separately |
+| 8n / 8c / 8o First setup | release build | not started | `settings.setup_done` ready; 8o reuses the Bag form |
+| 8a / 9a / 9b Welcome | release build (out of the token set) | not started | designed separately |
 | 8b / 8k Sign-in / account | held | not started | |
-| 7a / 7b Notifications | not now | not started | |
+| 7a / 7b Notifications | release build | not started | |
 | 8h My words | **not built: its premise doesn't hold** (Uryu, 2026-10-31) | — | My words are free memos with no repeated words to count, rename or merge. Its jobs are covered: finding a memo (search's Words), what repeats (8f's Flavours I pick most), the memo itself (2c). Also not built: 8f's What you keep saying, 6a's My words heading, Read my words |
-| 8i Reminders · 8j Feedback · 8m Language | not now | not started | |
+| 8i Reminders · 8j Feedback · 8m Language | release build | not started | |
 | 18a–18f Search (was 8l) | **yes** | **done** | Round 15: the empty state (Kind, Rating, Flavours I use most, Recent searches), hits and terms while typing, results in five tabs (ALL / CUPS / WORDS / BEANS / GEAR); Kind / Rating / bag / gear as a block (FilterToken) with the archive's shape. Recent searches stored (migration 5). **Seen on device** (2026-10-31) |
 | 8d / 8e Try next | **out (V2)** | placeholder tab | |
 

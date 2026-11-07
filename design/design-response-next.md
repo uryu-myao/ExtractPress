@@ -1,5 +1,49 @@
 # Design response — design-missing.md
 
+## Round 22 · Quieting the borders (2026-11-07)
+
+Mock: Turn 23 is new — **24a** 5a as now, **24b** 5a with quiet frames, **24d** 5a as the reference does it, **24c** the rule, **24e** pressed states. Nothing earlier is edited.
+
+**Revised 2026-11-07 after measuring the reference** (Uryu's screenshot): frames drop from `border.medium` to `border.muted`, and 24d / 24e are added.
+
+**Decided 2026-11-07 (Uryu): 24b.** Controls stay ink; 24d is not applied. Build spec: `handoff-round22.md`.
+
+### For §1 (replaces nothing; sits beside Shape's width rule)
+
+> **Border colour: who gets ink (added 2026-11-07).** Width says what an edge is (§1 Shape: 2 = a box's outline, 1.5 = an internal divider or a weak frame). Colour says whether the box acts. The two are independent: every combination keeps its width.
+> - **Control → ink** (`border.strong`). A box whose whole body is the thing you press and which holds nothing but its own label, glyph or value; it acts where it is (commits, types, toggles, sets, adds). Buttons, icon buttons, text and search fields, switches, unchecked checkbox and radio markers, Add buttons, steppers. The slider keeps §9's `text.secondary` track frame, also full weight.
+> - **Container → quiet** (`border.muted`, 2px). A box that encloses information or other things: cards, form sections and FieldRow groups, list blocks, notices, the photo frame, a sheet's top edge — **including a whole card or row block that leads to another screen.** Leading somewhere is the chevron's job (§1 Tap affordance), not the frame's.
+> - **Chrome edges → quiet** (`border.muted`): the bottom bar's top rule, a fixed foot panel's top rule.
+> - **Pressed**: unchanged (§1 Pressed). The fill answers: rows `state.pressed.row` out to the frame, light controls `state.pressed.surface`, primary `state.pressed.action`. **No frame ever changes colour on press**, pale or ink.
+> - **Unchanged**: options (selected = fill of its role; unselected = 1.5 `border.muted`), error frames and `state.error.shadow` (brown, their own role), badges and stamps, thumbnails' 1.5 edge, hairlines, every dashed line (§8).
+> - **The test**: does it act where it is, holding only its own label? Ink. Does it hold things, or go somewhere? Quiet.
+> - **Shadows follow controls only.** §7's three tokens are already button tokens; a container never carries one.
+> - **Why**: when cards and buttons share 2px ink, they look alike and nothing leads. Ink is a promise that pressing *this* does something here.
+
+### Answers
+1. **Colour, not width: agreed.** A 2px pale frame and a 2px ink frame are the same structure. Changing widths too would break the one rule that has held on every board, and 1.5 is already taken by dividers and weak frames.
+2. **The colour: `border.muted` #C8BCB4**, no new value. Measured on the reference: one frame colour (#CCC0AF) on everything, 1.55:1 on its ground. `border.muted` is that level on ours (1.60 on ground, 1.82 on raised), ΔE00 4 from it. (My first pick, `border.medium` at 2.05, was heavier than the reference.)
+   - **Not lower.** The paper's dots are 1.25:1 and the hairlines inside cards 1.23–1.39; below about 1.5 an edge reads as texture. No new colour is proposed because the reference's level already exists in the palette and there's no room under it.
+   - The frame is only 1.31:1 above its own hairlines; the width (2 vs 1.5) keeps them apart.
+   - `border.muted` also stays the unselected option's outline (1.5). Same colour, same meaning: nothing is pressed or chosen there yet.
+3. **Rows that are both: quiet.** A row opens a screen; it doesn't act in place, and it already has the chevron and the press fill (`state.pressed.row`). Rows inside a list have no frame of their own anyway (Round 9); what goes quiet is the block around them. Keeping those blocks ink would put ink back on most of the app.
+4. **Shadows: they already follow the split.** Of the mocks' ink shadows, all sit on buttons except the superseded floating tab bar (already off in the build), Welcome's brand graphics (out of scope) and **8d's suggestion card (5px), which loses it.** Error shadows stay.
+5. **Dashes: unchanged, confirmed** — on today's §8. The brief's examples are retired: `border.addSlot` was removed 2026-10-18 (add entries are buttons) and `axis.rail.derived` 2026-10-11 (AxisReadout has no frame, so it can't be the reference for "quiet"; the reference's own level is: `border.muted`). Dashed = empty, or two parts of one block; never pressable, whatever its colour.
+6. **One thing 24b exposes**: with the cards quiet, 5a's dashed photo slot is the heaviest container on the screen. It's already drift against §8 (a pressable add entry) and hidden at this stage; when it returns, it's an Add button.
+7. **5a was the right screen**: star card, segmented options, a FieldRow card, a foot panel and two buttons in one view. In 24b only close, the selected option, Save and Add tasting note keep ink.
+8. **What the reference does that 24b doesn't (24d).** It frames its buttons exactly like its cards; weight comes only from the filled primary and the selected state (a teal frame at 3.9:1). 24d draws that on 5a. **My recommendation is 24b**: the reference is a desktop page you read, 5a is a form you finish with a thumb; a secondary button framed like a card has neither the frame nor the fill §1 reads as "pressable", and close is the only way out of the sheet. Judge both on device.
+9. **Pressed (24e): nothing new.** Rows take `state.pressed.row` out to the card's frame; light controls `state.pressed.surface`; primary `state.pressed.action`; the shadow stays (§1 Pressed, 2026-10-06). The frame never darkens: a card turning ink under the finger would blink into a button. In 24d's pale controls the pressed fill is only 1.31:1 against the frame, one more reason for 24b.
+
+### For Code
+- §1: add the rule above.
+- Tokens: no new value. A semantic alias would help: `color.border.container` → `border.muted` (and `border.strong` read as "control").
+- Containers' 2px frames → `border.muted`; bottom bar and foot panels' top rule → `border.muted`.
+- 24b decided: controls stay ink. Full spec in `handoff-round22.md`.
+- 8d's suggestion card: no shadow.
+- Check on device first (24a / 24b).
+
+---
+
 ## Round 21 · build questions (2026-11-06)
 
 Answers to "Round 21 built: what didn't map" in `design-brief-next.md`. Mock: 23b, 23c, 23g and 6a are edited in place; `handoff-round21.md` is corrected.
@@ -16,7 +60,7 @@ Answers to "Round 21 built: what didn't map" in `design-brief-next.md`. Mock: 23
    Not drawn yet; I'll draw it when the first dogfood log nears 1,000.
 6. **2c: `gap.row` (8). Accepted;** 23g fixed.
 7. **6a: yes, the reason reaches 6a.** "Week streak" becomes **Cafés** (ink, not brown: it's a plain count like the other two), so 6a and Home count the same things: Cups, Bags, Cafés. 6a's "Logging since Jan 2026 · 34 weeks" already says how long, without scoring gaps. 6a edited.
-8. **Reset: Uryu's call** (asked separately).
+8. **Reset: confirmed by Uryu (2026-11-06).** Cups total, This month, Bags and Cafés do not reset with Taste DNA. They count records, not the profile; reset only rebuilds the profile.
 9. **Month strip, screen reader** (yours, not in the handoff): read as one element: **"6 days with a cup this month, out of 8 so far."** Then the stats as their own elements. Don't list days.
 
 ---
@@ -74,6 +118,68 @@ Full spec with a token check: `handoff-round21.md`.
 - 5c / 2c: tags replace the per-axis lines; sentence kept; "first ‹axis› reading" for first-only; no tag under 1 point.
 - Home: new top block (23b); the stats' counting rules (23c).
 - 8f: fixed axis order.
+
+---
+
+## Round 18 · My words leaves Taste DNA, and what's left in V1 (2026-10-31)
+
+Mock: Turn 21 (22a–22c) is new. 21b, 21d, 8f, 6a, 7a / 7b, the superseded 8g and 8h are edited in place.
+
+### A. Report
+1–5. **OK. No problems.** The tags and My words were always meant to do different jobs, and this makes that explicit.
+6. **OK.** Hiding it is right. The line stays "Counts from today. Older cups stay in Records."
+7. **OK.** B8 answers how it looks.
+8. **OK.**
+
+### B. Answers
+**1. 8g: stays inside "Flavour tags nudge, sliders decide", so 8g keeps seven rules.** Under it:
+> Peach leans brighter and sweeter. Tags make up at most a third of an axis. They're picked to describe the taste; My words is written to read back, so it stays out.
+
+- "Picked" and "written" carry the contrast. "To read back" says what My words is for, so leaving it out reads as a division of roles, not a limit.
+- Not its own rule. An eighth bold line about something that never counts would make it look bigger than it is. Remove PROVISIONAL.
+
+**2. 8f: the heading alone, no sub-heading. Confirmed.**
+
+**3. The mock: all four removed.**
+- 8f: "What you keep saying" is gone.
+- 6a: the My words row is gone.
+- Superseded 8g: "Read my words" is gone. Reset still shows on that superseded board; A6 holds.
+- 7a / 7b: the update is now "Log your café cups" (Round 16's Barista), so the notification screens keep a real example. This is mock content only, not a request to send that notification.
+
+**4. 8h: keep it, marked.** Your wording is on the board.
+
+**5. 5b's My words: my reading. No change asked for now.**
+- **The placeholder points at tasting.** "Cooled down it turned into iced tea…" describes the taste, which is the flavour tags' job, so it teaches the wrong use. When it changes, it should show a memo about the brew or the day, e.g. "Ground one step finer. Rainy morning at home."
+- **The eyebrow is fine.** "My words" says whose they are, not what they're for.
+- **It reads as optional enough.** It's the last field, has no required mark, and Save doesn't wait for it. Adding "optional" would only add noise.
+
+**6. Last shift: the plain section. Confirmed, and 21d is fixed.** The #FFF8F1 frame was my drift. §8 has no honest way to set it apart, since dashed means add or empty. The 10-caps heading is enough.
+
+**7. Drink sheet's Add row: confirmed as you describe.** The + marker, `Add "‹typed›"`, no meta, spaces trimmed. Not drawn: it's 20b's row without the meta.
+
+**8. 11a without an address (22a): the row drops its meta line, nothing more.**
+- No "Address unavailable", no icon, no retry. The address only tells two cafés apart, so its absence isn't worth a word.
+- It's the same row for all three causes (offline, no answer, typed by hand).
+- While fetching, nothing is shown. The line fades in (opacity, 150 ms) if the address arrives.
+
+**9. 15b Locked in (22b, 22c).**
+- Body:
+  - "Your profile has locked in. One cup no longer swings what it has learned."
+  - "It still moves as your taste does: recent cups count for more than old ones." (yours, kept)
+- "What it has learned" is about the profile, not every axis, so it holds when Roast is first noted after the lock.
+- Progress box:
+  - every axis at 10 or more: "From 147 cups."
+  - an axis under 10: "From 147 cups. Roast has 3 notes, so one cup can still move it."
+  - two axes under 10: "Body and Roast have under 10 notes, so one cup can still move them."
+- There is no "N more to lock in" here, since the profile is already locked.
+
+**10. 5e: "Add a product" and "Product name". Confirmed.** They pair with "Add a bag" and "Café name" / "Drink name".
+
+### For Code
+- 8g: the tags rule copy (B1). Remove PROVISIONAL.
+- 11a: an address that can't be fetched means no meta line. It fades in if it arrives (B8).
+- 15b: the Locked in copy and the box rule (B9).
+- 5e: copy confirmed (B10).
 
 ---
 
