@@ -845,7 +845,9 @@ export async function cupTimesSince(db: SQLiteDatabase, from: number): Promise<n
  * copied bean_name + bean_roaster + bean_roasted_at, so the same coffee
  * bought twice is two bags; a null date is a value like any other). Uryu,
  * 2026-11-06: someone who adds a sealed bag has two bags, not one, so this
- * replaces Design Round 21's "bags across my cups" (sent back to Design).
+ * replaces Design Round 21's "bags across my cups". Design Round 23 (D2)
+ * took this rule into 23c as written; Uryu may still say a deleted bag
+ * shouldn't count at all.
  * Counts of records: Taste DNA's reset_at doesn't apply.
  */
 export async function countBags(db: SQLiteDatabase): Promise<number> {
