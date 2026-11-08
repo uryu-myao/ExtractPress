@@ -233,9 +233,11 @@ export default function ProfileTabScreen() {
               onPress={onExport(shareCupsCsv)}
               disabled={busy}
             />
-            {/* INTERIM (todo.md T-8): a manual JSON of everything in 6b's
-                Backup row, until the real backup (Round 16, B8). */}
-            <MenuRow icon="download" label="Export everything" sub="Cups, bags and gear, as JSON" onPress={onExport(shareBackup)} disabled={busy} />
+            {/* INTERIM (todo.md T-8): a manual export of everything in 6b's
+                Backup row, until the real backup (Round 16, B8). Since
+                2026-11-08 a zip with the photos, which Restore reads back.
+                TODO: the sub copy is ours; Design, Round 23. */}
+            <MenuRow icon="download" label="Export everything" sub="Cups, bags, gear and photos" onPress={onExport(shareBackup)} disabled={busy} />
           </Section>
         </View>
       ) : null}

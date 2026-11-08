@@ -39,7 +39,7 @@ A versioned `schema_migrations (version, name, applied_at)` table, not a single 
 - **Both or neither**: the native render writes the original, then the styled copy, and removes the original if the styled copy fails. A photo is prepared in the cache and moved into `Documents/photos/` only when its row is saved.
 - **Cleanup**: on launch, kept files no row points at (a deleted bag's) and leftovers in the cache are removed (`sweepPhotos`).
 - **The style can change**: originals are kept, so `restyleAll()` re-makes every styled copy. Not automatic: changing `PHOTO_STYLE` leaves the kept photos in the old style until it is run.
-- **In the backup** with the database (below). "Export everything" exports the ids, not the photos.
+- **In the backup** with the database (below). "Export everything" writes a zip with the originals since 2026-11-08 (`backupFormat.ts`), and Restore puts them back and remakes the styled copies (`import-v1.md`). Before that it exported the ids only.
 
 ## WAL and backups (found 2026-10-20)
 

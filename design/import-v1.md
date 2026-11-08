@@ -11,7 +11,21 @@ Asked by the planner on 2026-11-08: should V1 ship a way to restore the records 
   - pre-rename files (`app: 'MoreCoffee'`) accepted.
 - `expo-document-picker` is approved, but goes in **one native rebuild together with the other native changes**.
 - The Restore row goes in 6b's My data, beside "Export everything". Design is asked how a row that only works on an empty app looks when there are records: hidden, or shown disabled (Round 23).
-- Everything but the UI starts now, in parallel with Design. Separate from the rename (`rename-plan.md`): Uryu accepted losing today's dogfood records, so this is about the store build, not about saving them.
+- Everything but the UI starts now, in parallel with Design.
+
+**Built 2026-11-08, everything but the UI:**
+- `src/data/backupFormat.ts`: the zip, parsing, checks, rebuild and copy. It has no Expo imports, so it runs under node.
+- `src/data/backup.ts`: the picker, reading the file, restoring, and the photos.
+- `photos.ts`: `originalBytes` and `restorePhoto`.
+- "Export everything" writes the zip (`format: 2`).
+- `npm run check:backup` (pre-commit):
+  - round trip with a photo;
+  - format 1 with `app: 'MoreCoffee'`;
+  - a schema-5 file coming up through migration 6;
+  - refused on a non-empty app, with nothing written;
+  - 7 refusals.
+- Nothing calls Restore yet: the rows wait for Design (Round 23, C).
+- The scratch database is in memory (`:memory:`), so there is no file to clean up. Separate from the rename (`rename-plan.md`): Uryu accepted losing today's dogfood records, so this is about the store build, not about saving them.
 
 ## Why it matters
 

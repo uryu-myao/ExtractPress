@@ -109,6 +109,33 @@ export async function restyleAll(db: SQLiteDatabase): Promise<{ done: number; fa
   return { done, failed };
 }
 
+/** A kept photo's original, for the backup (backup.ts); null when it isn't there. */
+export async function originalBytes(id: string): Promise<Uint8Array | null> {
+  const file = original(KEPT, id);
+  return file.exists ? await file.bytes() : null;
+}
+
+/**
+ * Put a photo back from a backup (backup.ts): its original as it was, then
+ * the styled copy made again in the current PHOTO_STYLE (the backup carries
+ * originals only). A photo whose restyle fails keeps its original, which
+ * photoUri() shows; it never stops the restore.
+ */
+export async function restorePhoto(id: string, bytes: Uint8Array): Promise<boolean> {
+  KEPT.create({ intermediates: true, idempotent: true });
+  const file = original(KEPT, id);
+  if (file.exists) file.delete();
+  file.create();
+  await file.write(bytes);
+  try {
+    await restylePhoto(file.uri, styled(KEPT, id).uri, PHOTO_STYLE);
+    return true;
+  } catch (error) {
+    console.warn('[photos] restore: restyle failed', id, error);
+    return false;
+  }
+}
+
 /**
  * On launch: remove kept photo files no row points at, and anything left
  * pending by a sheet that never finished. This is how a deleted bag's photo

@@ -1,21 +1,26 @@
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { BACKUP_FORMAT, packBackup, photoIdsOf, readTables } from './backupFormat';
 import { cupsCsv, type CsvCup } from './csv';
+import { asSqlDb } from './migrate';
+import { originalBytes } from './photos';
 
 /**
  * Two ways out, 6b's two My data rows (2026-10-28), each a file handed to
  * the iOS share sheet:
  *   shareCupsCsv  "Export my cups": the cups as a spreadsheet (csv.ts)
- *   shareBackup   "Export everything" (6b's Backup row): every table as one JSON file.
+ *   shareBackup   "Export everything" (6b's Backup row): every table and,
+ *                 since 2026-11-08, the photos, as one zip (backupFormat.ts),
+ *                 which Restore reads back (backup.ts, design/import-v1.md).
  *                 INTERIM (todo.md T-8): it holds 6b's Backup row until the
  *                 real backup is built. 6b's Backup saves by itself ("Last
  *                 saved today, 08:24"); this is a manual export of
  *                 everything, a different thing, and the only way the bags'
  *                 and gear's own records (size, default, finished on) get out.
- * Export only — nothing reads either back.
+ * The CSV is export only; the zip is read back by Restore.
  *
- * The JSON (2026-10-20):
+ * The JSON inside the zip (2026-10-20):
  *
  * Every table as stored, rows untouched (ids, epoch-ms times, JSON columns as
  * their text), found from sqlite_master so a new table is never left out.
@@ -23,23 +28,10 @@ import { cupsCsv, type CsvCup } from './csv';
  *
  * Read through SQL, never by copying the database file: the rows mostly live
  * in extract.db-wal until a checkpoint, so the .db alone can be empty.
+ *
+ * Both files are written with await before sharing (2026-11-08): File.write
+ * is asynchronous, and the share sheet could open on a file still being written.
  */
-export const EXPORT_FORMAT = 1;
-
-type Tables = Record<string, Record<string, unknown>[]>;
-
-export async function exportAll(db: SQLiteDatabase): Promise<{ schemaVersion: number; tables: Tables }> {
-  const names = await db.getAllAsync<{ name: string }>(
-    "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
-  );
-  const tables: Tables = {};
-  for (const { name } of names) {
-    // Names come from sqlite_master, not from input; quoted as identifiers.
-    tables[name] = await db.getAllAsync(`SELECT * FROM "${name.replace(/"/g, '""')}"`);
-  }
-  const row = await db.getFirstAsync<{ version: number | null }>('SELECT MAX(version) AS version FROM schema_migrations');
-  return { schemaVersion: row?.version ?? 0, tables };
-}
 
 /** Local date as YYYY-MM-DD, for the file name. */
 function localDate(d: Date): string {
@@ -47,22 +39,28 @@ function localDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** Write extract-backup-YYYY-MM-DD.json to the cache and open the share sheet on it. */
+/** Write extract-backup-YYYY-MM-DD.zip to the cache and open the share sheet on it. */
 export async function shareBackup(db: SQLiteDatabase): Promise<void> {
   if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing is not available on this device.');
   const now = new Date();
-  const { schemaVersion, tables } = await exportAll(db);
+  const { schemaVersion, tables } = await readTables(asSqlDb(db));
   const body = {
     app: 'ExtractPress',
-    format: EXPORT_FORMAT,
+    format: BACKUP_FORMAT,
     exported_at: now.toISOString(),
     schema_version: schemaVersion,
     tables,
   };
+  // The originals; a photo whose file is gone is left out (Restore then shows the placeholder).
+  const photos = new Map<string, Uint8Array>();
+  for (const id of photoIdsOf(tables)) {
+    const bytes = await originalBytes(id);
+    if (bytes) photos.set(id, bytes);
+  }
   // Cache: the file only has to live until the share sheet has taken it.
-  const file = new File(Paths.cache, `extract-backup-${localDate(now)}.json`);
-  file.write(JSON.stringify(body, null, 2));
-  await Sharing.shareAsync(file.uri, { UTI: 'public.json', mimeType: 'application/json' });
+  const file = new File(Paths.cache, `extract-backup-${localDate(now)}.zip`);
+  await file.write(packBackup(body, photos));
+  await Sharing.shareAsync(file.uri, { UTI: 'public.zip-archive', mimeType: 'application/zip' });
 }
 
 /** Every cup with its café's name as copied at logging (migration 6), for the sheet. */
@@ -85,6 +83,6 @@ export async function listCsvCups(db: SQLiteDatabase): Promise<CsvCup[]> {
 export async function shareCupsCsv(db: SQLiteDatabase): Promise<void> {
   if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing is not available on this device.');
   const file = new File(Paths.cache, `extract-cups-${localDate(new Date())}.csv`);
-  file.write(cupsCsv(await listCsvCups(db)));
+  await file.write(cupsCsv(await listCsvCups(db)));
   await Sharing.shareAsync(file.uri, { UTI: 'public.comma-separated-values-text', mimeType: 'text/csv' });
 }

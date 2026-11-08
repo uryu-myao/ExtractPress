@@ -11,6 +11,7 @@
     "check:schema": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-schema.ts",
     "check:dna": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-dna.ts",
     "check:csv": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-csv.ts",
+    "check:backup": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-backup.ts",
     "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
@@ -24,6 +25,7 @@
     "expo": "^58.0.0",
     "expo-blur": "~58.0.5",
     "expo-build-properties": "~58.0.11",
+    "expo-document-picker": "~58.0.4",
     "expo-file-system": "~58.0.11",
     "expo-font": "~58.0.10",
     "expo-haptics": "~58.0.7",
@@ -33,6 +35,7 @@
     "expo-splash-screen": "~58.0.11",
     "expo-sqlite": "~58.0.14",
     "expo-status-bar": "~58.0.4",
+    "fflate": "^0.8.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.0",

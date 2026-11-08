@@ -748,6 +748,12 @@ function notifyShelfChanged() {
   shelfListeners.forEach((listener) => listener());
 }
 
+/** Everything was replaced at once (a restore, backup.ts): every subscriber reloads. */
+export function notifyEverythingChanged() {
+  notifyCupsChanged();
+  notifyShelfChanged();
+}
+
 /** A cup with the names it points at, for the Records list (2a). The bean names are the cup's own copies. */
 export type CupListItem = {
   id: number;

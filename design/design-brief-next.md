@@ -8,6 +8,8 @@ Sent 2026-10-30: the café report went out in Round 17 (`design-brief-round-17.m
 
 Sent 2026-11-01: the photo questions, search sheets' Back / ✓, and 2b's same-name groups went out in Round 19 (`design-brief-round-19.md`).
 
+2026-11-08: the two items below are in the Round 23 draft (`design-brief-round-23.md`, C), which waits for the planner's review before it is sent. They stay here until answered.
+
 ## 3c's photo slot is built solid, not dashed (2026-11-01; drift D-63)
 
 3c draws the photo slot (76 square, camera and "Photo") in a 2px dashed `#6B5D55` frame. §8 keeps dashed for "empty or not started" and never for "press this", and the slot is a button (it opens the camera / library sheet, Round 19 A4), so it is built with a solid 2px ink frame on the ground colour. Once a photo is chosen, the square shows the styled copy and the title reads "Bag photo" (ours). Confirm, or redraw.
