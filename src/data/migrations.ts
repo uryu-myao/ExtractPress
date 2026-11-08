@@ -373,6 +373,29 @@ export const migrations: readonly Migration[] = [
       }
     },
   },
+  {
+    /*
+     * Try next's "Not for me" (design/try-next-v1.md, "the shape of migration
+     * 7"; Design Round 23, 25d; 2026-11-08). One row per dismissed suggestion,
+     * never shown again. settings is one typed row, so a list doesn't go there.
+     * key says what was dismissed, by kind (repository.ts loadTryNext):
+     *   bag:<name>\u001f<roaster>   the bean, lower-cased: buying it again makes
+     *                               a new bag row, which mustn't bring it back
+     *   cafe:<place id>
+     *   brewer:<bag id>:<gear id>
+     *   tag:<word>                  lower-cased
+     * Undo (25d) deletes the row.
+     */
+    version: 7,
+    name: 'try next dismissals',
+    statements: [
+      `CREATE TABLE try_next_dismissed (
+        key TEXT PRIMARY KEY,
+        kind TEXT NOT NULL CHECK (kind IN ('bag', 'cafe', 'brewer', 'tag')),
+        dismissed_at INTEGER NOT NULL
+      )`,
+    ],
+  },
 ];
 
 /** The bookkeeping table. Created before any migration runs. */

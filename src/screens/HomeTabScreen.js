@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Button from '../components/base/Button';
 import RecordRow from '../components/base/RecordRow';
@@ -6,10 +6,23 @@ import Text from '../components/base/Text';
 import HomeStats, { monthStart } from '../components/HomeStats';
 import ShelfBlock from '../components/ShelfBlock';
 import TasteDnaCard from '../components/TasteDnaCard';
+import TryNextCard from '../components/TryNextCard';
 import { MODE_BADGE, cupTitle } from '../constants/cups';
 import { useDatabase } from '../data/DatabaseProvider';
-import { countBags, countCupCafes, countCups, cupTimesSince, listCups, loadTasteDna, onCupsChanged, onShelfChanged } from '../data/repository';
-import { requestDnaInfo, requestOpenCup, requestPush, requestShell } from '../navigation';
+import {
+  countBags,
+  countCupCafes,
+  countCups,
+  cupTimesSince,
+  dismissTryNext,
+  listCups,
+  loadTasteDna,
+  loadTryNext,
+  onCupsChanged,
+  onShelfChanged,
+  undoDismissTryNext,
+} from '../data/repository';
+import { onTabLeave, requestDnaInfo, requestOpenCup, requestPush, requestShell } from '../navigation';
 import { layout, space, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -25,12 +38,16 @@ import ScreenFrame from './ScreenFrame';
  *   - the Taste DNA card; its stamp opens 15b's sheet (over the bar, so
  *     AppShell hosts it: DnaInfoHost); its foot row "Open my taste DNA ›"
  *     opens 8f (Design Round 11, B)
+ *   - Try next (Design Round 23, 25c): one suggestion, only when there is
+ *     one (TryNextCard; the rules in data/tryNext.ts). "Not for me" leaves
+ *     the hidden line with Undo until Home is left; the next suggestion, or
+ *     none, shows when Home is shown again.
  *   - "Recently sipped" (display.sm) with "See all ›" (to Records; the ›
  *     since Design Round 15, B4, as the shelf's action) and the three
  *     latest cups as list rows (title, mode badge, rating, date) → their 2c
  *   - My gear / My beans (Round 14, 17a / 17b: three rows a side, swiped
  *     or tabbed; "See all gear & beans ›" opens 17c / 17d on that side)
- * Not shown: Try next's box (V2), the line under the counts (dropped for V1,
+ * Not shown: the line under the counts (dropped for V1,
  * Design Round 10, C10; gone in Round 21's 23b too).
  *
  * Screens opened from Home — Gear & beans (17c / 17d), 3c (Add a bag), 3a
@@ -53,25 +70,61 @@ const dayFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'num
 export default function HomeTabScreen() {
   const db = useDatabase();
   const [data, setData] = useState(null);
+  // A Try next suggestion just dismissed: its hidden line stays until Home is left.
+  const [dismissed, setDismissed] = useState(null);
   const push = (name) => requestPush({ name });
 
+  const load = useCallback(() => {
+    const now = Date.now();
+    Promise.all([
+      loadTasteDna(db),
+      countCups(db),
+      cupTimesSince(db, monthStart(now)),
+      countBags(db),
+      countCupCafes(db),
+      listCups(db),
+      loadTryNext(db, now),
+    ]).then(
+      ([dna, total, month, bags, cafes, cups, tryNext]) => setData({ dna, total, month, bags, cafes, recent: cups.slice(0, 3), tryNext, now }),
+      (error) => console.error('[home] could not read', error)
+    );
+  }, [db]);
+
   useEffect(() => {
-    const load = () => {
-      const now = Date.now();
-      Promise.all([loadTasteDna(db), countCups(db), cupTimesSince(db, monthStart(now)), countBags(db), countCupCafes(db), listCups(db)]).then(
-        ([dna, total, month, bags, cafes, cups]) => setData({ dna, total, month, bags, cafes, recent: cups.slice(0, 3), now }),
-        (error) => console.error('[home] could not read', error)
-      );
-    };
     load();
     // The shelf too: adding a bag changes Bags without touching a cup.
     const offCups = onCupsChanged(load);
     const offShelf = onShelfChanged(load);
+    const offLeave = onTabLeave((tab) => {
+      if (tab !== 'home') return;
+      setDismissed(null);
+      load();
+    });
     return () => {
       offCups();
       offShelf();
+      offLeave();
     };
-  }, [db]);
+  }, [load]);
+
+  const dismiss = async (suggestion) => {
+    try {
+      await dismissTryNext(db, suggestion);
+      setDismissed(suggestion);
+    } catch (error) {
+      console.error('[home] could not dismiss', error);
+    }
+  };
+  const undo = async () => {
+    try {
+      await undoDismissTryNext(db, dismissed.key);
+    } catch (error) {
+      console.error('[home] could not undo', error);
+    }
+    setDismissed(null);
+    load();
+  };
+  const tryNext = dismissed ?? data?.tryNext;
 
 
   const greeting = greetingAt(new Date(data?.now ?? Date.now()));
@@ -83,6 +136,7 @@ export default function HomeTabScreen() {
             <HomeStats total={data.total} monthCupTimes={data.month} bags={data.bags} cafes={data.cafes} now={data.now} />
             <Button label="Record a coffee" onPress={() => requestShell({ record: true })} />
             <TasteDnaCard dna={data.dna} onStampPress={() => requestDnaInfo(data.dna)} onOpen={() => push('dna')} />
+            {tryNext ? <TryNextCard suggestion={tryNext} hidden={dismissed != null} onDismiss={() => dismiss(tryNext)} onUndo={undo} /> : null}
             {data.recent.length ? (
               <View>
                 <View style={styles.recentHead}>

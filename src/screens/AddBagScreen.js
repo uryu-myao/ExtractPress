@@ -28,11 +28,15 @@ import ScreenFrame from './ScreenFrame';
  * the chosen photo (already styled) waits in the cache and is kept only when
  * the bag is added. Leaving without adding drops it.
  */
-export default function AddBagScreen({ onBack, onAdded }) {
+/**
+ * prefill: { name, roaster } from Try next's "Add it to my beans" (Design
+ * Round 23, 25d: buying a bean again); the fields start filled, still editable.
+ */
+export default function AddBagScreen({ onBack, onAdded, prefill }) {
   const db = useDatabase();
   // In the Record sheet the new bag becomes the cup's bag; from 3d it just joins the shelf.
   const chooseBag = useRecordDraftIfAny()?.chooseBag;
-  const [form, setForm] = useState({ name: '', roaster: '', roastedAt: null, process: null });
+  const [form, setForm] = useState({ name: prefill?.name ?? '', roaster: prefill?.roaster ?? '', roastedAt: null, process: null });
   const [picking, setPicking] = useState(false);
   // 5d's way (decided 2026-10-11): the button stays pressable; pressed with no
   // name, the field says it is required. Typing a name ends it.

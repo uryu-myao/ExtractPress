@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import type { Bag, CupMode, Gear, GearCategory, Place, Row } from './schema';
 import { changeOf, computeDna, dnaCupFromRow, lastShift, type Dna, type DnaShift } from './tasteDna';
+import { pickTryNext, type Suggestion, type TryNextCup } from './tryNext';
 
 /**
  * The reference rows Record coffee pre-fills its field sets with. Until the
@@ -178,6 +179,42 @@ export async function countOwnRecords(db: SQLiteDatabase): Promise<{ cups: numbe
             (SELECT COUNT(*) FROM gear) AS gear, (SELECT COUNT(*) FROM places) AS places`
   );
   return row ?? { cups: 0, bags: 0, gear: 0, places: 0 };
+}
+
+export type TryNextSuggestion = Suggestion<Bag, Gear, Place>;
+
+/**
+ * Home's Try next card (Design Round 23, 25c): the one suggestion to show, or
+ * null (no card). The rules are tryNext.ts's; this reads what they need.
+ */
+export async function loadTryNext(db: SQLiteDatabase, now = Date.now()): Promise<TryNextSuggestion | null> {
+  const [cups, bags, gear, places, dismissed] = await Promise.all([
+    db.getAllAsync<Omit<TryNextCup, 'flavours'> & { flavours: string }>(
+      'SELECT id, logged_at, rating, mode, flavours, bag_id, bean_name, bean_roaster, brewer_id, place_id FROM cups'
+    ),
+    db.getAllAsync<Bag & { notes: string }>('SELECT * FROM bags'),
+    db.getAllAsync<Gear>('SELECT * FROM gear'),
+    db.getAllAsync<Place>("SELECT * FROM places WHERE kind = 'cafe'"),
+    db.getAllAsync<{ key: string }>('SELECT key FROM try_next_dismissed'),
+  ]);
+  return pickTryNext({
+    cups: cups.map((c) => ({ ...c, flavours: JSON.parse(c.flavours) })),
+    bags: bags.map((b) => ({ ...b, notes: JSON.parse(b.notes as unknown as string) })),
+    gear,
+    places,
+    dismissed: new Set(dismissed.map((d) => d.key)),
+    now,
+  });
+}
+
+/** "Not for me" (25d): the suggestion never comes back. */
+export async function dismissTryNext(db: SQLiteDatabase, suggestion: { key: string; kind: string }): Promise<void> {
+  await db.runAsync('INSERT OR REPLACE INTO try_next_dismissed (key, kind, dismissed_at) VALUES (?, ?, ?)', [suggestion.key, suggestion.kind, Date.now()]);
+}
+
+/** 25d's Undo: the dismissal is taken back. */
+export async function undoDismissTryNext(db: SQLiteDatabase, key: string): Promise<void> {
+  await db.runAsync('DELETE FROM try_next_dismissed WHERE key = ?', [key]);
 }
 
 /** One cup as 2c shows it: every stored field, its place names as copied (migration 6). */

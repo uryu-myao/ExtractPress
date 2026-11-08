@@ -63,6 +63,14 @@ export function bagFilter(bag) {
 export function gearFilter(gear) {
   return { type: 'gear', value: gear.id, label: gear.name };
 }
+/**
+ * Try next's tag lead, "See the 4 cups" (Design Round 23, 25d): the cups with
+ * that flavour at that rating, so the count on the button is the count here.
+ * The block's label ("blackcurrant · 5★") is ours: 25d draws only the button.
+ */
+export function flavourFilter(word, rating) {
+  return { type: 'flavour', value: word.toLowerCase(), rating, label: `${word} · ${rating}★` };
+}
 
 /** The cups a filter keeps, in the order given. */
 export function cupsForFilter(cups, filter) {
@@ -75,6 +83,8 @@ export function cupsForFilter(cups, filter) {
       return cups.filter((c) => c.bag_id === filter.value);
     case 'gear':
       return cups.filter((c) => c.brewer_id === filter.value || c.grinder_id === filter.value);
+    case 'flavour':
+      return cups.filter((c) => c.rating === filter.rating && c.flavours.some((f) => f.toLowerCase() === filter.value));
     default:
       return [];
   }

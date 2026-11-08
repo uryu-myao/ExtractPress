@@ -12,6 +12,7 @@
     "check:dna": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-dna.ts",
     "check:csv": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-csv.ts",
     "check:backup": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-backup.ts",
+    "check:trynext": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-trynext.ts",
     "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {

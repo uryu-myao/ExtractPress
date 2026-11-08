@@ -229,6 +229,17 @@ export const schema = {
     term: { type: 'TEXT', nullable: false },
     searched_at: { type: 'INTEGER', nullable: false },
   },
+
+  /**
+   * Try next's "Not for me" (migration 7, 2026-11-08): one row per dismissed
+   * suggestion, which never comes back. key: bag:… / cafe:… / brewer:… / tag:…
+   * (migrations.ts says what each names).
+   */
+  try_next_dismissed: {
+    key: { type: 'TEXT', nullable: false, pk: true },
+    kind: { type: 'TEXT', nullable: false, values: ['bag', 'cafe', 'brewer', 'tag'] },
+    dismissed_at: { type: 'INTEGER', nullable: false },
+  },
 } as const satisfies Record<string, Record<string, ColumnDef>>;
 
 export type TableName = keyof typeof schema;

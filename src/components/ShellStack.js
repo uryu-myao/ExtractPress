@@ -117,6 +117,7 @@ export default function ShellStack() {
       case 'addBag':
         return (
           <AddBagScreen
+            prefill={entry.prefill}
             onBack={goBack}
             onAdded={() => {
               setStack((s) => (s.some((e) => e.name === 'shelf' && !e.leaving) ? s : [{ name: 'shelf', side: 'beans', key: (nextKey.current += 1) }, ...s]));

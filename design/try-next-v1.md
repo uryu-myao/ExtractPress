@@ -163,3 +163,20 @@ CREATE TABLE try_next_dismissed (
 - **No "undo" and no expiry** in V1: the brief says a dismissed suggestion never comes back. If Design adds an undo line, it is a `DELETE` by key.
 - **Which suggestion shows this week isn't stored**: it is computed from the date (the week's Monday) and the priority order, so it stays the same all week without a row.
 - Settled after Design's card: whether "Not for me" covers just this one suggestion (above) or the whole kind ("no more café suggestions"). That would be a column, or a `kind:*` key.
+
+## Built 2026-11-08 (Design Round 23, 25c / 25d)
+
+- **Code**:
+  - `data/tryNext.ts`: the rules, pure;
+  - `repository.ts`: `loadTryNext`, `dismissTryNext`, `undoDismissTryNext`;
+  - migration 7: `try_next_dismissed`, the shape above;
+  - `TryNextCard` under the Taste DNA card on Home;
+  - `npm run check:trynext`, run by the pre-commit hook.
+- **Thresholds as proposed above**: 0.75 stars, 30 days, 10 tagged cups, 3 cups. Still the planner's to change: they are constants at the top of `tryNext.ts`.
+- **"It changes on Monday"**: every time condition is read as of this week's Monday 00:00, so the same card shows all week. It changes when the records change, or when it is dismissed.
+- **"Not for me"** writes the dismissal at once, and Undo deletes it. Design's 25d commits it when Home is left; the result is the same. The hidden line stays until Home is left (another tab); Home then shows the next suggestion, or none.
+- **The tag lead's "See the ‹n› cups"** opens search on a new filter block: that flavour at 5★ ("blackcurrant · 5★", label ours). That way the count on the button is the count in the results. A plain word search would also show the 3★ cups with the word, and the number wouldn't match.
+- **Ours, in the copy**: a café whose best cup wasn't its last visit reads "Five stars in September. Last visit 6 weeks ago." 25d's "not since" would be untrue there. A month from another year gets its year.
+- **Open in Maps** opens Apple Maps on the café's name at its coordinates. Design asked for the stored MapKit id. A place-id link isn't verified on iOS 17: TODO, check on device.
+- **Not built**: 5c's "One more cup and Try next opens up". It was never in the code; it is dropped.
+- **The planner decides after seeing it** whether the card stays in V1 (brief B6).
