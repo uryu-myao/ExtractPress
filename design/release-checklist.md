@@ -11,15 +11,15 @@ Target: on the store by the end of December 2026 (`v1-status.md`). This lists wh
 | Apple Developer Program | ⏳ applied (2026-11-07), approval pending. Was: | This Mac holds one signing identity, "Apple Development: myao.jpn@gmail.com", and device builds expire after 7 days: that is free provisioning (a Personal Team, `Y57C6973DT`). The App Store needs the paid program (USD 99 a year). **Enrol now**: approval can take from a day to a couple of weeks. |
 | Distribution certificate | ❌ | "Apple Distribution". Xcode's automatic signing makes it once the paid team exists. |
 | App Store provisioning profile | ❌ | Made by automatic signing, the same way. |
-| App ID / bundle ID | ⚠️ | `com.uryumyao.MoreCoffee-App`, not yet registered under a paid team. **It can never change after the first upload**, so decide now. Keeping it means the store build can install over Uryu's current build; whether his records survive the switch from the Personal Team to the paid team is unverified, so **export the CSV first**. |
-| App Store Connect app record | ❌ **not until the name is decided** | Name, primary language (English), bundle ID, SKU. The bundle ID can't change after the first upload. |
+| App ID / bundle ID | ✅ 2026-11-08: **`app.smallpress.extract`** (was `com.uryumyao.MoreCoffee-App`) | Not yet registered under the paid team: automatic signing registers it on the first signed build. **It can never change after the first upload.** A new bundle ID is a new app: Uryu's records stay in the old app on his phone, so **export there before deleting it** (`todo.md` T-16, `rename-plan.md`). |
+| App Store Connect app record | ❌ the name is decided (2026-11-08); make it once the paid team is approved | Name, primary language (English), bundle ID, SKU. The bundle ID can't change after the first upload. |
 
 ## 2. The binary
 
 | Item | State | Notes |
 |---|---|---|
 | Release build | ✅ builds | Release for device built 2026-11-07 (0 errors, 2 warnings). Install failed only because the phone disconnected. Archiving and uploading are untried: they need distribution signing. |
-| Display name | ✅ 2026-11-07 | "MoreCoffee" (was "MoreCoffee-App"). The final name is decided later: `rename-plan.md`. **No App Store Connect record until then.** |
+| Display name | ✅ 2026-11-08 | **"Extract Press"**, `ios.infoPlist.CFBundleDisplayName` (was "MoreCoffee", and "MoreCoffee-App" before 2026-11-07). `rename-plan.md`. |
 | Version / build | ✅ | 1.0.0 (1). Raise the build number on every upload. |
 | App icon | ❌ | `assets/icon.png` is **Expo's template** (grey grid and circles). It is the right size: 1024×1024 with no alpha, and a single 1024 is enough now because Xcode makes the other sizes. A real icon is needed: square corners in the file, with no transparency. |
 | Launch screen | ❌ | `assets/splash.png` is also Expo's template. The background is already `#F4EDEA`. |
@@ -29,7 +29,7 @@ Target: on the store by the end of December 2026 (`v1-status.md`). This lists wh
 | Dev seed data | ✅ **verified** | A production export's source map lists the app's 126 modules, and `src/data/dev/seed.ts` is not among them. It cannot run in Release because it isn't in the bundle. (The opt-in `EXPO_PUBLIC_DEV_SEED=1` only applies under `__DEV__`.) |
 | Dev harness | ✅ 2026-11-07: `require()`d inside the branch, so the production bundle went from 126 app modules to 110, none from `src/dev/`. Was: unreachable but shipped. | `SHOW_DEV_HARNESS = __DEV__ && EXPO_PUBLIC_DEV_HARNESS === '1'` is false in Release, and nothing else imports `src/dev/`, so no path reaches it. But `App.js` imports `DevHarness` at the top, so its **16 modules** (the Photo style lab, the AxisSlider page and the rest) are in the bundle. Fix: `require()` it inside the branch, as the seed does. A three-line change. |
 | Retired screens | ✅ | HomeScreen, CoffeeListScreen, AddCoffeeScreen and the other old screens are not in the bundle. |
-| Placeholder content | ❌ | The Try next tab says **"This screen is being rebuilt."** App Review rejects placeholder content (Guideline 2.1). It goes, whichever way Uryu decides Try next. Check every other row for a dead end too (6b, 6c). |
+| Placeholder content | ⚠️ 2026-11-08: the Try next tab is gone (four-slot bar); 6b / 6c still to check. Was: ❌ | The Try next tab says **"This screen is being rebuilt."** App Review rejects placeholder content (Guideline 2.1). It goes, whichever way Uryu decides Try next. Check every other row for a dead end too (6b, 6c). |
 
 ## 3. Permission strings (Info.plist, as of 2026-11-07)
 

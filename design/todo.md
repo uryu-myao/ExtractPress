@@ -154,7 +154,20 @@ Design: "the café line shows the short address only, with no distance or visit 
 - **Option 2**: look the address up live by MapKit id (`MKMapItemRequest`, iOS 18+). No schema change, but it needs the network on every 11a open and a new native call.
 - **Decision (Uryu, 2026-10-31): option 2, live.** No `places.address`. Waiting on Design Round 18, B8 (11a when the address can't be fetched: not an error, the name shows, only the address is missing) before building.
 
-## T-16. Export before the account or the bundle ID changes (recorded 2026-11-07, planner)
+## T-16. Export before the account or the bundle ID changes (recorded 2026-11-07, planner) — **closed 2026-11-08**
+
+**Closed 2026-11-08 (planner)**: Uryu deleted the old MoreCoffee app on his iPhone and installed Extract Press (`app.smallpress.extract`). His records start from zero, which he accepted. What stays true for any later switch is the warning below: an export is not a way back into the app until the import (`import-v1.md`, in V1 since 2026-11-08) is built.
+
 **Before** the first build signed by the paid team goes onto Uryu's iPhone, and again before the bundle ID changes with the new name: on the phone, Profile → **Export my cups** (CSV) and **Export everything** (JSON). Keep both files off the phone (Files / iCloud Drive / Mac).
+
+> **Exporting does not make the switch safe. The files cannot be put back into the app.** They keep the records as files for Uryu to read; the app on the other side of the switch still starts empty. Don't read "we exported" as "nothing is lost" (planner, 2026-11-08).
 - **Why**: whether the records survive is unknown. iOS keeps an app's data per bundle ID. A new bundle ID is a new app with an empty database. The same bundle ID signed by a different team may refuse to install over the old build until it is deleted, and deleting it deletes the records.
-- **The files keep the records, not the app's state**: V1 has **no import**, so neither file can be read back into the app. Also, the JSON holds photo ids, not the photos. If the records must come back into the store build, an import has to be built first (not planned), or the switch has to keep the data container (same bundle ID, same team).
+- **The files keep the records, not the app's state**: V1 has **no import**, so neither file can be read back into the app. Also, the JSON holds photo ids, not the photos. If the records must come back into the store build, an import has to be built first (proposed for V1, not decided: `import-v1.md`), or the switch has to keep the data container (same bundle ID, same team).
+- **2026-11-08, the bundle ID changed** (`app.smallpress.extract`, `rename-plan.md`). The two simulators were exported to `~/Desktop/morecoffee-export-2026-11-08/`. Uryu's iPhone: Uryu deleted the old app and starts from zero (2026-11-08).
+
+## T-17. Try a whole-phone iCloud restore once (recorded 2026-11-08, planner)
+**When**: after Extract Press has a few cups on Uryu's iPhone, not before (the old app's records would muddy the result).
+- **What**: back the phone up to iCloud, restore it (to the same phone after erasing, or to another iPhone), and check that Extract Press comes back with its cups, bags and bag photos.
+- **Why**: `data-model.md` ("WAL and backups") says the database and `Documents/photos` are in the backup, and the checkpoint on going to the background leaves `extract.db` complete. **Nobody has seen it work.** The import (`import-v1.md`) will be a second way, but "it's in the backup" should not be believed without trying it.
+- **Then**: if it works, the store text and the support page can say so. If not, find out why before the import becomes the only route.
+

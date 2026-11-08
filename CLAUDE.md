@@ -23,7 +23,7 @@ No test or lint scripts are configured yet.
 
 ## Architecture
 
-MoreCoffee is a React Native + Expo mobile app for logging and tracking coffee consumption.
+Extract Press (internal name MoreCoffee) is a React Native + Expo mobile app for logging and tracking coffee consumption. The repository, `expo.slug` and code identifiers keep the internal name; what the user sees says Extract Press (`design/rename-plan.md`).
 
 **Entry point:** `App.js` → renders `src/AppShell.js`
 

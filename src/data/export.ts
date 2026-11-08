@@ -22,7 +22,7 @@ import { cupsCsv, type CsvCup } from './csv';
  * schema_migrations rides along: it says which schema the rows are in.
  *
  * Read through SQL, never by copying the database file: the rows mostly live
- * in morecoffee.db-wal until a checkpoint, so the .db alone can be empty.
+ * in extract.db-wal until a checkpoint, so the .db alone can be empty.
  */
 export const EXPORT_FORMAT = 1;
 
@@ -47,20 +47,20 @@ function localDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** Write morecoffee-backup-YYYY-MM-DD.json to the cache and open the share sheet on it. */
+/** Write extract-backup-YYYY-MM-DD.json to the cache and open the share sheet on it. */
 export async function shareBackup(db: SQLiteDatabase): Promise<void> {
   if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing is not available on this device.');
   const now = new Date();
   const { schemaVersion, tables } = await exportAll(db);
   const body = {
-    app: 'MoreCoffee',
+    app: 'ExtractPress',
     format: EXPORT_FORMAT,
     exported_at: now.toISOString(),
     schema_version: schemaVersion,
     tables,
   };
   // Cache: the file only has to live until the share sheet has taken it.
-  const file = new File(Paths.cache, `morecoffee-backup-${localDate(now)}.json`);
+  const file = new File(Paths.cache, `extract-backup-${localDate(now)}.json`);
   file.write(JSON.stringify(body, null, 2));
   await Sharing.shareAsync(file.uri, { UTI: 'public.json', mimeType: 'application/json' });
 }
@@ -79,12 +79,12 @@ export async function listCsvCups(db: SQLiteDatabase): Promise<CsvCup[]> {
 }
 
 /**
- * Write morecoffee-cups-YYYY-MM-DD.csv to the cache and open the share sheet
+ * Write extract-cups-YYYY-MM-DD.csv to the cache and open the share sheet
  * on it (the date says what the file is once it is in someone's Files).
  */
 export async function shareCupsCsv(db: SQLiteDatabase): Promise<void> {
   if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing is not available on this device.');
-  const file = new File(Paths.cache, `morecoffee-cups-${localDate(new Date())}.csv`);
+  const file = new File(Paths.cache, `extract-cups-${localDate(new Date())}.csv`);
   file.write(cupsCsv(await listCsvCups(db)));
   await Sharing.shareAsync(file.uri, { UTI: 'public.comma-separated-values-text', mimeType: 'text/csv' });
 }

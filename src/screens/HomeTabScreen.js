@@ -17,7 +17,8 @@ import ScreenFrame from './ScreenFrame';
  * Home (1b; 4a / 4b are Home with My gear / My beans below), top to bottom:
  *   - title: a greeting by part of day — 1b's "Good morning"; "Good
  *     afternoon" / "Good evening" ours, confirmed (Design Round 7); eyebrow
- *     "MoreCoffee"
+ *     the app's name, "Extract Press" (1b's mock says "MoreCoffee"; renamed
+ *     2026-11-08)
  *   - HomeStats: cups total; This month, Bags, Cafés; the month strip
  *     (Design Round 21, 23b)
  *   - "Record a coffee" (primary) → the Record sheet, as the bar's +
@@ -76,7 +77,7 @@ export default function HomeTabScreen() {
   const greeting = greetingAt(new Date(data?.now ?? Date.now()));
   return (
     <View style={styles.screen}>
-      <ScreenFrame scroll title={greeting} eyebrow="MoreCoffee">
+      <ScreenFrame scroll title={greeting} eyebrow="Extract Press">
         {data ? (
           <View style={styles.body}>
             <HomeStats total={data.total} monthCupTimes={data.month} bags={data.bags} cafes={data.cafes} now={data.now} />

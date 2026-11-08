@@ -53,7 +53,7 @@ export default function PhotoSheet({ visible, onClose, onChosen, onRemove }) {
       if (source === 'camera') {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-          Alert.alert('The camera is off for MoreCoffee', 'Turn it on in Settings to take a photo here.', [
+          Alert.alert('The camera is off for Extract Press', 'Turn it on in Settings to take a photo here.', [
             { text: 'Not now', style: 'cancel' },
             { text: 'Open Settings', onPress: () => Linking.openSettings() },
           ]);

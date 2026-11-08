@@ -74,7 +74,7 @@ const belowBaseline = (line) => line.height - line.ascender;
  *   userTitle the title is user data (2c's bean name): `name` truncation,
  *             2 lines (§3.1). Fixed screen titles never truncate.
  *   eyebrow   optional small label above the title (label.eyebrow, accent):
- *             "The archive" (2a), "MoreCoffee" (1b). Fades out on collapse.
+ *             "The archive" (2a), "Extract Press" (1b). Fades out on collapse.
  *   leading   optional control above the title (5b's back button). A control
  *             never fades or moves on collapse; the title shrinks below it
  *   meta      optional information, right-aligned at the foot of the header

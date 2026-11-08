@@ -22,7 +22,8 @@ import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
  * settings, My data, Reset, Account) and 6c are not built, except 6b's
  * "How my DNA is built" and My data's rows (below).
  *
- *   header       "Morecoffee" over "My profile". 6a's "Edit" leads to 6d (Edit
+ *   header       "Extract Press" over "My profile" (6a's "Morecoffee": the
+ *                app was renamed 2026-11-08). 6a's "Edit" leads to 6d (Edit
  *                profile), not built: not shown.
  *   card         the personal card without its identity row: 6d holds the
  *                name and avatar, and the "Home brewer" badge has no rule
@@ -212,7 +213,7 @@ export default function ProfileTabScreen() {
   };
 
   return (
-    <ScreenFrame scroll eyebrow="Morecoffee" title="My profile">
+    <ScreenFrame scroll eyebrow="Extract Press" title="My profile">
       {data ? (
         <View style={styles.body}>
           <PersonalCard profile={data.profile} now={data.now} />

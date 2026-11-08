@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "MoreCoffee",
+    "name": "Extract Press",
     "slug": "MoreCoffee-App",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,10 +11,13 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.uryumyao.MoreCoffee-App",
+      "bundleIdentifier": "app.smallpress.extract",
       "appleTeamId": "Y57C6973DT",
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "CFBundleDisplayName": "Extract Press"
       }
     },
     "android": {

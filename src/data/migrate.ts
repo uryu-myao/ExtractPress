@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { MIGRATIONS_TABLE, migrations } from './migrations';
 
-export const DATABASE_NAME = 'morecoffee.db';
+export const DATABASE_NAME = 'extract.db';
 
 type Executor = Pick<SQLite.SQLiteDatabase, 'execAsync' | 'runAsync' | 'getAllAsync'>;
 
