@@ -1,5 +1,93 @@
 # Design response — design-missing.md
 
+## Round 23 · Floating bar, Try next on Home, Restore (2026-11-08)
+
+Mock: Turn 24 is new — **25a** the bar over a 20-row list, **25b** its spec, pressed and active states, **25c** Home with Try next, **25d** the four kinds and dismissal, **25e** 6b My data, **25f** Restore's sheets, **25g** refusals and first setup. Edited: **23b** and **6a** eyebrows read EXTRACT PRESS; **23c**'s Bags rule (D2). Build spec: `handoff-round23.md`.
+
+### A. Built
+
+1. **A1 — no problem seen.** Understood that it's interim and the device check only confirms it's usable until E lands. Not redrawn.
+2. **A2 — Process.**
+   1. **Show the chips on 3c; no fold.** A fold costs two taps (open, choose) for one row; shown, it costs one, and the bag with its label is in hand at 3c. It stays optional and never blocks "Open this bag", so the 15-second path isn't slower for someone who skips it.
+   2. **44, as built.** Four chips wrap to two lines either way. At 32 with hit-slop back to 44, the two wrapped lines' touch areas would overlap across the 6–8 gap between them; at 44 they don't. And 44 matches the maker chips, the only other chips on these screens. 3g's 9 / 14 was drawn before Process was clearable or shown on 3c — drift.
+   - Clearing by pressing the selected chip (scale, no darker tier): agreed, nothing to add.
+3. **A3 — the name.** 23b's and 6a's eyebrows now read EXTRACT PRESS, and every board drawn this round uses the new name. The four unbuilt strings (6c "Rate MoreCoffee" and "MoreCoffee 1.4.0", 8i's permission line, 6d's social-feed line) change when those boards are next touched. Two things aren't strings:
+   - 1b, 4a and 4b still carry the old Home eyebrow. All three are superseded by 23b, so they aren't worth editing.
+   - **Welcome (9a / 9b / 8a) draws "Morecoffee" as the brand mark.** That's a wordmark, not copy, and it needs Uryu's new logo before the store build. Flagging it so it isn't missed.
+
+### B. Try next on Home (25c, 25d)
+
+1. **One card, four variants.** Each variant has a serif title (`display.sm`), one reason line, one action and "Not for me". Copy (final unless you object):
+
+   | Kind | Title | Reason | Action |
+   |---|---|---|---|
+   | Other brewer | Guji in the AeroPress? | AeroPress cups average 4.3 stars. Guji in the V60: 3.0. | Log a cup |
+   | Bag | Hoja Verde, again? | Five stars in September. Last brewed six weeks ago. | Add it to my beans |
+   | Café | Back to Fuglen? | Five stars in September, not since. | Open in Maps |
+   | Tag lead | Look for blackcurrant | It's on 4 of the 5-star cups. | See the 4 cups |
+
+   - Copy rules: the title is ≤ 26 characters; the reason is one line, facts only (whole stars, averages to one decimal, months and weeks); no "your" (it states the record).
+   - **Café → Open in Maps: yes.** It hands the stored MapKit id to Apple Maps, with no new screen in the app. Going back to a café is a trip, and this is its first step.
+2. **No suggestion, no card.** Recently sipped moves up. 5c's "One more cup…" goes.
+3. **Order as you set it**: other brewer, then bag, then café, then tag. It changes on Monday or after a dismissal. Agreed.
+4. **Position: under the Taste DNA card, agreed.** It reads as "what the DNA suggests" and never moves Record a coffee or the counts.
+   - It looks like a note, not a record: paper ground inside a quiet frame, where the DNA card is raised. A spark glyph and a brown TRY NEXT eyebrow mark it.
+   - The action is a secondary button (ink frame, paper fill). Record a coffee stays the only blue on Home. Not dashed: dashed means empty (§8).
+5. **States.**
+   - Pressed: the button takes `state.pressed.surface`; the text actions scale (§1). The card itself isn't pressable.
+   - **"Not for me" leaves a line**: the card shrinks in place to "Hidden. It won't come back." with **Undo**. The line stays until Home is next shown; then the next suggestion appears, or no card. Undo instead of a confirm: a mis-tap costs one tap back.
+6. **Making the tag lead carry more: "See the 4 cups".** It opens Records' search on that word (8l's results, "4 cups say blackcurrant"). The lead becomes something to read today, the cups that earned it, instead of a note for a shop visit weeks away. Code: this needs search to match tasting-note tags; say if it doesn't.
+   - **One related question**: 6b's "How adventurous" says it "sets how far Try next strays from what I already like". V1's four kinds have nothing for it to steer. My suggestion: hide it in V1 and bring it back with V2's Try next. Planner's call.
+
+### C. Restore (25e–25g)
+
+- **Export everything: "Cups, bags, gear and photos" — confirmed.** Name the file **"Extract Press backup ‹date›.zip"**: the "not a backup" refusal points to that name.
+1. **C1 — a third way: a row while restore can work, a sentence once it can't.**
+   - On an empty app, "Restore from a backup" (sub line "From an Export everything file") sits between Export and Backup.
+   - Once there's any cup, bag, gear or café, the row goes. One line sits under the block instead: "Restoring a backup works on an empty app only."
+   - Someone who logs a first cup on a new phone and comes looking finds the reason where they look. Nobody lives with a dead row. It's text, not a disabled control.
+2. **C2 — steps.**
+   1. **Confirm**: "Restore this backup?" / "From 8 Nov 2026: 214 cups, 9 bags, 6 gear, 4 cafés and 31 photos." The date comes first because it's how a person recognises the file. Restore is the primary (blue); Cancel is secondary. **Engine: I've added gear and cafés to the counts**; if they aren't available, drop them.
+   2. **Working**: "Restoring…" with "Photos 18 of 31" and a neutral 4pt meter. No spinner. It can't be dismissed while running.
+   3. **Done**: "All back." / "214 cups, 9 bags, 6 gear and 4 cafés are in. My taste DNA is rebuilt from them." The button is Go to Home.
+   4. **Refused**: one form each — a title saying what happened, one line on why and what to do, one button. No error colour, because nothing in the app went wrong.
+      - Not a backup: "That file can't be restored." / "It isn't an Extract Press backup. Exports are named "Extract Press backup ‹date›.zip"." · Choose another file
+      - Newer app: "Update first." / "This backup comes from a newer version of Extract Press. Update the app, then try again." · OK
+      - Damaged: "That file can't be read." / "It may be damaged or incomplete. Nothing was changed. Try another copy of the backup." · Choose another file
+      - Not empty: "Only on an empty app." / "There's already 1 cup here. Restoring never merges or overwrites, so it works on an empty app only." · OK
+   5. **Photos missing: a line on Done**, under a dashed soft divider: "3 bag photos weren't in the file. Those bags show the placeholder; a photo can be added from each bag's page." No line when nothing is missing.
+3. **C3 — yes.** First setup's step 1 (8n) gets a text action at its foot: "New phone? **Restore a backup**". A fresh install starts there, and the app is empty by definition. After a restore, setup is skipped. Welcome (8a) is unchanged.
+
+### D. Carried
+
+1. **3c's photo slot, solid 2px ink: confirmed.** It's a control by Round 22's test (it acts where it is, holding its own glyph and label), so ink is right. Dashed would wrongly say "empty".
+2. **Bags counts every bag added: noted, and 23c's rule is rewritten.** It now counts open or finished bags, brewed or not. A deleted bag still counts if cups point at it, through their copy (name + roaster + roasted on). One deleted with no cups was a mistake and doesn't count. Uryu: say if a deleted bag shouldn't count at all.
+
+### E. The bottom bar (25a, 25b)
+
+- **Shape.** Two pieces on one baseline, both 56 tall with square corners and a 2px edge, 12 apart (`space[12]`), inset by the gutter (22) at the sides and 26 from the bottom edge (the home-indicator inset less `space[8]`, as today).
+  - The + is a 56 square. The body is screen − 22 × 2 − 12 − 56 = 290 at 402, and its three tabs split it evenly (≈ 95 × 52, the whole slot is the touch area).
+- **Shadow or frame: the + with the CTA's hard shadow, the body without.**
+  - The body is chrome holding tabs, so by Round 22 it gets a quiet frame (`border.container`) on raised paper and no shadow. That's what failed in October: elevation over a busy list. It can't come back like this.
+  - The + is a control and the screen's primary action, so it gets ink, `color.action.bg` and `shadow.floating` (4: a floating, fixed-width control; the full-width primary keeps 5).
+  - They differ only where the frame rule says they must. Height, corners, width of edge and baseline make them one bar.
+- **What's under and between: a paper band, not the list.** From 12 above the bar to the screen's bottom edge (94 in all), the ground is plain paper with its dots. No rule, no fade.
+  - Without it, half-cut rows show through the 12 gap and the 26 strip. That noise is exactly what the old floating bar suffered from.
+  - Screens keep 94 + `space[20]` under their last row. Toasts sit `space[12]` above the band, as today above the bar.
+- **Pressed**: tabs scale (0.88), as now. **The + darkens to `state.pressed.action` — confirmed**: a blue fill has a darker tier (§1, by surface; 56 ≥ 44, by size). The shadow and frame are unchanged.
+- **Active tab: it still reads; nothing added.** The eye compares blue against two greys inside the body, and the + doesn't enter that comparison: a filled 56 square isn't the same kind of thing as a 20 glyph. Blue on both is §1's own pairing (the primary action, the current place).
+- **Reach**: the + spans x 324–380 and bottom 848 on 874, centre (352, 820). That's under a right thumb, with 44+ in both directions. Its corner is 22 in and 26 up, clear of the display's rounded corner. Check one-handed on the 15 Pro Max, as with A1.
+
+### For Code
+
+- E: two views in `FooterNav`, plus the band. Simplest band: end the scroll viewport 94 above the edge, so the fixed `DotTexture` shows through with nothing new drawn. §9 Bottom bar is rewritten from `handoff-round23.md` §1.
+- B: `TryNextCard` under the DNA card on Home. Four variants, dismiss line with Undo, routes as listed. The tag lead needs Records search to match tasting-note tags.
+- C: 6b's rows by app-empty state, five sheets, the 8n text action, export file name.
+- A2: show the chips on 3c, 44 tall.
+- No new tokens.
+
+---
+
 ## Round 22 · Quieting the borders (2026-11-07)
 
 Mock: Turn 23 is new — **24a** 5a as now, **24b** 5a with quiet frames, **24d** 5a as the reference does it, **24c** the rule, **24e** pressed states. Nothing earlier is edited.
@@ -7,6 +95,8 @@ Mock: Turn 23 is new — **24a** 5a as now, **24b** 5a with quiet frames, **24d*
 **Revised 2026-11-07 after measuring the reference** (Uryu's screenshot): frames drop from `border.medium` to `border.muted`, and 24d / 24e are added.
 
 **Decided 2026-11-07 (Uryu): 24b.** Controls stay ink; 24d is not applied. Build spec: `handoff-round22.md`.
+
+**Follow-up (Uryu's comment on 23b, 2026-11-07):** Home's top block is now one panel (raised, quiet frame) and the total drops to a new `numeral.lg` 64 / 52; the stats lose their hairlines. 23b / 23c redrawn; spec in `handoff-round22.md` §5.
 
 ### For §1 (replaces nothing; sits beside Shape's width rule)
 
@@ -232,14 +322,6 @@ Mock: Turn 20, 21a–21e. 8g as first drawn is superseded.
 - 8g: seven rules, as in B1. My numbers as 21a / 21c.
 - 8f: remove the footer bar. The link goes at the end of the content.
 
-### Built (2026-10-31)
-All four, as answered. Where it differs from 21a–21e:
-- "7 more to lock in": `meta` (12 / 600); 21a draws 12 / 700, which has no style. The counts take a new `text.countTabular` (14 / 600, tabular).
-- My numbers' rows: 21a's 13 padding folds to `inset.listRow` (12), as Round 9's 11 did. The cups line stays `body.sm` (21a: 13).
-- The rule bullet stays `size.dot.bullet` (6); 21b draws 9.
-- 15b's progress box keeps no frame (on device, 2026-10-17); 21e draws it in 2px ink. The link sits 12 under it, as 21e's 2 + its 10 padding.
-- 15b's Locked in copy is still ours (only the early sheet was drawn).
-
 ---
 
 ## Round 16 · Barista (2026-10-30)
@@ -293,8 +375,6 @@ Mock: Turn 19, 20a–20g.
 - 11a: Café meta = short address.
 - 2b: café groups and "No café".
 - 6b: Backup copy.
-
-**2b corrected 2026-10-31**: built on 2026-10-30 with the café groups after Packaged ("Round 16 did not say where they go"), which B6 does say. Now as B6: cafés stand among the roasters (first cup under the sort; by name under "Roaster A–Z"), then No roaster, No café, Packaged. Group by Brewer keeps one "Barista" group.
 
 ---
 
