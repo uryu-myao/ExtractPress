@@ -40,6 +40,10 @@ const SHAPES = {
   dripper: [<Path key="a" d="M5 4h11l-1 6a5 5 0 0 1-9 0z" />, <Path key="b" d="M16 5h2.5a2.5 2.5 0 0 1 0 5H16" />, <Path key="c" d="M4 20h13" />],
   beanBag: [<Path key="a" d="M6 3h12v5a6 6 0 0 1-2 4.5V21H8v-8.5A6 6 0 0 1 6 8z" />, <Path key="b" d="M9 7h6" />],
   download: [<Path key="a" d="M12 4v11" />, <Path key="b" d="M7 11l5 5 5-5" />, <Path key="c" d="M4 20h16" />],
+  // 6b's Restore from a backup (Design Round 23, 25e), verbatim: Export's arrow turned up, out of the tray.
+  restore: [<Path key="a" d="M12 20V9" />, <Path key="b" d="M7 14l5-5 5 5" />, <Path key="c" d="M5 4h14" />],
+  // Try next's eyebrow on Home (Design Round 23, 25c), verbatim.
+  spark: [<Path key="p" d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18" />],
   // beanFreshness's clock (3d / 4b), verbatim.
   clock: [<Circle key="c" cx="12" cy="12" r="9" />, <Path key="p" d="M12 7v5l3.5 2" />],
   // 3g's Delete this bag (the bin), verbatim.

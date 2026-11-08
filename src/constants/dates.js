@@ -15,6 +15,11 @@ export const daysSince = (ms) => Math.round((startOfDay(new Date()) - startOfDay
 const short = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
 const withYear = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+const fullDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+/** "8 Nov 2026": the day a backup was made (Restore's confirm, Design Round 23, 25f). */
+export const formatFullDate = (date) => fullDate.format(date);
+
 /** "Apr 1" (3c), with the year only when it is not this year. */
 export const formatDay = (ms) => {
   const d = new Date(ms);

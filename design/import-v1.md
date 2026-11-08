@@ -24,7 +24,11 @@ Asked by the planner on 2026-11-08: should V1 ship a way to restore the records 
   - a schema-5 file coming up through migration 6;
   - refused on a non-empty app, with nothing written;
   - 7 refusals.
-- Nothing calls Restore yet: the rows wait for Design (Round 23, C).
+- **The UI was built the same day** from Design Round 23 (25e–25g):
+  - `RestoreSheet.js`: confirm, working with a photo meter, done (with a line when photos are missing), and the four refusals;
+  - 6b shows "Restore from a backup" only on an empty app, otherwise a sentence under the block;
+  - the export is named `Extract Press backup YYYY-MM-DD.zip`.
+  - **Not built: 8n's "New phone? Restore a backup"**, because the first setup (8n) isn't built. It goes in with 8n.
 - The scratch database is in memory (`:memory:`), so there is no file to clean up. Separate from the rename (`rename-plan.md`): Uryu accepted losing today's dogfood records, so this is about the store build, not about saving them.
 
 ## Why it matters

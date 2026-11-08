@@ -21,6 +21,8 @@
  *                        tabs and the bar (Home's stamp)
  *   requestSortSheet(r)  AppShell shows 2b over the tabs and the bar (2a's
  *                        filter button): { sort, group, onApply }
+ *   requestRestore()     AppShell runs Restore from a backup: the file
+ *                        picker, then its sheets (6b's row, Design Round 23)
  */
 const cupListeners = new Set();
 const shellListeners = new Set();
@@ -87,6 +89,17 @@ export function requestSortSheet(request) {
 export function onSortSheetRequest(listener) {
   sortSheetListeners.add(listener);
   return () => sortSheetListeners.delete(listener);
+}
+
+const restoreListeners = new Set();
+
+export function requestRestore() {
+  restoreListeners.forEach((l) => l());
+}
+
+export function onRestoreRequest(listener) {
+  restoreListeners.add(listener);
+  return () => restoreListeners.delete(listener);
 }
 
 export function requestShell(request) {

@@ -167,6 +167,19 @@ export async function loadProfile(db: SQLiteDatabase): Promise<{ bags: number; c
   return { bags, cafes, cupTimes: cups.map((c) => c.logged_at) };
 }
 
+/**
+ * What the user has made, as Restore's rule reads it (backupFormat.ts isEmpty):
+ * 6b shows Restore only while all four are 0 (Design Round 23, 25e), and the
+ * "Only on an empty app" sheet names them.
+ */
+export async function countOwnRecords(db: SQLiteDatabase): Promise<{ cups: number; bags: number; gear: number; places: number }> {
+  const row = await db.getFirstAsync<{ cups: number; bags: number; gear: number; places: number }>(
+    `SELECT (SELECT COUNT(*) FROM cups) AS cups, (SELECT COUNT(*) FROM bags) AS bags,
+            (SELECT COUNT(*) FROM gear) AS gear, (SELECT COUNT(*) FROM places) AS places`
+  );
+  return row ?? { cups: 0, bags: 0, gear: 0, places: 0 };
+}
+
 /** One cup as 2c shows it: every stored field, its place names as copied (migration 6). */
 export type CupRecord = Row<'cups'>;
 

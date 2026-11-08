@@ -39,7 +39,10 @@ function localDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** Write extract-backup-YYYY-MM-DD.zip to the cache and open the share sheet on it. */
+/**
+ * Write "Extract Press backup YYYY-MM-DD.zip" to the cache and open the share
+ * sheet on it (Design Round 23: Restore's "not a backup" refusal names it).
+ */
 export async function shareBackup(db: SQLiteDatabase): Promise<void> {
   if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing is not available on this device.');
   const now = new Date();
@@ -58,7 +61,7 @@ export async function shareBackup(db: SQLiteDatabase): Promise<void> {
     if (bytes) photos.set(id, bytes);
   }
   // Cache: the file only has to live until the share sheet has taken it.
-  const file = new File(Paths.cache, `extract-backup-${localDate(now)}.zip`);
+  const file = new File(Paths.cache, `Extract Press backup ${localDate(now)}.zip`);
   await file.write(packBackup(body, photos));
   await Sharing.shareAsync(file.uri, { UTI: 'public.zip-archive', mimeType: 'application/zip' });
 }

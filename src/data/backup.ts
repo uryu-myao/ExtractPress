@@ -45,7 +45,12 @@ export async function readBackupFile(uri: string): Promise<{ backup: Backup; sum
  * photos the rows point at that couldn't be restored (missing from the file,
  * or not restyled): their bags show the placeholder, or the original.
  */
-export async function restoreBackup(db: SQLite.SQLiteDatabase, backup: Backup): Promise<{ photosMissing: string[] }> {
+export async function restoreBackup(
+  db: SQLite.SQLiteDatabase,
+  backup: Backup,
+  /** Called before the first photo and after each one: Restore's "Photos 18 of 31". */
+  onPhoto?: (done: number, total: number) => void
+): Promise<{ photosMissing: string[] }> {
   const scratch = await SQLite.openDatabaseAsync(':memory:');
   let tables: Tables;
   try {
@@ -58,9 +63,12 @@ export async function restoreBackup(db: SQLite.SQLiteDatabase, backup: Backup): 
   // After the commit: a photo written before a failed copy would only be
   // swept on the next launch (sweepPhotos), but there's no reason to risk it.
   const photosMissing: string[] = [];
-  for (const id of photoIdsOf(tables)) {
+  const ids = photoIdsOf(tables);
+  onPhoto?.(0, ids.length);
+  for (const [i, id] of ids.entries()) {
     const bytes = backup.photos.get(id);
     if (!bytes || !(await restorePhoto(id, bytes))) photosMissing.push(id);
+    onPhoto?.(i + 1, ids.length);
   }
   notifyEverythingChanged();
   return { photosMissing };

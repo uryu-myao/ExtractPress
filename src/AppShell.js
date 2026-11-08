@@ -7,6 +7,7 @@ import { onShellRequest, requestOpenCup, requestTabLeave, requestTabReset } from
 import DotTexture from './components/base/DotTexture';
 import FooterNav, { useFooterHeight } from './components/FooterNav';
 import Notice from './components/Notice';
+import { RestoreHost } from './components/RestoreSheet';
 import ShellStack from './components/ShellStack';
 import { TABS } from './constants/navigation';
 import { SCREEN_COMPONENTS } from './screens';
@@ -127,6 +128,8 @@ export default function AppShell() {
       <DnaInfoHost />
       {/* 2b: Records' filter button opens Sort & group over the tabs and the bar. */}
       <SortSheetHost />
+      {/* 6b's Restore from a backup: its sheets over the tabs and the bar. */}
+      <RestoreHost />
       <AddCoffeeOverlay
         visible={showAddCoffee}
         preset={recordPreset}

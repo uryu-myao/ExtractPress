@@ -10,9 +10,9 @@ import { daysBetween } from '../constants/dates';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { shareBackup, shareCupsCsv } from '../data/export';
-import { OPEN_BAG_LIMIT, countGear, countOpenBags, loadDnaPage, loadProfile, onCupsChanged, onShelfChanged } from '../data/repository';
+import { OPEN_BAG_LIMIT, countGear, countOpenBags, countOwnRecords, loadDnaPage, loadProfile, onCupsChanged, onShelfChanged } from '../data/repository';
 import { bandOf } from '../data/tasteDna';
-import { requestPush } from '../navigation';
+import { requestPush, requestRestore } from '../navigation';
 import { color, dashed, layout, shape, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
@@ -186,8 +186,9 @@ export default function ProfileTabScreen() {
 
   useEffect(() => {
     const load = () =>
-      Promise.all([loadProfile(db), loadDnaPage(db), countGear(db), countOpenBags(db)]).then(
-        ([profile, page, gear, bags]) => setData({ profile, page, gear, bags, now: Date.now() }),
+      Promise.all([loadProfile(db), loadDnaPage(db), countGear(db), countOpenBags(db), countOwnRecords(db)]).then(
+        ([profile, page, gear, bags, own]) =>
+          setData({ profile, page, gear, bags, empty: own.cups + own.bags + own.gear + own.places === 0, now: Date.now() }),
         (error) => console.error('[profile] could not read', error)
       );
     load();
@@ -225,7 +226,9 @@ export default function ProfileTabScreen() {
           <Section title="Taste DNA">
             <MenuRow icon="asterisk" label="How my DNA is built" onPress={() => requestPush({ name: 'dnaBuilt' })} />
           </Section>
-          <Section title="My data">
+          {/* Restore only on an empty app (Design Round 23, 25e): the row while it
+              can work, then a sentence under the block instead, not a dead row. */}
+          <Section title="My data" caption={data.empty ? undefined : 'Restoring a backup works on an empty app only.'}>
             <MenuRow
               icon="download"
               label="Export my cups"
@@ -236,8 +239,9 @@ export default function ProfileTabScreen() {
             {/* INTERIM (todo.md T-8): a manual export of everything in 6b's
                 Backup row, until the real backup (Round 16, B8). Since
                 2026-11-08 a zip with the photos, which Restore reads back.
-                TODO: the sub copy is ours; Design, Round 23. */}
+                The sub line is Design's (Round 23, 25e). */}
             <MenuRow icon="download" label="Export everything" sub="Cups, bags, gear and photos" onPress={onExport(shareBackup)} disabled={busy} />
+            {data.empty ? <MenuRow icon="restore" label="Restore from a backup" sub="From an Export everything file" onPress={requestRestore} disabled={busy} /> : null}
           </Section>
         </View>
       ) : null}
