@@ -9,6 +9,7 @@ Reply under "Round 23" in `design-response-next.md`, numbered as in this brief.
 - **B** asks you to draw the Try next card. **It is not built until you have drawn it.**
 - **C** asks you to draw Restore, in My data. The engine is being built now; the rows wait for you.
 - **D** carries two items collected since Round 22.
+- **E** asks you to draw a new bottom bar (Uryu, 2026-11-08): floating again, three tabs, and the + on its own to the right.
 
 **Context: V1 is going to the App Store by the end of December 2026.** The app is now called **Extract Press** (2026-11-08).
 
@@ -22,7 +23,8 @@ Reply under "Round 23" in `design-response-next.md`, numbered as in this brief.
   - Rejected: keeping the + centred (two tabs on the left, one on the right: lopsided), and moving it to the end (the thumb has learned it inside).
   - At 390pt the icon centres are 65 / 152 / 238 / 325.
 - **Not final until checked on Uryu's phone** (15 Pro Max): whether the + is harder to reach with one hand off centre. The build is on his phone.
-- §9's bar text now says four slots (`design-system.md`). **Please redraw the bar in your file** (1b, 2a, 6a, 8d), and drop Try next's icon from it.
+- §9's bar text now says four slots (`design-system.md`).
+- **This is the interim bar.** Uryu wants the bar drawn again for 3 + 1 (E). Don't redraw A1 in your file; draw E.
 
 ### A2. Process is back on 3c and 3g
 
@@ -119,3 +121,40 @@ Decided 2026-11-08 (planner): V1 can read a backup back in (`import-v1.md`). Wit
 2. Bags counts every bag added, not only bags across my cups (Uryu, 2026-11-06).
 
 Details for both are in `design-brief-next.md`.
+
+## E. Please draw: the bottom bar, floating, with the + on its own (Uryu, 2026-11-08)
+
+Now that the bar holds three tabs and the +, Uryu wants it to say so: **three tabs in one body, and the + as a separate button beside it.**
+
+**Uryu's direction:**
+1. **Floating again**, no longer full width on the bottom edge: the bar sits above the bottom edge, inside the screen.
+2. **Two pieces side by side**:
+   - the **body**: Home · Records · Profile, the three tabs, each with its name under the glyph as now;
+   - the **+**: its own button, **to the right of the body**.
+3. **The + takes the CTA's blue**, `color.action.bg` (#067BC2), the same as "Record a coffee", with `color.action.fg` for the glyph. Today it is an ink square.
+4. **One style for both**: the + is drawn in the body's language (frame, height, corners, shadow or none), so they read as one bar in two parts, not as a bar plus a stray button.
+
+**What to settle in the drawing:**
+- **The gap and the sizes**:
+  - the space between body and +;
+  - the +'s width (square at the body's height?);
+  - the inset from the screen's sides (`layout.gutter`, 22, as the screens?);
+  - the inset from the bottom: above the home indicator, and how far.
+- **Shadow or frame.** The old floating bar (the source's 1b / 2a / 6a / 8d: 90% wide, `shadow.floating`) was taken off on 2026-10-05: over a full Records list its elevation read as noise. The full-width bar with a 2px top rule replaced it. A floating bar comes back to that question. Options:
+  - a frame only (2px, `border.container` or ink, Round 22);
+  - `shadow.floating` on both pieces;
+  - the + with the CTA's hard shadow, as "Record a coffee", and the body without.
+  
+  Your call. Please show it over a full list (2a with 20 rows), not only over an empty screen.
+- **What shows under and between the pieces.** Content scrolls behind the bar. The gap between the pieces and the strip below them show the list through. Is that fine, or does the strip need a ground behind it? Screens keep room under their content so the last row clears the bar.
+- **Pressed**:
+  - The tabs scale, as now.
+  - The + changes rule: as an ink square it had no darker tier, so it scaled. **A blue fill does have one**, `state.pressed.action` (as "Record a coffee"), so by §1 it would darken instead. Please confirm.
+- **The active tab**: today's blue glyph and name. With a blue + right beside the body, does the active tab still read, or does it need another sign (an underline, a fill)?
+- **Reach**: the + moves to the right edge of the bar. Planner's note: in A1, "the + at the end" was the option set aside, because the thumb had learned it in the middle. On the right edge it sits under a right thumb. Please keep it inside the tap target (44 or more) and clear of the screen's rounded corner.
+
+**What we'll do**:
+- A1's four-slot bar stays until you have drawn E.
+- Then E replaces it, and §9 is rewritten again.
+- Building it is mostly `FooterNav`: the body and the + become two views, and the screens' room under the content follows the new height.
+
