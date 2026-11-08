@@ -5,7 +5,7 @@ import { DnaInfoHost } from './components/DnaInfoSheet';
 import { SortSheetHost } from './components/SortSheet';
 import { onShellRequest, requestOpenCup, requestTabLeave, requestTabReset } from './navigation';
 import DotTexture from './components/base/DotTexture';
-import FooterNav from './components/FooterNav';
+import FooterNav, { useFooterHeight } from './components/FooterNav';
 import Notice from './components/Notice';
 import ShellStack from './components/ShellStack';
 import { TABS } from './constants/navigation';
@@ -96,13 +96,18 @@ export default function AppShell() {
     [width]
   );
 
+  const bandHeight = useFooterHeight();
   return (
     <View style={styles.container}>
       <DotTexture />
       <ScreenBackdropContext.Provider value={false}>
         <>
+          {/* The pager ends at the bar's band (Design Round 23): from space.12
+              above the floating bar to the edge, the DotTexture behind shows,
+              so no half-cut row shows between or under the bar's pieces. */}
           <Animated.ScrollView
             ref={pager}
+            style={{ marginBottom: bandHeight }}
             horizontal
             scrollEnabled={false}
             showsHorizontalScrollIndicator={false}

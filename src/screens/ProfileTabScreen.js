@@ -248,8 +248,9 @@ export default function ProfileTabScreen() {
 const styles = StyleSheet.create({
   body: {
     gap: space[20],
-    // Room under the last block so the bottom bar never covers it (as 2a).
-    paddingBottom: layout.empty.block,
+    // Room under the last block; the pager already ends at the bar's band
+    // (Design Round 23: the band plus space.20).
+    paddingBottom: space[20],
   },
   frame: {
     borderWidth: shape.borderWidth.box,

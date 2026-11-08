@@ -67,7 +67,7 @@ Non-negotiable, and each one is a measured fact rather than a preference.
 - **A frameless whole row goes to `state.pressed.row` (2026-10-18, on device)**: list rows (Records, Recently sipped, the pickers' and search sheet's rows, FieldRows), "Manage my beans", My beans' card info and "Finished bags". The ink at 6%, laid over what is under it: #E8E2DE on ground, #F2F0ED on raised — the smallest step that still shows, low in chroma, from the app's own ink, and the ground's dots show through. `surface.muted`'s beige read loud on a row. **The fill bleeds past the content to its container's edges**: a row on the screen gutter fills the screen's width; a row in a card fills out to the card's frame (and to its top or bottom edge where it is the first or last part). The content, and a list's header hairline, keep their width. Framed controls (Button, IconButton, AddButton, SegmentedControl, chips, ShelfBlock's tabs, the star disc) keep `state.pressed.surface`: their frame carries the shape.
 - **Surface → darken.** **Nothing else changes**: border, label/ink, glyph and `HardShadow` stay as they are. The change is instant (no motion).
 - A fill that is already ink (the selected chip) has no darker tier and does not respond. Pressing it is a no-op anyway. Disabled controls do not respond.
-- Darken applies to: Button, SegmentedControl options, FieldRow, StarRating stars, IconButton. Scale applies to: the bottom-bar tab icons, and the bottom bar's + (an ink square: no darker tier left, below; it showed no change until 2026-10-18). Every tappable component added later takes one of the two by this test; its Step 4 component spec says which.
+- Darken applies to: Button, SegmentedControl options, FieldRow, StarRating stars, IconButton. Scale applies to: the bottom-bar tab icons. The bottom bar's + darkens to `state.pressed.action` since 2026-11-08 (Round 23: a blue fill has a darker tier). As an ink square it scaled, 2026-10-18 to 2026-11-08. Every tappable component added later takes one of the two by this test; its Step 4 component spec says which.
 - **The condition above both tests (2026-10-10): the feedback must be perceptible.** Surface and size choose the means, *provided that means can be seen*. Where it cannot, scale is used:
   - **too small to see a darker fill under the finger**: under 44pt (the axis handle, checkboxes);
   - **no darker tier left**: a fill that is already the darkest, i.e. the ink-filled selected chip of a clearable set (Roast level, Process). Pressing it clears it, so it must respond.
@@ -936,7 +936,22 @@ Swiping horizontally moves between the four tab screens: Home → Records → Tr
 - **Scope**: tab screens only. The Record overlay is above the pager, not inside it, so swiping in it never pages. No back gesture yet, because no detail screen exists.
 - Measured (390pt simulator, programmatic animated page changes): 60 fps on the JS thread, p95 17.5 ms, one ~25 ms frame per page change at settle (the bar re-rendering; screens are memoised and do not re-render). Footer taps land on the right page in all four directions. Gesture arbitration with real fingers needs a physical device: the simulator cannot inject swipes here.
 
-### Bottom bar — formerly "Floating bar" (revised 2026-10-05)
+### Bottom bar (2026-11-08, Design Round 23; 25a / 25b)
+**Bottom bar (2026-11-08, Round 23).** Two pieces, floating: a body with three tabs (Home · Records · Profile) and the + to its right.
+- **Both pieces**: 56 tall (`size.tabBar.height`), square corners, a 2px frame, `space[12]` apart.
+- **Position**: inset by `layout.gutter` at the sides, and the home-indicator inset less `space[8]` above the bottom edge.
+- **The body is chrome**: `surface.raised`, `border.container`, no shadow. Its three slots share its width, and each is the whole touch area.
+- **The + is the screen's primary action**: `color.action.bg`, `border.strong`, `shadow.floating`. It darkens to `state.pressed.action`.
+- **The band**: behind the bar, from `space[12]` above it to the edge, plain ground hides the content (no rule, no fade). Screens keep the band plus `space[20]` under their content.
+
+*Why the body has no shadow: 2026-10-05, elevation over a full list read as noise.*
+
+**Built 2026-11-08**:
+- `FooterNav` draws the two pieces. `AppShell` ends the tab pager at the band, so the fixed `DotTexture` shows through.
+- The tab screens keep `space[20]` under their content; the toast sits `space[12]` above the band.
+- **Open**: an iPhone with no home indicator (SE) has no inset. There the bar sits `space[12]` above the edge. That value is ours, for Design to confirm.
+
+### Bottom bar, 2026-10-05 to 2026-11-08 (superseded: kept as history)
 **The bar no longer hides (decided on device, 2026-10-12)**: it stays put while a page scrolls; the hide / reveal below is superseded.
 
 ~~**Hide and reveal (2026-10-06)**~~: the bar **hides on downward scroll**, sliding its full height off the bottom edge. **Any upward scroll brings it fully back at once**: no threshold, no waiting for the top, because + is the primary action and scrolling back up the list is when a missed cup comes to mind.
@@ -1376,3 +1391,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-11-06 — Design Round 21 built (23a–23h). New tokens: `color.axis.{acidity,body,roast,sweetness}` (identity, the four axes only, never text; §1, §2), `size.axis.key` (12 × 4), `size.statColumn` (150, Home's stat column; not the shelf's `statusColumn`). AxisReadout: fill in the axis colour, marker by role, the key on every readout (`AxisPoles`); AxisSlider: the key only, hung outside the 260 track. 5c / 2c: change tags replace the per-axis lines. Home: the This week panel goes; total, three stats (glyphs `calendar`, `store` new, Bags takes 6a's `beanBag`; `icon.sm`) and a month strip (`size.dot.bullet`, today's underline square + 2 × `borderWidth.box`, derived). Build questions (same day): the stat column hugs its content from a four-digit total; 6a's Week streak becomes Cafés (ink). Bags (Home and 6a, `countBags`): every bag added plus deleted bags my cups still name (by name + roaster + roast date); Uryu, overturning 23c's "bags across my cups", sent back to Design.
 - 2026-11-07 — Design Round 22 built (24b; 24d not applied): §1 Border colour — controls keep `border.strong`, containers and chrome edges go to `border.container` (new alias of `border.muted`, same hex; `border.control` proposed too, not added: controls already say `border.strong`). 22 frames moved; widths unchanged. 8d's shadow: 8d isn't built.
 - 2026-11-08 — §9 Bottom bar: four slots (Home · Records · + · Profile), layout A (planner). Try next is no tab in V1 (a card on Home instead), and its placeholder would fail App Review. The + moves right of centre (about 5/8). Reach is to be checked on device. §1's clearable chip is built for the first time (SegmentedControl `clearable`, 3c / 3g's Process): the selected chip presses by scale.
+- 2026-11-08 — Design Round 23 built (E, 25a / 25b): §9 Bottom bar is two floating pieces, the three-tab body (quiet frame, no shadow) and a blue + (`border.strong`, `shadow.floating`). A band of ground hides the content behind it. §1: the + moves from scale to darken (`state.pressed.action`). Tokens: `tabBar.addSlot`, `addLift` and the ink `add` removed; `tabBar.add` is now the plus glyph's size and stroke (icon.lg's 22 at icon.sm's 2.6).

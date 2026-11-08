@@ -188,7 +188,8 @@ const styles = StyleSheet.create({
   list: {
     paddingTop: space[16],
     zIndex: 1,
-    // Room under the last row so the bottom bar never covers it (§9 Bottom bar).
-    paddingBottom: layout.empty.block,
+    // Room under the last row; the pager already ends at the bar's band
+    // (Design Round 23: the band plus space.20).
+    paddingBottom: space[20],
   },
 });

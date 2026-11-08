@@ -594,32 +594,26 @@ export const component = {
     grip: axisGrip,
   },
   /**
-   * Bottom tab bar, carried by the floating bar (design-system.md §9).
-   * Four tab slots + one wider add slot, centred in the bar.
+   * Bottom bar (design-system.md §9; Design Round 23, 2026-11-08): the tab
+   * body's slots and the +'s glyph. The pieces' height is size.tabBar.height.
+   * Removed 2026-11-08: addSlot (68 × 40) and addLift, the ink + among the
+   * tabs; add's ink background and mark.
    * The two raw icon colours were missed by the original extraction (lowercase
    * hex in the source) and added 2026-10-04: 6 and 5 screens, see changelog.
    */
   tabBar: {
     slot: { w: 60, h: 40 },
-    addSlot: { w: 68, h: 40 },
     /**
      * The glyphs' box (2026-10-18): the glyphs are 19–20 tall, so each sits
      * centred in 20 and the names under them share one baseline.
      */
     glyph: 20,
-    /**
-     * Optical: the + rises this far off the glyph-and-name block's centre
-     * (2026-10-18, on device it read low). The tabs' weight is in the glyphs,
-     * so the + centres halfway between the block's centre (28 in the row) and
-     * the glyphs' (20): 24.
-     */
-    addLift: space[4],
     icon: {
       active: color.action.bg,
       inactive: '#9B8F87',
     },
-    /** the add button: ink square with a ground-coloured plus */
-    add: { background: color.surface.inverse, mark: color.text.onInverse },
+    /** the +'s plus: icon.lg's size at icon.sm's stroke (25b: 22 at 2.6), in color.action.fg */
+    add: { glyph: icon.lg.size, strokeWidth: icon.sm.strokeWidth },
   },
   requiredBar,
   /**

@@ -130,8 +130,9 @@ const styles = StyleSheet.create({
   body: {
     // 1b's blocks sit 20 apart (each section's padding-bottom).
     gap: space[20],
-    // Room under the last block so the bottom bar never covers it (as 2a).
-    paddingBottom: layout.empty.block,
+    // Room under the last block; the pager already ends at the bar's band
+    // (Design Round 23: the band plus space.20).
+    paddingBottom: space[20],
   },
   // space.2 under it (Round 14, was 14), so "Recently sipped" and the
   // shelf's tabs sit the same distance from their rows.

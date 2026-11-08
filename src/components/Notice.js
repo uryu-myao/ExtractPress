@@ -28,7 +28,8 @@ const easing = Easing.bezier(...motion.expand.controlPoints);
 const RISE = space[8];
 
 export default function Notice() {
-  const bottom = useFooterHeight() + spacing.gap.section;
+  // space.12 above the bar's band (Design Round 23).
+  const bottom = useFooterHeight() + space[12];
   const [notice, setNotice] = useState(null); // { name, key }
   const opacity = useRef(new Animated.Value(0)).current;
   const lift = useRef(new Animated.Value(0)).current;
