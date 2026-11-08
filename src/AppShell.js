@@ -21,8 +21,8 @@ const PAGES = TABS.map((t) => t.key);
  * The overlay is the last child, so it covers the bar; it sits outside the
  * pager, so swiping inside it never pages.
  *
- * The four tab screens sit side by side in a horizontal ScrollView (Home →
- * Records → Try next → Profile), **switched by the tab bar only**: swiping
+ * The three tab screens sit side by side in a horizontal ScrollView (Home →
+ * Records → Profile; Try next left the bar 2026-11-08), **switched by the tab bar only**: swiping
  * between tabs was removed (2026-10-07) so the horizontal gesture stays free
  * for tabs inside a screen, and for horizontal controls such as the taste
  * axis. The ScrollView is kept, with scrolling disabled, because it keeps

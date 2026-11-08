@@ -53,8 +53,8 @@ export async function countOpenBags(db: SQLiteDatabase): Promise<number> {
 }
 
 /** What 3c's Bag form hands over (minimal set: name required, the rest optional). */
-/** photo: a kept photo's id (data/photos.ts), or null. */
-export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; open: boolean; photo?: string | null };
+/** photo: a kept photo's id (data/photos.ts), or null. process: null is "don't know". */
+export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; process?: Bag['process']; open: boolean; photo?: string | null };
 
 /**
  * Add a bag: opened now (3c "Open this bag"), or not yet (3c "Add without
@@ -64,10 +64,11 @@ export type NewBag = { name: string; roaster: string | null; roastedAt: number |
  */
 export async function insertBag(db: SQLiteDatabase, bag: NewBag): Promise<Bag> {
   if ((await countOpenBags(db)) >= OPEN_BAG_LIMIT) throw new Error(`All ${OPEN_BAG_LIMIT} slots are taken. Finish a bag to free one up.`);
-  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, opened_at, photo_uri) VALUES (?, ?, ?, ?, ?)', [
+  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, process, opened_at, photo_uri) VALUES (?, ?, ?, ?, ?, ?)', [
     bag.name,
     bag.roaster,
     bag.roastedAt,
+    bag.process ?? null,
     bag.open ? Date.now() : null,
     bag.photo ?? null,
   ]);
@@ -247,8 +248,8 @@ export async function reopenBag(db: SQLiteDatabase, id: number): Promise<void> {
   notifyShelfChanged();
 }
 
-/** What 3g (minimal) edits. */
-export type BagEdit = { name: string; roaster: string | null; roastedAt: number | null; openedAt: number | null };
+/** What 3g (minimal, plus Process) edits. */
+export type BagEdit = { name: string; roaster: string | null; roastedAt: number | null; process: Bag['process']; openedAt: number | null };
 
 /**
  * Save 3g. The cups logged from the bag carry copies of its details
@@ -267,17 +268,19 @@ export async function updateBag(db: SQLiteDatabase, id: number, edit: BagEdit): 
       if (at != null && at > latest) throw new Error("A date can't be after the first cup from this bag, or in the future.");
     }
     if (edit.roastedAt != null && edit.openedAt != null && edit.openedAt < edit.roastedAt) throw new Error("A bag can't be opened before it was roasted.");
-    await tx.runAsync('UPDATE bags SET name = ?, roaster = ?, roasted_at = ?, opened_at = ? WHERE id = ?', [
+    await tx.runAsync('UPDATE bags SET name = ?, roaster = ?, roasted_at = ?, process = ?, opened_at = ? WHERE id = ?', [
       edit.name,
       edit.roaster,
       edit.roastedAt,
+      edit.process,
       edit.openedAt,
       id,
     ]);
-    await tx.runAsync('UPDATE cups SET bean_name = ?, bean_roaster = ?, bean_roasted_at = ? WHERE bag_id = ?', [
+    await tx.runAsync('UPDATE cups SET bean_name = ?, bean_roaster = ?, bean_roasted_at = ?, bean_process = ? WHERE bag_id = ?', [
       edit.name,
       edit.roaster,
       edit.roastedAt,
+      edit.process,
       id,
     ]);
   });

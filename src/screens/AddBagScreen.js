@@ -32,7 +32,7 @@ export default function AddBagScreen({ onBack, onAdded }) {
   const db = useDatabase();
   // In the Record sheet the new bag becomes the cup's bag; from 3d it just joins the shelf.
   const chooseBag = useRecordDraftIfAny()?.chooseBag;
-  const [form, setForm] = useState({ name: '', roaster: '', roastedAt: null });
+  const [form, setForm] = useState({ name: '', roaster: '', roastedAt: null, process: null });
   const [picking, setPicking] = useState(false);
   // 5d's way (decided 2026-10-11): the button stays pressable; pressed with no
   // name, the field says it is required. Typing a name ends it.
@@ -69,7 +69,7 @@ export default function AddBagScreen({ onBack, onAdded }) {
         kept = photo.id;
         pending.current = null;
       }
-      const bag = await insertBag(db, { name, roaster: form.roaster.trim() || null, roastedAt: form.roastedAt, open: opened, photo: kept });
+      const bag = await insertBag(db, { name, roaster: form.roaster.trim() || null, roastedAt: form.roastedAt, process: form.process, open: opened, photo: kept });
       // Only an opened bag can be the cup's bag.
       if (opened) chooseBag?.(bag);
       (onAdded ?? onBack)();

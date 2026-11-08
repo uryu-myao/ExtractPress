@@ -224,6 +224,8 @@ The Switch is not built yet. The taste-axis handle is now derived from it, so th
 
 ## Bag form: origin, region and process (decided 2026-10-09; not built)
 
+**Process built 2026-11-08** (planner: "a bag record without it has a hole"), on 3c and 3g, under Roaster: SegmentedControl `clearable`. Origin and Region stay out of V1. Deviations sent to Design (Round 23, A2): 3c shows the row, not the "Origin · Process" fold; the chips are the maker chips' size.
+
 - **Never required, never blocking**: §1's principle, "required fields start pre-filled and never block".
 - **3c (new bag, the 15-second path)**: one optional line under Roast level, "Origin · Process", shown with any guess. Saving without touching it is fine.
 - **3g (edit bag)**: full fields.
@@ -379,7 +381,7 @@ The bundled list is the starting point for 5b's flavour tags (never a whitelist;
 | 8j topic | An idea / Logging / Taste DNA / Something else | no | "Something else" covers the rest |
 | 8l scope | Words / Beans / Gear | no | a search has a scope |
 | **3c 3g Roast level** | Light / Medium / Medium-dark / Dark | **yes** | unset is valid, and a reused bag pre-fills it |
-| **3c 3g Process** (planned) | Washed / Natural / Honey / Anaerobic | **yes** | unset means unknown (no "Unknown" option) |
+| **3c 3g Process** (built 2026-11-08) | Washed / Natural / Honey / Anaerobic | **yes** | unset means unknown (no "Unknown" option) |
 
 - **Open**: the selected chip of a clearable set needs press feedback. Today it does not respond. Its ink fill has no darker tier, so it would take the scale, or a step lighter. To decide when built.
 

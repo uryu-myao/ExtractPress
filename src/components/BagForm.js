@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { PROCESS_OPTIONS } from '../constants/cups';
 import { formatDay } from '../constants/dates';
 import { resolveTextStyle } from '../theme/fonts';
 import { color, icon, shape, size, space, spacing, state, textStyle } from '../theme/tokens';
 import ClearButton from './base/ClearButton';
 import Glyph from './base/Glyph';
+import SegmentedControl from './base/SegmentedControl';
 import Text from './base/Text';
 
 /**
@@ -12,7 +14,16 @@ import Text from './base/Text';
  * Two field sets, one component:
  *   minimal  Bean name (required), Roaster, Roasted on — 8o's set; 3c (minimal)
  *   full     + Roast level, Size, Photo, Origin / Region / Process — 3c / 3g;
- *            not built yet (the screen keeps its entry points when it grows)
+ *            built so far: Photo (3c) and Process (both, 2026-11-08)
+ *
+ * Process (planner, 2026-11-08): Washed / Natural / Honey / Anaerobic, a
+ * clearable option set (unset is "don't know"; no Unknown chip), under
+ * Roaster as in 3g. 3g puts it under Roast level, which isn't built, so it
+ * sits where that block would. 3c's mock folds it into an "Origin · Process"
+ * line; without Origin that line would open onto one row, so both show the
+ * row itself.
+ * TODO: 3c's fold, and the chip size (3g's mock draws 9 / 14 padding, the
+ * maker chips' 14 / 16 here), for Design.
  *
  * Fields follow 3c / 3g: an eyebrow label over a 46pt line with a 2px
  * underline — ink while focused, border.muted otherwise.
@@ -31,7 +42,8 @@ import Text from './base/Text';
  * the whole screen.
  *
  * Props
- *   value       { name, roaster, roastedAt (ms of a local midnight, or null) }
+ *   value       { name, roaster, roastedAt (ms of a local midnight, or null),
+ *               process ('washed' … or null) }
  *   onChange    (next) => void
  *   onPickDate  open the date sheet for Roasted on
  *   datePicking the sheet is open (the field shows focus)
@@ -67,6 +79,12 @@ export default function BagForm({
       {photo ? <PhotoField uri={photo.uri} onPress={photo.onPress} /> : null}
       <Field label="Bean name" value={value.name} placeholder="e.g. Ethiopia Guji" onChangeText={(name) => onChange({ ...value, name })} autoFocus={autoFocusName} error={nameMissing} />
       <Field label="Roaster" value={value.roaster} placeholder="Optional" onChangeText={(roaster) => onChange({ ...value, roaster })} />
+      <View style={styles.field}>
+        <Text variant="labelEyebrow" color="muted">
+          Process
+        </Text>
+        <SegmentedControl options={PROCESS_OPTIONS} value={value.process ?? null} onChange={(process) => onChange({ ...value, process })} clearable />
+      </View>
       <DayField
         label="Roasted on"
         value={value.roastedAt}

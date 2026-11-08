@@ -44,9 +44,10 @@ import ScreenFrame from './ScreenFrame';
  *              (search with the bag as a block); none: "No cups from this
  *              bag yet." and, for an open bag, "Log a cup from it ›" (Log a
  *              cup with the bag preselected)
- *   details    "Details", then BagForm (minimal: Bean name, Roaster, Roasted
- *              on, Opened on for an opened bag). Photo, origin, region,
- *              process and size have no inputs yet.
+ *   details    "Details", then BagForm (minimal: Bean name, Roaster, Process
+ *              (2026-11-08), Roasted on, Opened on for an opened bag). Origin,
+ *              region and size have no inputs yet; the photo sits in the
+ *              status block (above).
  *   end        "Finish bag" (secondary, a normal step of a bag's life) for an
  *              open bag, then "Delete this bag" (the weak 1.5 frame) with
  *              "Not finish — erases it" (19a); where there is no Finish
@@ -77,7 +78,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   const db = useDatabase();
   // The bag as stored: the title, the sub line and what counts as an edit.
   const [stored, setStored] = useState(bag);
-  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at });
+  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at, process: bag.process ?? null });
   const [openedAt, setOpenedAt] = useState(bag.opened_at);
   const cups = useFilteredCups(bagFilter(bag));
   const [nameMissing, setNameMissing] = useState(false);
@@ -94,7 +95,12 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
 
   const name = form.name.trim();
   const roaster = form.roaster.trim() || null;
-  const dirty = name !== stored.name || roaster !== (stored.roaster ?? null) || form.roastedAt !== stored.roasted_at || openedAt !== stored.opened_at;
+  const dirty =
+    name !== stored.name ||
+    roaster !== (stored.roaster ?? null) ||
+    form.roastedAt !== stored.roasted_at ||
+    form.process !== (stored.process ?? null) ||
+    openedAt !== stored.opened_at;
   useEffect(() => {
     guardLeave?.(dirty && !busy, () => {
       Keyboard.dismiss();
@@ -141,9 +147,9 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     }
     setBusy(true);
     try {
-      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, openedAt });
+      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, process: form.process, openedAt });
       Keyboard.dismiss();
-      setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, opened_at: openedAt }));
+      setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, process: form.process, opened_at: openedAt }));
       setForm((f) => ({ ...f, name, roaster: roaster ?? '' }));
     } catch (error) {
       console.error('[3g] could not save', error);

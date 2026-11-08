@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, View } from 'react-native';
-import { color, shape, size, spacing, state } from '../../theme/tokens';
+import { useRef } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { color, motion, shape, size, spacing, state } from '../../theme/tokens';
 import Text from './Text';
 
 /**
@@ -23,6 +24,11 @@ import Text from './Text';
  *             options, on or off by itself (8l's "4★ and up" beside the
  *             scopes, 2026-10-21). Same look; pressing it when on turns it
  *             off, so it responds in both states.
+ *   clearable optional (components.md, "clearable"): an empty answer is valid,
+ *             so pressing the selected chip clears it (onChange(null)). That
+ *             chip is ink, with no darker tier, so it presses by scale
+ *             (state.pressed.scale over motion.press; design-system.md §1,
+ *             "no darker tier left"). First use: 3c / 3g's Process, 2026-11-08.
  *   compact   optional: inset.controlCompact and gap.controlCompact, so a row of
  *             four holds one line on narrow phones (2b's Group by; Uryu,
  *             2026-10-26; search's Kind chips, Design Round 15, which took
@@ -36,7 +42,7 @@ import Text from './Text';
 const COMPACT_SLOP = spacing.inset.control.v - spacing.inset.controlCompact.v;
 const COMPACT_HIT_SLOP = { top: COMPACT_SLOP, bottom: COMPACT_SLOP };
 
-export default function SegmentedControl({ options, value, onChange, toggle, compact, testOnly_pressedValue }) {
+export default function SegmentedControl({ options, value, onChange, toggle, clearable, compact, testOnly_pressedValue }) {
   // TODO: disabled chip state is undesigned (gaps.md 4).
   const chip = [styles.chip, compact && styles.chipCompact];
   const hitSlop = compact ? COMPACT_HIT_SLOP : undefined;
@@ -44,6 +50,9 @@ export default function SegmentedControl({ options, value, onChange, toggle, com
     <View style={[styles.group, compact && styles.groupCompact]} accessibilityRole="radiogroup">
       {options.map((opt) => {
         const on = opt.value === value;
+        if (on && clearable) {
+          return <ClearableChip key={opt.value} label={opt.label} style={[chip, styles.chipOn]} hitSlop={hitSlop} onPress={() => onChange(null)} />;
+        }
         return (
           <Pressable
             key={opt.value}
@@ -73,6 +82,32 @@ export default function SegmentedControl({ options, value, onChange, toggle, com
         </Pressable>
       ) : null}
     </View>
+  );
+}
+
+const pressEasing = Easing.bezier(...motion.press.controlPoints);
+
+/** The selected chip of a clearable set: pressing it clears the answer. */
+function ClearableChip({ label, style, hitSlop, onPress }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const scaleTo = (toValue) =>
+    Animated.timing(scale, { toValue, duration: motion.press.duration, easing: pressEasing, useNativeDriver: true }).start();
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => scaleTo(state.pressed.scale)}
+      onPressOut={() => scaleTo(1)}
+      hitSlop={hitSlop}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: true }}
+      accessibilityHint="Clears it">
+      {/* The ink chip is what scales; the touch area stays put. */}
+      <Animated.View style={[style, { transform: [{ scale }] }]}>
+        <Text variant="labelCaps" color={color.badge.fg.selected}>
+          {label}
+        </Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 

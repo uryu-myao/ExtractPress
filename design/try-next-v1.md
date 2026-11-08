@@ -124,3 +124,42 @@ Copy is provisional (Design's). **Which one, when several qualify**: the other b
 
 About 2 days after Design's card.
 
+
+## Decided 2026-11-08 (planner)
+
+- **The card is approved**, on the condition already in the proposal: no suggestion, no card.
+- **The concern, recorded:** in the first month most users see only the tag lead, the weakest kind, with nothing to press. For a new user, Try next is "a card that turns up now and then after a month, and you can't act on it". **Whether that is good enough for the store build is judged from the built card.** If it is too weak, V1 leaves it out.
+- **Order of work:**
+  1. Design draws the card first. Sent: `design-brief-round-23.md`, B.
+  2. Then migration 7, once the card's design is settled.
+  3. Then the build.
+- The bar has four slots, layout A (`design-system.md` §9).
+- Process is back on 3c / 3g (`components.md`). That makes "a process you've never logged" possible again. It is not one of the four kinds: it knows only bags added from now on.
+
+## "Not for me": the shape of migration 7 (proposal)
+
+`settings` is one row with typed columns (`id = 1`), so a list doesn't belong there. Proposed: **a small table.**
+
+```sql
+CREATE TABLE try_next_dismissed (
+  key TEXT PRIMARY KEY,          -- what was dismissed, see below
+  kind TEXT NOT NULL CHECK (kind IN ('bag', 'cafe', 'brewer', 'tag')),
+  dismissed_at INTEGER NOT NULL  -- epoch ms
+)
+```
+
+| Kind | key | Why that subject |
+|---|---|---|
+| Revisit a bag | `bag:<name>\u001f<roaster>`, lower-cased, trimmed | "Buy it again" is about the bean, not the bag row: buying it again makes a new bag row, which must not bring the suggestion back |
+| Revisit a café | `cafe:<place id>` | a café is one `places` row |
+| The other brewer | `brewer:<bag id>:<gear id>` | about that bag and that brewer. A new bag of the same bean is a new question |
+| A tag lead | `tag:<word>`, lower-cased | the word |
+
+- **A table, not a JSON column in `settings`**:
+  - one row per dismissal, with a constraint on `kind`;
+  - "dismissed?" is a primary-key lookup;
+  - "Export everything" picks the table up by itself (it reads every table from `sqlite_master`), and so would an import (`import-v1.md`).
+  - A JSON column would need parsing on every read, and a rewrite of the whole list for each dismissal.
+- **No "undo" and no expiry** in V1: the brief says a dismissed suggestion never comes back. If Design adds an undo line, it is a `DELETE` by key.
+- **Which suggestion shows this week isn't stored**: it is computed from the date (the week's Monday) and the priority order, so it stays the same all week without a row.
+- Settled after Design's card: whether "Not for me" covers just this one suggestion (above) or the whole kind ("no more café suggestions"). That would be a column, or a `kind:*` key.

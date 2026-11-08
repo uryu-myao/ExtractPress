@@ -15,6 +15,17 @@ export const MODE_BADGE = {
   packaged: { label: 'Packaged', tone: 'neutral' },
 };
 
+/**
+ * A bag's process (3c / 3g, components.md "Bag form"; restored 2026-11-08).
+ * No "Unknown": unset is the unknown answer (the set is clearable).
+ */
+export const PROCESS_OPTIONS = [
+  { value: 'washed', label: 'Washed' },
+  { value: 'natural', label: 'Natural' },
+  { value: 'honey', label: 'Honey' },
+  { value: 'anaerobic', label: 'Anaerobic' },
+];
+
 const capitalise = (word) => word.charAt(0).toUpperCase() + word.slice(1);
 
 /**

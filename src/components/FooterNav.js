@@ -5,9 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TABS } from '../constants/navigation';
 import { color, component, layout, motion, shape, size, space, spacing, state } from '../theme/tokens';
 import Text from './base/Text';
-import { AddCoffeeIcon, HomeIcon, ProfileIcon, RecordsIcon, TryNextIcon } from './icons/TabBarIcons';
+import { AddCoffeeIcon, HomeIcon, ProfileIcon, RecordsIcon } from './icons/TabBarIcons';
 
-const ICONS = { home: HomeIcon, records: RecordsIcon, tryNext: TryNextIcon, profile: ProfileIcon };
+const ICONS = { home: HomeIcon, records: RecordsIcon, profile: ProfileIcon };
 const { slot, addSlot, glyph, addLift, icon: iconColor } = component.tabBar;
 
 /**
@@ -21,8 +21,10 @@ const { slot, addSlot, glyph, addLift, icon: iconColor } = component.tabBar;
  * on review, 2026-10-05). Below the size.tabBar.height row, padding clears the
  * home indicator (the safe-area inset).
  *
- * Five slots, the icons evenly spaced within the screen gutter (layout.gutter)
- * and the centre + exactly in the middle; the outer slots' touch areas extend
+ * Four equal slots, Home · Records · + · Profile (planner, 2026-11-08, layout
+ * A: Try next is no tab): the icons evenly spaced within the screen gutter
+ * (layout.gutter), so the + sits right of centre, at 5/8 of the width. It was
+ * five slots with the + in the middle. The outer slots' touch areas extend
  * through the gutter to the screen edge. The touch area is the whole slot.
  *
  * Each tab names itself under its glyph (2026-10-18): tabLabel, gap.tight
@@ -57,7 +59,7 @@ export default function FooterNav({ activeTab, position, hidden, onTabPress, onA
   const barHeight = useFooterHeight();
   const slide = hidden ? { transform: [{ translateY: hidden.interpolate({ inputRange: [0, 1], outputRange: [0, barHeight] }) }] } : null;
 
-  const tab = ({ key, label }, index, edges) => {
+  const tab = ({ key, label }, edge) => {
     const Icon = ICONS[key];
     const isActive = key === activeTab;
     const page = TABS.findIndex((t) => t.key === key);
@@ -65,7 +67,7 @@ export default function FooterNav({ activeTab, position, hidden, onTabPress, onA
       <Slot
         key={key}
         box={slot}
-        edge={edges[index]}
+        edge={edge}
         role="tab"
         label={label}
         selected={isActive}
@@ -83,13 +85,13 @@ export default function FooterNav({ activeTab, position, hidden, onTabPress, onA
     <Animated.View style={[styles.wrapper, slide]}>
       <View style={[styles.bar, { paddingBottom: footerInset(insets) }]}>
         <View style={styles.row}>
-          {TABS.slice(0, 2).map((t, i) => tab(t, i, ['start', null]))}
+          {TABS.slice(0, 2).map((t, i) => tab(t, i === 0 ? 'start' : null))}
           <Slot box={addSlot} role="button" label="Log a cup" onPress={onAddPress}>
             <View style={styles.add}>
               <AddCoffeeIcon />
             </View>
           </Slot>
-          {TABS.slice(2).map((t, i) => tab(t, i, [null, 'end']))}
+          {TABS.slice(2).map((t, i, right) => tab(t, i === right.length - 1 ? 'end' : null))}
         </View>
       </View>
     </Animated.View>
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
     height: size.tabBar.height,
     flexDirection: 'row',
   },
-  // Five slots share the row equally *after* the outer slots take
+  // The slots share the row equally *after* the outer slots take
   // layout.gutter of padding: the icons sit as if the row were inset by the
   // screen gutter, while the outer touch areas still reach the screen edge.
   slotTouch: {
