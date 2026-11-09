@@ -1,5 +1,113 @@
 # Design response — design-missing.md
 
+## Round 24 · A colour for deleting (2026-11-09)
+
+Mock: Turn 25 is new. **26a** shows the colour, its contrast and how it compares with Roast. **26b** shows it on the confirm sheet, the delete row and the text actions. Nothing earlier is edited.
+
+### 1. The colour
+
+**`color.text.destructive` `#B4153F`**: one crimson. Alias **`color.icon.destructive`** to it for the bin.
+
+| Against | Value |
+|---|---|
+| `surface.ground` #F4EDEA | 5.82 : 1 |
+| `surface.raised` #FFFCFA (sheets) | 6.59 : 1 |
+| `state.pressed.surface` #E4D6CC | 4.74 : 1 |
+| `state.pressed.row` #F2F0ED / #E8E2DE | 5.92 / 5.24 : 1 |
+| OKLCH | L 0.50 · C 0.19 · h 15 |
+
+How far it is from each colour already in use (ΔE00):
+
+| Colour | ΔE00 | Note |
+|---|---|---|
+| `color.axis.roast` | 9.2 | see below |
+| `color.axis.sweetness` | 17.8 | |
+| accent brown | 28.2 | |
+| `text.accentStrong` | 26.9 | |
+| rating gold | 41.1 | |
+
+- **Why a red.** A delete should read as one at a glance, and red is the colour every iOS user already reads that way. The only question was which red.
+- **How it stays apart from Roast** (`#9D3D36`):
+  - **Hue and chroma.** Roast is a dull red that leans brown (C 0.13, h 27). This red is about a third more saturated and turned toward crimson (C 0.19, h 15), at the same lightness. Side by side they read as two reds. 26a draws them on one card.
+  - **Form, which matters more.** Roast is only ever a 4pt bar and a 12 × 4 key, never text. The destructive red is only ever words, with their underline or a bin. Neither ever takes the other's form.
+  - **Colour blindness.** With red-green colour blindness both reds turn olive. The words and the bin still carry the meaning, as §1 already requires.
+- **Only one value.** I'm not proposing `.fill` / `.pressed` / `.onFill` tokens, because nothing is filled (question 2). The interim `state.error.action.{bg, pressed, fg}` go away.
+
+### 2. Filled or not: not filled
+
+The confirm sheets become two secondary buttons:
+
+- **"Delete this cup" on top**, 56 tall, red label, paper fill, ink frame, no shadow.
+- **"Keep it" under it**, at 52, as now.
+
+The blue primary goes. Why:
+
+- **Blue means "go ahead".** A sheet asking whether to delete shouldn't say that about the delete. 11b's mock made Delete the primary "because it's the action the sheet was opened for". That reason doesn't hold once the action is destructive. iOS's own sheets don't fill it either.
+- **A red fill would be too loud.** A 56-tall red slab would be the loudest thing in the app, louder than Record a coffee, on the one action we want people to slow down on. On 2c and 5c it would also sit under the Roast bars as a large block of almost their colour. Red words stay small and stay words.
+- **Fallback, if Uryu wants it filled after seeing it on the phone**: fill `#B4153F`, white label 6.73 : 1, pressed `#921133` (8.93 : 1, ΔE00 6.9 below), ink frame and `shadow.primary` kept. I'd only add those tokens then.
+
+Pressed: the secondary's `state.pressed.surface`. The label stays red (4.74 : 1 on it). Text actions scale as now.
+
+### 3. The delete rows (3g, 3e)
+
+- **The bin takes the red, with the label.** They are one control and should read as one.
+- **The hint stays `text.muted`.** "Not finish — erases it" explains the action. It isn't the action.
+- The row's frame is unchanged (1.5 `border.muted`). Red is never a frame.
+
+### 4. 5d's required-field error: stays brown
+
+- They aren't the same thing. A missing rating isn't a warning about losing something. It's §1's brown meaning "this is yours to enter", turned up.
+- Brown already belongs to the user's own input, which is the right family for "your input is missing here".
+- Red stays for one meaning only: **this removes something for good**. If red also meant "you forgot a field", it would stop meaning that.
+- So `state.error.*` stays exactly as it is. The only change is that its `.action` sub-tokens go.
+
+### 5. §1 text
+
+In Tap affordance, replace the two lines ("Never brown." and "Destructive actions … get no look of their own for now…") with:
+
+> - **Never brown.** Brown marks a value the user entered; on an action, that mark fades. Brown carries only entered values, and `state.error`, which is about them.
+> - **Destructive actions are red (2026-11-09, Round 24).** A command that deletes something saved, or throws away input the user would lose by leaving, sets its label in `color.text.destructive`, and its bin glyph in `color.icon.destructive`. Only the label and the glyph: never a fill, a frame or a shadow. It keeps its form (secondary button, text action with underline, row with bin), so colour still never says "pressable" on its own.
+>   - A confirm sheet for a delete has **no primary**: the delete is a secondary button with the red label, on top, at 56; "Keep it" sits under it at 52.
+>   - Undoing input in place is not destructive and stays ink: a field's clear ×, the axis's Clear, a filter's ×, Reset in Sort.
+>   - Confirmation and undo stay (`gaps.md` 18); the colour adds to them.
+>   - `color.text.destructive` is used for nothing else. It sits beside `color.axis.roast` but never takes its forms (bar, key), and Roast never takes its form (words).
+
+Add to §2 colours: `color.text.destructive` `#B4153F`, with that role. Changelog entry: "2026-11-09 — §1 Tap affordance: destructive actions are red (`color.text.destructive`), label and glyph only; delete confirm sheets lose their primary. `state.error.action.*` removed (Round 24)."
+
+### 6. Scope
+
+**The test**: does it remove something saved, or throw away input the user would lose by leaving? Then it's red. Does it only undo input in place, where a second tap puts it back? Then it's ink.
+
+| Item | Answer | Why |
+|---|---|---|
+| Delete this cup / bag, Remove from my gear (sheets and rows) | yes | removes something saved |
+| 11a's Delete this cup | yes | removes something saved |
+| Remove photo | yes | removes the saved photo |
+| Discard changes | yes | loses the user's edits when they leave |
+| 5b's "Discard and save", only while it discards | yes, agreed | loses the note. "Save without the note" stays ink |
+| 8g's Reset my taste DNA (and 6b's row) | yes, when built | Its confirm sheet follows §2 above. The cups stay, but the profile as it stood is gone |
+| **18a's Clear (recent searches)** | **no, take it out** | Recent searches are a convenience the app keeps for you, not something you made. A red word on the search start screen would be the loudest thing there, for nothing. Keep it an ink text action, with no confirmation |
+| Field clear ×, axis Clear, filter ×, Sort's Reset | no, agreed with Code | They undo input in place, and the value comes back by retyping |
+| Try next's "Not for me" | no | a dismissal, with Undo, not a removal |
+| Sign out | no | removes nothing. Account things are out of V1's local-only scope anyway |
+
+### For Code
+
+- `tokens.ts`:
+  - add `color.text.destructive` `#B4153F` and `color.icon.destructive` (alias);
+  - remove `state.error.action.{bg, pressed, fg}`;
+  - leave `state.error.*` as it is.
+- `Button` `destructive`:
+  - primary + destructive no longer exists. The delete sheets (11b, 3g, 3e) use secondary + destructive at 56 on top, then "Keep it" at 52;
+  - secondary + destructive: red label;
+  - text + destructive: red label and underline.
+- Delete rows: label and bin red, hint muted.
+- 18a Clear: back to ink.
+- `design-system.md`: §1 text and changelog as in 5 above.
+- **The repo's `design-response-next.md` is stale.** Its Round 23 E still has the first answer (the body with a quiet frame and no shadow). Replace it with this file. The current handoffs are listed in `handoff-README.md`.
+
+---
+
 ## Round 23 · Floating bar, Try next on Home, Restore (2026-11-08)
 
 Mock: Turn 24 is new — **25a** the bar over a 20-row list, **25b** its spec, pressed and active states, **25c** Home with Try next, **25d** the four kinds and dismissal, **25e** 6b My data, **25f** Restore's sheets, **25g** refusals and first setup. Edited: **23b** and **6a** eyebrows read EXTRACT PRESS; **23c**'s Bags rule (D2). Build spec: `handoff-round23.md`.
@@ -67,20 +175,21 @@ Mock: Turn 24 is new — **25a** the bar over a 20-row list, **25b** its spec, p
 
 - **Shape.** Two pieces on one baseline, both 56 tall with square corners and a 2px edge, 12 apart (`space[12]`), inset by the gutter (22) at the sides and 26 from the bottom edge (the home-indicator inset less `space[8]`, as today).
   - The + is a 56 square. The body is screen − 22 × 2 − 12 − 56 = 290 at 402, and its three tabs split it evenly (≈ 95 × 52, the whole slot is the touch area).
-- **Shadow or frame: the + with the CTA's hard shadow, the body without.**
-  - The body is chrome holding tabs, so by Round 22 it gets a quiet frame (`border.container`) on raised paper and no shadow. That's what failed in October: elevation over a busy list. It can't come back like this.
-  - The + is a control and the screen's primary action, so it gets ink, `color.action.bg` and `shadow.floating` (4: a floating, fixed-width control; the full-width primary keeps 5).
-  - They differ only where the frame rule says they must. Height, corners, width of edge and baseline make them one bar.
+- **Shadow or frame: ink frame and hard shadow on both pieces** (revised 2026-11-08 on Uryu's comment on 25a: the tabs are pressed, so they're controls, like the CTA).
+  - Body: raised paper, 2px `border.strong`, `shadow.floating`. +: `color.action.bg`, 2px `border.strong`, `shadow.floating`. Floating, fixed-width controls take 4 (§7); the full-width primary keeps 5.
+  - Only the fill differs. Height, corners, frame, shadow and baseline make them one bar.
+  - October's problem was elevation over busy rows. Here the paper band (below) keeps rows from under and between the pieces, so the shadows fall on plain ground. Check it over Records on device.
+  - *First answer, superseded*: the body with a quiet frame and no shadow.
 - **What's under and between: a paper band, not the list.** From 12 above the bar to the screen's bottom edge (94 in all), the ground is plain paper with its dots. No rule, no fade.
   - Without it, half-cut rows show through the 12 gap and the 26 strip. That noise is exactly what the old floating bar suffered from.
   - Screens keep 94 + `space[20]` under their last row. Toasts sit `space[12]` above the band, as today above the bar.
 - **Pressed**: tabs scale (0.88), as now. **The + darkens to `state.pressed.action` — confirmed**: a blue fill has a darker tier (§1, by surface; 56 ≥ 44, by size). The shadow and frame are unchanged.
-- **Active tab: it still reads; nothing added.** The eye compares blue against two greys inside the body, and the + doesn't enter that comparison: a filled 56 square isn't the same kind of thing as a 20 glyph. Blue on both is §1's own pairing (the primary action, the current place).
+- **Active tab: it still reads; nothing added.** The eye compares blue against two greys inside the body, and the + doesn't enter that comparison (the shared ink frame and shadow don't change this): a filled 56 square isn't the same kind of thing as a 20 glyph. Blue on both is §1's own pairing (the primary action, the current place).
 - **Reach**: the + spans x 324–380 and bottom 848 on 874, centre (352, 820). That's under a right thumb, with 44+ in both directions. Its corner is 22 in and 26 up, clear of the display's rounded corner. Check one-handed on the 15 Pro Max, as with A1.
 
 ### For Code
 
-- E: two views in `FooterNav`, plus the band. Simplest band: end the scroll viewport 94 above the edge, so the fixed `DotTexture` shows through with nothing new drawn. §9 Bottom bar is rewritten from `handoff-round23.md` §1.
+- E: two views in `FooterNav`, both with ink frame and `shadow.floating`, plus the band. Simplest band: end the scroll viewport 94 above the edge, so the fixed `DotTexture` shows through with nothing new drawn. §9 Bottom bar is rewritten from `handoff-round23.md` §1.
 - B: `TryNextCard` under the DNA card on Home. Four variants, dismiss line with Undo, routes as listed. The tag lead needs Records search to match tasting-note tags.
 - C: 6b's rows by app-empty state, five sheets, the 8n text action, export file name.
 - A2: show the chips on 3c, 44 tall.
