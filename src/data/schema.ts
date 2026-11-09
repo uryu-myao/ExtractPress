@@ -202,19 +202,25 @@ export const schema = {
   },
 
   /**
-   * The two V1 settings, one row (id = 1), both from first setup and NULL when
-   * skipped (data-model.md):
+   * One row (id = 1). drinks_out and coffee_style come from first setup and
+   * are NULL when skipped (data-model.md); what each is for:
    *   drinks_out    8c "I mostly drink out" (0 / 1): read once, for the first
    *                 cup's mode; later cups take the last cup's mode
    *   coffee_style  8n "How do you take your coffee?": read on every cup, to
-   *                 order the flavour suggestions (not the axes). No settings
-   *                 screen in V1 (gaps.md 22)
+   *                 order the flavour suggestions (not the axes)
    */
   settings: {
     id: { type: 'INTEGER', nullable: false, pk: true },
+    /**
+     * ALWAYS EMPTY IN V1 — on purpose, as drinks_out and coffee_style both.
+     * V1 never reads them, and has no way to set them: first setup (8n / 8c)
+     * is V1.5 (gaps.md 22, closed 2026-11-09). They are used in V1.5, built
+     * with first setup, the flavour reordering (constants/flavours.js) and
+     * the first cup's mode from drinks_out, and a place to change both.
+     */
     drinks_out: { type: 'INTEGER', nullable: true },
     coffee_style: { type: 'TEXT', nullable: true, values: ['black', 'with_milk', 'depends'] },
-    /** Reset my taste DNA (V1.5): only cups logged from this time count. */
+    /** Reset my taste DNA (6b, built 2026-11-09): only cups logged from this time count. NULL: never reset. */
     reset_at: { type: 'INTEGER', nullable: true },
     /** 0 / 1: the first setup (8a / 8n / 8c / 8o) was finished or skipped. */
     setup_done: { type: 'INTEGER', nullable: false },

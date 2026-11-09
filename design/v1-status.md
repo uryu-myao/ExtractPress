@@ -13,7 +13,10 @@ Scope test (2026-10-11): can Uryu use it every day himself? His cups are mostly 
 **The release build, one stage (recorded 2026-11-06, Uryu).** What Uryu doesn't need to use the app himself, and what is all needed at once when it is handed to other people. Taken as one stage, so building any one of them first shows the rest:
 - localisation (Chinese, Japanese) **and its typesetting decisions**: Archivo and Instrument Serif have no CJK glyphs, the 14 composite text styles' line heights were measured on Archivo, and the 4 upper-case styles lose their hierarchy in CJK. So this is designing the Japanese version, not translating. Its first item is the survey of what that takes (not done now). The flavour-tag / drink-name storage this touches: `data-model.md`, flavour tags
 - Welcome (8a / 9a / 9b)
-- first setup (8n / 8c / 8o); `settings.setup_done` already exists
+- first setup (8n / 8c / 8o); `settings.setup_done` already exists. **Moved to V1.5 (2026-11-09, Uryu).** Two settings come from it, and neither works in V1: not only is there no way to set them, nothing reads them. Building first setup means building these with it, not only the screens (`gaps.md` 22):
+  - `settings.coffee_style` (8n) and **the flavour suggestions' reordering by it** (`constants/flavours.js`'s groups; the rule is in `components.md`). Not built.
+  - `settings.drinks_out` (8c) and **the first cup's mode from it** in 5a. Not built.
+  - **a place to change both later** (6b doesn't draw one: Design has to).
 - the rest of 6b (settings, Reset, a real Backup)
 - 6c (help, legal)
 - 6d (edit profile)

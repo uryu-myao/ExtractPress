@@ -7,8 +7,10 @@
  * coffee?" favours — bright (acidity / origin) for "Black", round (body /
  * sweetness) for "With milk". Favouring puts that group first WITHOUT hiding
  * the other: the first five keep one or two of the rest (8n = "what you use
- * more, first", not "hide the rest"). Rule: design/components.md. The 8n
- * reordering is not built yet; the default order below is.
+ * more, first", not "hide the rest"). Rule: design/components.md.
+ * V1.5: the 8n reordering is not in V1, with first setup (gaps.md 22,
+ * closed 2026-11-09). V1 always uses the default order below;
+ * settings.coffee_style is never set or read.
  */
 export const BUNDLED_FLAVOURS = [
   // Default order interleaves the groups (decided 2026-10-10), so the first

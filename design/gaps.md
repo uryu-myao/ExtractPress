@@ -492,13 +492,19 @@ The user sees the past rewritten.
 
 ---
 
-## 22. A first-setup choice that cannot be changed in V1 (added 2026-10-10)
+## 22. A first-setup choice that cannot be changed in V1 (added 2026-10-10) — **CLOSED 2026-11-09: outside V1**
 
 **What**: 8n's "How do you take your coffee?" (Black / With milk / Depends on the day) is stored in V1 and read on every cup: it orders the tasting-note suggestions. **V1 has no settings screen**, so once chosen it cannot be changed. "Skip all" leaves it unset.
 
 **Contrast**: 8c's "I mostly drink out" is read once (the first cup's default) and stops mattering after; it needs no editing.
 
 **Status**: recorded, not solved. Options when the settings screen comes (V1.5): an entry for it there; or, before that, a way back into first setup.
+
+**Closed 2026-11-09 (Uryu): outside V1.** First setup moves to V1.5 whole (`v1-status.md`), and both settings with it.
+- **Why not add two rows to Profile**: in V1 the two settings have no effect, not only no way in. The 8n reordering isn't built (`constants/flavours.js`), and nothing reads `drinks_out`. Rows would be two switches that change nothing, which is worse than none.
+- **What makes them work, all at once (V1.5)**: the flavour suggestions' reordering by `coffee_style`; 5a's first-cup mode from `drinks_out`; and a place to change both, which Design has to draw (6b, 6c and 6d have none).
+- **The choices, as drawn**: 8n (setup 1 of 3) "How do you take your coffee?" / "Sets which tasting notes show first when you log a cup.": one pick of three, Black ("Acidity, origin"), With milk ("Body, sweetness"), Depends on the day. 8c (2 of 3) "How do you usually brew?": gear picks plus "I mostly drink out". Each step can be skipped ("Skip all").
+- In V1 both columns stay NULL, and `schema.ts` says why.
 
 ---
 
