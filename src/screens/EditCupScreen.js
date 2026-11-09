@@ -154,7 +154,7 @@ function DeleteSheet({ visible, onClose, cup, dropsLockIn, onDelete }) {
         </Text>
       ) : null}
       <View style={styles.sheetActions}>
-        <Button destructive label="Delete this cup" onPress={onDelete} />
+        <Button variant="secondary" destructive label="Delete this cup" onPress={onDelete} />
         <Button variant="secondary" label="Keep it" onPress={onClose} />
       </View>
     </BottomSheet>

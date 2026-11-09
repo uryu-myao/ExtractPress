@@ -2,7 +2,7 @@
 
 Round 24 · after Round 23 (25a–25g, built 2026-11-08 / 09)
 
-**Status: ready to send (Uryu, 2026-11-09).**
+**Status: answered (Design, 2026-11-09, `design-response-next.md` Round 24; Turn 25, 26a / 26b). Built the same day.**
 
 Reply under "Round 24" in `design-response-next.md`, numbered as in this brief. One item: **a warning colour for destructive actions.**
 

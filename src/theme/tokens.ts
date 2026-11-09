@@ -28,6 +28,14 @@ export const color = {
     accent: '#9E5202',
     accentStrong: '#8A4602',
     success: '#4A6640',
+    /**
+     * A command that deletes something saved, or throws away input lost by
+     * leaving (Design Round 24, 26a / 26b): its label only, never a fill,
+     * frame or shadow (§1 Tap affordance). 5.82:1 on ground, 6.59:1 on
+     * raised, 4.74:1 on state.pressed.surface. Used for nothing else; apart
+     * from axis.roast by form (words, never a bar or key) and hue (ΔE00 9.2).
+     */
+    destructive: '#B4153F',
     onInverse: '#F4EDEA',
   },
   surface: {
@@ -77,6 +85,8 @@ export const color = {
     accent: '#9E5202',
     onAction: '#FFFFFF',
     rating: '#C9821A',
+    /** A delete row's bin (Design Round 24): alias of text.destructive. */
+    destructive: '#B4153F',
   },
   action: {
     bg: '#067BC2',
@@ -121,14 +131,6 @@ export const state = {
     text: '#8A4602',
     shadow: { offsetX: 4, offsetY: 4, blur: 0, color: '#9E5202' },
     dashedBorder: { width: 1.5, style: 'dashed', color: '#9E5202' },
-    /**
-     * A destructive command (Uryu, 2026-11-09: everything that deletes takes
-     * the warning colour, from the DS first; state.error is the DS's only
-     * one). A filled button: bg with fg (5.74:1), darkening to pressed (the
-     * error text's hex); its ink frame and shadow stay. A text action or a
-     * row's label: state.error.text (6.14:1 on ground).
-     */
-    action: { bg: '#9E5202', pressed: '#8A4602', fg: '#FFFFFF' },
   },
   /** Archived bag thumbnails. RN has no style filter — see OQ-5. */
   archived: { filter: 'saturate(0.7)' },

@@ -36,10 +36,11 @@ import Text from './Text';
  *              label, no shadow (5d)
  *   pressed    the fill darkens (state.pressed.action / .surface); outline,
  *              label and shadow stay — Hard Rule, design-system.md §1
- *   destructive  a command that deletes (Uryu, 2026-11-09): the warning
- *              colour, state.error. Primary fills with state.error.action
- *              (darkening to its pressed), secondary and text take the label
- *              in state.error.text. Frame, shadow, underline unchanged.
+ *   destructive  a command that deletes (Design Round 24, §1 Tap
+ *              affordance): secondary or text, the label (and a trailing
+ *              glyph) in color.text.destructive. Never a fill, frame or
+ *              shadow; frame, underline and pressed stay the variant's. No
+ *              primary form: a delete sheet's delete is secondary, on top.
  *              Disabled wins.
  *
  * Optional trailing glyph (5a "Add tasting note →"): icon.sm, gap.row after the
@@ -104,7 +105,7 @@ function TextButton({ label, small = false, stacked = false, trailingIcon, disab
         </Animated.View>
       ) : (
         <Animated.View style={{ transform: [{ scale }] }}>
-          <Text variant={small ? 'meta' : 'labelCaps'} color={disabled ? 'muted' : destructive ? state.error.text : 'primary'} style={styles.underline}>
+          <Text variant={small ? 'meta' : 'labelCaps'} color={disabled ? 'muted' : destructive ? 'destructive' : 'primary'} style={styles.underline}>
             {label}
           </Text>
         </Animated.View>
@@ -132,9 +133,12 @@ function FilledButton({
   const row = buttonSize === 'row';
   const warns = disabled && warnWhenDisabled;
   const primary = variant === 'primary' && !disabled;
-  const warning = destructive && !disabled;
-  const labelColor = disabled ? 'muted' : primary ? (warning ? state.error.action.fg : color.action.fg) : warning ? state.error.text : 'primary';
-  const iconColor = disabled ? color.icon.muted : primary ? color.icon.onAction : warning ? state.error.text : color.icon.default;
+  if (__DEV__ && destructive && variant === 'primary') {
+    console.warn('[Button] destructive has no primary form (§1, Design Round 24): use variant="secondary".');
+  }
+  const warning = destructive && !disabled && !primary;
+  const labelColor = disabled ? 'muted' : primary ? color.action.fg : warning ? 'destructive' : 'primary';
+  const iconColor = disabled ? color.icon.muted : primary ? color.icon.onAction : warning ? color.icon.destructive : color.icon.default;
 
   // Row size has no hard shadow unless raised (1b's See all, 2026-10-12).
   const hardShadow = primary ? (row ? (raised ? shadow.control : null) : shadow.primary) : null;
@@ -149,10 +153,10 @@ function FilledButton({
         style={({ pressed }) => [
           styles.base,
           row && styles.row,
-          primary && (warning ? styles.destructive : styles.primary),
+          primary && styles.primary,
           variant === 'secondary' && styles.secondary,
           disabled && styles.disabled,
-          pressed && !disabled && (primary ? (warning ? styles.destructivePressed : styles.primaryPressed) : styles.secondaryPressed),
+          pressed && !disabled && (primary ? styles.primaryPressed : styles.secondaryPressed),
         ]}>
         <View style={styles.content}>
           <Text variant={row ? 'labelCaps' : 'buttonCaps'} color={labelColor} style={styles.label}>
@@ -200,12 +204,6 @@ const styles = StyleSheet.create({
   },
   primaryPressed: {
     backgroundColor: state.pressed.action,
-  },
-  destructive: {
-    backgroundColor: state.error.action.bg,
-  },
-  destructivePressed: {
-    backgroundColor: state.error.action.pressed,
   },
   secondaryPressed: {
     backgroundColor: state.pressed.surface,
