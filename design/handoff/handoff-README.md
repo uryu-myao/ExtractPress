@@ -1,6 +1,6 @@
 # Handoff index: read this first
 
-Updated 2026-11-09. Design's handoff files to Code, the latest version of each, and which file wins where they overlap.
+Updated 2026-11-09 (Round 24). Design's handoff files to Code, the latest version of each, and which file wins where they overlap.
 
 ## Files and versions
 
@@ -9,7 +9,8 @@ Updated 2026-11-09. Design's handoff files to Code, the latest version of each, 
 | `handoff-round21.md` | 2026-11-09 | Starts with an "Updated 2026-11-09" box; §3 Layout is marked SUPERSEDED |
 | `handoff-round22.md` | 2026-11-09 | Has **§5 "Home's top block becomes a panel"** (added 2026-11-07, after the file first went out) |
 | `handoff-round23.md` | **v2**, 2026-11-08 | Says "Version 2" at the top. §0 has "Body: fill / frame / shadow … `border.strong` / `shadow.floating`" |
-| `MoreCoffee design.dc.html` | 2026-11-08 | Turn 24 (25a–25g) exists; 25a's tab body has an ink frame and a hard shadow |
+| Round 24 (destructive colour) | 2026-11-09 | No separate handoff: `design-response-next.md` Round 24, "For Code". Board 26a / 26b |
+| `MoreCoffee design.dc.html` | 2026-11-09 | Turn 25 (26a–26b) exists; Turn 24's 25a's tab body has an ink frame and a hard shadow |
 
 A copy without these markers is stale. Take the current set from the artifact, not from an earlier chat attachment.
 
