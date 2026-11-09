@@ -1,5 +1,9 @@
 # Round 22 handoff — quiet frames (24b)
 
+> **Updated 2026-11-09. Read `handoff-README.md` first.**
+> - **§5 was added on 2026-11-07, after this file first went out.** If your copy ends at §4, it is stale: Home's top block (panel, total 64) is in §5.
+> - §2's "bottom bar's 2px top rule" no longer applies: the bar is floating now (`handoff-round23.md` §1).
+
 Decided by Uryu 2026-11-07: **24b**. Reference frames in `MoreCoffee design.dc.html`, Turn 23: **24a** 5a as now, **24b** 5a as decided, **24c** the rule, **24e** pressed. **24d** (the reference's fuller version, buttons pale too) was **not chosen** — don't apply it. Reasoning: `design-response-next.md`, Round 22.
 
 One rule, applied by you across the app. No screen list: sort each 2px frame by the categories in §2.
@@ -63,7 +67,7 @@ Contrast: `border.muted` is 1.60:1 on ground, 1.82:1 on raised, 1.31:1 over `bor
 - **Whole cards or row blocks that open another screen**: 6a's Taste DNA card and My shelf, 8d's suggestion card. Their chevron stays; their frame goes quiet.
 - The 2c photo frame
 - A sheet's top edge
-- **Chrome edges**: the bottom bar's 2px top rule; fixed foot panels' top rule (5a's Save area, 5d, Edit bag / Edit cup)
+- **Chrome edges**: ~~the bottom bar's 2px top rule~~ (gone: floating bar, `handoff-round23.md` §1); fixed foot panels' top rule (5a's Save area, 5d, Edit bag / Edit cup)
 
 ### Shadow removed
 - **8d's suggestion card** (`shadow.primary` on a container). Nothing else: every other ink shadow is already on a button.
@@ -85,3 +89,15 @@ Contrast: `border.muted` is 1.60:1 on ground, 1.82:1 on raised, 1.31:1 over `bor
 ## 4. Check on device
 - 5a against 24b: only close, the selected maker option, Save and Add tasting note should read as heavy.
 - Home and 6a: the Taste DNA card's edge must still be visible on ground in daylight. If it disappears on device, report it; don't darken it locally.
+
+---
+
+## 5. Home's top block becomes a panel (added 2026-11-07, Uryu's comment on 23b)
+
+Supersedes `handoff-round21.md` §3's layout; the counting rules there stand.
+
+- **Panel**: the total, the three stats and the month strip sit in one container — `surface.raised`, 2px `border.muted` (§2 Quiet), `spacing.inset.container` (14 / 16), `space[14]` between the numeral row and the strip. Outer: `space[4]` above, `layout.gutter` sides, `space[20]` below.
+- **Total**: new text style **`numeral.lg`: Instrument Serif 64 / lineHeight 52** (the hero's 0.82). Code: add it to `textStyle`; `numeralHero` (96) stays for wherever else it's used. Label "CUPS TOTAL" and its 12 margin unchanged (D-34).
+- **Numeral row**: `align-items: center` (was bottom).
+- **Stats**: no hairline under each row any more; rows `space[6]` apart. Column still 150. With 64pt, a four-digit total fits beside it (your Round 21 question 5 is moot).
+- **Taste DNA card**: quiet frame as §2 says. Its top lands at 369 on 402 × 874 (was 398 before Round 21).

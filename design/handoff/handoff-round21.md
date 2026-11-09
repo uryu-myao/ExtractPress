@@ -1,5 +1,10 @@
 # Round 21 handoff — axis colours, change tags, Home's top block
 
+> **Updated 2026-11-09. Parts of this file are superseded; read `handoff-README.md` first.**
+> - §3 Layout and Expected result → `handoff-round22.md` §5 (Home's top block is a panel, total 64).
+> - §3 Bags counting rule → `handoff-round23.md` §4 (every bag added).
+> - Everything else here stands.
+
 Reference frames in `MoreCoffee design.dc.html`, Turn 22: **23a** (axis colours, spec), **23b** (Home), **23c** (Home top, states and counting rules), **23d** (5b), **23e / 23f** (5c and tag states), **23g** (2c and 11a), **23h** (8f). The reasoning is in `design-response-next.md`, Round 21.
 
 The three parts are independent. Build them in any order.
@@ -24,16 +29,16 @@ All type is Archivo unless noted. Colours: ink `#273D22`, muted `#6B5D55`, secon
 | Tag text | `textStyle.labelEyebrow` |
 | Tag padding | `spacing.badge.inline` (4 / 8) |
 | Gap inside a tag, between tags | `space[6]` |
-| Home total | `textStyle.numeralHero`, colour `text.accent`; its label and 12 margin unchanged (D-34) |
+| Home total | ~~`textStyle.numeralHero`~~ → **`numeral.lg` 64 / 52** (`handoff-round22.md` §5), colour `text.accent`; its label and 12 margin unchanged (D-34) |
 | Stat label / value | `labelEyebrow` + `text.muted` / `numeralInline` + `text.primary` |
-| Stat row rule | `shape.borderWidth.divider` + `divider.hairlineStrong`, `space[6]` above it |
-| Stat rows gap, icon ↔ label | `space[8]` / `space[6]` |
+| Stat row rule | ~~hairline under each row~~ → **none** (`handoff-round22.md` §5) |
+| Stat rows gap, icon ↔ label | ~~`space[8]`~~ → **`space[6]`** / `space[6]` |
 | Stat icons | `icon.sm` (16 / 2.6), `color.icon.muted` |
 | Numeral ↔ stat column | `space[20]` |
 | Day square | `size.dot.bullet` (6) |
 | Day colours: cup / past without / still to come | `text.accent` / `border.muted` / `border.subtle` |
 | Square ↔ today underline | `spacing.gap.tight` (4) |
-| Block padding | `space[8]` top, `layout.gutter` sides, `space[20]` bottom; numeral row ↔ strip `space[14]` |
+| Block padding | ~~`space[8]` top, no panel~~ → **a panel** (`surface.raised`, 2px `border.muted`, inset 14 / 16), `space[4]` above, `layout.gutter` sides, `space[20]` below; numeral row ↔ strip `space[14]` (`handoff-round22.md` §5) |
 
 **New tokens needed.** Code: these are decided by Design; add them, don't substitute.
 1. **`color.axis.acidity` `#7C7D0F`, `color.axis.body` `#614A87`, `color.axis.roast` `#9D3D36`, `color.axis.sweetness` `#AE5A84`.** Identity colours, outside §1's three roles, like `icon.rating`. Put the rule in the token's comment: *used for the four taste axes only, never as text, never for anything else.* Contrast on track / card / ground: 3.08–5.21 / 4.28–7.24 / 3.78–6.40.
@@ -98,8 +103,8 @@ Axis names in the first-reading sentence: Acidity, Body, Roast, Sweetness.
 - "A slow start is still a start." and its dashed rule.
 - (Already V1:) no Try next row, no "3 of 5 cups" on the card.
 
-### Layout
-- Row, bottom-aligned, `space[20]` gap:
+### Layout — SUPERSEDED by `handoff-round22.md` §5 (panel, `numeral.lg` 64, centre-aligned, no hairlines, rows `space[6]`)
+- ~~Row, bottom-aligned, `space[20]` gap:~~
   - Left: "CUPS TOTAL" label + total (`numeralHero`, accent), unchanged.
   - Right: stat column (150; hugs its content once the total reaches four digits, see design-response), three rows, `space[8]` apart. Each row: [icon 16] `space[6]` [label] ……… [value], centre-aligned, hairline under each row.
 - Under the row, `space[14]`: the **month strip**, full content width.
@@ -113,14 +118,14 @@ Axis names in the first-reading sentence: Acidity, Body, Roast, Sweetness.
 | Stat | Counts | Notes |
 |---|---|---|
 | This month | cups logged since the 1st of the current month (local) | all three modes |
-| Bags | distinct bags across all my cups, each once | I made it cups with a bag. Key on `bag_id`; a cup whose bag was deleted (`bag_id` null) counts by its copied `bean_name` + `bean_roaster` + `bean_roasted_at`. Not origins: no form fills `origin` yet |
+| Bags | ~~distinct bags across all my cups~~ → **every bag added** (`handoff-round23.md` §4) | I made it cups with a bag. Key on `bag_id`; a cup whose bag was deleted (`bag_id` null) counts by its copied `bean_name` + `bean_roaster` + `bean_roasted_at`. Not origins: no form fills `origin` yet |
 | Cafés | distinct cafés my cups point at | `cups.place_id` → `places.kind = 'cafe'`. Stores (`bought_at_place_id`) don't count. Show 0 as 0 |
 
 - No week streak (Design decided not to define one).
 - Values through `Intl.NumberFormat`. Reset (`reset_at`) does **not** apply: these are counts of records, not the profile.
 
-### Expected result
-- The block goes from 189 to 157 tall; the Taste DNA card's top moves from 398 to 366 on a 402 × 874 screen (measured in the mock).
+### Expected result — SUPERSEDED
+- ~~189 → 157 tall, DNA card top 366~~. Now: **the Taste DNA card's top lands at 369** on 402 × 874 (`handoff-round22.md` §5).
 
 ---
 

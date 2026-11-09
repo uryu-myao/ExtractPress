@@ -1,5 +1,8 @@
 # Round 23 handoff: floating bar, Try next on Home, Restore
 
+> **Version 2, 2026-11-08 (updated 2026-11-09). Read `handoff-README.md` first.**
+> - **v2 change: the tab body takes the +'s ink frame and hard shadow** (2px `border.strong` + `shadow.floating`), Uryu's comment on 25a. Version 1 had a quiet `border.container` frame and no shadow. If your copy says "no shadow" on the body, it is v1.
+
 The reference frames are in `MoreCoffee design.dc.html`, Turn 24:
 
 | Frame | Shows |
@@ -14,7 +17,7 @@ The reference frames are in `MoreCoffee design.dc.html`, Turn 24:
 
 The reasoning is in `design-response-next.md`, Round 23.
 
-Status: Design's answer, not yet reviewed by the planner (Try next may still leave V1, see the brief's B6).
+Status: **§1 Bottom bar is decided (Uryu, 2026-11-08): build it.** It replaces A1's four slots. §2 Try next waits for the planner (it may still leave V1, see the brief's B6). §3 Restore and §4 go ahead.
 
 All type is Archivo unless noted. Colours by token; hex only for reference.
 
@@ -32,7 +35,7 @@ Code: verify against `tokens.ts`; stop and report anything that doesn't map.
 | Side inset | `layout.gutter` (22) |
 | Gap between body and + | `space[12]` |
 | Under the bar | home-indicator inset − `space[8]` (26), as today |
-| Body: fill / frame | `surface.raised` / 2px `border.container` (= `border.muted`) |
+| Body: fill / frame / shadow | `surface.raised` / 2px `border.strong` / `shadow.floating` (4) — revised 2026-11-08, Uryu: the tabs are controls |
 | +: fill / glyph / frame / shadow | `color.action.bg` / `color.action.fg` / 2px `border.strong` / `shadow.floating` (4) |
 | + pressed | `state.pressed.action` |
 | Tab glyph, name, colours | unchanged: `component.tabBar.glyph` (20), `textStyle.tabLabel`, `tabBar.icon.active` / `inactive` |
@@ -56,7 +59,7 @@ Code: verify against `tokens.ts`; stop and report anything that doesn't map.
 
 ### Layout (402 × 874; scales with width)
 - A row of two pieces, `layout.gutter` from each side and 26 above the bottom edge, `space[12]` apart, both 56 tall, square corners.
-- **Body** (flex): `surface.raised`, 2px `border.container`, **no shadow**. Three equal slots: Home · Records · Profile. Each slot is the whole touch area (≈ 95 × 52 at 402). Glyph (20 box) + `gap.tight` + name, centred, as today.
+- **Body** (flex): `surface.raised`, 2px `border.strong`, `shadow.floating` (the same frame and shadow as the +; revised 2026-11-08). Three equal slots: Home · Records · Profile. Each slot is the whole touch area (≈ 95 × 52 at 402). Glyph (20 box) + `gap.tight` + name, centred, as today.
 - **+** (56 × 56): `color.action.bg`, 2px `border.strong`, `shadow.floating`, a 22 plus in `color.action.fg` at stroke 2.6. No name. The `addLift` goes: the + is centred.
 - At 402: body x 22–312, + x 324–380, both y 792–848.
 
@@ -73,7 +76,7 @@ Code: verify against `tokens.ts`; stop and report anything that doesn't map.
 - Haptic: light impact on both, as today.
 
 ### §9 text: replace the Bottom bar section with
-> **Bottom bar (2026-11-08, Round 23).** Two pieces, floating: a body with three tabs (Home · Records · Profile) and the + to its right. Both are 56 tall (`size.tabBar.height`) with square corners and a 2px frame, `space[12]` apart, inset by `layout.gutter` and sitting the home-indicator inset less `space[8]` above the bottom edge. The body is chrome: `surface.raised`, `border.container`, no shadow; its three slots share its width and are each the whole touch area. The + is the screen's primary action: `color.action.bg`, `border.strong`, `shadow.floating`; it darkens to `state.pressed.action`. Behind the bar, from `space[12]` above it to the edge, a band of plain ground hides the content (no rule, no fade). Screens keep the band plus `space[20]` under their content. *Why the body has no shadow: 2026-10-05, elevation over a full list read as noise.*
+> **Bottom bar (2026-11-08, Round 23).** Two pieces, floating: a body with three tabs (Home · Records · Profile) and the + to its right. Both are 56 tall (`size.tabBar.height`) with square corners and a 2px frame, `space[12]` apart, inset by `layout.gutter` and sitting the home-indicator inset less `space[8]` above the bottom edge. Both pieces are controls, with a `border.strong` frame and `shadow.floating`: the body on `surface.raised`, its three slots sharing its width, each the whole touch area; the + on `color.action.bg`, darkening to `state.pressed.action`. Behind the bar, from `space[12]` above it to the edge, a band of plain ground hides the content (no rule, no fade). Screens keep the band plus `space[20]` under their content. *The 2026-10-05 objection (elevation over a full list read as noise) is met by the band: the shadows fall on plain ground, never on rows.*
 
 ---
 
@@ -152,6 +155,6 @@ Code: verify against `tokens.ts`; stop and report anything that doesn't map.
 
 ## 5. Check on device
 - 25a over Records on the 15 Pro Max:
-  - is the body's quiet frame visible on paper in daylight?
+  - do the two shadows read as calm over a full list (the band behind them)?
   - does the + reach one-handed?
 - Try next on Home: the card must not read as part of the DNA card.
