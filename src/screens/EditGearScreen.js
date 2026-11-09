@@ -181,10 +181,11 @@ export default function EditGearScreen({ gear, onBack, onRemoved, guardLeave }) 
               accessibilityRole="button"
               accessibilityHint="Frees 1 slot"
               style={({ pressed }) => [styles.remove, pressed && styles.pressed]}>
-              {/* 3e: the bin (icon.accent; 3e draws 17, icon.md is 18) before the label. */}
+              {/* 3e: the bin (3e draws 17, icon.md is 18) before the label; both
+                  in the warning colour (Uryu, 2026-11-09). */}
               <View style={styles.removeLabel}>
-                <Glyph name="trash" token={icon.md} color={color.icon.accent} />
-                <Text variant="labelCaps" color="primary">
+                <Glyph name="trash" token={icon.md} color={state.error.text} />
+                <Text variant="labelCaps" color={state.error.text}>
                   Remove from my gear
                 </Text>
               </View>
@@ -230,7 +231,7 @@ export default function EditGearScreen({ gear, onBack, onRemoved, guardLeave }) 
           </Text>
         ) : null}
         <View style={styles.sheetActions}>
-          <Button label="Remove from my gear" onPress={remove} />
+          <Button destructive label="Remove from my gear" onPress={remove} />
           <Button variant="secondary" label="Keep it" onPress={() => setSheet(null)} />
         </View>
       </BottomSheet>

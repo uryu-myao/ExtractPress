@@ -121,6 +121,14 @@ export const state = {
     text: '#8A4602',
     shadow: { offsetX: 4, offsetY: 4, blur: 0, color: '#9E5202' },
     dashedBorder: { width: 1.5, style: 'dashed', color: '#9E5202' },
+    /**
+     * A destructive command (Uryu, 2026-11-09: everything that deletes takes
+     * the warning colour, from the DS first; state.error is the DS's only
+     * one). A filled button: bg with fg (5.74:1), darkening to pressed (the
+     * error text's hex); its ink frame and shadow stay. A text action or a
+     * row's label: state.error.text (6.14:1 on ground).
+     */
+    action: { bg: '#9E5202', pressed: '#8A4602', fg: '#FFFFFF' },
   },
   /** Archived bag thumbnails. RN has no style filter — see OQ-5. */
   archived: { filter: 'saturate(0.7)' },

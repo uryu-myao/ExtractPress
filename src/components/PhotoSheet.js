@@ -106,6 +106,7 @@ export default function PhotoSheet({ visible, onClose, onChosen, onRemove }) {
           {onRemove ? (
             <Button
               variant="text"
+              destructive
               label="Remove photo"
               onPress={() => {
                 onRemove();

@@ -36,6 +36,11 @@ import Text from './Text';
  *              label, no shadow (5d)
  *   pressed    the fill darkens (state.pressed.action / .surface); outline,
  *              label and shadow stay — Hard Rule, design-system.md §1
+ *   destructive  a command that deletes (Uryu, 2026-11-09): the warning
+ *              colour, state.error. Primary fills with state.error.action
+ *              (darkening to its pressed), secondary and text take the label
+ *              in state.error.text. Frame, shadow, underline unchanged.
+ *              Disabled wins.
  *
  * Optional trailing glyph (5a "Add tasting note →"): icon.sm, gap.row after the
  * label, coloured like the label — onAction on primary, ink on secondary,
@@ -75,7 +80,7 @@ const TEXT_HIT_SLOP = { top: space[16], bottom: space[16], left: space[8], right
 // only 4pt into it; 20 below ends where the next axis begins (gap.axis).
 const SMALL_HIT_SLOP = { top: space[8], bottom: space[20], left: space[8], right: space[8] };
 
-function TextButton({ label, small = false, stacked = false, trailingIcon, disabled = false, onPress, accessibilityLabel }) {
+function TextButton({ label, small = false, stacked = false, trailingIcon, disabled = false, destructive = false, onPress, accessibilityLabel }) {
   const scale = useRef(new Animated.Value(1)).current;
   const scaleTo = (toValue) =>
     Animated.timing(scale, { toValue, duration: motion.press.duration, easing: pressEasing, useNativeDriver: true }).start();
@@ -99,7 +104,7 @@ function TextButton({ label, small = false, stacked = false, trailingIcon, disab
         </Animated.View>
       ) : (
         <Animated.View style={{ transform: [{ scale }] }}>
-          <Text variant={small ? 'meta' : 'labelCaps'} color={disabled ? 'muted' : 'primary'} style={styles.underline}>
+          <Text variant={small ? 'meta' : 'labelCaps'} color={disabled ? 'muted' : destructive ? state.error.text : 'primary'} style={styles.underline}>
             {label}
           </Text>
         </Animated.View>
@@ -120,14 +125,16 @@ function FilledButton({
   warnWhenDisabled = false,
   size: buttonSize = 'full',
   raised = false,
+  destructive = false,
   onPress,
   testOnly_pressed,
 }) {
   const row = buttonSize === 'row';
   const warns = disabled && warnWhenDisabled;
   const primary = variant === 'primary' && !disabled;
-  const labelColor = disabled ? 'muted' : primary ? color.action.fg : 'primary';
-  const iconColor = disabled ? color.icon.muted : primary ? color.icon.onAction : color.icon.default;
+  const warning = destructive && !disabled;
+  const labelColor = disabled ? 'muted' : primary ? (warning ? state.error.action.fg : color.action.fg) : warning ? state.error.text : 'primary';
+  const iconColor = disabled ? color.icon.muted : primary ? color.icon.onAction : warning ? state.error.text : color.icon.default;
 
   // Row size has no hard shadow unless raised (1b's See all, 2026-10-12).
   const hardShadow = primary ? (row ? (raised ? shadow.control : null) : shadow.primary) : null;
@@ -142,10 +149,10 @@ function FilledButton({
         style={({ pressed }) => [
           styles.base,
           row && styles.row,
-          primary && styles.primary,
+          primary && (warning ? styles.destructive : styles.primary),
           variant === 'secondary' && styles.secondary,
           disabled && styles.disabled,
-          pressed && !disabled && (primary ? styles.primaryPressed : styles.secondaryPressed),
+          pressed && !disabled && (primary ? (warning ? styles.destructivePressed : styles.primaryPressed) : styles.secondaryPressed),
         ]}>
         <View style={styles.content}>
           <Text variant={row ? 'labelCaps' : 'buttonCaps'} color={labelColor} style={styles.label}>
@@ -193,6 +200,12 @@ const styles = StyleSheet.create({
   },
   primaryPressed: {
     backgroundColor: state.pressed.action,
+  },
+  destructive: {
+    backgroundColor: state.error.action.bg,
+  },
+  destructivePressed: {
+    backgroundColor: state.error.action.pressed,
   },
   secondaryPressed: {
     backgroundColor: state.pressed.surface,

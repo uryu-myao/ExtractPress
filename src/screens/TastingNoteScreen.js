@@ -294,6 +294,7 @@ export default function TastingNoteScreen({ onBack }) {
           <Button
             label={hasTastingInput ? 'Discard and save' : 'Save without the note'}
             variant="secondary"
+            destructive={hasTastingInput}
             onPress={() => saveOrGoBack({ withNote: false })}
           />
         </View>

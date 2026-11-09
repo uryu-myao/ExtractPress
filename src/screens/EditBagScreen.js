@@ -305,10 +305,11 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
                 accessibilityRole="button"
                 accessibilityHint={open ? 'Not finish — erases it' : 'For a bag added by mistake'}
                 style={({ pressed }) => [styles.delete, pressed && styles.pressed]}>
-                {/* 3g: the bin (icon.accent; 3g draws 17, icon.md is 18) before the label. */}
+                {/* 3g: the bin (3g draws 17, icon.md is 18) before the label; both
+                    in the warning colour (Uryu, 2026-11-09). */}
                 <View style={styles.deleteLabel}>
-                  <Glyph name="trash" token={icon.md} color={color.icon.accent} />
-                  <Text variant="labelCaps" color="primary">
+                  <Glyph name="trash" token={icon.md} color={state.error.text} />
+                  <Text variant="labelCaps" color={state.error.text}>
                     Delete this bag
                   </Text>
                 </View>
@@ -379,7 +380,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
           </Text>
         ) : null}
         <View style={styles.sheetActions}>
-          <Button label="Delete this bag" onPress={remove} />
+          <Button destructive label="Delete this bag" onPress={remove} />
           <Button variant="secondary" label="Keep it" onPress={() => setSheet(null)} />
         </View>
       </BottomSheet>

@@ -154,7 +154,7 @@ function DeleteSheet({ visible, onClose, cup, dropsLockIn, onDelete }) {
         </Text>
       ) : null}
       <View style={styles.sheetActions}>
-        <Button label="Delete this cup" onPress={onDelete} />
+        <Button destructive label="Delete this cup" onPress={onDelete} />
         <Button variant="secondary" label="Keep it" onPress={onClose} />
       </View>
     </BottomSheet>
@@ -288,7 +288,7 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
         footer={
           <>
             <Button label="Save changes" onPress={save} />
-            <Button variant="text" stacked label="Delete this cup" onPress={askDelete} />
+            <Button variant="text" stacked destructive label="Delete this cup" onPress={askDelete} />
           </>
         }>
         <View style={styles.sections}>

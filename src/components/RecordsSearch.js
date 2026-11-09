@@ -268,7 +268,7 @@ function Start({ cups, history, onFilter, onSearch, onClear }) {
         <View>
           <View style={styles.historyHead}>
             <SectionLabel variant="plain" label="Recent searches" />
-            <Button variant="text" label="Clear" onPress={onClear} />
+            <Button variant="text" destructive label="Clear" onPress={onClear} />
           </View>
           {history.map((term) => (
             <Pressable key={term} onPress={() => onSearch(term)} accessibilityRole="button" style={({ pressed }) => [styles.lineRow, pressed && styles.rowPressed]}>

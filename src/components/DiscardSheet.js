@@ -25,7 +25,7 @@ export default function DiscardSheet({ visible, onClose, body, onDiscard }) {
       </Text>
       <View style={styles.actions}>
         <Button label="Keep editing" onPress={onClose} />
-        <Button variant="text" stacked label="Discard changes" onPress={onDiscard} />
+        <Button variant="text" stacked destructive label="Discard changes" onPress={onDiscard} />
       </View>
     </BottomSheet>
   );
