@@ -56,9 +56,9 @@ import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
  *                heading of its own (Round 11, D1's "when 8h comes"): 8h is
  *                not built (2026-10-31).
  *   Taste DNA    6b's section with only "How my DNA is built" (6b's row and
- *                glyph) → 8g (2026-10-30; Design Round 17, A4: OK). 6b is
- *                otherwise not built; "How adventurous" is Try next's
- *                setting, V2.
+ *                glyph) → 8g (2026-10-30; Design Round 17, A4: OK). "How
+ *                adventurous" is not shown (drift D-70): V1's Try next has
+ *                nothing for it to steer.
  *   My data      6b's two rows (2026-10-28): "Export my cups", the cups as
  *                CSV ("N cups as CSV, notes included", 6b's line), and in
  *                the Backup row's place "Export everything" / "Cups, bags
