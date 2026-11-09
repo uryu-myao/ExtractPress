@@ -9,7 +9,7 @@ import Text from '../components/base/Text';
 import { useRecordDraftIfAny } from '../components/RecordDraft';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deletePhoto, dropPhoto, keepPhoto } from '../data/photos';
-import { OPEN_BAG_LIMIT, countOpenBags, insertBag } from '../data/repository';
+import { OPEN_BAG_LIMIT, countCups, countOpenBags, insertBag } from '../data/repository';
 import { spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -23,6 +23,12 @@ import ScreenFrame from './ScreenFrame';
  * back to 5a. "Add without opening" stores it unopened (it takes a slot; 3d
  * opens it later). onAdded, when given, replaces Back after a save (Home → 3d). The name is the only required field. At 5 open bags the button
  * is disabled and the line under it says why (3c's copy).
+ *
+ * First cup (Uryu, 2026-11-09): reached from the Record sheet before any
+ * cup is logged, a line over the form says only the name is needed and the
+ * rest can be changed later, so logging the first cup doesn't feel like a
+ * long form. Body, text.secondary, gap.section above the form. Copy and
+ * placement are ours (not drawn); TODO: Design to confirm.
  *
  * Photo (2026-11-01, bags first): 3c's slot over the fields opens PhotoSheet;
  * the chosen photo (already styled) waits in the cache and is kept only when
@@ -42,6 +48,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
   // name, the field says it is required. Typing a name ends it.
   const [nameMissing, setNameMissing] = useState(false);
   const [open, setOpen] = useState(null);
+  const [firstCup, setFirstCup] = useState(false);
   // A prepared photo (data/photos.ts), not kept until the bag is added.
   const [photo, setPhoto] = useState(null);
   const [photoSheet, setPhotoSheet] = useState(false);
@@ -52,10 +59,11 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
   useEffect(() => {
     let alive = true;
     countOpenBags(db).then((n) => alive && setOpen(n), () => alive && setOpen(0));
+    if (chooseBag) countCups(db).then((n) => alive && setFirstCup(n === 0), () => {});
     return () => {
       alive = false;
     };
-  }, [db]);
+  }, [db, chooseBag]);
 
   const full = open != null && open >= OPEN_BAG_LIMIT;
   const free = open == null ? null : OPEN_BAG_LIMIT - open;
@@ -111,6 +119,11 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
             ) : null}
           </View>
         }>
+        {firstCup ? (
+          <Text variant="body" color="secondary" style={styles.firstCup}>
+            Just the name is needed for now. The rest can be added or changed any time in My beans.
+          </Text>
+        ) : null}
         <BagForm
           value={form}
           onChange={(next) => {
@@ -170,5 +183,8 @@ const styles = StyleSheet.create({
   },
   slots: {
     textAlign: 'center',
+  },
+  firstCup: {
+    marginBottom: spacing.gap.section,
   },
 });
