@@ -12,6 +12,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.smallpress.extract",
+      "buildNumber": "1",
       "appleTeamId": "Y57C6973DT",
       "config": {
         "usesNonExemptEncryption": false

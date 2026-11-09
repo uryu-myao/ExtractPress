@@ -7,6 +7,7 @@ import { onShellRequest, requestOpenCup, requestTabLeave, requestTabReset } from
 import DotTexture from './components/base/DotTexture';
 import FooterNav, { useFooterHeight } from './components/FooterNav';
 import Notice from './components/Notice';
+import { ResetDnaHost } from './components/ResetDnaSheet';
 import { RestoreHost } from './components/RestoreSheet';
 import ShellStack from './components/ShellStack';
 import { TABS } from './constants/navigation';
@@ -130,6 +131,8 @@ export default function AppShell() {
       <SortSheetHost />
       {/* 6b's Restore from a backup: its sheets over the tabs and the bar. */}
       <RestoreHost />
+      {/* 6b's Reset my taste DNA: its confirmation over the tabs and the bar. */}
+      <ResetDnaHost />
       <AddCoffeeOverlay
         visible={showAddCoffee}
         preset={recordPreset}

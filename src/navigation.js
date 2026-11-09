@@ -14,7 +14,8 @@
  *                        { name: 'editBag', bag } | { name: 'editGear', gear } from search,
  *                        { name: 'cup', id } | { name: 'search', filter } from a bag / gear page,
  *                        { name: 'dna' } (8f) from Profile and 2c,
- *                        { name: 'dnaBuilt' } (8g) from 8f, Profile and 15b
+ *                        { name: 'dnaBuilt' } (8g) from 8f, Profile and 15b,
+ *                        { name: 'licences' } (6c) from Profile
  *   requestCloseCup()    Records closes its open cup (after a delete in 11a)
  *   requestNotice(text)  AppShell shows 13b's one-line notice above the bar
  *   requestDnaInfo(dna)  AppShell shows 15b's Taste DNA info sheet over the
@@ -23,6 +24,8 @@
  *                        filter button): { sort, group, onApply }
  *   requestRestore()     AppShell runs Restore from a backup: the file
  *                        picker, then its sheets (6b's row, Design Round 23)
+ *   requestResetDna()    AppShell asks Reset my taste DNA's confirmation
+ *                        over the tabs and the bar (6b's row)
  */
 const cupListeners = new Set();
 const shellListeners = new Set();
@@ -140,4 +143,15 @@ export function requestTabLeave(tab) {
 export function onTabLeave(listener) {
   tabLeaveListeners.add(listener);
   return () => tabLeaveListeners.delete(listener);
+}
+
+const resetDnaListeners = new Set();
+
+export function requestResetDna() {
+  resetDnaListeners.forEach((l) => l());
+}
+
+export function onResetDnaRequest(listener) {
+  resetDnaListeners.add(listener);
+  return () => resetDnaListeners.delete(listener);
 }

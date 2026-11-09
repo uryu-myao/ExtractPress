@@ -1,5 +1,6 @@
+import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import Badge from '../components/base/Badge';
 import DashedRule from '../components/base/DashedRule';
 import Chevron from '../components/base/Chevron';
@@ -7,20 +8,22 @@ import MenuRow from '../components/base/MenuRow';
 import Text from '../components/base/Text';
 import { GEAR_LIMIT } from '../constants/gear';
 import { daysBetween } from '../constants/dates';
+import { PRIVACY_POLICY_URL } from '../constants/links';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { shareBackup, shareCupsCsv } from '../data/export';
 import { OPEN_BAG_LIMIT, countGear, countOpenBags, countOwnRecords, loadDnaPage, loadProfile, onCupsChanged, onShelfChanged } from '../data/repository';
 import { bandOf } from '../data/tasteDna';
-import { requestPush, requestRestore } from '../navigation';
+import { requestPush, requestResetDna, requestRestore } from '../navigation';
 import { color, dashed, layout, shape, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
 
 /**
- * 6a — Profile, the upper part (2026-10-21). 6b (the lower part: DNA
- * settings, My data, Reset, Account) and 6c are not built, except 6b's
- * "How my DNA is built" and My data's rows (below).
+ * 6a — Profile, the upper part (2026-10-21), then 6b's and 6c's blocks as
+ * far as V1 has them (scope settled 2026-11-09): 6b's Taste DNA and My data,
+ * 6c's Legal and version line. Not built (drift.md): 6b's How adventurous,
+ * Backup and Account; 6c's App, Help & feedback, Support us and Terms of use.
  *
  *   header       "Extract Press" over "My profile" (6a's "Morecoffee": the
  *                app was renamed 2026-11-08). 6a's "Edit" leads to 6d (Edit
@@ -63,6 +66,26 @@ import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
  *                promise a restore that doesn't exist). INTERIM (todo.md
  *                T-8): 6b's Backup saves by itself; this is a manual export
  *                until it is built.
+ *                The CSV row stays beside Export everything (Uryu,
+ *                2026-11-09), though 25e drops it: the CSV is for reading,
+ *                the zip is for putting back. Different jobs.
+ *                6b's Backup row is not shown: V1 has no automatic backup,
+ *                so it would lead nowhere (drift.md).
+ *                Reset my taste DNA closes the block, where 6b and 25e draw
+ *                it: red label and glyph (Design Round 24), Round 12's line
+ *                (25e's "My cups and notes stay…" is the older one). It
+ *                asks first (ResetDnaSheet).
+ *   Legal        6c's last block (2026-11-09). Privacy policy opens its page
+ *                in the browser, shown only once constants/links.js has its
+ *                URL (todo.md T-18). Licences → its page (LicencesScreen).
+ *                Terms of use is not built: with no terms of our own, Apple's
+ *                standard EULA applies (drift.md). 6c's other blocks (App,
+ *                Help & feedback, Support us) are out of V1.
+ *   version      6c's line under Legal: "Extract Press 1.0.0 (1)", the
+ *                version and the build number from app.json (ios.buildNumber),
+ *                the pair App Store Connect shows, so a report can be matched
+ *                to an upload. 6c's "(2026.09)" is a date. 6c draws 11 / 500,
+ *                which has no style: bodySm (12 / 500; drift.md).
  *
  * Each section: label.eyebrow heading (muted) over a 2px frame on raised
  * (border.container: quiet, Design Round 22, 24b; the chevrons say "opens");
@@ -78,6 +101,12 @@ function sinceLine(first, now) {
   const weeks = Math.floor(daysBetween(first, now) / 7);
   const since = `Logging since ${sinceFormat.format(new Date(first))}`;
   return weeks > 0 ? `${since} · ${weeks === 1 ? '1 week' : `${weeks} weeks`}` : since;
+}
+
+/** "Extract Press 1.0.0 (1)"; a missing part is left out. */
+function versionLine(config) {
+  const build = config?.ios?.buildNumber;
+  return ['Extract Press', config?.version, build ? `(${build})` : null].filter(Boolean).join(' ');
 }
 
 function Stat({ value, label, first = false }) {
@@ -242,7 +271,15 @@ export default function ProfileTabScreen() {
                 The sub line is Design's (Round 23, 25e). */}
             <MenuRow icon="download" label="Export everything" sub="Cups, bags, gear and photos" onPress={onExport(shareBackup)} disabled={busy} />
             {data.empty ? <MenuRow icon="restore" label="Restore from a backup" sub="From an Export everything file" onPress={requestRestore} disabled={busy} /> : null}
+            <MenuRow icon="reset" destructive label="Reset my taste DNA" sub="Counts from today. Older cups stay in Records." onPress={requestResetDna} disabled={busy} />
           </Section>
+          <Section title="Legal">
+            {PRIVACY_POLICY_URL ? <MenuRow icon="shield" label="Privacy policy" onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} /> : null}
+            <MenuRow icon="licences" label="Licences" onPress={() => requestPush({ name: 'licences' })} />
+          </Section>
+          <Text variant="bodySm" color="muted" style={styles.version}>
+            {versionLine(Constants.expoConfig)}
+          </Text>
         </View>
       ) : null}
     </ScreenFrame>
@@ -302,5 +339,8 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.gap.row,
+  },
+  version: {
+    textAlign: 'center',
   },
 });

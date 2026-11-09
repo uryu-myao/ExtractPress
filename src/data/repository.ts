@@ -79,6 +79,20 @@ export async function insertBag(db: SQLiteDatabase, bag: NewBag): Promise<Bag> {
   return { ...row, notes: JSON.parse(row.notes as unknown as string) };
 }
 
+/**
+ * Reset my taste DNA (6b): from now on, only cups logged from this moment
+ * count. No cup is touched; Records keeps every one (taste-dna.md item 7).
+ * Now, not the start of today: right after a reset the profile is empty, as
+ * the confirm sheet says ("only cups from now on count").
+ * No undo (Uryu, 2026-11-09): cups logged after a reset store a change worked
+ * out from the empty profile, so moving reset_at back would leave their
+ * stored changes wrong.
+ */
+export async function resetTasteDna(db: SQLiteDatabase, now = Date.now()): Promise<void> {
+  await db.runAsync('UPDATE settings SET reset_at = ?', [now]);
+  notifyCupsChanged();
+}
+
 /** Taste DNA now, from every counted cup (computed on read, never stored). */
 export async function loadTasteDna(db: SQLiteDatabase): Promise<Dna> {
   const settings = await db.getFirstAsync<{ reset_at: number | null }>('SELECT reset_at FROM settings');
@@ -218,10 +232,14 @@ export async function undoDismissTryNext(db: SQLiteDatabase, key: string): Promi
 }
 
 /** One cup as 2c shows it: every stored field, its place names as copied (migration 6). */
-export type CupRecord = Row<'cups'>;
+/** before_reset: 1 when the cup was logged before Reset my taste DNA, so it no longer counts (2c). */
+export type CupRecord = Row<'cups'> & { before_reset?: number };
 
 export async function getCup(db: SQLiteDatabase, id: number): Promise<CupRecord | null> {
-  const row = await db.getFirstAsync<CupRecord & { flavours: string }>('SELECT * FROM cups WHERE id = ?', [id]);
+  const row = await db.getFirstAsync<CupRecord & { flavours: string }>(
+    'SELECT c.*, (s.reset_at IS NOT NULL AND c.logged_at < s.reset_at) AS before_reset FROM cups c, settings s WHERE c.id = ?',
+    [id]
+  );
   return row ? { ...row, flavours: JSON.parse(row.flavours as unknown as string) } : null;
 }
 

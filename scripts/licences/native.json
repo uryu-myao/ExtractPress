@@ -1,0 +1,24 @@
+{
+  "_comment": [
+    "Native libraries in the iOS binary that no npm package's licence covers (read by scripts/gen-licences.mjs).",
+    "Kept by hand. React Native 0.88 ships them prebuilt in ReactNativeDependencies.xcframework",
+    "(ios/Pods/ReactNativeDependencies-artifacts), which holds no licence files, and ios/Pods has none of their sources.",
+    "Versions: node_modules/react-native/third-party-podspecs/*.podspec (boost, DoubleConversion, fast_float, fmt, glog),",
+    "ios/Podfile.lock (RCT-Folly, hermes-engine), and scripts/cocoapods/helpers.rb socket_rocket_config (SocketRocket).",
+    "Texts: each project's licence file at that version's tag (url below), fetched 2026-11-09; hermes.txt is",
+    "ios/Pods/hermes-engine/LICENSE; folly.txt is folly's LICENSE with Meta's copyright line from its source headers on top.",
+    "REVIEW ON EVERY REACT NATIVE UPGRADE: versions and the set of libraries change with it.",
+    "noticeRequired false: the licence asks for no notice in a compiled binary (Boost 1.0; SQLite is public domain). Listed anyway."
+  ],
+  "libraries": [
+    { "name": "Boost", "version": "1.84.0", "licence": "BSL-1.0", "file": "boost.txt", "url": "https://github.com/boostorg/boost/blob/boost-1.84.0/LICENSE_1_0.txt", "noticeRequired": false },
+    { "name": "double-conversion", "version": "1.1.6", "licence": "BSD-3-Clause", "file": "double-conversion.txt", "url": "https://github.com/google/double-conversion/blob/v1.1.6/LICENSE" },
+    { "name": "fast_float", "version": "8.0.0", "licence": "MIT", "file": "fast_float.txt", "url": "https://github.com/fastfloat/fast_float/blob/v8.0.0/LICENSE-MIT" },
+    { "name": "{fmt}", "version": "12.1.0", "licence": "MIT", "file": "fmt.txt", "url": "https://github.com/fmtlib/fmt/blob/12.1.0/LICENSE" },
+    { "name": "Folly", "version": "2024.11.18.00", "licence": "Apache-2.0", "file": "folly.txt", "url": "https://github.com/facebook/folly/blob/v2024.11.18.00/LICENSE" },
+    { "name": "glog", "version": "0.3.5", "licence": "BSD-3-Clause", "file": "glog.txt", "url": "https://github.com/google/glog/blob/v0.3.5/COPYING" },
+    { "name": "Hermes", "version": "260318099.0.4", "licence": "MIT", "file": "hermes.txt", "url": "https://github.com/facebook/hermes/blob/main/LICENSE" },
+    { "name": "SocketRocket", "version": "0.7.1", "licence": "BSD-3-Clause", "file": "socketrocket.txt", "url": "https://github.com/facebookincubator/SocketRocket/blob/0.7.1/LICENSE" },
+    { "name": "SQLite", "version": "", "licence": "Public domain", "text": "SQLite is in the public domain. https://sqlite.org/copyright.html", "url": "https://sqlite.org/copyright.html", "noticeRequired": false }
+  ]
+}

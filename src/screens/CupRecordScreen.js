@@ -47,6 +47,11 @@ import ScreenFrame from './ScreenFrame';
  * (the axis colour's fill, a brown marker; Design Round 21, 23g), as 11a.
  * "Feeds my taste DNA" holds the sentence and the change tags (23g), from
  * the stored dna_change, so they match what 5c showed at save time.
+ *
+ * PROVISIONAL (Design Round 25): a cup logged before Reset my taste DNA
+ * keeps its stored change (it was true then), but "Feeds" no longer holds.
+ * Until Design answers: the heading in the past tense, "Fed my taste DNA",
+ * and one line under the tags saying it isn't in the profile now.
  */
 /** "Blue Bottle · day 7 when brewed": day only with a roast date, never negative. */
 function subtitle(cup) {
@@ -224,11 +229,16 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
           style={({ pressed }) => [styles.section, styles.feeds, pressed && styles.feedsPressed]}>
           <View style={styles.feedsHead}>
             <Text variant="labelCaps" color="accent">
-              Feeds my taste DNA
+              {cup.before_reset ? 'Fed my taste DNA' : 'Feeds my taste DNA'}
             </Text>
             <Chevron />
           </View>
           <DnaChange change={change} />
+          {cup.before_reset ? (
+            <Text variant="bodySm" color="muted">
+              Logged before the reset, so it isn't in my taste DNA now.
+            </Text>
+          ) : null}
         </Pressable>
       </View>
     </ScreenFrame>

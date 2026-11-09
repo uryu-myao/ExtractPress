@@ -171,3 +171,18 @@ Design: "the café line shows the short address only, with no distance or visit 
 - **Why**: `data-model.md` ("WAL and backups") says the database and `Documents/photos` are in the backup, and the checkpoint on going to the background leaves `extract.db` complete. **Nobody has seen it work.** The import (`import-v1.md`) will be a second way, but "it's in the backup" should not be believed without trying it.
 - **Then**: if it works, the store text and the support page can say so. If not, find out why before the import becomes the only route.
 
+
+## T-18. Privacy policy and support pages: they must exist before submission (recorded 2026-11-09, planner)
+**Deadline: required before the December 2026 submission** (`v1-status.md`: on the store by the end of December). Not "later": without both pages the app can't be submitted. Make one page on GitHub Pages; the content below is settled, so this is only writing it down.
+
+- **Now (in the app only)**: `src/constants/links.js` holds `PRIVACY_POLICY_URL` and `SUPPORT_URL`, both `null`, each with this TODO. While a URL is null its row is not shown (Profile's Legal block, 6c). Filling the constant is the only change needed; the row appears by itself.
+- **Why it can't wait for after release**:
+  - App Store Connect requires both URLs on the app record, and App Review opens them. A 404 or an "under construction" page is a rejection.
+  - Guideline 5.1.1(i) also wants the privacy policy inside the app, easy to find. So the submitted build must have `PRIVACY_POLICY_URL` filled: an empty constant means no Privacy policy row, which is itself a rejection.
+- **The privacy policy says** (facts about the app; they won't change for V1):
+  - The records are stored only on the phone, and are never sent anywhere.
+  - Photos are stored only on the phone.
+  - Café search uses Apple's MapKit: the search words, and the location when it is used (to show nearby cafés first), are sent to Apple to answer the search. Location is not stored.
+  - No analytics, no advertising, no tracking.
+- **The support page**: a contact address on one line is enough. It can be the same site.
+- **Done when**: both pages open from a phone, both constants are filled, the Privacy policy row opens its page on device, and both URLs are on the App Store Connect record.

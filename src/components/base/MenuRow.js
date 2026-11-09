@@ -17,10 +17,13 @@ import Text from './Text';
  *   With onPress the whole row is pressable: a chevron at its end (§1 Tap
  *   affordance) and state.pressed.row out to the frame. Without it, the
  *   row is information only: no chevron, no press (6a's My gear until 3b).
+ *   destructive  label and glyph in color.text.destructive (Design Round
+ *          24: 6b's Reset my taste DNA); the sub line stays muted, as 3g's
+ *          delete hint.
  *
- * Props: icon (Glyph name), label, sub, value, onPress, disabled
+ * Props: icon (Glyph name), label, sub, value, onPress, disabled, destructive
  */
-export default function MenuRow({ icon: glyph, label, sub, value, onPress, disabled = false }) {
+export default function MenuRow({ icon: glyph, label, sub, value, onPress, disabled = false, destructive = false }) {
   const pressable = Boolean(onPress);
   return (
     <Pressable
@@ -30,9 +33,9 @@ export default function MenuRow({ icon: glyph, label, sub, value, onPress, disab
       accessibilityState={pressable ? { disabled } : undefined}
       accessibilityLabel={[label, sub, value].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      {glyph ? <Glyph name={glyph} token={icon.md} color={color.text.primary} /> : null}
+      {glyph ? <Glyph name={glyph} token={icon.md} color={destructive ? color.icon.destructive : color.text.primary} /> : null}
       <View style={styles.text}>
-        <Text variant="label" color="primary" truncate="name">
+        <Text variant="label" color={destructive ? 'destructive' : 'primary'} truncate="name">
           {label}
         </Text>
         {sub ? (

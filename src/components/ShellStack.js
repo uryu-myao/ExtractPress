@@ -3,6 +3,7 @@ import AddBagScreen from '../screens/AddBagScreen';
 import AddGearScreen from '../screens/AddGearScreen';
 import CupRecordScreen from '../screens/CupRecordScreen';
 import DnaBuiltScreen from '../screens/DnaBuiltScreen';
+import LicencesScreen from '../screens/LicencesScreen';
 import EditBagScreen from '../screens/EditBagScreen';
 import EditCupScreen from '../screens/EditCupScreen';
 import EditGearScreen from '../screens/EditGearScreen';
@@ -50,6 +51,7 @@ import RecordsSearch from './RecordsSearch';
  *   dna       8f, from Profile and 2c's "Feeds my taste DNA"
  *   dnaBuilt  8g, from 8f's footer, 6b's row on Profile and 15b's way on
  *             (Home's and 8f's; not 5c's)
+ *   licences  6c's Licences, from Profile's Legal block
  */
 /** What a pushed screen shows: one bag's page and another's are two screens. */
 const subject = (e) => e.bag?.id ?? e.gear?.id ?? e.cup?.id ?? e.id ?? (e.filter ? `${e.filter.type}:${e.filter.value}` : null);
@@ -114,6 +116,8 @@ export default function ShellStack() {
         return <TasteDnaScreen onBack={goBack} />;
       case 'dnaBuilt':
         return <DnaBuiltScreen onBack={goBack} />;
+      case 'licences':
+        return <LicencesScreen onBack={goBack} />;
       case 'addBag':
         return (
           <AddBagScreen
