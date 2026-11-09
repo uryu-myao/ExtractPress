@@ -184,6 +184,8 @@ export const textStyle = {
   /** 3d's "Finished bags" entry (2026-10-14, from the mock). */
   displayXs:     { fontFamily: 'Instrument Serif', fontSize: 24, fontWeight: '400', lineHeight: 24 },
   numeralHero:   { fontFamily: 'Instrument Serif', fontSize: 96, fontWeight: '400', lineHeight: 79 },
+  /** Home's cups total in its panel (Design Round 22 §5, 2026-11-07): 64 at the hero's 0.82. */
+  numeralLg:     { fontFamily: 'Instrument Serif', fontSize: 64, fontWeight: '400', lineHeight: 52 },
   numeralInline: { fontFamily: 'Instrument Serif', fontSize: 22, fontWeight: '400', lineHeight: 22 },
   /**
    * My words (5b's input, 2c's display). Upright since 2026-10-12: the app
@@ -596,8 +598,8 @@ export const component = {
   /**
    * Bottom bar (design-system.md §9; Design Round 23, 2026-11-08): the tab
    * body's slots and the +'s glyph. The pieces' height is size.tabBar.height.
-   * Removed 2026-11-08: addSlot (68 × 40) and addLift, the ink + among the
-   * tabs; add's ink background and mark.
+   * Removed 2026-11-08: addSlot (68 × 40), addLift and add, the ink + among
+   * the tabs (handoff-round23 §0); the blue +'s plus takes icon tokens.
    * The two raw icon colours were missed by the original extraction (lowercase
    * hex in the source) and added 2026-10-04: 6 and 5 screens, see changelog.
    */
@@ -612,8 +614,6 @@ export const component = {
       active: color.action.bg,
       inactive: '#9B8F87',
     },
-    /** the +'s plus: icon.lg's size at icon.sm's stroke (25b: 22 at 2.6), in color.action.fg */
-    add: { glyph: icon.lg.size, strokeWidth: icon.sm.strokeWidth },
   },
   requiredBar,
   /**

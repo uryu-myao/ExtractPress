@@ -47,7 +47,7 @@ Non-negotiable, and each one is a measured fact rather than a preference.
 ### Type
 - **Two families only**: `Archivo` (sans) and `Instrument Serif` (serif).
 - **Three weights only: 500 / 600 / 700. Regular (400) does not exist in this design — 0 occurrences across 30 screens. The lightest weight is 500. Do not use 400 on new screens.** Body copy is set at 500 deliberately.
-- **Instrument Serif is used for exactly three things**: screen titles (`display.lg`, `display.sm`), statistics and numerals (`numeral.hero` for the cup count, `numeral.inline` for ratings, times like "08:00", temperatures like "92°"), and the tasting-note input field (the single italic exception). **It is never used for** body copy, labels, buttons, chips/badges, list-row titles, form labels or navigation — all of those are Archivo.
+- **Instrument Serif is used for exactly three things**: screen titles (`display.lg`, `display.sm`), statistics and numerals (`numeral.lg` for the cup count, `numeral.inline` for ratings, times like "08:00", temperatures like "92°"), and the tasting-note input field (the single italic exception). **It is never used for** body copy, labels, buttons, chips/badges, list-row titles, form labels or navigation — all of those are Archivo.
 - **No italics anywhere in the app** (decided 2026-10-12, on device). The mocks' one italic, 5b's My words, is set upright (`text.note`). Do not use italics.
 
 ### Spacing
@@ -447,10 +447,10 @@ The old display axis's parts `axis.rail.derived`, `axis.needle` (12 × 30) and `
 | part | value | notes |
 |---|---|---|
 | `tabBar.slot` | `60 × 40` | Visual box of each tab. The touch area stretches to the bar's inner height (56) to clear `size.tapTarget` |
-| `tabBar.addSlot` | `68 × 40` | The centre add slot |
+| ~~`tabBar.addSlot`~~ | ~~`68 × 40`~~ | Removed 2026-11-08 (Round 23): the + is its own piece now |
 | `tabBar.icon.active` | alias `color.action.bg` (`#067BC2`) | the current tab's fill glyph |
 | `tabBar.icon.inactive` | `#9B8F87` | 6 screens / 23 uses. No in-role sibling to merge into: the fill-icon role otherwise holds only the rating gold |
-| `tabBar.add` | `color.surface.inverse` square, `color.text.onInverse` plus | 44 × 34 glyph, square (no radius) |
+| ~~`tabBar.add`~~ | ~~`color.surface.inverse` square, `color.text.onInverse` plus~~ | Removed 2026-11-08 (Round 23). The blue +'s plus is `icon.lg.size` at `icon.sm.strokeWidth` (22 / 2.6) |
 
 **Removed 2026-10-20 — `tabBar.icon.accentInactive` (`#C6BBD3`) and `accentActive`**: they coloured the calendar glyph's binding marks, a placeholder for the Try next icon. The Try next icon that replaced it (icon-footer-trynext.svg, 2026-10-10) is one fill, so nothing used them (drift D-45). This was the review trigger written here; it fired.
 
@@ -471,7 +471,8 @@ React Native has no `em` and no unitless line height, so both are converted: `le
 |---|---|---|---|---|---|
 | `display.lg` | 40 | 400 | 41 | 40/1, 40/1.02, 44/1.02, 44/0.8, 42/1.04, 38/1.06, 36/1.08, 34/1.08, 33/1.1 | 12 screens / 29 uses |
 | `display.sm` | 30 | 400 | 31 | 30/1, 30/0.9, 30/1.1, 32/1, 31/1, 28/1, 27/1.1 | 14 screens / 25 uses |
-| `numeral.hero` | 96 | 400 | 79 | 96/0.82 | 3 screens / 3 uses |
+| `numeral.hero` | 96 | 400 | 79 | 96/0.82 | 3 screens / 3 uses. Unused since 2026-11-09 (Home's total took `numeral.lg`); kept, Design's call |
+| `numeral.lg` | 64 | 400 | 52 | the hero's 0.82 (Design Round 22 §5, 2026-11-07) | Home's cups total, in its panel |
 | `numeral.inline` | 22 | 400 | 22 | 22/1, 26/1, 24/1, 21/1, 19 | 10 screens / 33 uses |
 | `text.note` | 20 (**upright** since 2026-10-12) | 400 | 28 | 20/1.4 italic in the mock (formerly E-3) | My words: 5b's input, 2c's display. **No italics in the app** (§1 Type). Its `min-height: 84` stays local to the field |
 
@@ -562,14 +563,15 @@ Each face's natural line box (ascent + descent + lineGap) comes from its font fi
 | Instrument Serif | 990 / 310 / 0 | 1.300 em | 52 at 40 |
 | Archivo (500/600/700) | 878 / 210 / 0 | 1.088 em | 15.2 at 14 |
 
-All four serif styles carry a `lineHeight` below their natural box (`display.lg` 41 < 52, `display.sm` 31 < 39, `numeral.hero` 79 < 124.8, `numeral.inline` 22 < 28.6). No Archivo style does.
+All five serif styles carry a `lineHeight` below their natural box (`display.lg` 41 < 52, `display.sm` 31 < 39, `numeral.hero` 79 < 124.8, `numeral.lg` 52 < 83.2, `numeral.inline` 22 < 28.6). No Archivo style does.
 - **CSS / web** spreads the deficit evenly as negative half-leading, and ink overflows the box without clipping. The token values describe the design correctly in these terms.
 - **iOS** takes the whole deficit from *above* the baseline, keeps the full descent *below* it, and clips the text to its frame. Measured on `display.lg`: frame 41, baseline 28.6 from the top, tallest ink ("f", 29.9 above the baseline) cut flat at the frame top, and 12.4 of empty descent above the rule.
 
 This is a platform difference, not a token error.
 
 **iOS adjustment**: `resolveTextStyle` drops a `lineHeight` that is shorter than the face's natural box, so those styles render on the natural box. That box contains every glyph by construction (ascent 39.6 ≥ "f" 29.9; descent 12.4 ≥ "g" 8.6 at 40). Spacing around such text is then set by its container, never by line-box leftover (see §9 Screen shell for the header).
-- The rule applies to all four serif styles. Only `display.lg` is in use today; `display.sm`, `numeral.hero` and `numeral.inline` get taller boxes on iOS (e.g. 124.8 for the hero numeral). Their containers must be set when each is first used.
+- Home's top panel takes CSS's half of the deficit off each side of `numeral.lg` and its `numeral.inline` values (negative margins from the metrics), so it measures as 23b does: the panel 136 tall, the Taste DNA card's top at 369 on 402 × 874 (measured 369.7, 2026-11-09).
+- The rule applies to all five serif styles. Only `display.lg` is in use today; `display.sm`, `numeral.hero` and `numeral.inline` get taller boxes on iOS (e.g. 124.8 for the hero numeral). Their containers must be set when each is first used.
 - Web keeps the CSS behaviour; it is a harness target, not a ship target.
 - Android is unverified. Check it on the first Android build.
 
@@ -940,11 +942,12 @@ Swiping horizontally moves between the four tab screens: Home → Records → Tr
 **Bottom bar (2026-11-08, Round 23).** Two pieces, floating: a body with three tabs (Home · Records · Profile) and the + to its right.
 - **Both pieces**: 56 tall (`size.tabBar.height`), square corners, a 2px frame, `space[12]` apart.
 - **Position**: inset by `layout.gutter` at the sides, and the home-indicator inset less `space[8]` above the bottom edge.
-- **The body is chrome**: `surface.raised`, `border.container`, no shadow. Its three slots share its width, and each is the whole touch area.
-- **The + is the screen's primary action**: `color.action.bg`, `border.strong`, `shadow.floating`. It darkens to `state.pressed.action`.
+- **Both pieces are controls** (handoff-round23 v2; Uryu on 25a): a `border.strong` frame and `shadow.floating`.
+  - The body is on `surface.raised`. Its three slots share its width, and each is the whole touch area.
+  - The + is on `color.action.bg` and darkens to `state.pressed.action`.
 - **The band**: behind the bar, from `space[12]` above it to the edge, plain ground hides the content (no rule, no fade). Screens keep the band plus `space[20]` under their content.
 
-*Why the body has no shadow: 2026-10-05, elevation over a full list read as noise.*
+*The 2026-10-05 objection (elevation over a full list read as noise) is met by the band: the shadows fall on plain ground, never on rows.* (v1, built 2026-11-08 and replaced 2026-11-09: a quiet `border.container` body with no shadow.)
 
 **Built 2026-11-08**:
 - `FooterNav` draws the two pieces. `AppShell` ends the tab pager at the band, so the fixed `DotTexture` shows through.
@@ -1393,3 +1396,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-11-08 — §9 Bottom bar: four slots (Home · Records · + · Profile), layout A (planner). Try next is no tab in V1 (a card on Home instead), and its placeholder would fail App Review. The + moves right of centre (about 5/8). Reach is to be checked on device. §1's clearable chip is built for the first time (SegmentedControl `clearable`, 3c / 3g's Process): the selected chip presses by scale.
 - 2026-11-08 — Design Round 23 built (E, 25a / 25b): §9 Bottom bar is two floating pieces, the three-tab body (quiet frame, no shadow) and a blue + (`border.strong`, `shadow.floating`). A band of ground hides the content behind it. §1: the + moves from scale to darken (`state.pressed.action`). Tokens: `tabBar.addSlot`, `addLift` and the ink `add` removed; `tabBar.add` is now the plus glyph's size and stroke (icon.lg's 22 at icon.sm's 2.6).
 - 2026-11-08 — Design Round 23 built (B, C): Try next's card on Home (`TryNextCard`, 25c / 25d) and Restore's row and sheets (`RestoreSheet`, 25e–25g). New glyphs `restore` and `spark`. **Token gap, reported to Design**: 25c / 25d set the card's reason, the hidden line and 8n's "New phone?" at 13 / 1.45, and no text style has 13. They take `body` (14 / 21) until Design picks a token.
+- 2026-11-09 — Design's handoff index (`handoff-README.md`) checked against the build. Two parts had been built from stale copies. §9 Bottom bar: the tab body takes the +'s `border.strong` frame and `shadow.floating` (handoff-round23 v2; v1's quiet frame was built on 2026-11-08). `tabBar.add` removed as handoff-round23 §0 says: the plus reads `icon.lg.size` / `icon.sm.strokeWidth` directly. Home's top block (Round 22 §5, which the copy built from on 2026-11-06 didn't have): one panel (`surface.raised`, 2px `border.muted`, `inset.container`, `space[4]` under the header), the total in the new `numeral.lg` (64 / 52), the row centre-aligned, no hairline under the stats, rows `space[6]` apart. Measured on 402 × 874: bar body x 22–312, + x 324–380, both y 792–848; Taste DNA card top 369.7.

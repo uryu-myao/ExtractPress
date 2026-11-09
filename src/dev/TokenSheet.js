@@ -47,6 +47,7 @@ const SAMPLE = {
   displayLg: 'Log a cup',
   displaySm: 'My shelf',
   numeralHero: '128',
+  numeralLg: '64',
   numeralInline: '08:00 · 92° · 4.5',
   title: 'Ethiopia Guji',
   label: 'Would order again',

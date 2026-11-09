@@ -5,18 +5,20 @@ import Glyph from './base/Glyph';
 import Text from './base/Text';
 
 /**
- * 1b's top block (Design Round 21, 23b / 23c): "Cups total" over the hero
- * numeral, beside a column of three stats, then the month strip under both.
+ * 1b's top block (Design Round 21, 23b / 23c; a panel since Round 22 §5,
+ * 2026-11-07): "Cups total" over the numeral, beside a column of three
+ * stats, then the month strip under both, all in one panel: surface.raised,
+ * a 2px border.muted frame (Round 22's quiet frame), inset.container.
  *
- * Row, bottom-aligned, space.20 apart:
+ * Row, centre-aligned, space.20 apart:
  *   left   "Cups total" space.12 above the numeral (D-34; §4: serif ink sets
- *          its own space), numeralHero in accent
+ *          its own space), numeralLg (64 / 52) in accent
  *   right  the stat column (size.statColumn; from a four-digit total it
- *          hugs its content, so the numeral never shrinks or wraps —
- *          Design Round 21 build questions, 5), rows space.8 apart: [icon.sm]
- *          space.6 [label] ……… [value], a hairline (divider, hairlineStrong)
- *          space.6 under each. Label labelEyebrow muted, value
- *          numeralInline ink, through Intl.NumberFormat.
+ *          hugs its content — Design Round 21 build questions, 5; at 64 a
+ *          four-digit total fits beside it, Round 22 §5), rows space.6
+ *          apart, no rule under them: [icon.sm] space.6 [label] ……… [value].
+ *          Label labelEyebrow muted, value numeralInline ink, through
+ *          Intl.NumberFormat.
  *            This month  cups since the 1st (local), all three modes
  *            Bags        every bag I've added, and deleted ones my cups
  *                        still name (countBags; Uryu, 2026-11-06)
@@ -35,21 +37,23 @@ import Text from './base/Text';
  *
  * Gone with Round 21: the This week panel (its count and Mon–Sun strip) and
  * "A slow start is still a start." (already dropped for V1, Round 10 C10).
+ * Gone with Round 22 §5: the 96 hero numeral, the bottom-aligned row and the
+ * hairline under each stat (built 2026-11-06 from Round 21 §3, which went out
+ * without §5).
  *
  * Props: total, monthCupTimes (logged_at of this month's cups), bags, cafes,
  * now
  */
 /*
- * The hero numeral's ink, not its box (§3, measured: Instrument Serif ascent
- * 990, descent 310 per 1000; digit ink −10 … 745). On iOS the numeral renders
- * on its natural box (§3.2), so (990 − 745) / 1000 em of space sits above the
- * digits and 310 / 1000 em below. These pull the box in to the ink, so
- * "Cups total" sits space.12 above the digits (D-34) and the digits' foot
- * meets the stat column's last hairline. Formulas from the measured metrics, not tokens.
+ * The serif numerals' authored boxes (§3: Instrument Serif ascent 990,
+ * descent 310 per 1000). On iOS they render on the natural box, 1.3 em
+ * (§3.2); CSS centres the glyphs in the shorter line box, taking half the
+ * difference off each side. This takes the same off, so the total's box is
+ * the mock's 52 ("Cups total" space.12 above it, D-34) and each stat row the
+ * mock's 22; on iOS's 28.6 rows the panel stood 20 taller than 23b and the
+ * Taste DNA card missed 369 (Round 22 §5). From the measured metrics, not tokens.
  */
-const HERO = textStyle.numeralHero.fontSize;
-const HERO_ABOVE_INK = ((990 - 745) / 1000) * HERO;
-const HERO_BELOW_INK = (310 / 1000) * HERO;
+const trimToLineHeight = ({ fontSize, lineHeight }) => -(((990 + 310) / 1000) * fontSize - lineHeight) / 2;
 
 /** Local midnight of the 1st of this month: the month strip and This month. */
 export function monthStart(now) {
@@ -71,7 +75,7 @@ function Stat({ glyph, label, value }) {
           {label}
         </Text>
       </View>
-      <Text variant="numeralInline" color="primary">
+      <Text variant="numeralInline" color="primary" style={styles.value}>
         {shown}
       </Text>
     </View>
@@ -96,7 +100,7 @@ export default function HomeStats({ total, monthCupTimes, bags, cafes, now }) {
           <Text variant="labelEyebrow" color="primary" style={styles.totalLabel}>
             Cups total
           </Text>
-          <Text variant="numeralHero" color="accent" style={styles.hero}>
+          <Text variant="numeralLg" color="accent" style={styles.numeral}>
             {String(total)}
           </Text>
         </View>
@@ -125,25 +129,35 @@ export default function HomeStats({ total, monthCupTimes, bags, cafes, now }) {
 }
 
 const styles = StyleSheet.create({
+  // Round 22 §5: space.4 under the header's foot. ScreenFrame's body already
+  // starts inset.container.v below it.
   block: {
+    marginTop: space[4] - spacing.inset.container.v,
     gap: space[14],
+    paddingVertical: spacing.inset.container.v,
+    paddingHorizontal: spacing.inset.container.h,
+    borderWidth: shape.borderWidth.box,
+    borderColor: color.border.muted,
+    backgroundColor: color.surface.raised,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: space[20],
   },
-  hero: {
-    marginTop: -HERO_ABOVE_INK,
-    marginBottom: -HERO_BELOW_INK,
+  numeral: {
+    marginVertical: trimToLineHeight(textStyle.numeralLg),
+  },
+  value: {
+    marginVertical: trimToLineHeight(textStyle.numeralInline),
   },
   totalLabel: {
-    // §4: the hero numeral's ink fills its box, so the space is set here (D-34).
+    // §4: the numeral's ink fills its box, so the space is set here (D-34).
     marginBottom: space[12],
   },
   stats: {
-    gap: space[8],
+    gap: space[6],
   },
   statsFixed: {
     width: size.statColumn,
@@ -153,9 +167,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.gap.row,
-    paddingBottom: space[6],
-    borderBottomWidth: shape.borderWidth.divider,
-    borderBottomColor: color.divider.hairlineStrong,
   },
   statLabel: {
     flexDirection: 'row',

@@ -14,13 +14,16 @@ const { slot, glyph, icon: iconColor } = component.tabBar;
 /**
  * Bottom bar (design-system.md §9; Design Round 23, 25a / 25b, 2026-11-08):
  * two pieces, floating.
- *   body  the three tabs, Home · Records · Profile. Chrome: surface.raised, a
- *         2px border.container frame, no shadow (2026-10-05: elevation over a
- *         full list read as noise). Its three slots share its width; each is
- *         the whole touch area.
+ *   body  the three tabs, Home · Records · Profile, on surface.raised. Its
+ *         three slots share its width; each is the whole touch area.
  *   +     the screen's primary action, to the body's right, space.12 apart:
- *         a size.tabBar.height square in color.action.bg, a 2px border.strong
- *         frame and shadow.floating. No name ("Log a cup" to VoiceOver).
+ *         a size.tabBar.height square in color.action.bg. No name ("Log a
+ *         cup" to VoiceOver).
+ * Both are controls, so both take the 2px border.strong frame and
+ * shadow.floating (handoff-round23 v2, Uryu on 25a). The 2026-10-05 objection
+ * to elevation over a full list is met by the band: the shadows fall on plain
+ * ground, never on rows. (v1, built 2026-11-08 and replaced the next day: a
+ * quiet border.container body with no shadow.)
  * Both are size.tabBar.height (56) tall, square-cornered, inset by
  * layout.gutter at the sides, the home-indicator inset less space.8 above the
  * bottom edge.
@@ -69,21 +72,23 @@ export default function FooterNav({ activeTab, position, hidden, onTabPress, onA
 
   return (
     <Animated.View style={[styles.wrapper, { paddingBottom: bottomGap(insets) }, slide]} pointerEvents="box-none">
-      <View style={styles.body}>
-        {TABS.map(({ key, label }) => {
-          const Icon = ICONS[key];
-          const page = TABS.findIndex((t) => t.key === key);
-          return (
-            <Tab key={key} label={label} selected={key === activeTab} onPress={() => onTabPress(key)}>
-              {position ? (
-                <PagerTab Icon={Icon} label={label} page={page} position={position} />
-              ) : (
-                <TabContent Icon={Icon} label={label} isActive={key === activeTab} />
-              )}
-            </Tab>
-          );
-        })}
-      </View>
+      <HardShadow shadow={shadow.floating} style={styles.body}>
+        <View style={styles.bodyFace}>
+          {TABS.map(({ key, label }) => {
+            const Icon = ICONS[key];
+            const page = TABS.findIndex((t) => t.key === key);
+            return (
+              <Tab key={key} label={label} selected={key === activeTab} onPress={() => onTabPress(key)}>
+                {position ? (
+                  <PagerTab Icon={Icon} label={label} page={page} position={position} />
+                ) : (
+                  <TabContent Icon={Icon} label={label} isActive={key === activeTab} />
+                )}
+              </Tab>
+            );
+          })}
+        </View>
+      </HardShadow>
       <AddButton onPress={onAddPress} />
     </Animated.View>
   );
@@ -186,9 +191,12 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     height: size.tabBar.height,
+  },
+  bodyFace: {
+    flex: 1,
     flexDirection: 'row',
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.container,
+    borderColor: color.border.strong,
     backgroundColor: color.surface.raised,
   },
   slotTouch: {
