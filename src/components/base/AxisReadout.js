@@ -31,7 +31,9 @@ import Text from './Text';
  *
  * value null (nothing noted on this axis; Design 10b, decided 2026-10-12):
  * the bare track with "Not noted yet" centred on it, on a surface.raised
- * patch padded space.8 each side. The words follow the tone (2026-10-14,
+ * patch padded space.8 each side, in text.placeholder (2026-11-09, Uryu on
+ * device: text.muted read as noise against the pale track; placeholder is
+ * the DS's empty-value grey, 3.08:1 on raised, the 3:1 floor). The words follow the tone (2026-10-14,
  * Uryu): "Not noted yet" on a profile (computed: a later cup can still note
  * it); "Not noted" on one cup's own values (entered: 2c, 11a — that cup's
  * axes can't change, so "yet" promises something that won't come). — readable, and the gap in the bar reads as
@@ -89,7 +91,7 @@ export default function AxisReadout({ axis, value, tone = 'computed', previous =
       {has ? <View style={[styles.marker, { left: `${value}%`, backgroundColor: MARKER[tone] }]} /> : null}
       {has ? null : (
         <View style={styles.emptyLabel} pointerEvents="none">
-          <Text variant="meta" color="muted" style={styles.patch}>
+          <Text variant="meta" color="placeholder" style={styles.patch}>
             {emptyWords}
           </Text>
         </View>
