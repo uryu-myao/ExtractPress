@@ -22,8 +22,8 @@ import Text from './base/Text';
  *   early   "Early signs" — Badge accent (the mock's #F1E3D6 / #8A4602; its
  *           1.5px border is left out: a Badge has none, §9)
  *   locked  "Locked in" — Badge selected (6a / 8f)
- *   none    no stamp: nothing noted yet, and one line under the axes, 8f's
- *           (dnaNoneLine): "Rate a cup and note one taste to start." (Design
+ *   none    no stamp: nothing noted yet, and one line right under the title
+ *           (8 under it, 20 over the axes; Design 27a), 8f's (dnaNoneLine): "Rate a cup and note one taste to start." (Design
  *           Round 12), or after a reset "Starting again from Nov 10. Rate a
  *           cup and note one taste." (Design Round 25, A1)
  * The stamp is a button (DnaStamp, 15a): it opens 15b's info sheet.
@@ -129,12 +129,12 @@ export default function TasteDnaCard({ dna, onStampPress, onOpen }) {
         </Text>
         <DnaStamp state={dna.state} onPress={onStampPress} />
       </View>
-      <DnaAxes dna={dna} style={styles.axes} />
       {dna.state === 'none' ? (
         <Text variant="bodySm" color="secondary">
           {dnaNoneLine(dna)}
         </Text>
       ) : null}
+      <DnaAxes dna={dna} style={styles.axes} />
       {onOpen ? (
         <Pressable onPress={onOpen} accessibilityRole="button" style={({ pressed }) => [styles.open, pressed && styles.openPressed]}>
           <Text variant="labelCaps" color="primary">
