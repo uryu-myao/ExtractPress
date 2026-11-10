@@ -17,7 +17,8 @@ import { cupsLabel } from './TasteDnaScreen';
  * 'dnaBuilt', 2026-10-30). Reached from 8f's footer, 6b's row on Profile and
  * 15b's way on (Home's and 8f's, not 5c's).
  *
- *   header    compact, Back, "How it is built" (8g), as 8f's.
+ *   header    compact, Back, "How it is built" (8g) in titleCaps, as 21a
+ *             draws it and as 8f's (2026-11-10).
  *   opening   8g's two lines as drawn (display.lg, then body): they hold in V1.
  *   My numbers  (Uryu, 2026-10-30; drawn in Design Round 17, 21a / 21c) a
  *            2px frame, one row per axis split by hairlines: the name, the
@@ -162,7 +163,7 @@ export default function DnaBuiltScreen({ onBack }) {
   }, [db]);
 
   return (
-    <ScreenFrame scroll compact title="How it is built" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
+    <ScreenFrame scroll compact titleCaps title="How it is built" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
       <View style={styles.body}>
         <View style={styles.head}>
           <Text variant="displayLg" color="primary">

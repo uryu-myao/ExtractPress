@@ -220,6 +220,8 @@ export const textStyle = {
   countTabular:  { fontFamily: 'Archivo', fontSize: 14, fontWeight: '600', lineHeight: 21, fontVariant: ['tabular-nums'] },
   /** lineHeight UNDECLARED · 0.08em x 12 */
   labelCaps:     { fontFamily: 'Archivo', fontSize: 12, fontWeight: '700', letterSpacing: 0.96, textTransform: 'uppercase' },
+  /** A pushed page's title in caps beside Back: 8f, 8g (21a, 21d) and Licences. 13 / 700 · 0.12em x 13. 2026-11-10. */
+  titleCaps:     { fontFamily: 'Archivo', fontSize: 13, fontWeight: '700', letterSpacing: 1.56, textTransform: 'uppercase' },
   /** lineHeight UNDECLARED · 0.12em x 10 (was 0.16em; tightened on Uryu's ask, 2026-11-09) */
   labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
   /** lineHeight UNDECLARED · 0.06em x 16 */

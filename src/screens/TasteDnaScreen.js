@@ -19,7 +19,8 @@ import ScreenFrame from './ScreenFrame';
  * Reached from Profile (6a's card; until 6a, the placeholder's row) and 2c's
  * "Feeds my taste DNA" (D-48).
  *
- *   header   compact, Back, "My taste DNA", the state's stamp (DnaStamp: its ⓘ
+ *   header   compact, Back, "My taste DNA" in titleCaps (13 / 700 caps, as
+ *            21d draws it; 2026-11-10), the state's stamp (DnaStamp: its ⓘ
  *            opens 15b's sheet, Design Round 8). 8f draws the stamp small
  *            (9px on surface.inverse); the shared stamp is kept: there is no
  *            9px style.
@@ -119,6 +120,7 @@ export default function TasteDnaScreen({ onBack }) {
     <ScreenFrame
       scroll
       compact
+      titleCaps
       title="My taste DNA"
       leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
       trailing={dna ? <DnaStamp state={dna.state} onPress={() => requestDnaInfo(dna)} /> : undefined}>

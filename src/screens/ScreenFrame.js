@@ -96,6 +96,9 @@ const belowBaseline = (line) => line.height - line.ascender;
  *             A stat may take the meta's place (3c / 3a), fading with it.
  *             On collapse the row rises to the safe-area top and the title
  *             scales; the control moves with it (never fades); the meta fades
+ *   titleCaps compact only: the title in titleCaps (13 / 700 caps, ink) beside
+ *             Back, as 8f / 8g draw it (21a, 21d), not display.lg. It never
+ *             scales on collapse: the row only rises (2026-11-10)
  *   scrollRef     optional ref to the ScrollView (scroll variants), e.g. 5d's
  *                 "Go to first"
  *   footerTone    'error': the footer panel's top rule takes state.error.border
@@ -111,6 +114,7 @@ export default function ScreenFrame({
   stat,
   scroll = false,
   compact = false,
+  titleCaps = false,
   footer,
   footerTone,
   userTitle = false,
@@ -175,7 +179,7 @@ export default function ScreenFrame({
 
   const commit = () => {
     const p = parts.current;
-    const s = COLLAPSE.titleScale;
+    const s = titleCaps ? 1 : COLLAPSE.titleScale;
     const I = insets.top;
     let next = null;
     if (compact) {
@@ -235,6 +239,8 @@ export default function ScreenFrame({
   // the header); one that scrolls less than `full` collapses only that far.
   const distance = Math.min(full, range);
 
+  // A caps title (8f / 8g) is already small: it rises with its row, unscaled.
+  const titleScale = titleCaps ? 1 : COLLAPSE.titleScale;
   const anim = useMemo(() => {
     if (!(distance > 0)) return null;
     // Collapsed amount in points, clamped to [0, distance]: linear in scroll
@@ -244,7 +250,7 @@ export default function ScreenFrame({
     return {
       shift,
       up: lerp(-full),
-      scale: shift.interpolate({ inputRange: [0, full], outputRange: [1, COLLAPSE.titleScale] }),
+      scale: shift.interpolate({ inputRange: [0, full], outputRange: [1, titleScale] }),
       // Small labels never scale: they fade out over the first part of the collapse.
       // Fully gone within the reachable collapse: a page that can scroll only
       // a little must not rest with half-transparent labels.
@@ -257,10 +263,10 @@ export default function ScreenFrame({
       above: compact ? null : lerp(geo.above),
       stat: compact ? null : lerp(geo.stat),
       leading: compact
-        ? shift.interpolate({ inputRange: [0, full], outputRange: [optical, geo.leadingMove + optical * COLLAPSE.titleScale] })
+        ? shift.interpolate({ inputRange: [0, full], outputRange: [optical, geo.leadingMove + optical * titleScale] })
         : null,
     };
-  }, [compact, distance, full, geo, optical, scrollY]);
+  }, [compact, distance, full, geo, optical, scrollY, titleScale]);
 
   // The content's own movement under the header: the scroll offset less the
   // collapse (ContentScrollContext).
@@ -304,7 +310,7 @@ export default function ScreenFrame({
   const onTitleText = compact ? onCompactTitleText : onBaseline('baseline');
   const titleText = (
     <Text
-      variant="displayLg"
+      variant={titleCaps ? 'titleCaps' : 'displayLg'}
       truncate={userTitle ? 'name' : 'none'}
       accessibilityRole="header"
       onTextLayout={(e) => {

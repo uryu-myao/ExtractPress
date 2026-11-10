@@ -9,8 +9,8 @@ import ScreenFrame from './ScreenFrame';
 /**
  * 6c's Licences, pushed over the tabs and the bar (ShellStack 'licences',
  * 2026-11-09). 6c draws the row only; the page is ours, in the pushed
- * screens' shape (compact header, Back, title, body), to be shown to Design
- * after the fact (Round 25).
+ * screens' shape (compact header, Back, title in titleCaps as 8f / 8g's,
+ * body), to be shown to Design after the fact (Round 25).
  *
  *   opening   one line, body, secondary.
  *   entries   each package as shipped: its name (label), "version · licence"
@@ -25,7 +25,7 @@ import ScreenFrame from './ScreenFrame';
  */
 export default function LicencesScreen({ onBack }) {
   return (
-    <ScreenFrame scroll compact title="Licences" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
+    <ScreenFrame scroll compact titleCaps title="Licences" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
       <View style={styles.body}>
         <Text variant="body" color="secondary">
           Extract Press is built on these open-source projects. Each keeps its own licence, given here in full.
