@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useDatabase } from '../data/DatabaseProvider';
 import { resetTasteDna } from '../data/repository';
-import { onResetDnaRequest } from '../navigation';
+import { onResetDnaRequest, requestNotice } from '../navigation';
 import { space, spacing } from '../theme/tokens';
 import BottomSheet from './base/BottomSheet';
 import Button from './base/Button';
@@ -13,7 +13,8 @@ import Text from './base/Text';
  * delete sheets' form, red secondary on top, "Keep it" under it). Opened by
  * requestResetDna() (6b's row). The copy is approved (2026-11-09): it says
  * first that nothing is deleted, since the action only looks destructive.
- * No undo after it (repository resetTasteDna).
+ * No undo after it (repository resetTasteDna). Done: 13b's notice, "Taste DNA
+ * reset." (Uryu, 2026-11-10; the words are ours, Round 25 C4).
  */
 export function ResetDnaHost() {
   const db = useDatabase();
@@ -27,6 +28,7 @@ export function ResetDnaHost() {
     try {
       await resetTasteDna(db);
       setVisible(false);
+      requestNotice({ name: 'Taste DNA', verb: 'reset' });
     } catch (error) {
       console.error('[reset] failed', error);
       Alert.alert("Couldn't reset", String(error?.message ?? error));

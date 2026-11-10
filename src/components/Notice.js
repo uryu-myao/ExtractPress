@@ -8,7 +8,8 @@ import { useFooterHeight } from './FooterNav';
 /**
  * 13a / 13b — the one-line notice after a delete ("Ethiopia Guji deleted."),
  * Design Round 5 (2026-10-13). AppShell mounts it over the tabs. Also after
- * 3f's Reopen ("Kenya Kirinyaga reopened.", 2026-10-14; the verb is ours).
+ * 3f's Reopen ("Kenya Kirinyaga reopened.", 2026-10-14; the verb is ours)
+ * and 6b's Reset my taste DNA ("Taste DNA reset.", 2026-11-10, ours too).
  *
  *   look     surface.inverse + text.onInverse, square, no border, no shadow;
  *            min size.notice.minHeight (48), padding 16 a side; gap.section

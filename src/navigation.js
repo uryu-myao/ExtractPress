@@ -62,7 +62,7 @@ export function onCloseCupRequest(listener) {
 
 const noticeListeners = new Set();
 
-/** { name, verb? } — "‹name› ‹verb›." (verb: 'deleted' by default; 'reopened' after 3f's Reopen). */
+/** { name, verb? } — "‹name› ‹verb›." (verb: 'deleted' by default; 'reopened' after 3f's Reopen, 'reset' after 6b's Reset). */
 export function requestNotice(notice) {
   noticeListeners.forEach((l) => l(notice));
 }

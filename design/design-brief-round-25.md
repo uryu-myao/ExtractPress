@@ -6,7 +6,7 @@ Round 25 · after Round 24 (26a / 26b, built 2026-11-09)
 
 Reply under "Round 25" in `design-response-next.md`, numbered as in this brief. 6b and 6c are built as far as V1 has them (2026-11-09). Two questions about Reset, one regression, and three things for your boards.
 
-**Questions:** A1, A2. **To fix on the board:** B1. **For your information** (decided; tell us if a board should change): C1–C3.
+**Questions:** A1, A2. **To fix on the board:** B1. **For your information** (decided; tell us if a board should change): C1–C4.
 
 ## What was built
 
@@ -76,3 +76,7 @@ Recorded as drift D-64 to D-66. They stay on the boards for later.
 If you want to draw it, it is yours; nothing else waits on it.
 
 Also: the version line is "Extract Press 1.0.0 (1)" in body.sm, the build number where 6c has a date (D-67): App Store Connect shows version and build, so a report can be matched to an upload.
+
+### C4. After Reset: 13b's notice (added 2026-11-10)
+
+Confirming closed the sheet and nothing else happened: the profile on 6b doesn't change, so it looked as if the tap did nothing. **Uryu asked for 13b's notice**, as after a delete or a Reopen: **"Taste DNA reset."** ("Taste DNA" in noticeName, "reset." in notice). The words are ours; give others if you like.
