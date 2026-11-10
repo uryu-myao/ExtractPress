@@ -2,7 +2,7 @@
 
 Round 25 · after Round 24 (26a / 26b, built 2026-11-09)
 
-**Status: sent, waiting for Design.**
+**Status: answered 2026-11-10** (`design-response-next.md`, Round 25; boards 27a / 27b, 25e and 6b updated). **Built 2026-11-10**: A1's line, A2's dated line under a dashed divider, no chevron on Reset (B1).
 
 Reply under "Round 25" in `design-response-next.md`, numbered as in this brief. 6b and 6c are built as far as V1 has them (2026-11-09). Two questions about Reset, one regression, and three things for your boards.
 

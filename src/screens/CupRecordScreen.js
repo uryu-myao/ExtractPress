@@ -4,6 +4,7 @@ import AxisReadout, { AxisPoles } from '../components/base/AxisReadout';
 import Badge from '../components/base/Badge';
 import FieldRow from '../components/base/FieldRow';
 import Chevron from '../components/base/Chevron';
+import DashedRule from '../components/base/DashedRule';
 import Glyph from '../components/base/Glyph';
 import IconButton from '../components/base/IconButton';
 import SectionLabel from '../components/base/SectionLabel';
@@ -11,13 +12,13 @@ import Text from '../components/base/Text';
 import DnaChange from '../components/DnaChange';
 import { whenLine } from '../components/WhenMeta';
 import { MODE_LABEL, NONE, cupTitle, tidyNote } from '../constants/cups';
-import { daysBetween } from '../constants/dates';
+import { daysBetween, formatDay } from '../constants/dates';
 import { FLAVOUR_LIMIT } from '../constants/flavours';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { getCup, onCupsChanged } from '../data/repository';
 import { requestPush } from '../navigation';
-import { color, icon, layout, shape, space, spacing, state } from '../theme/tokens';
+import { color, dashed, icon, layout, shape, space, spacing, state } from '../theme/tokens';
 import { RATING_COPY } from './RecordCoffeeScreen';
 import ScreenFrame from './ScreenFrame';
 
@@ -48,10 +49,11 @@ import ScreenFrame from './ScreenFrame';
  * "Feeds my taste DNA" holds the sentence and the change tags (23g), from
  * the stored dna_change, so they match what 5c showed at save time.
  *
- * PROVISIONAL (Design Round 25): a cup logged before Reset my taste DNA
- * keeps its stored change (it was true then), but "Feeds" no longer holds.
- * Until Design answers: the heading in the past tense, "Fed my taste DNA",
- * and one line under the tags saying it isn't in the profile now.
+ * A cup logged before Reset my taste DNA (Design Round 25, A2) keeps its
+ * stored change, true of that day, under "Fed my taste DNA"; below a dashed
+ * dividerSoft (the block's second part), "Logged before the reset on Nov 10,
+ * so it isn't in my taste DNA now." (bodySm, muted; the date answers "which
+ * reset?"). The chevron still opens 8f: the profile as it stands now.
  */
 /** "Blue Bottle · day 7 when brewed": day only with a roast date, never negative. */
 function subtitle(cup) {
@@ -235,9 +237,12 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
           </View>
           <DnaChange change={change} />
           {cup.before_reset ? (
-            <Text variant="bodySm" color="muted">
-              Logged before the reset, so it isn't in my taste DNA now.
-            </Text>
+            <>
+              <DashedRule token={dashed.dividerSoft} />
+              <Text variant="bodySm" color="muted">
+                {`Logged before the reset on ${formatDay(cup.reset_at)}, so it isn't in my taste DNA now.`}
+              </Text>
+            </>
           ) : null}
         </Pressable>
       </View>

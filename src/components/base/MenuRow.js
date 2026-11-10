@@ -20,10 +20,12 @@ import Text from './Text';
  *   destructive  label and glyph in color.text.destructive (Design Round
  *          24: 6b's Reset my taste DNA); the sub line stays muted, as 3g's
  *          delete hint.
+ *   chevron false: pressable, but no chevron, for a row that opens a
+ *          confirm sheet, not a screen (6b's Reset, Design Round 25, B1).
  *
- * Props: icon (Glyph name), label, sub, value, onPress, disabled, destructive
+ * Props: icon (Glyph name), label, sub, value, onPress, disabled, destructive, chevron
  */
-export default function MenuRow({ icon: glyph, label, sub, value, onPress, disabled = false, destructive = false }) {
+export default function MenuRow({ icon: glyph, label, sub, value, onPress, disabled = false, destructive = false, chevron = true }) {
   const pressable = Boolean(onPress);
   return (
     <Pressable
@@ -49,7 +51,7 @@ export default function MenuRow({ icon: glyph, label, sub, value, onPress, disab
           {value}
         </Text>
       ) : null}
-      {pressable ? <Chevron /> : null}
+      {pressable && chevron ? <Chevron /> : null}
     </Pressable>
   );
 }

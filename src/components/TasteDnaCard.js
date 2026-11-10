@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { formatDay } from '../constants/dates';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { bandOf } from '../data/tasteDna';
 import { color, motion, shape, size, space, spacing, state as pressState } from '../theme/tokens';
@@ -22,7 +23,9 @@ import Text from './base/Text';
  *           1.5px border is left out: a Badge has none, §9)
  *   locked  "Locked in" — Badge selected (6a / 8f)
  *   none    no stamp: nothing noted yet, and one line under the axes, 8f's
- *           "Rate a cup and note one taste to start." (Design Round 12)
+ *           (dnaNoneLine): "Rate a cup and note one taste to start." (Design
+ *           Round 12), or after a reset "Starting again from Nov 10. Rate a
+ *           cup and note one taste." (Design Round 25, A1)
  * The stamp is a button (DnaStamp, 15a): it opens 15b's info sheet.
  * No line under the title (Design Round 8, 2026-10-17): what it said moved
  * into the sheet's progress box (DnaInfoSheet).
@@ -108,6 +111,15 @@ export function DnaAxes({ dna, bands = false, style }) {
  *   onStampPress   the stamp: open 15b's sheet
  *   onOpen         the foot row: open 8f
  */
+/**
+ * The 'none' line, Home's card and 8f. After Reset my taste DNA the profile is
+ * empty by choice, not new: it says when it started again (reset_at, the
+ * app's short date), then the same instruction (Design Round 25, A1).
+ */
+export function dnaNoneLine(dna) {
+  return dna.resetAt != null ? `Starting again from ${formatDay(dna.resetAt)}. Rate a cup and note one taste.` : 'Rate a cup and note one taste to start.';
+}
+
 export default function TasteDnaCard({ dna, onStampPress, onOpen }) {
   return (
     <View style={styles.card}>
@@ -120,7 +132,7 @@ export default function TasteDnaCard({ dna, onStampPress, onOpen }) {
       <DnaAxes dna={dna} style={styles.axes} />
       {dna.state === 'none' ? (
         <Text variant="bodySm" color="secondary">
-          Rate a cup and note one taste to start.
+          {dnaNoneLine(dna)}
         </Text>
       ) : null}
       {onOpen ? (

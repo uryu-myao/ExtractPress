@@ -1,5 +1,57 @@
 # Design response — design-missing.md
 
+## Round 25 · After a reset, 6b's rows (2026-11-10)
+
+Mock:
+
+- **New: Turn 26.** **27a** shows the empty profile after a reset, and the notice. **27b** shows 2c on a cup logged before the reset.
+- **Edited.** **25e** now shows V1's rows: Export my cups, Export everything, Restore, Reset (red). **6b**'s Reset row is back to Round 12's line, in red.
+
+### A. Questions
+
+1. **A1. Yes, a line of its own for an empty profile after a reset**: **"Starting again from Nov 10. Rate a cup and note one taste."**
+   - **What it says.** It opens with what happened and when, so the empty profile reads as chosen and recent, not as a new account. Then comes the same instruction, shorter, because "to start" is already said.
+   - **The date** is `reset_at`, in the app's short date (the "Apr 8" form).
+   - **Where it shows**: Home's card and 8f, wherever the "none" line would show, while `reset_at` is set and no noted cup has come after it. After the first noted cup it's Early signs, with its usual lines.
+   - **Nothing else changes.** The card is the same empty card: no stamp, four "Not noted yet". The new-user line stays as it is for new users.
+2. **A2. Way 3, as built, with one change**: put the reset's date in the line, **"Logged before the reset on Nov 10, so it isn't in my taste DNA now."**
+   - **The date** answers "which reset?" if there has been more than one. It also places the cup without opening anything.
+   - **"Fed my taste DNA"**: agreed. The sentence and the tags stay as stored, because they're true of that day.
+   - **Where the line sits**: under the tags, below a 1.5 dashed `border.soft` divider (§8: the second part of one block). It uses `body.sm` in `text.muted`, as built.
+   - **Not way 2.** Hiding the block would make old cups look as if they never counted.
+   - **The chevron stays and still opens 8f**: the profile as it stands now, which is what the line points to.
+
+### B. Fixed on the board
+
+1. **B1. Done.** 25e's two My data blocks and 6b's row now read "Counts from today. Older cups stay in Records."
+   - **Colour.** Label and glyph are `color.text.destructive` / `icon.destructive`.
+   - **Glyph.** 6b now uses 25e's glyph, the one that's built.
+   - **No chevron.** The row opens a sheet, not a screen, as 6b drew it.
+
+### C. Noted
+
+1. **C1. Export my cups stays, agreed. The board now has it.** It's the first row, above Export everything, with "147 cups as CSV, notes included" ("Every cup as CSV, notes included" on an empty app).
+   - The reason for keeping it is the one you gave: the CSV is for reading, the zip is for putting back.
+   - I've rewritten 25e's note that said "everything now earns its name".
+2. **C2. Agreed.** The Backup row is gone from 25e, which is V1's board. 6b keeps Backup and Account for later, as D-64 to D-66 say.
+3. **C3. Licences: no board needed.** The pushed-screen shape and full licence texts are right. "Extract Press 1.0.0 (1)" with the build number is better than the date. Agreed.
+4. **C4. "Taste DNA reset." Agreed**, no other words. It's drawn in 27a: noticeName + notice, no Undo, same place as after a delete.
+
+### On Reset's confirmation (not asked, for the record)
+
+Uryu's copy is right to say first that nothing is deleted. Round 24's form fits it: a red secondary on top, "Keep it" under it, no primary.
+
+- It's a destructive action even though no record goes: the profile as it stood can't come back (no undo).
+- So the red label is right, and the copy then corrects the fear.
+
+### For Code
+
+- Home / 8f "none" line: when `reset_at` is set, use "Starting again from ‹reset date›. Rate a cup and note one taste."
+- 2c, cups before `reset_at`: the line becomes "Logged before the reset on ‹reset date›, so it isn't in my taste DNA now.", below a dashed `border.soft` divider.
+- Nothing else changes. 6b is already built as the board now shows.
+
+---
+
 ## Round 24 · A colour for deleting (2026-11-09)
 
 Mock: Turn 25 is new. **26a** shows the colour, its contrast and how it compares with Roast. **26b** shows it on the confirm sheet, the delete row and the text actions. Nothing earlier is edited.

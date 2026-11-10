@@ -232,12 +232,12 @@ export async function undoDismissTryNext(db: SQLiteDatabase, key: string): Promi
 }
 
 /** One cup as 2c shows it: every stored field, its place names as copied (migration 6). */
-/** before_reset: 1 when the cup was logged before Reset my taste DNA, so it no longer counts (2c). */
-export type CupRecord = Row<'cups'> & { before_reset?: number };
+/** before_reset: 1 when the cup was logged before Reset my taste DNA, so it no longer counts; reset_at: when (2c's line, Design Round 25, A2). */
+export type CupRecord = Row<'cups'> & { before_reset?: number; reset_at?: number | null };
 
 export async function getCup(db: SQLiteDatabase, id: number): Promise<CupRecord | null> {
   const row = await db.getFirstAsync<CupRecord & { flavours: string }>(
-    'SELECT c.*, (s.reset_at IS NOT NULL AND c.logged_at < s.reset_at) AS before_reset FROM cups c, settings s WHERE c.id = ?',
+    'SELECT c.*, (s.reset_at IS NOT NULL AND c.logged_at < s.reset_at) AS before_reset, s.reset_at FROM cups c, settings s WHERE c.id = ?',
     [id]
   );
   return row ? { ...row, flavours: JSON.parse(row.flavours as unknown as string) } : null;

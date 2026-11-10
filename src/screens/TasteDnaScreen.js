@@ -4,7 +4,7 @@ import IconButton from '../components/base/IconButton';
 import InlineAction from '../components/base/InlineAction';
 import SectionLabel from '../components/base/SectionLabel';
 import Text from '../components/base/Text';
-import { DnaAxes, DnaStamp } from '../components/TasteDnaCard';
+import { DnaAxes, DnaStamp, dnaNoneLine } from '../components/TasteDnaCard';
 import { formatDay, daysSince } from '../constants/dates';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
@@ -28,7 +28,9 @@ import ScreenFrame from './ScreenFrame';
  *            axis is left.
  *   meta     "From N cups · shifted N days ago" (meta, accent). The shift part
  *            only when there was one. With nothing noted, one line under it:
- *            "Rate a cup and note one taste to start." (Design Round 11, B).
+ *            "Rate a cup and note one taste to start." (Design Round 11, B);
+ *            after a reset, "Starting again from Nov 10. …" (dnaNoneLine,
+ *            Design Round 25, A1).
  *   axes     the Taste DNA card's axes in a 2px frame on raised, each with its
  *            band name under it (DnaAxes bands).
  *   Flavours I pick most  (Design Round 11, B) the top 4 flavour tags with
@@ -132,7 +134,7 @@ export default function TasteDnaScreen({ onBack }) {
             </Text>
             {dna.state === 'none' ? (
               <Text variant="body" color="secondary">
-                Rate a cup and note one taste to start.
+                {dnaNoneLine(dna)}
               </Text>
             ) : null}
           </View>

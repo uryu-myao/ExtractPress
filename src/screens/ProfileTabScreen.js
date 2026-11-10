@@ -67,14 +67,14 @@ import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
  *                T-8): 6b's Backup saves by itself; this is a manual export
  *                until it is built.
  *                The CSV row stays beside Export everything (Uryu,
- *                2026-11-09), though 25e drops it: the CSV is for reading,
- *                the zip is for putting back. Different jobs.
+ *                2026-11-09; 25e has it again since Design Round 25, C1):
+ *                the CSV is for reading, the zip is for putting back.
  *                6b's Backup row is not shown: V1 has no automatic backup,
  *                so it would lead nowhere (drift.md).
  *                Reset my taste DNA closes the block, where 6b and 25e draw
  *                it: red label and glyph (Design Round 24), Round 12's line
- *                (25e's "My cups and notes stay…" is the older one). It
- *                asks first (ResetDnaSheet).
+ *                (both boards since Round 25, B1). It asks first
+ *                (ResetDnaSheet), so no chevron: a sheet, not a screen.
  *   Legal        6c's last block (2026-11-09). Privacy policy opens its page
  *                in the browser, shown only once constants/links.js has its
  *                URL (todo.md T-18). Licences → its page (LicencesScreen).
@@ -271,7 +271,7 @@ export default function ProfileTabScreen() {
                 The sub line is Design's (Round 23, 25e). */}
             <MenuRow icon="download" label="Export everything" sub="Cups, bags, gear and photos" onPress={onExport(shareBackup)} disabled={busy} />
             {data.empty ? <MenuRow icon="restore" label="Restore from a backup" sub="From an Export everything file" onPress={requestRestore} disabled={busy} /> : null}
-            <MenuRow icon="reset" destructive label="Reset my taste DNA" sub="Counts from today. Older cups stay in Records." onPress={requestResetDna} disabled={busy} />
+            <MenuRow icon="reset" destructive chevron={false} label="Reset my taste DNA" sub="Counts from today. Older cups stay in Records." onPress={requestResetDna} disabled={busy} />
           </Section>
           <Section title="Legal">
             {PRIVACY_POLICY_URL ? <MenuRow icon="shield" label="Privacy policy" onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} /> : null}
