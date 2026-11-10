@@ -25,7 +25,7 @@ import ScreenFrame from './ScreenFrame';
  */
 export default function LicencesScreen({ onBack }) {
   return (
-    <ScreenFrame scroll compact titleCaps title="Licences" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
+    <ScreenFrame scroll compact title="Licences" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
       <View style={styles.body}>
         <Text variant="body" color="secondary">
           Extract Press is built on these open-source projects. Each keeps its own licence, given here in full.

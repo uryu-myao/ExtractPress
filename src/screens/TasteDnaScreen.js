@@ -120,7 +120,6 @@ export default function TasteDnaScreen({ onBack }) {
     <ScreenFrame
       scroll
       compact
-      titleCaps
       title="My taste DNA"
       leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
       trailing={dna ? <DnaStamp state={dna.state} onPress={() => requestDnaInfo(dna)} /> : undefined}>

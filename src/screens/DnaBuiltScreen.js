@@ -163,7 +163,7 @@ export default function DnaBuiltScreen({ onBack }) {
   }, [db]);
 
   return (
-    <ScreenFrame scroll compact titleCaps title="How it is built" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
+    <ScreenFrame scroll compact title="How it is built" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
       <View style={styles.body}>
         <View style={styles.head}>
           <Text variant="displayLg" color="primary">
