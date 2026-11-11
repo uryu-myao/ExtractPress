@@ -33,7 +33,7 @@ The survey kept **`morecoffee.db`** and the **JSON's `app: 'MoreCoffee'`**. Both
 - With a new bundle ID there are no existing installs. Every install starts with a new, empty container, and V1 has no import. So there is nothing to stay compatible with, and the change costs nothing now.
 - Left alone, both old names would stay in the code for good.
 
-What the survey kept and this change still keeps: the repository, `expo.slug` (`MoreCoffee-App`: changing it makes EAS see a new project, so it is handled on its own), code identifiers, module names, and history in documents and comments.
+What the survey kept and this change still keeps: the repository (renamed later: §3), `expo.slug` (`MoreCoffee-App`: changing it makes EAS see a new project, so it is handled on its own), code identifiers, module names, and history in documents and comments.
 
 **Exports from before the rename** say `app: 'MoreCoffee'` and are named `morecoffee-*`. If an import is ever built, it should accept both values.
 
@@ -103,7 +103,7 @@ The permission texts don't contain the name: no change.
 
 ### 3. What stays as it is
 
-- The repository (`uryu-myao/MoreCoffee-App`), the local folder, `expo.slug` (`MoreCoffee-App`; Expo's project id, which nobody sees).
+- ~~The repository (`uryu-myao/MoreCoffee-App`), the local folder~~ (changed 2026-11-11: the repository is `uryu-myao/ExtractPress`, GitHub redirects the old URL; the local folder is `ExtractPress-app`), `expo.slug` (`MoreCoffee-App`; Expo's project id, which nobody sees).
 - Code identifiers and comments that say MoreCoffee, including tokens and schema.
 - ~~**The database file `morecoffee.db`**~~ (changed 2026-11-08 to `extract.db`: above) (`src/data/migrate.ts`): renaming it would orphan the data of every existing install.
 - ~~**The JSON export's `app: 'MoreCoffee'` field**~~ (changed 2026-11-08 to `'ExtractPress'`: above) (`src/data/export.ts:56`): it marks the format, not the brand. A future import would check it, and older exports must still match.
