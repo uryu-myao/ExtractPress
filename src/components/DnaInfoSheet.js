@@ -5,10 +5,11 @@ import { StyleSheet, View } from 'react-native';
 import { LegacyScrollView as ScrollView } from 'react-native-gesture-handler';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { DNA_TUNING } from '../data/tasteDna';
-import { onDnaInfoRequest } from '../navigation';
+import { onDnaInfoRequest, requestPush } from '../navigation';
 import { color, size, space, spacing } from '../theme/tokens';
 import BottomSheet from './base/BottomSheet';
 import Button from './base/Button';
+import InlineAction from './base/InlineAction';
 import Text from './base/Text';
 
 /**
@@ -31,9 +32,14 @@ import Text from './base/Text';
  *           what the count is for on its own, not leaning on the paragraph
  *           above, whose copy is still provisional.
  *   locked  "From 147 cups." (8f; PROVISIONAL, as on the card before)
- * TODO(V2): the box's first row, "3 of 5 cups" + five cup glyphs, is Try
- * next's threshold — not shown at this stage (design-missing.md 13), so the
- * box holds the sentence alone.
+ * The mock's first row in the box ("3 of 5 cups" + cup glyphs) was Try
+ * next's progress: dropped (2026-11-07), Try next has no cup count to reach
+ * (try-next-v1.md). The box holds the sentence alone.
+ *
+ * Way on (2026-10-30, Uryu): "How it is built" (InlineAction) under the
+ * progress box opens 8g. Only where 8g can be pushed: Home's and 8f's sheet
+ * (DnaInfoHost), never 5c's, which is inside the Record sheet. Confirmed in
+ * Design Round 17, B4 (21e): left-aligned under the box, above Got it.
  *
  * Title: display.sm, as every sheet title (§9 Bottom sheet). The mock's 34 is
  * not in the type scale.
@@ -48,18 +54,17 @@ function earlyProgress(dna) {
 }
 
 /**
- * TODO(copy, PROVISIONAL): Design's final copy is TBD (Round 8). 15b's second
- * paragraph ("At 5 cups it locks in … and Try next starts using it") is
- * rewritten to what V1 does: lock-in is 10 slider notes per axis
- * (DNA_TUNING.lockIn), and Try next is V2. The locked copy is ours.
+ * Early: Design Round 17 (A2, 21e): 15b's "At 5 cups it locks in" is gone
+ * (V1 counts ten notes per axis, and the progress box already says what's
+ * left), and "a few cups" became "a few notes".
+ * TODO(copy, PROVISIONAL): the locked copy is ours; Round 17 drew only the
+ * early sheet. Its first sentence is false when an axis is first noted
+ * after the lock (21c); Design Round 18, B9.
  */
 const COPY = {
   early: {
     title: 'Early signs',
-    body: [
-      'Your profile is built from the axes you note on each cup. With only a few cups, one cup can swing it a lot. Read it as a hint, not a verdict.',
-      `It locks in once every axis you note has ${DNA_TUNING.lockIn} notes. From then on it moves slowly.`,
-    ],
+    body: ['Your profile is built from the axes you note on each cup. With only a few notes, one cup can swing it a lot. Read it as a hint, not a verdict.'],
     progress: earlyProgress,
   },
   locked: {
@@ -77,8 +82,9 @@ const COPY = {
  *   visible, onClose
  *   dna      the profile (loadTasteDna); its state picks the copy. Kept while
  *            the sheet animates out.
+ *   onHowBuilt  shows the way on to 8g; omitted on 5c
  */
-export default function DnaInfoSheet({ visible, onClose, dna }) {
+export default function DnaInfoSheet({ visible, onClose, dna, onHowBuilt }) {
   // The body scrolls only when it doesn't fit; otherwise the whole sheet
   // takes the swipe down.
   const [frame, setFrame] = useState(0);
@@ -112,6 +118,11 @@ export default function DnaInfoSheet({ visible, onClose, dna }) {
                 {copy.progress(dna)}
               </Text>
             </View>
+            {onHowBuilt ? (
+              <View style={styles.howBuilt}>
+                <InlineAction label="How it is built" onPress={onHowBuilt} />
+              </View>
+            ) : null}
           </ScrollView>
           <View style={styles.action}>
             <Button variant="secondary" label="Got it" onPress={onClose} />
@@ -138,6 +149,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.inset.container.v,
     paddingHorizontal: spacing.inset.container.h,
   },
+  howBuilt: {
+    flexDirection: 'row',
+  },
   // 15b: the button sits 4 further down than the sheet's gap.
   action: {
     marginTop: space[4],
@@ -148,5 +162,16 @@ const styles = StyleSheet.create({
 export function DnaInfoHost() {
   const [shown, setShown] = useState({ visible: false, dna: null });
   useEffect(() => onDnaInfoRequest((dna) => setShown({ visible: true, dna })), []);
-  return <DnaInfoSheet visible={shown.visible} dna={shown.dna} onClose={() => setShown((s) => ({ ...s, visible: false }))} />;
+  const close = () => setShown((s) => ({ ...s, visible: false }));
+  return (
+    <DnaInfoSheet
+      visible={shown.visible}
+      dna={shown.dna}
+      onClose={close}
+      onHowBuilt={() => {
+        close();
+        requestPush({ name: 'dnaBuilt' });
+      }}
+    />
+  );
 }

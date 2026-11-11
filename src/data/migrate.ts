@@ -1,10 +1,20 @@
 import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
+import type { SqlDb } from './backupFormat';
 import { MIGRATIONS_TABLE, migrations } from './migrations';
 
-export const DATABASE_NAME = 'morecoffee.db';
+export const DATABASE_NAME = 'extract.db';
 
 type Executor = Pick<SQLite.SQLiteDatabase, 'execAsync' | 'runAsync' | 'getAllAsync'>;
+
+/** The database, or a transaction's executor, as backupFormat.ts's driver-neutral SqlDb. */
+export const asSqlDb = (db: Executor): SqlDb => ({
+  exec: (sql) => db.execAsync(sql),
+  all: (sql, params = []) => db.getAllAsync(sql, params),
+  run: async (sql, params = []) => {
+    await db.runAsync(sql, params);
+  },
+});
 
 /**
  * Run `task` in a transaction. Native uses an exclusive transaction (its own

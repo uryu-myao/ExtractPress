@@ -4,17 +4,28 @@
  *   requestOpenCup(id)   Records opens one cup (2c) — 5c's "See this record",
  *                        Home's recently sipped rows
  *   requestShell(req)    AppShell: { tab } switches tab, { record: true }
- *                        opens the Record sheet (1b "Record a coffee")
+ *                        opens the Record sheet (1b "Record a coffee");
+ *                        { record: { bag } | { brewer } | { grinder } }
+ *                        opens it with that preselected (a bag or gear
+ *                        page's "Log a cup with it", Design Round 15)
  *   requestPush(entry)   ShellStack pushes a screen over everything, the
- *                        bottom bar included: { name: 'beans' | 'addBag' |
- *                        'addGear' } from Home, { name: 'editCup', cup } from 2c,
- *                        { name: 'dna' } (8f) from Profile and 2c
+ *                        bottom bar included: { name: 'shelf', side } |
+ *                        { name: 'addBag' | 'addGear' } from Home, { name: 'editCup', cup } from 2c,
+ *                        { name: 'editBag', bag } | { name: 'editGear', gear } from search,
+ *                        { name: 'cup', id } | { name: 'search', filter } from a bag / gear page,
+ *                        { name: 'dna' } (8f) from Profile and 2c,
+ *                        { name: 'dnaBuilt' } (8g) from 8f, Profile and 15b,
+ *                        { name: 'licences' } (6c) from Profile
  *   requestCloseCup()    Records closes its open cup (after a delete in 11a)
  *   requestNotice(text)  AppShell shows 13b's one-line notice above the bar
  *   requestDnaInfo(dna)  AppShell shows 15b's Taste DNA info sheet over the
  *                        tabs and the bar (Home's stamp)
  *   requestSortSheet(r)  AppShell shows 2b over the tabs and the bar (2a's
  *                        filter button): { sort, group, onApply }
+ *   requestRestore()     AppShell runs Restore from a backup: the file
+ *                        picker, then its sheets (6b's row, Design Round 23)
+ *   requestResetDna()    AppShell asks Reset my taste DNA's confirmation
+ *                        over the tabs and the bar (6b's row)
  */
 const cupListeners = new Set();
 const shellListeners = new Set();
@@ -51,7 +62,7 @@ export function onCloseCupRequest(listener) {
 
 const noticeListeners = new Set();
 
-/** { name, verb? } — "‹name› ‹verb›." (verb: 'deleted' by default; 'reopened' after 3f's Reopen). */
+/** { name, verb? } — "‹name› ‹verb›." (verb: 'deleted' by default; 'reopened' after 3f's Reopen, 'reset' after 6b's Reset). */
 export function requestNotice(notice) {
   noticeListeners.forEach((l) => l(notice));
 }
@@ -83,6 +94,17 @@ export function onSortSheetRequest(listener) {
   return () => sortSheetListeners.delete(listener);
 }
 
+const restoreListeners = new Set();
+
+export function requestRestore() {
+  restoreListeners.forEach((l) => l());
+}
+
+export function onRestoreRequest(listener) {
+  restoreListeners.add(listener);
+  return () => restoreListeners.delete(listener);
+}
+
 export function requestShell(request) {
   shellListeners.forEach((l) => l(request));
 }
@@ -105,4 +127,31 @@ export function requestTabReset(tab) {
 export function onTabReset(listener) {
   tabResetListeners.add(listener);
   return () => tabResetListeners.delete(listener);
+}
+
+/**
+ * Another tab was chosen: `tab` is the one being left. Records closes its
+ * search then, so coming back shows the list (Uryu, 2026-10-28). Sent as
+ * the switch happens, so the page is back to its list before it shows again.
+ */
+const tabLeaveListeners = new Set();
+
+export function requestTabLeave(tab) {
+  tabLeaveListeners.forEach((l) => l(tab));
+}
+
+export function onTabLeave(listener) {
+  tabLeaveListeners.add(listener);
+  return () => tabLeaveListeners.delete(listener);
+}
+
+const resetDnaListeners = new Set();
+
+export function requestResetDna() {
+  resetDnaListeners.forEach((l) => l());
+}
+
+export function onResetDnaRequest(listener) {
+  resetDnaListeners.add(listener);
+  return () => resetDnaListeners.delete(listener);
 }

@@ -15,6 +15,11 @@ export const daysSince = (ms) => Math.round((startOfDay(new Date()) - startOfDay
 const short = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
 const withYear = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+const fullDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+/** "8 Nov 2026": the day a backup was made (Restore's confirm, Design Round 23, 25f). */
+export const formatFullDate = (date) => fullDate.format(date);
+
 /** "Apr 1" (3c), with the year only when it is not this year. */
 export const formatDay = (ms) => {
   const d = new Date(ms);
@@ -37,3 +42,16 @@ export function partOfDay(date) {
 
 /** Whole calendar days from the day `fromMs` falls on to the day `toMs` falls on. */
 export const daysBetween = (fromMs, toMs) => Math.round((startOfDay(new Date(toMs)) - startOfDay(new Date(fromMs))) / DAY_MS);
+
+/**
+ * When gear was last used, as Home's shelf words it after "Last · " (Round
+ * 14 §4), by calendar days: "today", "yesterday", "6 days ago", then the day
+ * ("Apr 12"; "Apr 12, 2025" in another year). TODO(i18n): plural rules.
+ */
+export function formatLastUsed(ms) {
+  const days = Math.max(0, daysSince(ms));
+  if (days === 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  return formatDay(ms);
+}

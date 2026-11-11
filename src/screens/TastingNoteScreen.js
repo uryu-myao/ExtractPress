@@ -59,8 +59,8 @@ function cupSummary(defaults, mode, productName) {
  * then the bundled list. With no history yet that is the bundled list's
  * interleaved order; the more you log, the more the five are your own words.
  */
-function shownFlavours(selected, history) {
-  const rest = searchItems(history, []).map((i) => i.key).filter((w) => !selected.includes(w));
+function shownFlavours(selected, history, kept) {
+  const rest = searchItems(history, kept).map((i) => i.key).filter((w) => !selected.includes(w));
   return [...selected.map((w) => ({ word: w, on: true })), ...rest.slice(0, Math.max(0, FLAVOUR_LIMIT - selected.length)).map((w) => ({ word: w, on: false }))];
 }
 
@@ -82,7 +82,7 @@ const Axes = memo(function Axes({ axes, setAxis }) {
 /** One axis; memoised so committing one leaves the other three alone. */
 const AxisRow = memo(function AxisRow({ axis, value, setAxis }) {
   const onChange = useCallback((v) => setAxis(axis.key, v), [axis.key, setAxis]);
-  return <AxisSlider from={axis.from} to={axis.to} steps={axis.steps} value={value} onChange={onChange} />;
+  return <AxisSlider axis={axis.key} from={axis.from} to={axis.to} steps={axis.steps} value={value} onChange={onChange} />;
 });
 
 /**
@@ -122,8 +122,10 @@ function Chip({ label, on, search, locked, onPress }) {
       onPress={locked ? (search ? warnLocked : undefined) : onPress}
       disabled={locked && !search}
       // Multi-select: each flavour is a checkbox to a screen reader; Search opens.
+      // A chip locked at the limit says so (gaps 11 audit, 2026-11-01: it was
+      // disabled but announced as available).
       accessibilityRole={search ? 'button' : 'checkbox'}
-      accessibilityState={search ? { disabled: Boolean(locked) } : { checked: on }}
+      accessibilityState={search ? { disabled: Boolean(locked) } : { checked: on, disabled: Boolean(locked) }}
       accessibilityHint={locked ? `Limit reached, ${FLAVOUR_LIMIT} of ${FLAVOUR_LIMIT}. Deselect a flavour to choose another.` : undefined}>
       {({ pressed }) => (
         <View
@@ -149,10 +151,11 @@ function Chip({ label, on, search, locked, onPress }) {
 /**
  * The search sheet's words (decided 2026-10-10): words used before (most used,
  * then most recent), then the bundled words not among them, in their order.
- * Words selected in this cup but not in either (just added) lead, so a new
- * word stays visible and can be unticked.
+ * Words added in this cup but not in either lead, newest first, selected or
+ * not: a word added and then unticked stays until the cup is saved or
+ * discarded (Uryu, 2026-11-01; withChosen keeps the other sheets the same).
  */
-function searchItems(history, selected) {
+function searchItems(history, added) {
   const seen = new Set();
   const out = [];
   const push = (word) => {
@@ -162,7 +165,7 @@ function searchItems(history, selected) {
     out.push({ key: word, label: word });
   };
   const known = new Set([...history.map((h) => h.word.toLowerCase()), ...BUNDLED_FLAVOURS.map((f) => f.word.toLowerCase())]);
-  selected.filter((w) => !known.has(w.toLowerCase())).forEach(push);
+  added.filter((w) => !known.has(w.toLowerCase())).forEach(push);
   history.forEach((h) => push(h.word));
   BUNDLED_FLAVOURS.forEach((f) => push(f.word));
   return out;
@@ -171,7 +174,7 @@ function searchItems(history, selected) {
 export default function TastingNoteScreen({ onBack }) {
   const insets = useSafeAreaInsets();
   const db = useDatabase();
-  const { defaults, mode, productName, rating, axes, setAxis, flavours, toggleFlavour, noteRef, setNoteFilled, hasTastingInput, save } = useRecordDraft();
+  const { defaults, mode, productName, rating, axes, setAxis, flavours, toggleFlavour, addFlavour, kept, noteRef, setNoteFilled, hasTastingInput, save } = useRecordDraft();
   const [searching, setSearching] = useState(false);
   const [history, setHistory] = useState([]);
   // Read on open and again whenever the search sheet opens; history only
@@ -262,7 +265,7 @@ export default function TastingNoteScreen({ onBack }) {
         <View style={styles.section}>
           <SectionLabel variant="plain" label="Flavors" status={atLimit ? 'limit' : 'count'} statusLabel={`${flavours.length} of ${FLAVOUR_LIMIT}`} />
           <View style={styles.chips}>
-            {shownFlavours(flavours, history).map((f) => (
+            {shownFlavours(flavours, history, kept.flavours).map((f) => (
               <Chip key={f.word} label={f.word} on={f.on} onPress={() => toggleFlavour(f.word)} />
             ))}
             <Chip label="Search" search locked={atLimit} onPress={() => setSearching(true)} />
@@ -291,6 +294,7 @@ export default function TastingNoteScreen({ onBack }) {
           <Button
             label={hasTastingInput ? 'Discard and save' : 'Save without the note'}
             variant="secondary"
+            destructive={hasTastingInput}
             onPress={() => saveOrGoBack({ withNote: false })}
           />
         </View>
@@ -299,11 +303,11 @@ export default function TastingNoteScreen({ onBack }) {
         visible={searching}
         onClose={() => setSearching(false)}
         placeholder="Search flavors"
-        items={searchItems(history, flavours)}
+        items={searchItems(history, [...flavours, ...kept.flavours])}
         selected={flavours}
         limit={FLAVOUR_LIMIT}
         onToggle={toggleFlavour}
-        onAdd={toggleFlavour}
+        onAdd={addFlavour}
         normalize={normalizeFlavour}
       />
     </View>
@@ -340,7 +344,7 @@ const styles = StyleSheet.create({
   card: {
     marginTop: space[20],
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
     // inset.container (14 / 16), as StarRating's card: drift D-18, decided
     // 2026-10-10 (the mocks' 20 / 18 is the drift, not the token).

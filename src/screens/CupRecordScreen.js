@@ -1,23 +1,24 @@
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
-import AxisReadout from '../components/base/AxisReadout';
+import AxisReadout, { AxisPoles } from '../components/base/AxisReadout';
 import Badge from '../components/base/Badge';
 import FieldRow from '../components/base/FieldRow';
 import Chevron from '../components/base/Chevron';
+import DashedRule from '../components/base/DashedRule';
 import Glyph from '../components/base/Glyph';
 import IconButton from '../components/base/IconButton';
 import SectionLabel from '../components/base/SectionLabel';
 import Text from '../components/base/Text';
-import DnaChangeLines from '../components/DnaChangeLines';
+import DnaChange from '../components/DnaChange';
 import { whenLine } from '../components/WhenMeta';
 import { MODE_LABEL, NONE, cupTitle, tidyNote } from '../constants/cups';
-import { daysBetween } from '../constants/dates';
+import { daysBetween, formatDay } from '../constants/dates';
 import { FLAVOUR_LIMIT } from '../constants/flavours';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { getCup, onCupsChanged } from '../data/repository';
 import { requestPush } from '../navigation';
-import { color, icon, layout, shape, space, spacing, state } from '../theme/tokens';
+import { color, dashed, icon, layout, shape, space, spacing, state } from '../theme/tokens';
 import { RATING_COPY } from './RecordCoffeeScreen';
 import ScreenFrame from './ScreenFrame';
 
@@ -43,8 +44,16 @@ import ScreenFrame from './ScreenFrame';
  * fill bleeds to the screen's edges (state.pressed.row). Not the mock's
  * dashed frame: §8 keeps dashed for empty states.
  *
- * "Where it sat" draws this cup's own values: AxisReadout's entered (brown)
- * tone — the only place it is used (§9).
+ * "Where it sat" draws this cup's own values: AxisReadout's entered tone
+ * (the axis colour's fill, a brown marker; Design Round 21, 23g), as 11a.
+ * "Feeds my taste DNA" holds the sentence and the change tags (23g), from
+ * the stored dna_change, so they match what 5c showed at save time.
+ *
+ * A cup logged before Reset my taste DNA (Design Round 25, A2) keeps its
+ * stored change, true of that day, under "Fed my taste DNA"; below a dashed
+ * dividerSoft (the block's second part), "Logged before the reset on Nov 10,
+ * so it isn't in my taste DNA now." (bodySm, muted; the date answers "which
+ * reset?"). The chevron still opens 8f: the profile as it stands now.
  */
 /** "Blue Bottle · day 7 when brewed": day only with a roast date, never negative. */
 function subtitle(cup) {
@@ -80,35 +89,25 @@ export function Stars({ rating, size = 'md' }) {
   );
 }
 
-/** "What I logged": the shelf part for I made it; Barista / Packaged rows until Design draws them. */
+/** "What I logged": the shelf part, I made it only (Packaged: Round 7; Barista: Round 16, B4). */
 function Logged({ cup }) {
-  if (cup.mode === 'made_it') {
-    const method = [cup.brew_method, cup.grinder].filter(Boolean).join(' · ');
-    return (
-      <View style={styles.card}>
-        {/* No bag: the Bag row is hidden, since a row reading "—" looks like
-            missing data (12a). Method stays even when it repeats the title:
-            it is the record, with the grinder. */}
-        {cup.bean_name ? (
-          <FieldRow
-            readOnly
-            swatch
-            label="Bag"
-            value={cup.bean_name}
-            // "from my shelf": the cup still points at a bag on the shelf.
-            meta={[cup.bean_roaster, cup.bag_id != null ? 'from my shelf' : null].filter(Boolean).join(' · ') || undefined}
-          />
-        ) : null}
-        <FieldRow readOnly divided={Boolean(cup.bean_name)} label="Method" value={method || NONE} />
-      </View>
-    );
-  }
-  // Barista (not at this stage, undrawn): 5a's fields for the mode.
-  // Packaged never gets here: its "What I logged" is hidden (Design Round 7).
+  const method = [cup.brew_method, cup.grinder].filter(Boolean).join(' · ');
   return (
     <View style={styles.card}>
-      <FieldRow readOnly icon="pin" label="Café" value={cup.place_name ?? NONE} />
-      <FieldRow readOnly divided label="Drink" value={cup.drink_type ?? NONE} />
+      {/* No bag: the Bag row is hidden, since a row reading "—" looks like
+          missing data (12a). Method stays even when it repeats the title:
+          it is the record, with the grinder. */}
+      {cup.bean_name ? (
+        <FieldRow
+          readOnly
+          swatch
+          label="Bag"
+          value={cup.bean_name}
+          // "from my shelf": the cup still points at a bag on the shelf.
+          meta={[cup.bean_roaster, cup.bag_id != null ? 'from my shelf' : null].filter(Boolean).join(' · ') || undefined}
+        />
+      ) : null}
+      <FieldRow readOnly divided={Boolean(cup.bean_name)} label="Method" value={method || NONE} />
     </View>
   );
 }
@@ -166,9 +165,10 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
 
         {/* Neither bag nor gear: the whole section goes (Design Round 4); the
             title and "No bag or gear noted" under it say what's missing. */}
-        {/* Packaged: hidden too — it would only repeat the title (Design
-            Round 7, 14b). */}
-        {cup.mode === 'barista' || (cup.mode === 'made_it' && (cup.bean_name || cup.brew_method || cup.grinder)) ? (
+        {/* Packaged and Barista: hidden too — it would only repeat the
+            title and the line under it (Design Round 7, 14b; Round 16, B4).
+            2c for a Barista cup is answered in words, not drawn. */}
+        {cup.mode === 'made_it' && (cup.bean_name || cup.brew_method || cup.grinder) ? (
           <View style={styles.section}>
             <SectionLabel variant="plain" label="What I logged" />
             <Logged cup={cup} />
@@ -188,15 +188,9 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
                 const value = cup[`axis_${axis.key}`];
                 return (
                   <View key={axis.key} style={styles.axis}>
-                    <View style={styles.poles}>
-                      <Text variant="labelCaps" color="muted">
-                        {axis.from}
-                      </Text>
-                      <Text variant="labelCaps" color="muted">
-                        {axis.to}
-                      </Text>
-                    </View>
+                    <AxisPoles axis={axis} />
                     <AxisReadout
+                      axis={axis.key}
                       tone="entered"
                       value={value}
                       accessibilityLabel={`${axis.from} to ${axis.to}, ${value == null ? 'not noted' : axis.steps[Math.round(value / 25)]}`}
@@ -237,11 +231,19 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
           style={({ pressed }) => [styles.section, styles.feeds, pressed && styles.feedsPressed]}>
           <View style={styles.feedsHead}>
             <Text variant="labelCaps" color="accent">
-              Feeds my taste DNA
+              {cup.before_reset ? 'Fed my taste DNA' : 'Feeds my taste DNA'}
             </Text>
             <Chevron />
           </View>
-          <DnaChangeLines change={change} />
+          <DnaChange change={change} />
+          {cup.before_reset ? (
+            <>
+              <DashedRule token={dashed.dividerSoft} />
+              <Text variant="bodySm" color="muted">
+                {`Logged before the reset on ${formatDay(cup.reset_at)}, so it isn't in my taste DNA now.`}
+              </Text>
+            </>
+          ) : null}
         </Pressable>
       </View>
     </ScreenFrame>
@@ -295,7 +297,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
   },
   cardInner: {
@@ -309,10 +311,6 @@ const styles = StyleSheet.create({
   },
   axis: {
     gap: spacing.gap.row,
-  },
-  poles: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   flavours: {
     flexDirection: 'row',

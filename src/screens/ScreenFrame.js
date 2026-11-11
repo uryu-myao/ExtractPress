@@ -70,11 +70,11 @@ const belowBaseline = (line) => line.height - line.ascender;
  * never sit inside a taller safe-area inset.
  *
  * Props
- *   title     screen title (display.lg)
+ *   title     screen title (display.lg; titleCaps when compact)
  *   userTitle the title is user data (2c's bean name): `name` truncation,
  *             2 lines (§3.1). Fixed screen titles never truncate.
  *   eyebrow   optional small label above the title (label.eyebrow, accent):
- *             "The archive" (2a), "MoreCoffee" (1b). Fades out on collapse.
+ *             "The archive" (2a), "Extract Press" (1b). Fades out on collapse.
  *   leading   optional control above the title (5b's back button). A control
  *             never fades or moves on collapse; the title shrinks below it
  *   meta      optional information, right-aligned at the foot of the header
@@ -90,12 +90,15 @@ const belowBaseline = (line) => line.height - line.ascender;
  *             the bottom when the content is short and follows it when it is long
  *   trailing  compact only: a control at the row's right end (2c's edit
  *             pencil). Moves with the row like `leading`; never fades
- *   compact   Record flow header (Log a cup, Tasting note, 3c, 3a, 2c; revised 2026-10-07):
- *             the leading control and the title on one row at the left, centred
- *             on the title's cap band; meta as the standard right-aligned column.
- *             A stat may take the meta's place (3c / 3a), fading with it.
- *             On collapse the row rises to the safe-area top and the title
- *             scales; the control moves with it (never fades); the meta fades
+ *   compact   every page that isn't a tab (Log a cup, Tasting note, 3c, 3a, 2c,
+ *             8f, 8g…; revised 2026-10-07): the leading control and the title
+ *             on one row at the left, centred on the title's cap band; meta as
+ *             the standard right-aligned column. A stat may take the meta's
+ *             place (3c / 3a), fading with it. The title is titleCaps (13 / 700
+ *             caps, ink), as 8f / 8g draw it (21a, 21d), on every such page
+ *             (Uryu, 2026-11-10; the other boards draw display.lg). On collapse
+ *             the row rises to the safe-area top, the title unscaled; the
+ *             control moves with it (never fades); the meta fades
  *   scrollRef     optional ref to the ScrollView (scroll variants), e.g. 5d's
  *                 "Go to first"
  *   footerTone    'error': the footer panel's top rule takes state.error.border
@@ -175,7 +178,7 @@ export default function ScreenFrame({
 
   const commit = () => {
     const p = parts.current;
-    const s = COLLAPSE.titleScale;
+    const s = compact ? 1 : COLLAPSE.titleScale;
     const I = insets.top;
     let next = null;
     if (compact) {
@@ -235,6 +238,8 @@ export default function ScreenFrame({
   // the header); one that scrolls less than `full` collapses only that far.
   const distance = Math.min(full, range);
 
+  // A compact title (titleCaps) is already small: it rises with its row, unscaled.
+  const titleScale = compact ? 1 : COLLAPSE.titleScale;
   const anim = useMemo(() => {
     if (!(distance > 0)) return null;
     // Collapsed amount in points, clamped to [0, distance]: linear in scroll
@@ -244,7 +249,7 @@ export default function ScreenFrame({
     return {
       shift,
       up: lerp(-full),
-      scale: shift.interpolate({ inputRange: [0, full], outputRange: [1, COLLAPSE.titleScale] }),
+      scale: shift.interpolate({ inputRange: [0, full], outputRange: [1, titleScale] }),
       // Small labels never scale: they fade out over the first part of the collapse.
       // Fully gone within the reachable collapse: a page that can scroll only
       // a little must not rest with half-transparent labels.
@@ -257,10 +262,10 @@ export default function ScreenFrame({
       above: compact ? null : lerp(geo.above),
       stat: compact ? null : lerp(geo.stat),
       leading: compact
-        ? shift.interpolate({ inputRange: [0, full], outputRange: [optical, geo.leadingMove + optical * COLLAPSE.titleScale] })
+        ? shift.interpolate({ inputRange: [0, full], outputRange: [optical, geo.leadingMove + optical * titleScale] })
         : null,
     };
-  }, [compact, distance, full, geo, optical, scrollY]);
+  }, [compact, distance, full, geo, optical, scrollY, titleScale]);
 
   // The content's own movement under the header: the scroll offset less the
   // collapse (ContentScrollContext).
@@ -304,7 +309,7 @@ export default function ScreenFrame({
   const onTitleText = compact ? onCompactTitleText : onBaseline('baseline');
   const titleText = (
     <Text
-      variant="displayLg"
+      variant={compact ? 'titleCaps' : 'displayLg'}
       truncate={userTitle ? 'name' : 'none'}
       accessibilityRole="header"
       onTextLayout={(e) => {
@@ -577,7 +582,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.gutter,
     backgroundColor: color.surface.raised,
     borderTopWidth: shape.borderWidth.box,
-    borderTopColor: color.border.strong,
+    borderTopColor: color.border.container,
   },
   footerError: {
     borderTopColor: state.error.border,

@@ -33,9 +33,17 @@ A versioned `schema_migrations (version, name, applied_at)` table, not a single 
 - Enumerations: `TEXT` with a `CHECK (col IN (...))`. `schema.ts` holds the same list, and the TS types are unions of it.
 - References: `ON DELETE SET NULL`. Deleting a bean or a place never deletes the cups that mention it.
 
+## Photos (2026-11-01)
+
+- **Files, not rows.** A photo is two JPEGs in `Documents/photos/`: `<id>.jpg`, the original (upright, long side 1200, only its capture date kept in the metadata), and `<id>-styled.jpg`, the copy the app shows (the house style, `src/constants/photoStyle.js`). A row keeps only `<id>` in its `photo_uri` (bags now; gear and cups later), **a basename, not a URI**: the app's container path changes on every reinstall and update. `data/photos.ts` derives both paths.
+- **Both or neither**: the native render writes the original, then the styled copy, and removes the original if the styled copy fails. A photo is prepared in the cache and moved into `Documents/photos/` only when its row is saved.
+- **Cleanup**: on launch, kept files no row points at (a deleted bag's) and leftovers in the cache are removed (`sweepPhotos`).
+- **The style can change**: originals are kept, so `restyleAll()` re-makes every styled copy. Not automatic: changing `PHOTO_STYLE` leaves the kept photos in the old style until it is run.
+- **In the backup** with the database (below). "Export everything" writes a zip with the originals since 2026-11-08 (`backupFormat.ts`), and Restore puts them back and remakes the styled copies (`import-v1.md`). Before that it exported the ids only.
+
 ## WAL and backups (found 2026-10-20)
 
-The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/morecoffee.db` (expo-sqlite's default directory), which iCloud and Finder backups include. Nothing sets `NSURLIsExcludedFromBackupKey`.
+The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extract.db` (expo-sqlite's default directory; `morecoffee.db` until the rename, 2026-11-08, so the notes below say that name), which iCloud and Finder backups include. Nothing sets `NSURLIsExcludedFromBackupKey`.
 
 - **The app is never closed cleanly, so the WAL never reaches SQLite's automatic checkpoint (1000 pages).** In dogfood the rows lived only in `morecoffee.db-wal`, and `morecoffee.db` stayed a 4 KB header for weeks.
 - **So `DatabaseProvider` runs `PRAGMA wal_checkpoint(TRUNCATE)` every time the app goes to the background.** That folds the WAL into `morecoffee.db` before iOS suspends the app (and before a backup can run), and leaves the WAL empty. Checked on a copy of the dogfood database: `.db` went from 4 KB to 80 KB, `-wal` to 0, and every cup was still there.
@@ -63,10 +71,12 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/more
 | grind_setting | REAL | null | made_it · **V1.5, no UI in V1** |
 | water_temp_c | REAL | null | made_it · **V1.5, no UI in V1** |
 | ratio | REAL | null | made_it · water : coffee by weight (16 = 1:16) · **V1.5, no UI in V1** |
-| place_id | INTEGER | null | → places · barista |
-| drink_type | TEXT | null | barista (e.g. "Flat white") |
-| product_id | INTEGER | null | → products · packaged |
+| place_id | INTEGER | null | → places · barista; required on Save since 2026-10-30 (earlier Barista cups have none) |
+| place_name | TEXT | null | barista · the café's name **copied at logging** (migration 6, 2026-10-31); 11a copies a newly chosen café's |
+| drink_type | TEXT | null | barista (e.g. "Flat white"); added by hand in the flavour tags' form (spaces collapsed, first letter upper-cased; 2026-10-31) |
+| product_name | TEXT | null | packaged · the name as typed, brand included (migration 4; was `product_id` → products, dropped); added by hand in the flavour tags' form since 2026-11-01 (upper case never lowered) |
 | bought_at_place_id | INTEGER | null | → places · packaged |
+| bought_at_name | TEXT | null | packaged · **always empty in V1** (no way to enter it): the same reference + copy shape for when "bought at" is built (migration 6) |
 
 - **`logged_at` vs `created_at`**: they are separate so a cup can be back-dated (logged in the evening, drunk in the morning). `logged_at` defaults to `created_at`. SQLite cannot default one column from another, and a BEFORE trigger cannot rewrite `NEW`. So the column is nullable in DDL, and an AFTER INSERT trigger fills it whenever it is inserted as NULL. The app never reads a NULL, and the TS type is `number`.
 - **Required fields**: `rating` is the only required *user-supplied content* field. **`mode` is structural**, so it is required too: it decides which mode-specific columns mean anything. A cup without a mode is invalid data, and allowing NULL would force null-handling into every query that branches on it. Everything else the user enters is optional.
@@ -104,8 +114,12 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/more
 | lng | REAL | null | |
 | external_id | TEXT | null, unique | MapKit identifier |
 
-- **One table for cafés and stores**: a convenience store and a café differ only by `kind`. Barista cups point at a café (`place_id`); packaged cups point at where they were bought (`bought_at_place_id`). The same 7-Eleven can be both, depending on the cup.
-- **`external_id`** holds the MapKit identifier, so a later visit matches the existing place instead of creating a duplicate. It is unique when present; places entered by hand have none.
+- **One table for cafés and stores**: a convenience store and a café differ only by `kind`. Barista cups point at a café (`place_id`); packaged cups point at where they were bought (`bought_at_place_id`).
+- **One row per MapKit place, whatever its kind** (corrected 2026-10-30; this said "the same 7-Eleven can be both", which the table cannot hold: `kind` is not null and `external_id` unique, so a place has one row and one kind). A café picked from the map whose identifier is already stored uses that row as it is, even if it was stored as a `store`. `kind` is the kind of the first cup that stored it; nothing reads it yet. No migration (decided 2026-10-30).
+- **`external_id`** holds the MapKit identifier (`MKMapItem.identifier`, iOS 18+), so a later visit matches the existing place instead of creating a duplicate. It is unique when present. Places typed by hand have none; a typed name matches an earlier typed place with the same name (ignoring case), so a café typed twice has one history.
+- **A places row is created on Save, never on a pick** (`repository.ts` `placeIdFor`): a café picked and not saved leaves nothing behind. And it is never renamed. A later visit under a new MapKit name keeps the stored one. 11a's café edit changes which row a cup points at, never a row.
+- **The name is copied onto the cup** (`cups.place_name`, migration 6, decided 2026-10-31, `todo.md` T-13), as the bag's and the gear's are: a cup is the fact it was. `place_id` stays (reference + copy). Everything a cup shows reads the copy (2a, 2c, 2b's café groups, search, the CSV); the café sheet lists places by their own name. Existing cups took their place's name once. Packaged's `bought_at_name` has the same shape and stays empty in V1.
+- **No address column** (decided 2026-10-30, kept 2026-10-31): no screen shows a stored place's address; the café sheet shows the map's address from the live result. Design Round 16, B5's 11a café line looks the address up live by the place's MapKit id (Uryu, 2026-10-31, `todo.md` T-15); how 11a looks without it is Design Round 18, B8.
 
 ### products
 
@@ -130,7 +144,7 @@ Names as built:
 - Gear: `gear (name, category, maker, settings_note, is_default, photo_uri, added_at)`. A partial unique index allows one default per category.
 - Settings: one row, `drinks_out` (0 / 1) and `coffee_style` (`black` / `with_milk` / `depends`); NULL when first setup was skipped.
 
-Not in it (unchanged decisions): drafts' screen and flow, profile, the other settings, 8h's merge table, remembered filters.
+Not in it (unchanged decisions): drafts' screen and flow, profile, the other settings, remembered filters. (8h's merge table: never, 8h is not built; 2026-10-31.)
 
 ## Planned changes (decided 2026-10-09, not built)
 
@@ -211,9 +225,8 @@ The columns are today's (`schema.ts`); "planned" means already decided above.
 | screen | input | stored in |
 |---|---|---|
 | 6d | photo, Display name (24), How I brew | **none** |
-| 8g | "Read my words" switch | **none** |
 | 8g | Reset my taste DNA ("cups and notes are never deleted") | **none** (needs a reset point) |
-| 8h | Add word, rename, merge, Clean up | **none** (the merge table, proposal above) |
+| 8h | Add word, rename, merge, Clean up | **not built** (2026-10-31: its premise doesn't hold; see "My words and 8h") |
 | 8i | Morning reminder, time, days; Updates & notices; Brewing tips; Bag going stale | **none** |
 | 8m | App language / Follow my phone | **none** |
 | 7a 7b | read state, Mark all read (and the items themselves, kept 60 days) | **none** |
@@ -225,13 +238,12 @@ The columns are today's (`schema.ts`); "planned" means already decided above.
 
 **Derived, no storage needed**:
 - counts, streak, "Logging since", "used in N cups", slots left, "stale", freshness day, Taste DNA;
-- its shifts ("shifted 4 days ago", 5c's "where it sat before") can be recomputed as of a date from cups, as long as the arithmetic is fixed. If it changes (e.g. "Read my words" is toggled), past shifts move. That is a call for later.
+- its shifts ("shifted 4 days ago", 5c's "where it sat before") can be recomputed as of a date from cups, as long as the arithmetic is fixed. If it changes (e.g. a new rating weight), past shifts move. That is a call for later.
 
 **The migration as now known** (in addition to the planned items above):
 - a finish state on bags;
 - a gear table;
 - profile and settings storage;
-- 8h's merge table;
 - notification read state;
 - recent searches;
 - Try next dismissals;
@@ -262,7 +274,7 @@ Which of these are V1 is open (report 2026-10-10).
 
 **Out**:
 - e. Drafts (5d "Keep as draft"): an exception path, designed once the main path runs. **But `cups.rating` becomes nullable in this migration**, because a draft has no rating; dropping NOT NULL later costs more. Taste DNA already ignores unrated cups (8g).
-- f. Profile (6d), settings (8g 8i 8m), notification read state, recent searches, 8h's merge table: outside the loop, V1.5+.
+- f. Profile (6d), settings (8g 8i 8m), notification read state, recent searches: outside the loop, V1.5+.
 - g. Remembered filters / sort (2a 2b 3f 8l): **not stored**, decided. Each launch starts from the defaults. No columns.
 - h. 8j's sending path: outside the loop, but the screen is not built until it is defined (`todo.md`).
 
@@ -321,13 +333,14 @@ Which of these are V1 is open (report 2026-10-10).
 
 - **Why an array, not a join table**: at most 5 per cup, read with the cup. The bundled list lives in code, and history (frequency order) is a `json_each` over cups: hundreds to thousands of rows. Same reasoning as `beans.notes`.
 - **Why the words, not word ids**:
-  - Flavours have **no master table and no rename UI**. 8h's rename / merge belongs to *My words*, a different list (`components.md` "Flavours and words are two kinds of data").
+  - Flavours have **no master table and no rename UI**. (8h's rename / merge was for *My words*, a different list; 8h is not built, 2026-10-31.)
   - Storing the text keeps a cup the fact it was, as with the bag copies.
   - If renaming a flavour is ever wanted, it is an explicit rewrite at that moment (as bag edits are), never a reference.
-- **My words and 8h**:
-  - 8h's words are *matched* from notes (8g: "Your words are matched, not read"). Renaming or merging a word "everywhere" must not rewrite anyone's note text; the note is the user's own writing.
-  - So 8h needs its own small table (a word, and what it merges into), used for matching and counting. The notes stay as typed.
-  - Proposal; specced with 8h.
+  - **Localisation (recorded 2026-11-06, Uryu):** translating the bundled flavour tags needs a move to storing them by id, or the bundled tags are not translated. Stored as text, a translated tag misses the word → axis map (matched by string) and the picker lists both the English and the translated tag. The bundled drink names (`BUNDLED_DRINKS`, stored as text in `cups.drink_type`) are the same. Moving later means a data migration; decided when the release build's localisation starts (`v1-status.md`).
+- **My words and 8h (decided 2026-10-31, Uryu): 8h is not built, and My words never shape Taste DNA.**
+  - 8h counts, renames and merges words a user writes again and again. Uryu's My words are free memos, close to a diary (brewing reminders, things beyond taste), with no words used over and over. Its premise doesn't hold: this is not "later", it is "not this app's".
+  - Describing taste is the flavour tags' job: picked from a finite set, so they repeat and can be counted (8f's "Flavours I pick most"). My words is the free space beside them. The split was there from the start.
+  - So no merge table, no word extraction, no "Read my words" setting. `cups.note` stays as typed: written on 5b, read in full on 2c, found by search's Words.
 
 ### Cups copy their bag's details at logging
 - When a cup is logged, the bag's details are **copied onto the cup** and stored there. `bean_id` stays as a reference, but **display and Taste DNA read the cup's copies**.
@@ -395,6 +408,13 @@ Readers to switch to `cups.product_name` (all of them; check none is left):
 - 5a's Packaged fields (`RecordCoffeeScreen`; hidden since 2026-10-14 until the input exists);
 - 5b's summary (`TastingNoteScreen`);
 - `getCup` / `listCups` (the products join) and `NewCup.productId` / `RecordDraft`.
+
+## Migration 5 · search history (built 2026-10-28)
+
+Design Round 15 (Search, 18a) brings back "Recent searches", which Round 10, 22 had left out of V1. It is the one thing about a search that is kept; the sort and 2a's view still are not (scope g).
+- **`search_history`** (`id`, `term` TEXT, `searched_at` INTEGER): the terms typed, one row per term ignoring case. A term searched again moves to the top with its new spelling. Only the last 5 are kept (`addSearchTerm`); "Clear" deletes every row at once, with no confirm.
+- A term is kept when it is searched: the keyboard's Search, a term row, a recent search or a flavour chip. A Kind or Rating block is a filter, not a term, and is not kept.
+- No new lookups needed a migration: cups by bag and by gear read `bag_id` / `brewer_id` / `grinder_id`, now in `listCups`; the flavour chips count `flavours` in memory.
 
 ---
 

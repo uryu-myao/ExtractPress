@@ -88,6 +88,8 @@ export type AxisDna = {
   /** total weight from sliders and from words: the words' share = words / (slider + words) */
   sliderWeight: number;
   wordWeight: number;
+  /** the words reached wordShareCap and were scaled down (8g's "at their limit") */
+  capped: boolean;
 };
 
 export type Dna = {
@@ -98,6 +100,8 @@ export type Dna = {
   fewest: number | null;
   /** 8f's "From N cups": counted cups with an axis noted or a table word */
   cups: number;
+  /** when Reset my taste DNA last ran (settings.reset_at), or null: 'none' after one has its own line (Design Round 25, A1) */
+  resetAt: number | null;
 };
 
 const wordsOf = (cup: DnaCup) => cup.flavours.flatMap((w) => DNA_TUNING.words[w.toLowerCase()] ?? []);
@@ -139,7 +143,7 @@ export function computeDna(cups: readonly DnaCup[], asOf: number, resetAt: numbe
       const k = s.wordW > allowed ? allowed / s.wordW : 1;
       const wordW = s.wordW * k;
       const total = s.sliderW + wordW;
-      return [a, { value: total > 0 ? (s.sliderWV + k * s.wordWV) / total : null, n: s.n, sliderWeight: s.sliderW, wordWeight: wordW }];
+      return [a, { value: total > 0 ? (s.sliderWV + k * s.wordWV) / total : null, n: s.n, sliderWeight: s.sliderW, wordWeight: wordW, capped: k < 1 }];
     })
   ) as Record<AxisKey, AxisDna>;
 
@@ -147,7 +151,7 @@ export function computeDna(cups: readonly DnaCup[], asOf: number, resetAt: numbe
   const fewest = noted.length ? Math.min(...noted) : null;
   const anything = AXES.some((a) => axes[a].value != null);
   const state = !anything ? 'none' : everLocked(cups, asOf, resetAt) ? 'locked' : 'early';
-  return { axes, state, fewest, cups: counted };
+  return { axes, state, fewest, cups: counted, resetAt };
 }
 
 /** Whether, at any point in logged order, every noted axis had `lockIn` slider records. */

@@ -102,10 +102,13 @@ Until 6a is built, Profile's placeholder (`screens/index.js`) holds:
 
 **Updated 2026-10-21 (6a's upper part)**: 8f's entry becomes 6a's Taste DNA card. The export is the only way to get the data out, so it must never be dropped. 6a's upper part has no place for it, so it moves to an interim row under 6a: 6b's own "My data / Export my cups" row, built alone (built 2026-10-21; the placeholder is gone). **When 6b is built, the export joins the rest of 6b's My data (Backup, …) in its final form.**
 
-## T-9. 8f's "What you keep saying" waits for 8h (recorded 2026-10-21)
+**Updated 2026-10-28 (CSV)**: My data now has 6b's two rows. "Export my cups" is the CSV 6b draws (`data/csv.ts`; one cup a row, 27 columns). The JSON of every table moved to 6b's **Backup** row as **"Export everything" — INTERIM**: 6b's Backup saves by itself ("Last saved today, 08:24"), and this is a manual export of everything, a different thing. It stays until the real backup is built, because it is the only way the bags' and gear's own records (size, default, finished on) get out. Label and sub line ("Export everything" / "Cups, bags and gear, as JSON") are Design's, Round 16 B8: "Back up" would promise a restore that doesn't exist.
+
+## T-9. 8f's "What you keep saying" waits for 8h (recorded 2026-10-21) — **closed 2026-10-31: not built**
 The block counts **My words** (what the user wrote; `components.md`, Words), not flavour tags (picked from a fixed set). It is not shown until 8h and My words' counts exist. Flavour tags are not a stand-in: under that heading they would pass picked category words off as the user's own words.
 - **Keep for then**: tapping a word opens 8l on the Words scope with that word typed (8l is built, 2026-10-21).
 - "Flavours I pick most" is its own block (Design Round 11, B; built 2026-10-23), above where this one will go. **When 8h comes**: "What you keep saying" goes under it, and each block gets its sub-heading, "From the flavour list" / "In my own words" (body.sm, `text.secondary`).
+- **Closed 2026-10-31 (Uryu)**: 8h is not built (Uryu's My words are free memos, close to a diary (brewing reminders, things beyond taste), with no words used over and over), so neither is this block. "Flavours I pick most" carries what repeats. Whether it still needs Round 11's sub-heading: Design Round 18.
 
 ## T-10. Pressable blocks: one design pass (recorded 2026-10-21, Uryu) — DONE 2026-10-23
 Pressable blocks and rows were each settled on their own, so the app and the boards differ: 2a's cup rows, Home's Recently sipped rows, 2c's "Feeds my taste DNA", 8l's results, 3d's cards, the shelf's Manage row; and 8f's "Last shift", a framed block that is not pressable. Uryu wants one treatment designed for all of them together.
@@ -130,3 +133,56 @@ Expo SDK 58 brought react-native-gesture-handler 3, which deprecates the `Gestur
 - **Where**: PushedScreen (edge swipe back), AddCoffeeOverlay (edge swipe), BottomSheet (swipe to close), AxisSlider (pan + tap, `Gesture.Exclusive`).
 - **Coupled**: the sheets' lists (PickerSheet, SearchSheet, DnaInfoSheet) import `LegacyScrollView`, which takes turns with the legacy sheet swipe as before. Move them to the new `ScrollView` in the same change as BottomSheet's gesture.
 - **When**: before Gesture Handler removes the builder, or with the next gesture work. One change, checked on device (each swipe, the slider, and a sheet's list scrolling against its swipe).
+
+## T-13. A café's name is read through place_id, not copied onto the cup (recorded 2026-10-30) — **done 2026-10-31**
+Bags and gear are copied onto the cup at logging (`bean_*`, `brew_method`, `grinder`): a cup is a fact, and the bag can be edited or deleted. A Barista cup's café is not: 2a / 2c / search / the CSV read `places.name` through `cups.place_id`. Inconsistent, but harmless while a places row never changes — and today none does: no screen edits or deletes a place, `placeIdFor` never renames one (a later visit under a new MapKit name keeps the stored one), and 11a's café edit points the cup at another row rather than changing a row.
+- **It stops being harmless the day** a places row can be renamed (a place edit screen, or refreshing names from MapKit) or deleted (`ON DELETE SET NULL` would strip the café from every cup). Before either, copy the name onto cups (`cups.place_name`, an ALTER TABLE ADD COLUMN with a backfill from places).
+- **Decision**: pending (Uryu, after the 2026-10-30 report).
+- **Done 2026-10-31 (Uryu: the one exception to "a record is the fact it was")**: migration 6 adds `cups.place_name`, copied at logging and when 11a picks another café; existing cups took their place's current name once. `place_id` stays. `cups.bought_at_name` comes with it, always empty in V1 (no way to enter it), so "bought at" needs no migration later; `schema.ts` says why it is empty.
+
+## T-14. Try next (8d / 8e): what the mocks need that V1 doesn't have (recorded 2026-10-30, read only)
+Read for planning after Barista; nothing built. Full transcript of both boards: the 2026-10-30 report.
+- **What is suggested**: a direction, never a product — origin + process + a brew change ("A washed Kenyan, ground coarser"; "Same bag, 2°C cooler"; "A natural process, once"). The one proper name, "Revisit Hoja Verde", is a bag from the user's own history (8l / 16c). "Add bag to my beans" means the user buys and adds it. **No bean database is needed.**
+- **What it does need and V1 lacks**: a static table from origin / process to the axes ("Kenya pushes acidity further than Ethiopia"; none exists, only `BUNDLED_FLAVOURS`); My words counts ("you wrote "juicy" nine times"; T-9, 8h); water temperature and grind history (`water_temp_c`, `grind_setting`: V1.5 columns with no UI; T-11); half-star ratings ("Rated 4.5"; V1 is whole stars); 6b's "How adventurous" (Safe / Stretch / Surprise) and 6d's "How I brew" (which set its tone; 6b / 6d are not built). 8e's "Log a cup with this plan" pre-fills 28 clicks / 92° / 1:16, which 5a can't enter.
+- **The 5-cup threshold has no reason left** (`taste-dna.md`, Thresholds): decide it with Try next.
+- **Next**: what can be cut so a first Try next stands on V1's data.
+- **Proposal 2026-11-07**: `try-next-v1.md` (what V1's data can make, thresholds per kind, no 8e). Waiting on Uryu.
+
+## T-15. 11a's café line wants an address that isn't stored (recorded 2026-10-30, Design Round 16 B5) — **decided 2026-10-31: live**
+Design: "the café line shows the short address only, with no distance or visit count". `places` has no address column (decided 2026-10-30, because no screen showed one); this answer is such a screen. Not built; 11a shows no café meta meanwhile.
+- **Option 1, recommended**: migration 6, `places.address TEXT` (ALTER TABLE ADD COLUMN, nullable), written by `placeIdFor` from the map's short address when the row is created. Places typed by hand, and those stored before, have none (no line). Never updated afterwards, as the name.
+- **Option 2**: look the address up live by MapKit id (`MKMapItemRequest`, iOS 18+). No schema change, but it needs the network on every 11a open and a new native call.
+- **Decision (Uryu, 2026-10-31): option 2, live.** No `places.address`. Waiting on Design Round 18, B8 (11a when the address can't be fetched: not an error, the name shows, only the address is missing) before building.
+
+## T-16. Export before the account or the bundle ID changes (recorded 2026-11-07, planner) — **closed 2026-11-08**
+
+**Closed 2026-11-08 (planner)**: Uryu deleted the old MoreCoffee app on his iPhone and installed Extract Press (`app.smallpress.extract`). His records start from zero, which he accepted. What stays true for any later switch is the warning below: an export is not a way back into the app until the import (`import-v1.md`, in V1 since 2026-11-08) is built.
+
+**Before** the first build signed by the paid team goes onto Uryu's iPhone, and again before the bundle ID changes with the new name: on the phone, Profile → **Export my cups** (CSV) and **Export everything** (JSON). Keep both files off the phone (Files / iCloud Drive / Mac).
+
+> **Exporting does not make the switch safe. The files cannot be put back into the app.** They keep the records as files for Uryu to read; the app on the other side of the switch still starts empty. Don't read "we exported" as "nothing is lost" (planner, 2026-11-08).
+- **Why**: whether the records survive is unknown. iOS keeps an app's data per bundle ID. A new bundle ID is a new app with an empty database. The same bundle ID signed by a different team may refuse to install over the old build until it is deleted, and deleting it deletes the records.
+- **The files keep the records, not the app's state**: V1 has **no import**, so neither file can be read back into the app. Also, the JSON holds photo ids, not the photos. If the records must come back into the store build, an import has to be built first (proposed for V1, not decided: `import-v1.md`), or the switch has to keep the data container (same bundle ID, same team).
+- **2026-11-08, the bundle ID changed** (`app.smallpress.extract`, `rename-plan.md`). The two simulators were exported to `~/Desktop/morecoffee-export-2026-11-08/`. Uryu's iPhone: Uryu deleted the old app and starts from zero (2026-11-08).
+
+## T-17. Try a whole-phone iCloud restore once (recorded 2026-11-08, planner)
+**When**: after Extract Press has a few cups on Uryu's iPhone, not before (the old app's records would muddy the result).
+- **What**: back the phone up to iCloud, restore it (to the same phone after erasing, or to another iPhone), and check that Extract Press comes back with its cups, bags and bag photos.
+- **Why**: `data-model.md` ("WAL and backups") says the database and `Documents/photos` are in the backup, and the checkpoint on going to the background leaves `extract.db` complete. **Nobody has seen it work.** The import (`import-v1.md`) will be a second way, but "it's in the backup" should not be believed without trying it.
+- **Then**: if it works, the store text and the support page can say so. If not, find out why before the import becomes the only route.
+
+
+## T-18. Privacy policy and support pages: they must exist before submission (recorded 2026-11-09, planner)
+**Deadline: required before the December 2026 submission** (`v1-status.md`: on the store by the end of December). Not "later": without both pages the app can't be submitted. Make one page on GitHub Pages; the content below is settled, so this is only writing it down.
+
+- **Now (in the app only)**: `src/constants/links.js` holds `PRIVACY_POLICY_URL` and `SUPPORT_URL`, both `null`, each with this TODO. While a URL is null its row is not shown (Profile's Legal block, 6c). Filling the constant is the only change needed; the row appears by itself.
+- **Why it can't wait for after release**:
+  - App Store Connect requires both URLs on the app record, and App Review opens them. A 404 or an "under construction" page is a rejection.
+  - Guideline 5.1.1(i) also wants the privacy policy inside the app, easy to find. So the submitted build must have `PRIVACY_POLICY_URL` filled: an empty constant means no Privacy policy row, which is itself a rejection.
+- **The privacy policy says** (facts about the app; they won't change for V1):
+  - The records are stored only on the phone, and are never sent anywhere.
+  - Photos are stored only on the phone.
+  - Café search uses Apple's MapKit: the search words, and the location when it is used (to show nearby cafés first), are sent to Apple to answer the search. Location is not stored.
+  - No analytics, no advertising, no tracking.
+- **The support page**: a contact address on one line is enough. It can be the same site.
+- **Done when**: both pages open from a phone, both constants are filled, the Privacy policy row opens its page on device, and both URLs are on the App Store Connect record.

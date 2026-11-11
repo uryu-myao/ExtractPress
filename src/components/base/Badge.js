@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { color, icon, space, spacing } from '../../theme/tokens';
+import { AxisKey } from './AxisReadout';
 import Glyph from './Glyph';
 import Text from './Text';
 
@@ -16,6 +17,10 @@ import Text from './Text';
  *              Design Round 8; the stamp's button is DnaStamp, the Badge
  *              itself still never acts). The left padding is 2 less, to
  *              balance the glyph. Status words only, never plain labels.
+ *   axis       optional taste axis key (TASTE_AXES): its 12 × 4 colour key
+ *              before the label, gap 6, padding unchanged — 5c / 2c's change
+ *              tags (Design Round 21, 23e). The key is decorative.
+ *   accessibilityLabel  what a screen reader says instead of the label
  *
  * Fixed copy only, on one line: it keeps its own width (flexShrink 0) rather
  * than wrapping, as the source's nowrap does. Long translated labels are
@@ -30,16 +35,20 @@ const FG = {
   selected: color.badge.fg.selected,
 };
 
-export default function Badge({ label, tone = 'neutral', placement = 'inline', icon: glyph }) {
+export default function Badge({ label, tone = 'neutral', placement = 'inline', icon: glyph, axis, accessibilityLabel }) {
   return (
     <View
+      accessible={accessibilityLabel ? true : undefined}
+      accessibilityLabel={accessibilityLabel}
       style={[
         styles.badge,
         styles[placement],
         glyph && [styles.withIcon, { paddingLeft: styles[placement].paddingHorizontal - space[2] }],
+        axis && styles.withIcon,
         { backgroundColor: color.badge.bg[tone] },
       ]}>
       {glyph ? <Glyph name={glyph} token={icon.stamp} color={FG[tone]} /> : null}
+      {axis ? <AxisKey axis={axis} /> : null}
       <Text variant="labelEyebrow" color={FG[tone]}>
         {label}
       </Text>

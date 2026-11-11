@@ -3,10 +3,12 @@ import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import AddCoffeeOverlay from './components/AddCoffeeOverlay';
 import { DnaInfoHost } from './components/DnaInfoSheet';
 import { SortSheetHost } from './components/SortSheet';
-import { onShellRequest, requestOpenCup, requestTabReset } from './navigation';
+import { onShellRequest, requestOpenCup, requestTabLeave, requestTabReset } from './navigation';
 import DotTexture from './components/base/DotTexture';
-import FooterNav from './components/FooterNav';
+import FooterNav, { useFooterHeight } from './components/FooterNav';
 import Notice from './components/Notice';
+import { ResetDnaHost } from './components/ResetDnaSheet';
+import { RestoreHost } from './components/RestoreSheet';
 import ShellStack from './components/ShellStack';
 import { TABS } from './constants/navigation';
 import { SCREEN_COMPONENTS } from './screens';
@@ -21,8 +23,8 @@ const PAGES = TABS.map((t) => t.key);
  * The overlay is the last child, so it covers the bar; it sits outside the
  * pager, so swiping inside it never pages.
  *
- * The four tab screens sit side by side in a horizontal ScrollView (Home →
- * Records → Try next → Profile), **switched by the tab bar only**: swiping
+ * The three tab screens sit side by side in a horizontal ScrollView (Home →
+ * Records → Profile; Try next left the bar 2026-11-08), **switched by the tab bar only**: swiping
  * between tabs was removed (2026-10-07) so the horizontal gesture stays free
  * for tabs inside a screen, and for horizontal controls such as the taste
  * axis. The ScrollView is kept, with scrolling disabled, because it keeps
@@ -39,6 +41,12 @@ export default function AppShell() {
   const { width } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState('home');
   const [showAddCoffee, setShowAddCoffee] = useState(false);
+  // The bag or gear a page's "Log a cup with it" logs with (null: the shelf's defaults).
+  const [recordPreset, setRecordPreset] = useState(null);
+  const openRecord = (preset = null) => {
+    setRecordPreset(preset);
+    setShowAddCoffee(true);
+  };
   const pager = useRef(null);
   const scrollX = useRef(new Animated.Value(0)).current;
   const position = useMemo(() => Animated.divide(scrollX, width), [scrollX, width]);
@@ -52,6 +60,7 @@ export default function AppShell() {
   const selectTab = (key) => {
     // Pressing the tab that is already showing returns it to its root.
     if (key === activeRef.current) requestTabReset(key);
+    else requestTabLeave(activeRef.current);
     setActiveTab(key);
     pager.current?.scrollTo({ x: PAGES.indexOf(key) * width, animated: false });
   };
@@ -61,7 +70,8 @@ export default function AppShell() {
     () =>
       onShellRequest(({ tab, record }) => {
         if (tab) selectTab(tab);
-        if (record) setShowAddCoffee(true);
+        // { record: true }, or { record: { bag } | { brewer } | { grinder } }.
+        if (record) openRecord(record === true ? null : record);
       }),
     // selectTab reads the latest width through its closure; re-subscribe with it.
     [width]
@@ -88,13 +98,18 @@ export default function AppShell() {
     [width]
   );
 
+  const bandHeight = useFooterHeight();
   return (
     <View style={styles.container}>
       <DotTexture />
       <ScreenBackdropContext.Provider value={false}>
         <>
+          {/* The pager ends at the bar's band (Design Round 23): from space.12
+              above the floating bar to the edge, the DotTexture behind shows,
+              so no half-cut row shows between or under the bar's pieces. */}
           <Animated.ScrollView
             ref={pager}
+            style={{ marginBottom: bandHeight }}
             horizontal
             scrollEnabled={false}
             showsHorizontalScrollIndicator={false}
@@ -105,7 +120,7 @@ export default function AppShell() {
           </Animated.ScrollView>
         </>
       </ScreenBackdropContext.Provider>
-      <FooterNav activeTab={activeTab} position={position} onTabPress={selectTab} onAddPress={() => setShowAddCoffee(true)} />
+      <FooterNav activeTab={activeTab} position={position} onTabPress={selectTab} onAddPress={() => openRecord()} />
       {/* 3d / 3c / 3a / 11a, pushed over the tabs and the bar (their mocks have none). */}
       <ShellStack />
       {/* 13b: "‹cup› deleted." above the bar, over Records. */}
@@ -114,8 +129,13 @@ export default function AppShell() {
       <DnaInfoHost />
       {/* 2b: Records' filter button opens Sort & group over the tabs and the bar. */}
       <SortSheetHost />
+      {/* 6b's Restore from a backup: its sheets over the tabs and the bar. */}
+      <RestoreHost />
+      {/* 6b's Reset my taste DNA: its confirmation over the tabs and the bar. */}
+      <ResetDnaHost />
       <AddCoffeeOverlay
         visible={showAddCoffee}
+        preset={recordPreset}
         onClose={() => setShowAddCoffee(false)}
         // 5c's buttons: Home, or the saved cup's record (2c) in Records.
         onNavigate={({ tab, cupId }) => {

@@ -1,8 +1,8 @@
-# MoreCoffee UI implementation guide
+# Extract Press UI implementation guide
 
 ## Project overview
 
-MoreCoffee is a coffee logging app focused on a clean, warm, and user-centered mobile experience.
+Extract Press (internal name MoreCoffee) is a coffee logging app focused on a clean, warm, and user-centered mobile experience.
 
 Tech stack:
 

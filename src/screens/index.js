@@ -1,8 +1,4 @@
-import { useEffect, useState } from 'react';
-import { useDatabase } from '../data/DatabaseProvider';
-import { countCups, onCupsChanged } from '../data/repository';
 import HomeTabScreen from './HomeTabScreen';
-import PlaceholderScreen from './PlaceholderScreen';
 import ProfileTabScreen from './ProfileTabScreen';
 import RecordsScreen from './RecordsScreen';
 
@@ -12,29 +8,16 @@ import RecordsScreen from './RecordsScreen';
 // on disk, unreferenced and out of the bundle, as the record of what the old
 // screens did.
 //
-// Each tab carries its mock's eyebrow verbatim: 1b "MoreCoffee", 6a
-// "Morecoffee" (both render uppercase), 8d "Based on 147 cups" with the real
-// count.
-const countFormat = new Intl.NumberFormat();
-
-function TryNextPlaceholder() {
-  const db = useDatabase();
-  const [count, setCount] = useState(null);
-
-  useEffect(() => {
-    const load = () => countCups(db).then(setCount, (error) => console.error('[try next] could not count cups', error));
-    load();
-    return onCupsChanged(load);
-  }, [db]);
-
-  // TODO(i18n): plural rules beyond English's one / other.
-  const eyebrow = count == null ? undefined : `Based on ${countFormat.format(count)} ${count === 1 ? 'cup' : 'cups'}`;
-  return <PlaceholderScreen title="Try next" eyebrow={eyebrow} />;
-}
+// Each tab carries its mock's eyebrow: 1b and 6a the app's name, "Extract
+// Press" (the mocks' "MoreCoffee" until the rename of 2026-11-08; it renders
+// uppercase).
+//
+// No Try next tab (planner, 2026-11-08): its placeholder ("This screen is
+// being rebuilt.") would fail App Review, and Try next becomes a card on Home
+// (design/try-next-v1.md).
 
 export const SCREEN_COMPONENTS = {
   home: HomeTabScreen,
   records: RecordsScreen,
-  tryNext: TryNextPlaceholder,
   profile: ProfileTabScreen,
 };

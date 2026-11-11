@@ -27,14 +27,21 @@ import Text from './Text';
  *              keeps clear of the button above and its hard shadow
  *              (decided on device 2026-10-13, for every such stack).
  *              trailingIcon: a text action that leads somewhere, beside a
- *              section title (1b's See all, redrawn 2026-10-18): the label
- *              then the glyph (icon.sm, gap.tight), both text.secondary, NO
- *              underline — §1 lets it go where the position already says
- *              "action", and the arrow says it too.
+ *              section title (1b's See all, redrawn 2026-10-18; Home's "See
+ *              all gear & beans"): the label then the glyph (icon.sm,
+ *              gap.tight), both text.secondary, NO underline — §1 lets it go
+ *              where the position already says "action", and the glyph says
+ *              it too. The glyph is the › chevron (Design Round 15, B4).
  *   disabled   either variant: ground fill, border.muted outline, text.muted
  *              label, no shadow (5d)
  *   pressed    the fill darkens (state.pressed.action / .surface); outline,
  *              label and shadow stay — Hard Rule, design-system.md §1
+ *   destructive  a command that deletes (Design Round 24, §1 Tap
+ *              affordance): secondary or text, the label (and a trailing
+ *              glyph) in color.text.destructive. Never a fill, frame or
+ *              shadow; frame, underline and pressed stay the variant's. No
+ *              primary form: a delete sheet's delete is secondary, on top.
+ *              Disabled wins.
  *
  * Optional trailing glyph (5a "Add tasting note →"): icon.sm, gap.row after the
  * label, coloured like the label — onAction on primary, ink on secondary,
@@ -74,7 +81,7 @@ const TEXT_HIT_SLOP = { top: space[16], bottom: space[16], left: space[8], right
 // only 4pt into it; 20 below ends where the next axis begins (gap.axis).
 const SMALL_HIT_SLOP = { top: space[8], bottom: space[20], left: space[8], right: space[8] };
 
-function TextButton({ label, small = false, stacked = false, trailingIcon, disabled = false, onPress, accessibilityLabel }) {
+function TextButton({ label, small = false, stacked = false, trailingIcon, disabled = false, destructive = false, onPress, accessibilityLabel }) {
   const scale = useRef(new Animated.Value(1)).current;
   const scaleTo = (toValue) =>
     Animated.timing(scale, { toValue, duration: motion.press.duration, easing: pressEasing, useNativeDriver: true }).start();
@@ -98,7 +105,7 @@ function TextButton({ label, small = false, stacked = false, trailingIcon, disab
         </Animated.View>
       ) : (
         <Animated.View style={{ transform: [{ scale }] }}>
-          <Text variant={small ? 'meta' : 'labelCaps'} color={disabled ? 'muted' : 'primary'} style={styles.underline}>
+          <Text variant={small ? 'meta' : 'labelCaps'} color={disabled ? 'muted' : destructive ? 'destructive' : 'primary'} style={styles.underline}>
             {label}
           </Text>
         </Animated.View>
@@ -119,14 +126,19 @@ function FilledButton({
   warnWhenDisabled = false,
   size: buttonSize = 'full',
   raised = false,
+  destructive = false,
   onPress,
   testOnly_pressed,
 }) {
   const row = buttonSize === 'row';
   const warns = disabled && warnWhenDisabled;
   const primary = variant === 'primary' && !disabled;
-  const labelColor = disabled ? 'muted' : primary ? color.action.fg : 'primary';
-  const iconColor = disabled ? color.icon.muted : primary ? color.icon.onAction : color.icon.default;
+  if (__DEV__ && destructive && variant === 'primary') {
+    console.warn('[Button] destructive has no primary form (§1, Design Round 24): use variant="secondary".');
+  }
+  const warning = destructive && !disabled && !primary;
+  const labelColor = disabled ? 'muted' : primary ? color.action.fg : warning ? 'destructive' : 'primary';
+  const iconColor = disabled ? color.icon.muted : primary ? color.icon.onAction : warning ? color.icon.destructive : color.icon.default;
 
   // Row size has no hard shadow unless raised (1b's See all, 2026-10-12).
   const hardShadow = primary ? (row ? (raised ? shadow.control : null) : shadow.primary) : null;

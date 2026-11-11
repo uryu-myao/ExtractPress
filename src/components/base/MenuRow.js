@@ -7,8 +7,8 @@ import Text from './Text';
 /**
  * A settings-list row (6a's My shelf, 6b's My data; 2026-10-21):
  * [glyph] label (over an optional sub line) [value] [chevron].
- * Rows stack in one 2px ink frame on raised, with no item dividers (Design
- * Round 9); the frame is the caller's.
+ * Rows stack in one 2px frame on raised (border.container, Design Round 22),
+ * with no item dividers (Design Round 9); the frame is the caller's.
  *
  *   label  label (15 / 700), ink
  *   sub    body.sm, muted ("147 cups as CSV, notes included")
@@ -17,10 +17,15 @@ import Text from './Text';
  *   With onPress the whole row is pressable: a chevron at its end (§1 Tap
  *   affordance) and state.pressed.row out to the frame. Without it, the
  *   row is information only: no chevron, no press (6a's My gear until 3b).
+ *   destructive  label and glyph in color.text.destructive (Design Round
+ *          24: 6b's Reset my taste DNA); the sub line stays muted, as 3g's
+ *          delete hint.
+ *   chevron false: pressable, but no chevron, for a row that opens a
+ *          confirm sheet, not a screen (6b's Reset, Design Round 25, B1).
  *
- * Props: icon (Glyph name), label, sub, value, onPress, disabled
+ * Props: icon (Glyph name), label, sub, value, onPress, disabled, destructive, chevron
  */
-export default function MenuRow({ icon: glyph, label, sub, value, onPress, disabled = false }) {
+export default function MenuRow({ icon: glyph, label, sub, value, onPress, disabled = false, destructive = false, chevron = true }) {
   const pressable = Boolean(onPress);
   return (
     <Pressable
@@ -30,9 +35,9 @@ export default function MenuRow({ icon: glyph, label, sub, value, onPress, disab
       accessibilityState={pressable ? { disabled } : undefined}
       accessibilityLabel={[label, sub, value].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      {glyph ? <Glyph name={glyph} token={icon.md} color={color.text.primary} /> : null}
+      {glyph ? <Glyph name={glyph} token={icon.md} color={destructive ? color.icon.destructive : color.text.primary} /> : null}
       <View style={styles.text}>
-        <Text variant="label" color="primary" truncate="name">
+        <Text variant="label" color={destructive ? 'destructive' : 'primary'} truncate="name">
           {label}
         </Text>
         {sub ? (
@@ -46,7 +51,7 @@ export default function MenuRow({ icon: glyph, label, sub, value, onPress, disab
           {value}
         </Text>
       ) : null}
-      {pressable ? <Chevron /> : null}
+      {pressable && chevron ? <Chevron /> : null}
     </Pressable>
   );
 }

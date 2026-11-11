@@ -29,7 +29,7 @@ Pressed, focus, tap affordance, the selection limit and the disabled look of opt
 |---|---|---|---|---|---|---|
 | 1 | Screen header (`ScreenFrame`) | 30 / 30 | component | standard · compact · eyebrow · stat · meta · footer | expanded, collapsed (2026-10-06) | — |
 | 2 | Bottom bar (`FooterNav`) | 6 (1b 2a 4a 4b 6a 8d; 6a's three-way split counted once) | component | tab · add | active, inactive, pressed (scale), hidden | — |
-| 3 | Button | 14 primary (1b 2b 3a 3c 3e 4a 4b 5a–5e 7b 8e) · 7 secondary (1b 3b 5a 5b 5c 5e) · ~13 text-only (2b 5d 6d 7b 8c 8e 8f 8h 8l) · 9 compact 36–48 (3c 3d 3e 6a 6d 7a 8f 8h 8j) · 8c Next (56, not full width) · 8d in-card CTA (borderless blue) | component: primary and secondary only | primary · secondary · **tertiary (text) not built** · **compact (40) / small (36) not built** · 44-tall inline (3c "Use", 3d "Edit / Finish bag") · shadowed 48 (8f) | default, pressed, disabled (decided, Button only) | **destructive** (3b / 3e "Remove from my gear", 8g "Reset my taste DNA" have no distinct look); disabled for text / compact; secondary height is 52 in the mocks, 56 in code (`gaps.md` 4) **2026-10-09**: small (36) is used by 3e / 3g's photo pair *and* 7a's "Mark all read", so it is a Button variant rather than a photo-slot part (its 44pt touch area: `gaps.md` 19). Note the name clash: the text variant's `small` prop (taste axis Clear) is a different thing; rename one when the 36 is built. **Destructive: decided to have no look of its own for now** (ink like any action, §1); protection is confirm / undo (`gaps.md` 18); a warning colour, which the product has none of, is a separate, undecided call. |
+| 3 | Button | 14 primary (1b 2b 3a 3c 3e 4a 4b 5a–5e 7b 8e) · 7 secondary (1b 3b 5a 5b 5c 5e) · ~13 text-only (2b 5d 6d 7b 8c 8e 8f 8h 8l) · 9 compact 36–48 (3c 3d 3e 6a 6d 7a 8f 8h 8j) · 8c Next (56, not full width) · 8d in-card CTA (borderless blue) | component: primary and secondary only | primary · secondary · **tertiary (text) not built** · **compact (40) / small (36) not built** · 44-tall inline (3c "Use", 3d "Edit / Finish bag") · shadowed 48 (8f) | default, pressed, disabled (decided, Button only) | **destructive** (3b / 3e "Remove from my gear", 8g "Reset my taste DNA" have no distinct look); disabled for text / compact; secondary height is 52 in the mocks, 56 in code (`gaps.md` 4) **2026-10-09**: small (36) is used by 3e / 3g's photo pair *and* 7a's "Mark all read", so it is a Button variant rather than a photo-slot part (its 44pt touch area: `gaps.md` 19). Note the name clash: the text variant's `small` prop (taste axis Clear) is a different thing; rename one when the 36 is built. ~~**Destructive: decided to have no look of its own for now**~~ **2026-11-09 (Design Round 24): `destructive` prop on secondary and text, label in `color.text.destructive`; never filled; a delete sheet has no primary** (design-system §1 Tap affordance); protection is still confirm / undo (`gaps.md` 18). |
 | 4 | IconButton | ~20 (back / close on 3a–3f 5a 5b 5d 5e 6d 7a 7b 8e–8j 8m) + 2a filter opener + 8e muted icon | component (default look) | default (2px ink, raised) · accent fill (2a) · muted 1.5 border (8e) | default, pressed | disabled; **what 2a's accent fill means** (filters applied?) 2026-10-09: 2a's accent fill goes (drift D-24), so it is the default look. |
 | 5 | Single-select chip group (`SegmentedControl`) | 12 screens: 2a 2b 3a 3c 3e 3f 5a 5d 5e 6d 8j 8l | component for 5a / 5d / 5e, 8l's scopes, 2a's categories (2026-10-23) | padding 6/11 (2a) · 7/12 (3a) · 9/13–14 (2b 3c 3e 3f) · 9/11 (8l) · 11/15 (5a) · 2px-border 11/13 (6d 8j) | selected (ink), unselected; tap affordance (§1); disabled (§1 Disabled options) | — |
 | 6 | Flavour chip, multi-select | 5b (6) | inline | selected · unselected · Search opener (2px solid ink frame since 2026-10-18; was `border.addSlot`) | selected, unselected; at the limit, disabled (§1) | — |
@@ -64,7 +64,7 @@ Pressed, focus, tap affordance, the selection limit and the disabled look of opt
 | 35 | Suggested value row ("Use") | 3c (2) | not started | — | offered | **applied** |
 | 36 | Stat tiles / profile header | 6a 8e | not started | — | static | — |
 | 37 | Avatar edit button | 6d (1, 34×34 at the avatar's corner) | not started | — | default | — (read as a checkbox in the first pass; it is a small icon button) |
-| 38 | Word tag (pressable) | 8f (4, word + count → 8l search) · 8h (11, tap to rename / merge) | not started | with count · without | default (8f's top word drawn 2px ink) | — (built at 44, §1 Tap affordance) 2026-10-09: the top word's 2px frame goes (drift D-23). |
+| 38 | Word tag (pressable) | 8f (4, word + count → 8l search) · 8h (11, tap to rename / merge) | **not built** (8h and 8f's block dropped, 2026-10-31) | with count · without | default (8f's top word drawn 2px ink) | — (built at 44, §1 Tap affordance) 2026-10-09: the top word's 2px frame goes (drift D-23). |
 | 39 | Attribute tag (display) | 6a (3, inside the pressable Taste DNA card) · 8d (2) | not started | — | static | — (never pressable on its own, §1 Tap affordance) |
 | 40 | Destructive row button (framed) | 3e "Remove from my gear" / "Frees 1 slot" · 3g "Delete this bag" / "Not finish — erases it" | not started | glyph + label + note at right, 1.5 `border.muted` frame, below the form card | default | pressed; confirm / undo (`gaps.md` 18). Label ink, not brown (drift D-30). Added 2026-10-09 |
 
@@ -112,6 +112,12 @@ Primitives, not counted: `Text`, `Glyph`, `HardShadow`, `DashedRule`, `DotTextur
   - 8l's Words search lists cups by a word in their note ("9 cups say "juicy"").
 - One sentence does not fit: 8h's "Words appear as chips when you log a cup". No logging screen shows words as chips; read here as "the words you write appear here as chips".
 - So the three looks are not one component: the flavour chip is an input (§1 Colour roles: brown, entered); the word tag (#38) belongs to words. Flavours: capitalised in the data, uppercased on screen by `label.caps`. Words: stored and shown as typed.
+
+**My words is a supporting field (decided 2026-10-31, Uryu)**. The reading above took My words as a vocabulary the user repeats (8h's counts, 8f's "What you keep saying", 7a / 7b, 8g's "Read my words"). Uryu's real notes are free memos, close to a diary: brewing reminders and things beyond the taste, with no words used over and over. So:
+- **Taste is described by the flavour tags**: picked from a finite set, they repeat and can be counted (8f's "Flavours I pick most"). My words is the free space beside them.
+- **My words does three things, unchanged**: written on 5b, read in full on 2c, found by search's Words (a part match on the note).
+- **It is optional and never in the way**: logging fast comes first, and a cup without a note loses nothing. It never feeds Taste DNA (`taste-dna.md` item 6).
+- **Not built, for this reason**: 8h, 8f's "What you keep saying", the word tag (#38), 6a's My words heading, 8g's "Read my words", 7a / 7b's announcement.
 
 **Are the 13 framed cards one component?**
 - The **container** is one: 2px ink on raised, square, no shadow.
@@ -218,6 +224,8 @@ The Switch is not built yet. The taste-axis handle is now derived from it, so th
 
 ## Bag form: origin, region and process (decided 2026-10-09; not built)
 
+**Process built 2026-11-08** (planner: "a bag record without it has a hole"), on 3c and 3g, under Roaster: SegmentedControl `clearable`. Origin and Region stay out of V1. Deviations sent to Design (Round 23, A2): 3c shows the row, not the "Origin · Process" fold; the chips are the maker chips' size.
+
 - **Never required, never blocking**: §1's principle, "required fields start pre-filled and never block".
 - **3c (new bag, the 15-second path)**: one optional line under Roast level, "Origin · Process", shown with any guess. Saving without touching it is fine.
 - **3g (edit bag)**: full fields.
@@ -302,6 +310,8 @@ The bundled list is the starting point for 5b's flavour tags (never a whitelist;
 
 **SearchSheet parameters**: `placeholder`, `items` ({ key, label, hint?, searchText? }, ordered by the caller), `selected`, `mode` (multi built; single for Origin to come), `limit`, `onToggle`, `onAdd` + `normalize`, `match`, `onClose`. Origin will need `mode: 'single'` (pick and close), `searchText` (aliases), sections ("Recent"), and clearing.
 
+**A choosing sheet always shows the field's current value, marked, even when no candidate is it, and keeps everything added while logging this cup** (rule, 2026-10-31; widened 2026-11-01). Put the value first and mark it, then what this cup added (`useKept`), until the cup is saved (they join the history) or discarded (they go). Use `withChosen(items, value, kept)` (`SearchSheet.js`); the café sheet does the same for its CafeChoices, the flavour sheet in `searchItems`. Kept too because switching away must not cost re-typing: Uryu types Japanese ("ほうじ茶ラテ" is input-mode switching and conversion, not five letters), and a name added by hand is exactly when candidates get compared ("mine or Cortado?"). **Why**: the candidates come from saved history, so a value added with Add "…" isn't in them until the cup is saved, and MapKit's results change with every search and every place you stand. Without it, reopening the sheet showed neither the value nor its marker, as if the choice had been lost (on device: a drink added by hand; the same held for Packaged's product and for a café typed or picked from the map). The flavour sheet did this from the start (`TastingNoteScreen` `searchItems`); drink, product and café were brought in line. **Origin, when built, must do the same.**
+
 **Search sheet layout** (decided 2026-10-10): runs from under the status bar to the keyboard's top; when the keyboard goes, only the bottom edge moves (the top never jumps).
 - **Measured on an SE (375 × 667)**: list starts at 125pt; rows are 53.5pt.
 - **With the keyboard up: about 270pt, 5 rows** (confirmed on a device 2026-10-11).
@@ -371,11 +381,11 @@ The bundled list is the starting point for 5b's flavour tags (never a whitelist;
 | 8j topic | An idea / Logging / Taste DNA / Something else | no | "Something else" covers the rest |
 | 8l scope | Words / Beans / Gear | no | a search has a scope |
 | **3c 3g Roast level** | Light / Medium / Medium-dark / Dark | **yes** | unset is valid, and a reused bag pre-fills it |
-| **3c 3g Process** (planned) | Washed / Natural / Honey / Anaerobic | **yes** | unset means unknown (no "Unknown" option) |
+| **3c 3g Process** (built 2026-11-08) | Washed / Natural / Honey / Anaerobic | **yes** | unset means unknown (no "Unknown" option) |
 
 - **Open**: the selected chip of a clearable set needs press feedback. Today it does not respond. Its ink fill has no darker tier, so it would take the scale, or a step lighter. To decide when built.
 
-## 8h words: merges live in their own table (policy, 2026-10-10)
+## 8h words: merges live in their own table (policy, 2026-10-10) — **void 2026-10-31: 8h is not built**
 
 - Renaming or merging a word in 8h **never rewrites note text**. Notes stay as the user wrote them (`cups.note`).
 - A separate table holds "this word merges into that one" (and renames). Matching and counting read it. Details are specced with 8h.
@@ -389,7 +399,7 @@ The bundled list is the starting point for 5b's flavour tags (never a whitelist;
 ## Row menus: gear and words are built differently (recorded 2026-10-09)
 
 - **Gear (3b)**: each item has a full page, 3e (Edit gear). The ⋮ sheet only repeated 3e's contents (default, edit, remove), so the ⋮ goes. The row opens 3e directly, with a chevron (drift D-26).
-- **Words (8h)**: the ⋮ stays as drawn.
+- **Words (8h)**: the ⋮ stays as drawn. (Void 2026-10-31: 8h is not built.)
   - The menu's contents are not in the mocks.
   - There is no page behind a word: rename and merge happen in place ("Tap a word to rename it everywhere, or merge it into another").
   - So 8h cannot follow 3b. Its ⋮ is specced when 8h is built.

@@ -1,5 +1,737 @@
 # Design response — design-missing.md
 
+## Round 25 · After a reset, 6b's rows (2026-11-10)
+
+Mock:
+
+- **New: Turn 26.** **27a** shows the empty profile after a reset, and the notice. **27b** shows 2c on a cup logged before the reset.
+- **Edited.** **25e** now shows V1's rows: Export my cups, Export everything, Restore, Reset (red). **6b**'s Reset row is back to Round 12's line, in red.
+
+### A. Questions
+
+1. **A1. Yes, a line of its own for an empty profile after a reset**: **"Starting again from Nov 10. Rate a cup and note one taste."**
+   - **What it says.** It opens with what happened and when, so the empty profile reads as chosen and recent, not as a new account. Then comes the same instruction, shorter, because "to start" is already said.
+   - **The date** is `reset_at`, in the app's short date (the "Apr 8" form).
+   - **Where it shows**: Home's card and 8f, wherever the "none" line would show, while `reset_at` is set and no noted cup has come after it. After the first noted cup it's Early signs, with its usual lines.
+   - **Nothing else changes.** The card is the same empty card: no stamp, four "Not noted yet". The new-user line stays as it is for new users.
+2. **A2. Way 3, as built, with one change**: put the reset's date in the line, **"Logged before the reset on Nov 10, so it isn't in my taste DNA now."**
+   - **The date** answers "which reset?" if there has been more than one. It also places the cup without opening anything.
+   - **"Fed my taste DNA"**: agreed. The sentence and the tags stay as stored, because they're true of that day.
+   - **Where the line sits**: under the tags, below a 1.5 dashed `border.soft` divider (§8: the second part of one block). It uses `body.sm` in `text.muted`, as built.
+   - **Not way 2.** Hiding the block would make old cups look as if they never counted.
+   - **The chevron stays and still opens 8f**: the profile as it stands now, which is what the line points to.
+
+### B. Fixed on the board
+
+1. **B1. Done.** 25e's two My data blocks and 6b's row now read "Counts from today. Older cups stay in Records."
+   - **Colour.** Label and glyph are `color.text.destructive` / `icon.destructive`.
+   - **Glyph.** 6b now uses 25e's glyph, the one that's built.
+   - **No chevron.** The row opens a sheet, not a screen, as 6b drew it.
+
+### C. Noted
+
+1. **C1. Export my cups stays, agreed. The board now has it.** It's the first row, above Export everything, with "147 cups as CSV, notes included" ("Every cup as CSV, notes included" on an empty app).
+   - The reason for keeping it is the one you gave: the CSV is for reading, the zip is for putting back.
+   - I've rewritten 25e's note that said "everything now earns its name".
+2. **C2. Agreed.** The Backup row is gone from 25e, which is V1's board. 6b keeps Backup and Account for later, as D-64 to D-66 say.
+3. **C3. Licences: no board needed.** The pushed-screen shape and full licence texts are right. "Extract Press 1.0.0 (1)" with the build number is better than the date. Agreed.
+4. **C4. "Taste DNA reset." Agreed**, no other words. It's drawn in 27a: noticeName + notice, no Undo, same place as after a delete.
+
+### On Reset's confirmation (not asked, for the record)
+
+Uryu's copy is right to say first that nothing is deleted. Round 24's form fits it: a red secondary on top, "Keep it" under it, no primary.
+
+- It's a destructive action even though no record goes: the profile as it stood can't come back (no undo).
+- So the red label is right, and the copy then corrects the fear.
+
+### For Code
+
+- Home / 8f "none" line: when `reset_at` is set, use "Starting again from ‹reset date›. Rate a cup and note one taste."
+- 2c, cups before `reset_at`: the line becomes "Logged before the reset on ‹reset date›, so it isn't in my taste DNA now.", below a dashed `border.soft` divider.
+- Nothing else changes. 6b is already built as the board now shows.
+
+---
+
+## Round 24 · A colour for deleting (2026-11-09)
+
+Mock: Turn 25 is new. **26a** shows the colour, its contrast and how it compares with Roast. **26b** shows it on the confirm sheet, the delete row and the text actions. Nothing earlier is edited.
+
+### 1. The colour
+
+**`color.text.destructive` `#B4153F`**: one crimson. Alias **`color.icon.destructive`** to it for the bin.
+
+| Against | Value |
+|---|---|
+| `surface.ground` #F4EDEA | 5.82 : 1 |
+| `surface.raised` #FFFCFA (sheets) | 6.59 : 1 |
+| `state.pressed.surface` #E4D6CC | 4.74 : 1 |
+| `state.pressed.row` #F2F0ED / #E8E2DE | 5.92 / 5.24 : 1 |
+| OKLCH | L 0.50 · C 0.19 · h 15 |
+
+How far it is from each colour already in use (ΔE00):
+
+| Colour | ΔE00 | Note |
+|---|---|---|
+| `color.axis.roast` | 9.2 | see below |
+| `color.axis.sweetness` | 17.8 | |
+| accent brown | 28.2 | |
+| `text.accentStrong` | 26.9 | |
+| rating gold | 41.1 | |
+
+- **Why a red.** A delete should read as one at a glance, and red is the colour every iOS user already reads that way. The only question was which red.
+- **How it stays apart from Roast** (`#9D3D36`):
+  - **Hue and chroma.** Roast is a dull red that leans brown (C 0.13, h 27). This red is about a third more saturated and turned toward crimson (C 0.19, h 15), at the same lightness. Side by side they read as two reds. 26a draws them on one card.
+  - **Form, which matters more.** Roast is only ever a 4pt bar and a 12 × 4 key, never text. The destructive red is only ever words, with their underline or a bin. Neither ever takes the other's form.
+  - **Colour blindness.** With red-green colour blindness both reds turn olive. The words and the bin still carry the meaning, as §1 already requires.
+- **Only one value.** I'm not proposing `.fill` / `.pressed` / `.onFill` tokens, because nothing is filled (question 2). The interim `state.error.action.{bg, pressed, fg}` go away.
+
+### 2. Filled or not: not filled
+
+The confirm sheets become two secondary buttons:
+
+- **"Delete this cup" on top**, 56 tall, red label, paper fill, ink frame, no shadow.
+- **"Keep it" under it**, at 52, as now.
+
+The blue primary goes. Why:
+
+- **Blue means "go ahead".** A sheet asking whether to delete shouldn't say that about the delete. 11b's mock made Delete the primary "because it's the action the sheet was opened for". That reason doesn't hold once the action is destructive. iOS's own sheets don't fill it either.
+- **A red fill would be too loud.** A 56-tall red slab would be the loudest thing in the app, louder than Record a coffee, on the one action we want people to slow down on. On 2c and 5c it would also sit under the Roast bars as a large block of almost their colour. Red words stay small and stay words.
+- **Fallback, if Uryu wants it filled after seeing it on the phone**: fill `#B4153F`, white label 6.73 : 1, pressed `#921133` (8.93 : 1, ΔE00 6.9 below), ink frame and `shadow.primary` kept. I'd only add those tokens then.
+
+Pressed: the secondary's `state.pressed.surface`. The label stays red (4.74 : 1 on it). Text actions scale as now.
+
+### 3. The delete rows (3g, 3e)
+
+- **The bin takes the red, with the label.** They are one control and should read as one.
+- **The hint stays `text.muted`.** "Not finish — erases it" explains the action. It isn't the action.
+- The row's frame is unchanged (1.5 `border.muted`). Red is never a frame.
+
+### 4. 5d's required-field error: stays brown
+
+- They aren't the same thing. A missing rating isn't a warning about losing something. It's §1's brown meaning "this is yours to enter", turned up.
+- Brown already belongs to the user's own input, which is the right family for "your input is missing here".
+- Red stays for one meaning only: **this removes something for good**. If red also meant "you forgot a field", it would stop meaning that.
+- So `state.error.*` stays exactly as it is. The only change is that its `.action` sub-tokens go.
+
+### 5. §1 text
+
+In Tap affordance, replace the two lines ("Never brown." and "Destructive actions … get no look of their own for now…") with:
+
+> - **Never brown.** Brown marks a value the user entered; on an action, that mark fades. Brown carries only entered values, and `state.error`, which is about them.
+> - **Destructive actions are red (2026-11-09, Round 24).** A command that deletes something saved, or throws away input the user would lose by leaving, sets its label in `color.text.destructive`, and its bin glyph in `color.icon.destructive`. Only the label and the glyph: never a fill, a frame or a shadow. It keeps its form (secondary button, text action with underline, row with bin), so colour still never says "pressable" on its own.
+>   - A confirm sheet for a delete has **no primary**: the delete is a secondary button with the red label, on top, at 56; "Keep it" sits under it at 52.
+>   - Undoing input in place is not destructive and stays ink: a field's clear ×, the axis's Clear, a filter's ×, Reset in Sort.
+>   - Confirmation and undo stay (`gaps.md` 18); the colour adds to them.
+>   - `color.text.destructive` is used for nothing else. It sits beside `color.axis.roast` but never takes its forms (bar, key), and Roast never takes its form (words).
+
+Add to §2 colours: `color.text.destructive` `#B4153F`, with that role. Changelog entry: "2026-11-09 — §1 Tap affordance: destructive actions are red (`color.text.destructive`), label and glyph only; delete confirm sheets lose their primary. `state.error.action.*` removed (Round 24)."
+
+### 6. Scope
+
+**The test**: does it remove something saved, or throw away input the user would lose by leaving? Then it's red. Does it only undo input in place, where a second tap puts it back? Then it's ink.
+
+| Item | Answer | Why |
+|---|---|---|
+| Delete this cup / bag, Remove from my gear (sheets and rows) | yes | removes something saved |
+| 11a's Delete this cup | yes | removes something saved |
+| Remove photo | yes | removes the saved photo |
+| Discard changes | yes | loses the user's edits when they leave |
+| 5b's "Discard and save", only while it discards | yes, agreed | loses the note. "Save without the note" stays ink |
+| 8g's Reset my taste DNA (and 6b's row) | yes, when built | Its confirm sheet follows §2 above. The cups stay, but the profile as it stood is gone |
+| **18a's Clear (recent searches)** | **no, take it out** | Recent searches are a convenience the app keeps for you, not something you made. A red word on the search start screen would be the loudest thing there, for nothing. Keep it an ink text action, with no confirmation |
+| Field clear ×, axis Clear, filter ×, Sort's Reset | no, agreed with Code | They undo input in place, and the value comes back by retyping |
+| Try next's "Not for me" | no | a dismissal, with Undo, not a removal |
+| Sign out | no | removes nothing. Account things are out of V1's local-only scope anyway |
+
+### For Code
+
+- `tokens.ts`:
+  - add `color.text.destructive` `#B4153F` and `color.icon.destructive` (alias);
+  - remove `state.error.action.{bg, pressed, fg}`;
+  - leave `state.error.*` as it is.
+- `Button` `destructive`:
+  - primary + destructive no longer exists. The delete sheets (11b, 3g, 3e) use secondary + destructive at 56 on top, then "Keep it" at 52;
+  - secondary + destructive: red label;
+  - text + destructive: red label and underline.
+- Delete rows: label and bin red, hint muted.
+- 18a Clear: back to ink.
+- `design-system.md`: §1 text and changelog as in 5 above.
+- **The repo's `design-response-next.md` is stale.** Its Round 23 E still has the first answer (the body with a quiet frame and no shadow). Replace it with this file. The current handoffs are listed in `handoff-README.md`.
+
+---
+
+## Round 23 · Floating bar, Try next on Home, Restore (2026-11-08)
+
+Mock: Turn 24 is new — **25a** the bar over a 20-row list, **25b** its spec, pressed and active states, **25c** Home with Try next, **25d** the four kinds and dismissal, **25e** 6b My data, **25f** Restore's sheets, **25g** refusals and first setup. Edited: **23b** and **6a** eyebrows read EXTRACT PRESS; **23c**'s Bags rule (D2). Build spec: `handoff-round23.md`.
+
+### A. Built
+
+1. **A1 — no problem seen.** Understood that it's interim and the device check only confirms it's usable until E lands. Not redrawn.
+2. **A2 — Process.**
+   1. **Show the chips on 3c; no fold.** A fold costs two taps (open, choose) for one row; shown, it costs one, and the bag with its label is in hand at 3c. It stays optional and never blocks "Open this bag", so the 15-second path isn't slower for someone who skips it.
+   2. **44, as built.** Four chips wrap to two lines either way. At 32 with hit-slop back to 44, the two wrapped lines' touch areas would overlap across the 6–8 gap between them; at 44 they don't. And 44 matches the maker chips, the only other chips on these screens. 3g's 9 / 14 was drawn before Process was clearable or shown on 3c — drift.
+   - Clearing by pressing the selected chip (scale, no darker tier): agreed, nothing to add.
+3. **A3 — the name.** 23b's and 6a's eyebrows now read EXTRACT PRESS, and every board drawn this round uses the new name. The four unbuilt strings (6c "Rate MoreCoffee" and "MoreCoffee 1.4.0", 8i's permission line, 6d's social-feed line) change when those boards are next touched. Two things aren't strings:
+   - 1b, 4a and 4b still carry the old Home eyebrow. All three are superseded by 23b, so they aren't worth editing.
+   - **Welcome (9a / 9b / 8a) draws "Morecoffee" as the brand mark.** That's a wordmark, not copy, and it needs Uryu's new logo before the store build. Flagging it so it isn't missed.
+
+### B. Try next on Home (25c, 25d)
+
+1. **One card, four variants.** Each variant has a serif title (`display.sm`), one reason line, one action and "Not for me". Copy (final unless you object):
+
+   | Kind | Title | Reason | Action |
+   |---|---|---|---|
+   | Other brewer | Guji in the AeroPress? | AeroPress cups average 4.3 stars. Guji in the V60: 3.0. | Log a cup |
+   | Bag | Hoja Verde, again? | Five stars in September. Last brewed six weeks ago. | Add it to my beans |
+   | Café | Back to Fuglen? | Five stars in September, not since. | Open in Maps |
+   | Tag lead | Look for blackcurrant | It's on 4 of the 5-star cups. | See the 4 cups |
+
+   - Copy rules: the title is ≤ 26 characters; the reason is one line, facts only (whole stars, averages to one decimal, months and weeks); no "your" (it states the record).
+   - **Café → Open in Maps: yes.** It hands the stored MapKit id to Apple Maps, with no new screen in the app. Going back to a café is a trip, and this is its first step.
+2. **No suggestion, no card.** Recently sipped moves up. 5c's "One more cup…" goes.
+3. **Order as you set it**: other brewer, then bag, then café, then tag. It changes on Monday or after a dismissal. Agreed.
+4. **Position: under the Taste DNA card, agreed.** It reads as "what the DNA suggests" and never moves Record a coffee or the counts.
+   - It looks like a note, not a record: paper ground inside a quiet frame, where the DNA card is raised. A spark glyph and a brown TRY NEXT eyebrow mark it.
+   - The action is a secondary button (ink frame, paper fill). Record a coffee stays the only blue on Home. Not dashed: dashed means empty (§8).
+5. **States.**
+   - Pressed: the button takes `state.pressed.surface`; the text actions scale (§1). The card itself isn't pressable.
+   - **"Not for me" leaves a line**: the card shrinks in place to "Hidden. It won't come back." with **Undo**. The line stays until Home is next shown; then the next suggestion appears, or no card. Undo instead of a confirm: a mis-tap costs one tap back.
+6. **Making the tag lead carry more: "See the 4 cups".** It opens Records' search on that word (8l's results, "4 cups say blackcurrant"). The lead becomes something to read today, the cups that earned it, instead of a note for a shop visit weeks away. Code: this needs search to match tasting-note tags; say if it doesn't.
+   - **One related question**: 6b's "How adventurous" says it "sets how far Try next strays from what I already like". V1's four kinds have nothing for it to steer. My suggestion: hide it in V1 and bring it back with V2's Try next. Planner's call.
+
+### C. Restore (25e–25g)
+
+- **Export everything: "Cups, bags, gear and photos" — confirmed.** Name the file **"Extract Press backup ‹date›.zip"**: the "not a backup" refusal points to that name.
+1. **C1 — a third way: a row while restore can work, a sentence once it can't.**
+   - On an empty app, "Restore from a backup" (sub line "From an Export everything file") sits between Export and Backup.
+   - Once there's any cup, bag, gear or café, the row goes. One line sits under the block instead: "Restoring a backup works on an empty app only."
+   - Someone who logs a first cup on a new phone and comes looking finds the reason where they look. Nobody lives with a dead row. It's text, not a disabled control.
+2. **C2 — steps.**
+   1. **Confirm**: "Restore this backup?" / "From 8 Nov 2026: 214 cups, 9 bags, 6 gear, 4 cafés and 31 photos." The date comes first because it's how a person recognises the file. Restore is the primary (blue); Cancel is secondary. **Engine: I've added gear and cafés to the counts**; if they aren't available, drop them.
+   2. **Working**: "Restoring…" with "Photos 18 of 31" and a neutral 4pt meter. No spinner. It can't be dismissed while running.
+   3. **Done**: "All back." / "214 cups, 9 bags, 6 gear and 4 cafés are in. My taste DNA is rebuilt from them." The button is Go to Home.
+   4. **Refused**: one form each — a title saying what happened, one line on why and what to do, one button. No error colour, because nothing in the app went wrong.
+      - Not a backup: "That file can't be restored." / "It isn't an Extract Press backup. Exports are named "Extract Press backup ‹date›.zip"." · Choose another file
+      - Newer app: "Update first." / "This backup comes from a newer version of Extract Press. Update the app, then try again." · OK
+      - Damaged: "That file can't be read." / "It may be damaged or incomplete. Nothing was changed. Try another copy of the backup." · Choose another file
+      - Not empty: "Only on an empty app." / "There's already 1 cup here. Restoring never merges or overwrites, so it works on an empty app only." · OK
+   5. **Photos missing: a line on Done**, under a dashed soft divider: "3 bag photos weren't in the file. Those bags show the placeholder; a photo can be added from each bag's page." No line when nothing is missing.
+3. **C3 — yes.** First setup's step 1 (8n) gets a text action at its foot: "New phone? **Restore a backup**". A fresh install starts there, and the app is empty by definition. After a restore, setup is skipped. Welcome (8a) is unchanged.
+
+### D. Carried
+
+1. **3c's photo slot, solid 2px ink: confirmed.** It's a control by Round 22's test (it acts where it is, holding its own glyph and label), so ink is right. Dashed would wrongly say "empty".
+2. **Bags counts every bag added: noted, and 23c's rule is rewritten.** It now counts open or finished bags, brewed or not. A deleted bag still counts if cups point at it, through their copy (name + roaster + roasted on). One deleted with no cups was a mistake and doesn't count. Uryu: say if a deleted bag shouldn't count at all.
+
+### E. The bottom bar (25a, 25b)
+
+- **Shape.** Two pieces on one baseline, both 56 tall with square corners and a 2px edge, 12 apart (`space[12]`), inset by the gutter (22) at the sides and 26 from the bottom edge (the home-indicator inset less `space[8]`, as today).
+  - The + is a 56 square. The body is screen − 22 × 2 − 12 − 56 = 290 at 402, and its three tabs split it evenly (≈ 95 × 52, the whole slot is the touch area).
+- **Shadow or frame: ink frame and hard shadow on both pieces** (revised 2026-11-08 on Uryu's comment on 25a: the tabs are pressed, so they're controls, like the CTA).
+  - Body: raised paper, 2px `border.strong`, `shadow.floating`. +: `color.action.bg`, 2px `border.strong`, `shadow.floating`. Floating, fixed-width controls take 4 (§7); the full-width primary keeps 5.
+  - Only the fill differs. Height, corners, frame, shadow and baseline make them one bar.
+  - October's problem was elevation over busy rows. Here the paper band (below) keeps rows from under and between the pieces, so the shadows fall on plain ground. Check it over Records on device.
+  - *First answer, superseded*: the body with a quiet frame and no shadow.
+- **What's under and between: a paper band, not the list.** From 12 above the bar to the screen's bottom edge (94 in all), the ground is plain paper with its dots. No rule, no fade.
+  - Without it, half-cut rows show through the 12 gap and the 26 strip. That noise is exactly what the old floating bar suffered from.
+  - Screens keep 94 + `space[20]` under their last row. Toasts sit `space[12]` above the band, as today above the bar.
+- **Pressed**: tabs scale (0.88), as now. **The + darkens to `state.pressed.action` — confirmed**: a blue fill has a darker tier (§1, by surface; 56 ≥ 44, by size). The shadow and frame are unchanged.
+- **Active tab: it still reads; nothing added.** The eye compares blue against two greys inside the body, and the + doesn't enter that comparison (the shared ink frame and shadow don't change this): a filled 56 square isn't the same kind of thing as a 20 glyph. Blue on both is §1's own pairing (the primary action, the current place).
+- **Reach**: the + spans x 324–380 and bottom 848 on 874, centre (352, 820). That's under a right thumb, with 44+ in both directions. Its corner is 22 in and 26 up, clear of the display's rounded corner. Check one-handed on the 15 Pro Max, as with A1.
+
+### For Code
+
+- E: two views in `FooterNav`, both with ink frame and `shadow.floating`, plus the band. Simplest band: end the scroll viewport 94 above the edge, so the fixed `DotTexture` shows through with nothing new drawn. §9 Bottom bar is rewritten from `handoff-round23.md` §1.
+- B: `TryNextCard` under the DNA card on Home. Four variants, dismiss line with Undo, routes as listed. The tag lead needs Records search to match tasting-note tags.
+- C: 6b's rows by app-empty state, five sheets, the 8n text action, export file name.
+- A2: show the chips on 3c, 44 tall.
+- No new tokens.
+
+---
+
+## Round 22 · Quieting the borders (2026-11-07)
+
+Mock: Turn 23 is new — **24a** 5a as now, **24b** 5a with quiet frames, **24d** 5a as the reference does it, **24c** the rule, **24e** pressed states. Nothing earlier is edited.
+
+**Revised 2026-11-07 after measuring the reference** (Uryu's screenshot): frames drop from `border.medium` to `border.muted`, and 24d / 24e are added.
+
+**Decided 2026-11-07 (Uryu): 24b.** Controls stay ink; 24d is not applied. Build spec: `handoff-round22.md`.
+
+**Follow-up (Uryu's comment on 23b, 2026-11-07):** Home's top block is now one panel (raised, quiet frame) and the total drops to a new `numeral.lg` 64 / 52; the stats lose their hairlines. 23b / 23c redrawn; spec in `handoff-round22.md` §5.
+
+### For §1 (replaces nothing; sits beside Shape's width rule)
+
+> **Border colour: who gets ink (added 2026-11-07).** Width says what an edge is (§1 Shape: 2 = a box's outline, 1.5 = an internal divider or a weak frame). Colour says whether the box acts. The two are independent: every combination keeps its width.
+> - **Control → ink** (`border.strong`). A box whose whole body is the thing you press and which holds nothing but its own label, glyph or value; it acts where it is (commits, types, toggles, sets, adds). Buttons, icon buttons, text and search fields, switches, unchecked checkbox and radio markers, Add buttons, steppers. The slider keeps §9's `text.secondary` track frame, also full weight.
+> - **Container → quiet** (`border.muted`, 2px). A box that encloses information or other things: cards, form sections and FieldRow groups, list blocks, notices, the photo frame, a sheet's top edge — **including a whole card or row block that leads to another screen.** Leading somewhere is the chevron's job (§1 Tap affordance), not the frame's.
+> - **Chrome edges → quiet** (`border.muted`): the bottom bar's top rule, a fixed foot panel's top rule.
+> - **Pressed**: unchanged (§1 Pressed). The fill answers: rows `state.pressed.row` out to the frame, light controls `state.pressed.surface`, primary `state.pressed.action`. **No frame ever changes colour on press**, pale or ink.
+> - **Unchanged**: options (selected = fill of its role; unselected = 1.5 `border.muted`), error frames and `state.error.shadow` (brown, their own role), badges and stamps, thumbnails' 1.5 edge, hairlines, every dashed line (§8).
+> - **The test**: does it act where it is, holding only its own label? Ink. Does it hold things, or go somewhere? Quiet.
+> - **Shadows follow controls only.** §7's three tokens are already button tokens; a container never carries one.
+> - **Why**: when cards and buttons share 2px ink, they look alike and nothing leads. Ink is a promise that pressing *this* does something here.
+
+### Answers
+1. **Colour, not width: agreed.** A 2px pale frame and a 2px ink frame are the same structure. Changing widths too would break the one rule that has held on every board, and 1.5 is already taken by dividers and weak frames.
+2. **The colour: `border.muted` #C8BCB4**, no new value. Measured on the reference: one frame colour (#CCC0AF) on everything, 1.55:1 on its ground. `border.muted` is that level on ours (1.60 on ground, 1.82 on raised), ΔE00 4 from it. (My first pick, `border.medium` at 2.05, was heavier than the reference.)
+   - **Not lower.** The paper's dots are 1.25:1 and the hairlines inside cards 1.23–1.39; below about 1.5 an edge reads as texture. No new colour is proposed because the reference's level already exists in the palette and there's no room under it.
+   - The frame is only 1.31:1 above its own hairlines; the width (2 vs 1.5) keeps them apart.
+   - `border.muted` also stays the unselected option's outline (1.5). Same colour, same meaning: nothing is pressed or chosen there yet.
+3. **Rows that are both: quiet.** A row opens a screen; it doesn't act in place, and it already has the chevron and the press fill (`state.pressed.row`). Rows inside a list have no frame of their own anyway (Round 9); what goes quiet is the block around them. Keeping those blocks ink would put ink back on most of the app.
+4. **Shadows: they already follow the split.** Of the mocks' ink shadows, all sit on buttons except the superseded floating tab bar (already off in the build), Welcome's brand graphics (out of scope) and **8d's suggestion card (5px), which loses it.** Error shadows stay.
+5. **Dashes: unchanged, confirmed** — on today's §8. The brief's examples are retired: `border.addSlot` was removed 2026-10-18 (add entries are buttons) and `axis.rail.derived` 2026-10-11 (AxisReadout has no frame, so it can't be the reference for "quiet"; the reference's own level is: `border.muted`). Dashed = empty, or two parts of one block; never pressable, whatever its colour.
+6. **One thing 24b exposes**: with the cards quiet, 5a's dashed photo slot is the heaviest container on the screen. It's already drift against §8 (a pressable add entry) and hidden at this stage; when it returns, it's an Add button.
+7. **5a was the right screen**: star card, segmented options, a FieldRow card, a foot panel and two buttons in one view. In 24b only close, the selected option, Save and Add tasting note keep ink.
+8. **What the reference does that 24b doesn't (24d).** It frames its buttons exactly like its cards; weight comes only from the filled primary and the selected state (a teal frame at 3.9:1). 24d draws that on 5a. **My recommendation is 24b**: the reference is a desktop page you read, 5a is a form you finish with a thumb; a secondary button framed like a card has neither the frame nor the fill §1 reads as "pressable", and close is the only way out of the sheet. Judge both on device.
+9. **Pressed (24e): nothing new.** Rows take `state.pressed.row` out to the card's frame; light controls `state.pressed.surface`; primary `state.pressed.action`; the shadow stays (§1 Pressed, 2026-10-06). The frame never darkens: a card turning ink under the finger would blink into a button. In 24d's pale controls the pressed fill is only 1.31:1 against the frame, one more reason for 24b.
+
+### For Code
+- §1: add the rule above.
+- Tokens: no new value. A semantic alias would help: `color.border.container` → `border.muted` (and `border.strong` read as "control").
+- Containers' 2px frames → `border.muted`; bottom bar and foot panels' top rule → `border.muted`.
+- 24b decided: controls stay ink. Full spec in `handoff-round22.md`.
+- 8d's suggestion card: no shadow.
+- Check on device first (24a / 24b).
+
+---
+
+## Round 21 · build questions (2026-11-06)
+
+Answers to "Round 21 built: what didn't map" in `design-brief-next.md`. Mock: 23b, 23c, 23g and 6a are edited in place; `handoff-round21.md` is corrected.
+
+1. **One coffee-bag glyph: 6a's `beanBag`.** Use it for the Bags stat too, and drop `coffeeBag`. Two different bags for the same thing (the bags on my shelf) would read as two things. 23b / 23c now draw 6a's shape; `assets/icons/beanBag.svg` (my new shape) is withdrawn.
+2. **`store`: the mock's version is final** — with the door, `currentColor`. The file I sent has the same paths as 23b; what reached you was not that file (a downloaded copy also picked up a `<metadata>` block, so something along the way rewrote it). Take these paths, or the copy in the project's `assets/icons/store.svg`:
+   `M3 9l1.5-5h15L21 9` · `M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z` · `M5 12.5V20h14v-7.5` · `M10 20v-5h4v5`
+3. **`bag_id`, and yes, add `bean_roasted_at` to the fallback key** (name + roaster + roasted date; a null date is a value like any other). "bean_id" in the handoff was my error.
+4. **5c: all four axes, fixed order. Confirmed.** The card is the Taste DNA card, and §9 keeps its four rows so its height never changes. "Only the moved axes, largest first" was the old per-axis lines' rule; the tags took that job.
+5. **Four digits: the numeral wins.** The total is the one number the block exists for, so it never shrinks or wraps. In order:
+   - the stat column hugs its content instead of a fixed 150;
+   - the numeral ↔ column gap drops from `space[20]` to `space[12]`;
+   - if it still doesn't fit, the three stats move under the numeral as one row (icon, label, value, ×3), above the strip.
+   Not drawn yet; I'll draw it when the first dogfood log nears 1,000.
+6. **2c: `gap.row` (8). Accepted;** 23g fixed.
+7. **6a: yes, the reason reaches 6a.** "Week streak" becomes **Cafés** (ink, not brown: it's a plain count like the other two), so 6a and Home count the same things: Cups, Bags, Cafés. 6a's "Logging since Jan 2026 · 34 weeks" already says how long, without scoring gaps. 6a edited.
+8. **Reset: confirmed by Uryu (2026-11-06).** Cups total, This month, Bags and Cafés do not reset with Taste DNA. They count records, not the profile; reset only rebuilds the profile.
+9. **Month strip, screen reader** (yours, not in the handoff): read as one element: **"6 days with a cup this month, out of 8 so far."** Then the stats as their own elements. Don't list days.
+
+---
+
+## Round 21 · Taste DNA colour, change tags, Home's top block (2026-11-06)
+
+Mock: Turn 22 (23a–23h) is new. Nothing earlier is edited; 23a–23h supersede the axis drawing on 4a / 1b / 5c / 2c / 8f / 11a and the per-axis lines on 5c / 2c. The Coffee Days screenshots did not reach me; this is worked from the brief.
+
+### 1. Axis colours (23a)
+**Four new values, identity only.** `color.axis.*`, in `tokens/colors.css` with the rule beside them.
+
+| axis | token | hex | name | on track / card / paper |
+|---|---|---|---|---|
+| Acid ↔ Bitter | `color.axis.acidity` | #7C7D0F | Citron | 3.08 / 4.28 / 3.78 |
+| Body | `color.axis.body` | #614A87 | Plum | 5.21 / 7.24 / 6.40 |
+| Roast | `color.axis.roast` | #9D3D36 | Ember | 4.69 / 6.52 / 5.75 |
+| Sweetness | `color.axis.sweetness` | #AE5A84 | Rose | 3.22 / 4.47 / 3.95 |
+
+- **They join the star, outside §1's three roles.** They say which axis and nothing else: not good or bad, not entered or computed, not in force. **Used nowhere else** — no chart, chip, category or emphasis outside the four axes. **Never as text**; labels stay `text.muted`.
+- **Not from the palette**, because every free hue there already has a job (brown entered, blue in force, gold the star, greens ink and freshness, neutrals computed). Borrowing one would say that job.
+- **Suited to the axis**: citron (citrus; the olive holds the bitter end), plum (weight, as in "full-bodied"), ember (heat; red, because brown means entered), rose (ripe fruit; never on Bitter).
+- **As a set**: one muted ink weight. Pairwise ΔE00 20–58; weakest under deuteranopia Acid / Roast 11.7, where labels and fixed order carry identity.
+- **§9's measurement**: the neutral fill was 1.67:1 on the track; these are 3.08–5.21:1, all over 3:1. **The coloured fill can carry the reading** (direction and how far). **The marker stays**: at 50 there is no fill, near 50 a sliver is not a reading, and the marker now carries the role.
+- **Fill = which axis, marker = what kind of value.** Computed: marker `text.muted` (unchanged). Entered (2c, 11a): marker `border.accent`. §9's brown fill on 2c is retired.
+- **The key**: 12 × 4 (the meter's height) before the left pole on every axis, so the axis stays named at 50 or when not noted.
+- **5b**: only the key, hung 20pt left of the 260 track (Low / High sweetness still fits as measured). Handle, track and dots unchanged, so brown keeps meaning "entered". Roast's key is ΔE00 18.5 from the handle's brown.
+- **5c's ghost**: unchanged (`border.muted` fill and marker underneath); the current fill is the axis colour on top.
+- **8f**: the fixed order, Acid, Body, Roast, Sweetness. The mock's Sweetness-above-Roast was drift.
+
+### 2. Change tags (23e, 23f)
+- **Tag**: key + `‹pole label› +N`, `label.eyebrow`, `badge.bg.neutral` / `badge.fg.neutral`. N is always positive: the pole carries the direction. Uses the pole labels printed on the axes.
+- **Order**: the axes' fixed order, matching the readouts.
+- **Light body +4 / Light roast +5**: the problem does not return. It came from comparatives without nouns; a tag always carries the full pole name, and the keys differ.
+- **First value**: tag `Starts at ‹step name›`, no number. Left out of the sentence, as before.
+- **Only first values**: the sentence becomes "My taste DNA has its first ‹axis› reading." ("first Roast and Sweetness readings").
+- **Nothing moved**: no tags; the current line unchanged. Under 1 point: no tag (the sentence's own threshold).
+- **The summary sentence survives.** It is the only place the result is said in words, it reads first, and it ranks (tags keep axis order). Its phrases are unchanged ("-bodied", "toward … roasts").
+- **Removed**: the "Moved N points toward ‹pole›" lines under each axis.
+
+### 3. Home's top block (23b, 23c)
+- **Total**: `numeral.hero` 96, as asked. The This week panel, its weekday strip and "A slow start is still a start." go.
+- **Month strip**: a 6pt square per day (`size.dot.bullet`). Cup day brown (as the weekday strip), past day without `border.muted`, days to come `border.subtle`, today underlined. No label.
+- **Stats** (right column, beside the numeral), each with a 16pt icon: calendar, bag, storefront (Cafés: a storefront, since a cup would read as a cup count):
+  - **This month**: cups since the 1st.
+  - **Bags**: distinct bags across my cups; a deleted bag counts through its cups' copy (bean name + roaster). Not origins: no form asks for origin yet.
+  - **Cafés**: distinct cafés my Barista cups point at (`places.kind = cafe`). Stores don't count. 0 shows as 0.
+  - **No week streak.** No rule exists, and I'd not write one: a streak counts what you missed, against Home's tone.
+- **Gain: 32pt** (DNA card 398 → 366; block 189 → 157). The numeral and its label are 103 of it. More would mean a smaller numeral, which has no text style between 96 and 40, so it's a decision for you.
+- No Try next row and no "3 of 5 cups" on the card (V2, as 21d).
+
+### For Code
+Full spec with a token check: `handoff-round21.md`.
+- `color.axis.{acidity,body,roast,sweetness}`: AxisReadout fill and the 12 × 4 key only; AxisSlider gets the key only. Note them as identity colours in §1 and §2.
+- AxisReadout: entered tone keeps the `border.accent` marker; fill = axis colour in both tones.
+- 5c / 2c: tags replace the per-axis lines; sentence kept; "first ‹axis› reading" for first-only; no tag under 1 point.
+- Home: new top block (23b); the stats' counting rules (23c).
+- 8f: fixed axis order.
+
+---
+
+## Round 18 · My words leaves Taste DNA, and what's left in V1 (2026-10-31)
+
+Mock: Turn 21 (22a–22c) is new. 21b, 21d, 8f, 6a, 7a / 7b, the superseded 8g and 8h are edited in place.
+
+### A. Report
+1–5. **OK. No problems.** The tags and My words were always meant to do different jobs, and this makes that explicit.
+6. **OK.** Hiding it is right. The line stays "Counts from today. Older cups stay in Records."
+7. **OK.** B8 answers how it looks.
+8. **OK.**
+
+### B. Answers
+**1. 8g: stays inside "Flavour tags nudge, sliders decide", so 8g keeps seven rules.** Under it:
+> Peach leans brighter and sweeter. Tags make up at most a third of an axis. They're picked to describe the taste; My words is written to read back, so it stays out.
+
+- "Picked" and "written" carry the contrast. "To read back" says what My words is for, so leaving it out reads as a division of roles, not a limit.
+- Not its own rule. An eighth bold line about something that never counts would make it look bigger than it is. Remove PROVISIONAL.
+
+**2. 8f: the heading alone, no sub-heading. Confirmed.**
+
+**3. The mock: all four removed.**
+- 8f: "What you keep saying" is gone.
+- 6a: the My words row is gone.
+- Superseded 8g: "Read my words" is gone. Reset still shows on that superseded board; A6 holds.
+- 7a / 7b: the update is now "Log your café cups" (Round 16's Barista), so the notification screens keep a real example. This is mock content only, not a request to send that notification.
+
+**4. 8h: keep it, marked.** Your wording is on the board.
+
+**5. 5b's My words: my reading. No change asked for now.**
+- **The placeholder points at tasting.** "Cooled down it turned into iced tea…" describes the taste, which is the flavour tags' job, so it teaches the wrong use. When it changes, it should show a memo about the brew or the day, e.g. "Ground one step finer. Rainy morning at home."
+- **The eyebrow is fine.** "My words" says whose they are, not what they're for.
+- **It reads as optional enough.** It's the last field, has no required mark, and Save doesn't wait for it. Adding "optional" would only add noise.
+
+**6. Last shift: the plain section. Confirmed, and 21d is fixed.** The #FFF8F1 frame was my drift. §8 has no honest way to set it apart, since dashed means add or empty. The 10-caps heading is enough.
+
+**7. Drink sheet's Add row: confirmed as you describe.** The + marker, `Add "‹typed›"`, no meta, spaces trimmed. Not drawn: it's 20b's row without the meta.
+
+**8. 11a without an address (22a): the row drops its meta line, nothing more.**
+- No "Address unavailable", no icon, no retry. The address only tells two cafés apart, so its absence isn't worth a word.
+- It's the same row for all three causes (offline, no answer, typed by hand).
+- While fetching, nothing is shown. The line fades in (opacity, 150 ms) if the address arrives.
+
+**9. 15b Locked in (22b, 22c).**
+- Body:
+  - "Your profile has locked in. One cup no longer swings what it has learned."
+  - "It still moves as your taste does: recent cups count for more than old ones." (yours, kept)
+- "What it has learned" is about the profile, not every axis, so it holds when Roast is first noted after the lock.
+- Progress box:
+  - every axis at 10 or more: "From 147 cups."
+  - an axis under 10: "From 147 cups. Roast has 3 notes, so one cup can still move it."
+  - two axes under 10: "Body and Roast have under 10 notes, so one cup can still move them."
+- There is no "N more to lock in" here, since the profile is already locked.
+
+**10. 5e: "Add a product" and "Product name". Confirmed.** They pair with "Add a bag" and "Café name" / "Drink name".
+
+### For Code
+- 8g: the tags rule copy (B1). Remove PROVISIONAL.
+- 11a: an address that can't be fetched means no meta line. It fades in if it arrives (B8).
+- 15b: the Locked in copy and the box rule (B9).
+- 5e: copy confirmed (B10).
+
+---
+
+## Round 17 · How my DNA is built (2026-10-31)
+
+Mock: Turn 20, 21a–21e. 8g as first drawn is superseded.
+
+### A. Report
+1. **OK. Yes, "no results" needs a line**, in the same slot as Round 16's states, with the Add row under it:
+   - location known: **"No cafés within 5 km match. Add it by name below."**
+   - location off: **"No cafés on the map match. Add it by name below."**
+   - My matching cafés still show. The line only shows when the map returned nothing.
+2. **OK, and thank you: the table is right.** All of it is answered in B1. One more problem from the same cause: **15b's body says "At 5 cups it locks in."**, which V1 contradicts. Remove that line, and change "With only a few cups" to **"With only a few notes"** (21e).
+3. **OK.**
+4. **OK**, except 8f's bar (B3).
+
+### B. Answers
+**1. Rules (21b): seven, not five.** Two lines split off from yours.
+
+| Bold line | Under it |
+|---|---|
+| Higher-rated cups weigh more | A 5★ cup counts three times a 3★. Low ratings count too: they record what you tasted, not what you liked. |
+| Recent cups weigh more | A cup counts half as much every three months. Rated the same, today's cup pulls four times as hard as one from six months ago. |
+| Each axis on its own | A cup that skips an axis is left out of it, never counted as the middle. |
+| Roast is the roast you tasted | Only your Roast slider moves it. The roast level on the bag never does. |
+| Flavour tags nudge, sliders decide | Peach leans brighter and sweeter. Tags make up at most a third of an axis. Your own words don't count. |
+| Ten notes per axis to lock in | Ten slider notes on each axis; tags don't count. Once locked in, it stays locked unless you delete cups. |
+| It moves only when your cups do | Logging, editing or deleting a cup moves it. Time alone never does. |
+
+- Roast is its own rule because Uryu wants it on the page. As a bold line, it can be found.
+- "Moves only when your cups do" left the recency rule. That rule is about weight, not timing.
+- "Every three months", not "after": the weight keeps halving.
+- The order: how a cup weighs (1–2), then what it moves (3–5), then when the profile changes (6–7).
+- Your renaming and your list of things left out: **OK.**
+
+**2. My numbers (21a, 21c): drawn.**
+- The heading **"My numbers": OK.**
+- The framed block, one row per axis: the name on the left, the count on the right in tabular figures. "7 more to lock in" goes on its own line under the count, in accent (`text.accent`): it is the only thing on the page that asks for something. "Not noted yet" is muted.
+- "Tags are at their limit here." goes under the row, muted. **Only at the limit.** A share on every row is a number with nothing to do about it.
+- The cups line closes the block, under a 2pt rule, since it covers all rows.
+- The locked-in state (21c): "3 notes" with no second line. **OK as built.**
+
+**3. 8f's footer: drop the bar in V1 (21d).** A raised bar keeps actions in reach while scrolling. A link to an explainer doesn't need that, and one link alone in it looks unfinished. "HOW IT IS BUILT" becomes the page's last item, after Last shift, as an InlineAction. The bar comes back with Try next in V2, with this link at its left. Reserving it now gains nothing.
+
+**4. 15b (21e): confirmed.** It sits left-aligned under the progress box, 2pt below it, above "Got it". Keep the progress box: it is the one line here that changes. Plus A2's copy fix.
+
+### For Code
+- Café sheet: the no-results lines (A1).
+- 15b: remove "At 5 cups it locks in.", and change "few cups" to "few notes".
+- 8g: seven rules, as in B1. My numbers as 21a / 21c.
+- 8f: remove the footer bar. The link goes at the end of the content.
+
+---
+
+## Round 16 · Barista (2026-10-30)
+
+Mock: Turn 19, 20a–20g.
+
+### A. Report
+1. **One problem, in the mock: 5d's café meta.** It read "Fuglen Tomigaya is 250 m away — or type a new one.", which is the nearby guess A2 rules out. Now: **"Pick it from the map or type its name."** The rest of A1 is OK.
+2. **OK.** 5a's Café details heading now reads SET in the mock.
+3. **OK.**
+4. **OK, for 5a only.** 11a's Café row shows the short address instead (see B5).
+5. **OK.**
+6. **OK, with one order:** open the sheet first, then the system prompt over it. The café list is then the reason in view.
+7. **OK.**
+
+### B. Answers
+**1. Café sheet (20a, 20b): confirmed as built.**
+- Rows and meta: as listed. Nothing is selected on a new cup.
+- **No headings.** The first part of the meta tells them apart: a visit count leads my rows, an address leads the map's.
+- My cafés stay latest visit first, never re-sorted by distance.
+- Add row: a + marker in place of the radio, with the meta **"Saved by name only"**.
+- Placeholder **"Café name": OK.**
+
+**2. When the map can't help (20c–20e).** One muted line under the field: body.sm, `text.secondary`.
+- Searching: "Searching the map…" **OK.** Show it after about 300 ms. My matches and the Add row show under it at once.
+- Can't search: **"Can't search the map right now. Add it by name below."** The line only shows after typing, so "Type the café's name" pointed at a step already done.
+- Location off: **OK, plus an InlineAction "Open Settings"** at the end of the line. After a No, Settings is the only way back. With Restricted, show the line without the link. My rows drop the distance.
+- Prompt: **"Shows the cafés around you first when you pick one. Your location is never stored."** iOS already titles the prompt with the app's name.
+
+**3. Drink sheet (20f): OK**, with one change. The placeholder is **"Drink name"**, to pair with "Café name". "Add a drink" and "Last time here" are OK. Only the first row has a meta. The pre-filled drink shows selected.
+
+**4. 2c for a Barista cup: show nothing. Remove "What I logged"**, as for Packaged (Round 7). The title and sub line already say the drink and the café.
+
+**5. 11a (20g): confirmed**, with one change. The Café row's meta is the **short address only**. Distance from where the phone is now says nothing about a past cup, and "Nth visit" changes meaning once the café changes. The Drink row has no meta. An older cup with no café saves without one.
+
+**6. 2b: yes, group by café under Group by Roaster.**
+- A café is who made the cup, as a roaster is who made the beans. Café groups take their place among the roaster groups by the same rule (first cup under the sort), and sort by name under "Roaster A–Z".
+- Barista cups with no café go into **"No café"**, next to "No roaster".
+- Under Group by Brewer, Barista cups stay one "Barista" group.
+- Packaged stays last.
+
+**7. Shelf rows: no chevron.** The chevron rule covers blocks. A shelf row is an item in a list of things, like a Records row or a My beans row, and these open their thing with no chevron. Add the case to §1 next to §3.1's two lines. "See all gear & beans ›" keeps its chevron.
+
+**8. Backup row: "Export everything" / "Cups, bags and gear, as JSON".** "Back up" promises a restore that doesn't exist. Use the drawn "Last saved…" line when the real backup comes.
+
+### For Code
+- 5d: the café meta copy (A1).
+- Café sheet: + marker and meta on the Add row. Copy in B2 and the Settings link.
+- Drink placeholder: "Drink name".
+- 2c: drop "What I logged" for Barista.
+- 11a: Café meta = short address.
+- 2b: café groups and "No café".
+- 6b: Backup copy.
+
+---
+
+## Round 15 · Search and bag / gear pages (2026-10-28)
+
+Mock: Turn 18. 18a–18f and 18x are search; 19a–19c are the pages.
+
+### Part 1 · Search
+**1. Empty state (18a, 18b)**
+- **Group order:** Kind, Rating, Flavours I use most, then Recent searches.
+  - The two fixed groups come first, so they never move.
+  - The data-dependent groups go below them.
+- **Kind drops "All".** In search it would just be the archive, which 2a already is.
+- **Flavours:** the top 6 by count, with at least 2 cups each. Chips are lower case.
+- **History:** the last 5 typed terms, as rows (clock icon + term) rather than chips.
+  - "Clear" sits at the heading's right edge.
+  - It acts at once, with no confirm.
+- **First use:** groups with no content don't render, headings included.
+  - Kind and Rating are always there, so the screen is never blank.
+  - No hint line.
+
+**2. While typing (18c)**
+- **Hits:** up to 3, mixed kinds.
+  - Each is a 46 thumbnail + name + a meta line that starts with the kind (`Bag ·`, `Cup ·`, `Gear ·`), and ends in ›.
+- **Terms:** a magnifier + the term, with the typed part in ink and the completion muted. No ›.
+- A hairline separates the two halves. There are no headings.
+- **Term rows don't show a kind.** A term searches everything and lands on ALL.
+
+**3. Results (18d–18f)**
+- **Text query:** five tabs, using Home's tab component on a hairline.
+  - ALL has no count.
+  - Tabs with 0 still show their 0, so the tab row is stable.
+- **ALL order:** Beans, Gear, Words, Cups. Empty sections are omitted.
+  - Rows shown: Beans and Gear 2, Words and Cups 3.
+  - "More cups · N ›" switches tab; it does not push a new screen.
+- **BEANS includes finished bags,** marked `finished Mar 2` in the meta line.
+- **Rating:** no tabs. Confirmed.
+- **Kind: confirmed archive shape** (month groups, 2b's Sort / Group). Also **no tabs, not even CUPS alone**: one tab isn't a choice. Rating uses the same archive shape.
+
+**4. The field (18x)**
+- **Kind and Rating are a block that can only be removed.** They are filters; editable text would turn them into a string search.
+- **A flavour is plain, editable text.** It really is a word query.
+- **This needs a new component, a FilterToken:**
+  - 30 tall, ink fill, labelCaps, × with a 44 hit area.
+  - × or backspace removes it.
+  - Typing replaces it. One filter or one query at a time; no mixing this round.
+
+### Part 2 · Pages (19a–19c)
+**5. Title = name.** 40/41 serif, 2 lines, then an ellipsis, as on 2c.
+- A sub line goes under it: roaster · size, or category · added date.
+- The back button is ‹, not ×.
+- The header "Cups logged" count is removed; the cup list carries it.
+
+**6. Cup list.** Proposed order: status → cups → details → end actions. This differs from the brief's "list at the bottom":
+- The page is for looking.
+- The form is about 480px tall and would push the cups below the fold.
+
+List details:
+- 5 rows, then "All N cups ›". That opens search with the bag or gear as a block, in archive shape.
+- **Row:** 46 thumbnail; date · method as the title; flavours; then rating + time of day. The bean isn't repeated on its own page. Each row goes to 2c.
+- **Empty:** "No cups with this grinder yet." + "Log a cup with it ›" (Log a cup, with the item preselected).
+- **Kettles and scales have no cup list** (B5).
+
+**7. Save is absent until the first edit.**
+- On the first edit a pinned bar rises over `motion.expand`. Height leads and opacity follows.
+- The scroll area's bottom inset grows by the bar's height, so nothing is covered.
+- Reverting to the stored values removes the bar.
+- Back with unsaved edits → the existing discard sheet.
+
+**8. Bottom order:** Finish bag (2px, a normal step), then Delete this bag (hairline), then the Save bar outside the scroll. Gear: Remove from my gear · Frees 1 slot.
+
+### Round 13 E3 / E4
+- **E3: still applies, moved.** Search has no header, so Kind and Rating searches show a count line ("14 cups") next to Sort / Group. Text queries carry their counts in the tabs.
+- **E4: still applies.**
+  - Filter with no cups: "No 2★ cups yet." + "Ratings you've given most: 3★ and 4★."
+  - Text with no matches: no tabs, "Nothing matches “xyz”."
+  - Empty tab: "No gear matches “guji”."
+
+### For Code
+- **2a:** remove the chip row (header, search, list).
+- **New component:** FilterToken.
+- **New data:** history storage (last 5 typed terms), and flavour counts per user.
+- **New lookups:** cups by bag id and by gear id.
+
+---
+
+## Round 15 · addendum (2026-10-27)
+
+Answers the items collected after Round 15 went out, so they can leave `design-brief-next.md`.
+
+**C8, as rewritten: accepted. 17c / 17d now follow it.**
+- Gear's first-row rule is gone. The rows start right under the underline on their own padding.
+- Beans' first card sits `gap.section` (12) under the underline.
+- 17c's thumbnails are 46.
+- Underlines fading with the scroll, labels switching at the midpoint, and the slot count crossfading over `motion.expand` are all right. A two-state tab that flickers on tap was a real defect.
+- I see no problem.
+
+**B3: the conclusion holds, the reason is corrected.**
+- Home's shelf rows are information and open nothing. That is right: they are recognition rows, not a list to work from.
+- Full names are one tap away through "See all gear & beans ›", which sits right under the rows. That is enough reach for the one-line exception.
+- Don't add a row affordance.
+
+**B4: yes, I meant Round 11 C.** There is no Round 16 rule; that was my error.
+- The chevron is the only "opens something" sign. It now also covers text actions beside a title (1b's See all, the shelf's See all gear & beans).
+- **5a's "Add tasting note →" keeps →.** It is a button that advances the same sheet, not a link to another place. → is "next step" and › is "go there", so the two stay distinct.
+
+**17a / 17b "Recently sipped" badges: fixed.**
+- The 12 mode and source badges are now `Badge` (`labelEyebrow`, 10 / .16em, 4 / 8 padding).
+- "Ready-to-drink" now reads "Packaged" (D-14).
+- The rest of those rows (58 thumbnail, 16 title) is still the old 2a style. The app's Round 9 rows win, and the redraw is still open.
+
+**Round 13 E1: note added there.**
+
+---
+
+## Round 15 (2026-10-27)
+
+Responds to `uploads/design-brief-round-15.md`. The mock (17a–17d) now follows A, C and E. Changes are listed at the end.
+
+### A. §0 token check
+1. Noted.
+2. **Agreed: `space.20`.** The mock now uses 20.
+3. **Agreed: all three names**, including `component.pageIndicator`. D-51 stays open for 3b / 3d.
+4. **Agreed: all five as built.**
+   - The tab count on `labelCaps` is better than my `meta` (same weight, same baseline).
+   - The status word on `meterLabel` is correct: it *is* the freshness state word.
+5. **Agreed.**
+
+### B. Questions
+**1. Round 7 is right. Round 14's table was my error, not a new decision.** I took the colours from the old 4b drawing and did not check them against 14a.
+- Home uses `component.beanFreshness` as it stands:
+  - The peak band is mint (`#CFDCC8`) in every state.
+  - Resting and past peak share the neutral pair, with a `text.secondary` word.
+  - Green means only "drink now", and past peak is not a warning.
+- 17a / 17b / 17d are redrawn to match.
+
+**2. Agreed: both, and the order.**
+- **Sealed**: the word "Sealed" alone, `beanFreshness.sealed.label`, with no bar.
+- **No roast date**: an empty column.
+- **Order**: after Resting, opened bags first, then oldest added.
+- The TODOs can close.
+
+**3. The shelf rows are an exception to §3.1: one line, with ellipsis.**
+- What Round 14 gets out of this block is that both sides are the same height, so the swipe doesn't jump. A row that grows to two lines breaks that.
+- The shelf only needs a name you can recognise. Tapping the row or "See all gear & beans" shows the full name, and on 17c / 3b / 3d names keep §3.1's 2 lines.
+- For §3.1: add "Home's shelf rows: 1 line."
+
+**4. Yes, switch "See all" to ›.**
+- Round 16's rule says every "go there" action becomes the chevron, and 1b's → was missed.
+- Two actions on one screen should not use two glyphs.
+
+**5. OK: empty, with no Add to a cup.** A cup can't hold a kettle or a scale, so the line would promise something impossible. "Not used" / "Add to a cup" stays for brewers and grinders only (cup count = 0).
+
+### C. Built differently: all accepted
+1. **Accepted: the column grows, with a least width of 84.** The bar stays 84. The mock now uses `min-width`.
+2. Accepted: `gap.tight`.
+3. Accepted: the existing `Badge`.
+4. Accepted: the marker is 2 × 14.
+5. Accepted: `motion.expand`.
+6. **Accepted.** The compact, pinned, collapsing header is right for a pushed screen. 17c / 17d's scrolling-away header is a mock simplification.
+7. **Accepted.** Each side keeps its own height on the full screen. Fixed heights only matter on Home, where the block sits above the nav.
+8. Accepted: 46 thumbnails and 3b's first-row rule.
+9. **Accepted: always gear.** Remembering the side would make Home open in a different state from day to day for little gain.
+10. **Accepted.** An empty side shows its add button in place of the three rows. The indicator and "See all gear & beans" stay.
+
+### D. §4 gear usage
+Confirmed. No issues.
+
+### E. Mock fixes
+- **17c note**: "3px" is now "2px", and "4 / 5 open" is now "3 / 5 on the shelf". Fixed.
+- **17b bars**: the window is now mint (see B1). Fixed.
+- **17a "Recently sipped" rows**: agreed, these are stale. The app's Round 9 rows win. Not redrawn this round.
+
+### F. Reports
+1. **2a pinned chips and headings: no problem.**
+   - Filling the pinned block with `surface.ground` plus the dot pattern, aligned to the page, is the right answer. It reads as the page, not as a new band.
+   - The heading owning its hairline is also right.
+2. **No header rule: matches the Round 14 mock.** No problem.
+3. **Compact chips at 32 with hit-slop: no problem.**
+   - The 44 touch target is kept, and one line at 375 / 402 is worth it.
+   - `inset.controlCompact` and `gap.controlCompact` should go into `tokens.ts` with a note: "chip rows that must hold one line". Otherwise the next chip row won't know which inset to pick.
+   - This changes Round 13 E1. I'll note it there.
+
+### Mock changes this round (17a–17d)
+- Tab gap is 20. Label-to-count gap is 4.
+- Tab label and count are `labelCaps`. Inactive count is `text.muted`.
+- Slot count is `labelCaps` / `meterLabel`.
+- The status column is `min-width: 84`. Status word is `meterLabel`. Gear line 2 is `bodySm`.
+- The Default badge is `Badge` (`labelEyebrow`, 4 / 8).
+- The marker is 2 × 14. The indicator transition is `motion.expand`.
+- Bean colours are Round 7 (B1).
+- The kettle's status column is empty (B5).
+- 17c / 17b notes are corrected (E).
+
+---
+
 ## Round 13 (2026-10-23)
 
 ### A. Round 12 build
@@ -22,7 +754,7 @@ Noted. Dropping 8l's matched tag is fine: the row's lines carry the match. 6a at
 ### E. 2a's category chips
 1. **All OK as listed.**
    - Labels: All / I made it / Barista / Packaged.
-   - `SegmentedControl`, 44 tall, the same row as 8l's.
+   - `SegmentedControl`, 44 tall, the same row as 8l's. **Superseded by Round 15 F3:** 2a's chips (and 2b's Group by) are compact chips, 32 tall, using `inset.controlCompact`, `gap.controlCompact` and a 6pt hit-slop to keep 44. 8l's scopes stay at 44.
    - One at a time. Each launch starts from All.
    - The chips and 2b combine. 8l doesn't take the chip.
    - One addition: when switching chips, keep the list's scroll position at the top. Each chip shows a different list.

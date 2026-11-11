@@ -26,14 +26,17 @@ import Text from './base/Text';
  * (decided 2026-10-18, Uryu), and a framed box would read as a marker.
  *
  * Props
- *   items     [{ key, label, meta?, swatch?, badge?, disabled?, disabledHint? }]
+ *   items     [{ key, label, meta?, swatch?, photo?, badge?, disabled?, disabledHint? }]
+ *             photo: a photo's id for the swatch (data/photos.ts)
  *             badge: an inline Badge after the name ("Default", as 4a).
  *             disabled: §1's disabled look (marker border.muted, label
  *             text.muted), no press; its meta line must say why (§1: a
  *             disabled option shows its reason), disabledHint for VoiceOver.
  *   selected  key or null
  *   onPick    (key) => void
- *   add       optional { label, onPress }
+ *   add       optional { label, meta?, onPress }: meta, a line under the
+ *             label as an item's (the café sheet's "Saved by name only",
+ *             Design Round 16, B1)
  *   framed    false when the container draws the frame (the search sheet)
  */
 const MARK = size.checkbox - 2 * shape.borderWidth.box - 2 * space[4];
@@ -56,7 +59,7 @@ export default function RadioList({ items, selected, onPick, add, framed = true 
             accessibilityLabel={item.meta ? `${item.label}, ${item.meta}` : item.label}
             style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
             <View style={[styles.marker, off && styles.markerOff]}>{on ? <View style={styles.mark} /> : null}</View>
-            {item.swatch ? <PhotoPlaceholder size={size.field.height} /> : null}
+            {item.swatch ? <PhotoPlaceholder size={size.field.height} photo={item.photo} /> : null}
             <View style={styles.text}>
               <View style={styles.nameRow}>
                 <Text variant="title" color={on ? 'primary' : off ? 'muted' : 'secondary'} truncate="name">
@@ -77,14 +80,21 @@ export default function RadioList({ items, selected, onPick, add, framed = true 
         <Pressable
           onPress={add.onPress}
           accessibilityRole="button"
-          accessibilityLabel={add.label}
+          accessibilityLabel={add.meta ? `${add.label}, ${add.meta}` : add.label}
           style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
           <View style={styles.addMark}>
             <Glyph name="plus" token={icon.sm} color={color.text.primary} />
           </View>
-          <Text variant="title" color="primary" style={styles.text} truncate="name">
-            {add.label}
-          </Text>
+          <View style={styles.text}>
+            <Text variant="title" color="primary" truncate="name">
+              {add.label}
+            </Text>
+            {add.meta ? (
+              <Text variant="meta" color="muted" truncate="meta">
+                {add.meta}
+              </Text>
+            ) : null}
+          </View>
         </Pressable>
       ) : null}
     </View>
@@ -94,7 +104,7 @@ export default function RadioList({ items, selected, onPick, add, framed = true 
 const styles = StyleSheet.create({
   frame: {
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
   },
   row: {

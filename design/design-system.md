@@ -32,10 +32,22 @@ Non-negotiable, and each one is a measured fact rather than a preference.
 - **Border style is binary: `solid` or `dashed`.** No dotted, no double.
 - Shadows are **hard**: blur 0, isotropic offset (x = y), single ink colour. No soft or directional shadows exist.
 
+### Border colour: who gets ink (added 2026-11-07, Design Round 22, 24b)
+- **Width says what an edge is (Shape above: 2 = a box's outline, 1.5 = an internal divider or a weak frame). Colour says whether the box acts.** The two are independent: every frame keeps its width.
+- **Control → ink** (`border.strong`). A box whose whole body is the thing you press and which holds nothing but its own label, glyph or value; it acts where it is (commits, types, toggles, sets, adds).
+- **Container → quiet** (`border.container`, an alias of `border.muted`, 2px). A box that encloses information or other things — including a whole card or row block that leads to another screen. Leading somewhere is the chevron's job (§1 Tap affordance), not the frame's.
+- **Chrome edges → quiet** (`border.container`): the bottom bar's top rule, a fixed foot panel's top rule, a sheet's top edge.
+- **Unchanged**: options, error frames and `state.error.shadow`, badges and stamps, thumbnails' 1.5 edge, hairlines, every dashed line (§8).
+- **The test**: does it act where it is, holding only its own label? Ink. Does it hold things, or go somewhere? Quiet.
+- **Shadows follow controls only.** A container never carries one.
+- **Pressed**: unchanged (§1 Pressed). No frame changes colour on press, pale or ink.
+- Ink: Button (primary, secondary, with their `HardShadow`), IconButton, text and search fields, Switch, unchecked checkbox and radio markers, AddButton, steppers, 5b's Search opener; the slider keeps §9's `text.secondary` track. Quiet: every card (Taste DNA on Home / 5c / 8f / 6a, bag cards, the star card, Where it sat, 8g's My numbers and rule list), form sections and picker / search frames, Profile's groups, Edit cup / Edit gear sections, the bottom bar, the foot panel (ScreenFrame's footer, SaveBar), BottomSheet's top edge.
+- Contrast: `border.container` is 1.60:1 on ground, 1.82:1 on raised. That is the reference's level (1.55:1); don't go lighter.
+
 ### Type
 - **Two families only**: `Archivo` (sans) and `Instrument Serif` (serif).
 - **Three weights only: 500 / 600 / 700. Regular (400) does not exist in this design — 0 occurrences across 30 screens. The lightest weight is 500. Do not use 400 on new screens.** Body copy is set at 500 deliberately.
-- **Instrument Serif is used for exactly three things**: screen titles (`display.lg`, `display.sm`), statistics and numerals (`numeral.hero` for the cup count, `numeral.inline` for ratings, times like "08:00", temperatures like "92°"), and the tasting-note input field (the single italic exception). **It is never used for** body copy, labels, buttons, chips/badges, list-row titles, form labels or navigation — all of those are Archivo.
+- **Instrument Serif is used for exactly three things**: screen titles (`display.lg`, `display.sm`), statistics and numerals (`numeral.lg` for the cup count, `numeral.inline` for ratings, times like "08:00", temperatures like "92°"), and the tasting-note input field (the single italic exception). **It is never used for** body copy, labels, buttons, chips/badges, list-row titles, form labels or navigation — all of those are Archivo.
 - **No italics anywhere in the app** (decided 2026-10-12, on device). The mocks' one italic, 5b's My words, is set upright (`text.note`). Do not use italics.
 
 ### Spacing
@@ -55,7 +67,7 @@ Non-negotiable, and each one is a measured fact rather than a preference.
 - **A frameless whole row goes to `state.pressed.row` (2026-10-18, on device)**: list rows (Records, Recently sipped, the pickers' and search sheet's rows, FieldRows), "Manage my beans", My beans' card info and "Finished bags". The ink at 6%, laid over what is under it: #E8E2DE on ground, #F2F0ED on raised — the smallest step that still shows, low in chroma, from the app's own ink, and the ground's dots show through. `surface.muted`'s beige read loud on a row. **The fill bleeds past the content to its container's edges**: a row on the screen gutter fills the screen's width; a row in a card fills out to the card's frame (and to its top or bottom edge where it is the first or last part). The content, and a list's header hairline, keep their width. Framed controls (Button, IconButton, AddButton, SegmentedControl, chips, ShelfBlock's tabs, the star disc) keep `state.pressed.surface`: their frame carries the shape.
 - **Surface → darken.** **Nothing else changes**: border, label/ink, glyph and `HardShadow` stay as they are. The change is instant (no motion).
 - A fill that is already ink (the selected chip) has no darker tier and does not respond. Pressing it is a no-op anyway. Disabled controls do not respond.
-- Darken applies to: Button, SegmentedControl options, FieldRow, StarRating stars, IconButton. Scale applies to: the bottom-bar tab icons, and the bottom bar's + (an ink square: no darker tier left, below; it showed no change until 2026-10-18). Every tappable component added later takes one of the two by this test; its Step 4 component spec says which.
+- Darken applies to: Button, SegmentedControl options, FieldRow, StarRating stars, IconButton. Scale applies to: the bottom-bar tab icons. The bottom bar's + darkens to `state.pressed.action` since 2026-11-08 (Round 23: a blue fill has a darker tier). As an ink square it scaled, 2026-10-18 to 2026-11-08. Every tappable component added later takes one of the two by this test; its Step 4 component spec says which.
 - **The condition above both tests (2026-10-10): the feedback must be perceptible.** Surface and size choose the means, *provided that means can be seen*. Where it cannot, scale is used:
   - **too small to see a darker fill under the finger**: under 44pt (the axis handle, checkboxes);
   - **no darker tier left**: a fill that is already the darkest, i.e. the ink-filled selected chip of a clearable set (Roast level, Process). Pressing it clears it, so it must respond.
@@ -149,6 +161,11 @@ Non-negotiable, and each one is a measured fact rather than a preference.
   - Stars are a sign that already means something across cultures, and the gold is part of that sign.
   - Turning them brown for uniformity would cost recognisability.
   - This is not an exception: the star brings its own vocabulary.
+- **The four taste axes have identity colours, `color.axis.*`, outside the three roles (Design Round 21, 23a; 2026-11-06).**
+  - Acid ↔ Bitter `#7C7D0F`, Body `#614A87`, Roast `#9D3D36`, Sweetness `#AE5A84`. They join the star: they say *which axis* and nothing else, not entered or computed, not in force, not good or bad.
+  - **Used for the four axes only**: AxisReadout's fill and its 12 × 4 key, AxisSlider's key, the change tags' key. No chart, chip, category or emphasis elsewhere. **Never as text**: labels stay `text.muted`.
+  - Not taken from the palette, because every free hue there already has a job.
+  - On a readout the fill says which axis; **the marker says what kind of value** (computed `text.muted`, entered `border.accent`).
 - **Why three (2026-10-08)**: "selected = ink" was imprecise.
   - 5b's selected flavour tags are brown in the mock (`badge.bg.accent` fill, `border.accent` frame and label), and stay brown.
   - They are not an exception to the selection rule. They belong to another role, the user's own input, like the axis's entered handle (accent fill).
@@ -192,12 +209,17 @@ Non-negotiable, and each one is a measured fact rather than a preference.
   - **Pressable row or block**: no frame of its own. Sign: `component.chevron` (`chevronRight` at `icon.sm`, 16, in `color.text.secondary`), the base `Chevron`, the same on every row and block. On a one-line row it is centred vertically; on a multi-line block it sits at the end of the heading line. Pressed: `state.pressed.row` out to the container's edges (§1 Pressed).
   - **Framed block that is not pressable**: a 2px ink frame on `surface.raised`, no chevron, no pressed state (2c "Where it sat", Home's Taste DNA card). Buttons inside it keep their own control look.
   - **Framed block that is pressable**: only Profile's Taste DNA card (6a). The same frame plus the chevron on its heading line, and the pressed fill inside the frame. The chevron is the only difference from a card that is not pressable.
-  - Where: 2a / Home's Recently sipped / 8l (`RecordRow`), 2c "Feeds my taste DNA", 3b's rows, 3d's cards and "Finished bags", Home shelf's Manage rows, 5a / 5d / 5e field rows (`FieldRow`; its error state recolours the chevron with the row), 6a's `MenuRow`s and its Taste DNA card. The boards' → arrows (2c, 3d, Home shelf) are this chevron.
-  - Not covered: a control's own trailing icon (Button `trailingIcon`, e.g. Home's "See all", 5a's "Add tasting note") is the control's, not a block's sign.
+  - Where: 2a / Home's Recently sipped / 8l (`RecordRow`), 2c "Feeds my taste DNA", 3b's rows, 3d's cards and "Finished bags", 5a / 5d / 5e field rows (`FieldRow`; its error state recolours the chevron with the row), 6a's `MenuRow`s and its Taste DNA card. The boards' → arrows (2c, 3d) are this chevron.
+  - A control's own trailing icon (Button `trailingIcon`) is the control's, not a block's sign, and says where it goes (Design Round 15, B4 and addendum): › (`chevronRight`) on a text action that goes to another place (1b's "See all", Home shelf's "See all gear & beans"); → on a button that moves the same sheet on to its next step (5a's "Add tasting note →").
+  - Home's shelf rows (17a / 17b) open nothing: they are information, with no chevron and no pressed state (Round 15 addendum). The full list is one tap away through "See all gear & beans ›".
 - **Text actions are ink + underline (2026-10-09).**
   - The underline may be left off where the position already says "action", e.g. the slot right of a sheet title, or beside a search field.
-  - **Never brown.** Brown marks a value the user entered; used on an action, the mark fades. Brown now carries only entered values.
-  - Destructive actions (Discard, Remove photo, …) get no look of their own for now. They are protected by confirmation or undo, not by colour (`gaps.md` 18); whether to add a warning colour, which the product has none of, is a separate decision (`components.md` #3).
+  - **Never brown.** Brown marks a value the user entered; on an action, that mark fades. Brown carries only entered values, and `state.error`, which is about them.
+  - **Destructive actions are red (2026-11-09, Round 24).** A command that deletes something saved, or throws away input the user would lose by leaving, sets its label in `color.text.destructive`, and its bin glyph in `color.icon.destructive`. Only the label and the glyph: never a fill, a frame or a shadow. It keeps its form (secondary button, text action with underline, row with bin), so colour still never says "pressable" on its own.
+    - A confirm sheet for a delete has **no primary**: the delete is a secondary button with the red label, on top, at 56; "Keep it" sits under it at 52.
+    - Undoing input in place is not destructive and stays ink: a field's clear ×, the axis's Clear, a filter's ×, Reset in Sort.
+    - Confirmation and undo stay (`gaps.md` 18); the colour adds to them.
+    - `color.text.destructive` is used for nothing else. It sits beside `color.axis.roast` but never takes its forms (bar, key), and Roast never takes its form (words).
 - **Detail — a text-only action is underlined. Colour alone never tells pressable from not pressable (2026-10-09).** The means is the one `text.inlineAction` already defines (an inline text action = underline); size, weight and case follow the context. First use: the taste axis Clear. Twelve text-only actions in the mocks rely on colour alone (2b, 5d, 6d, 7b, 8c, 8e, 8f, 8h, 8l). They are not changed yet (report 2026-10-09).
 - **Scope of the next rule (2026-10-11)**: it is the rule for parts that are options themselves (chips, tags, segmented options). In a **single-select row that carries a marker** (the radio list), the **marker** shows selection (§9 Radio marker); the row itself needs no fill.
 - **An outline with no fill never means "selected" (checked 2026-10-09).**
@@ -205,7 +227,7 @@ Non-negotiable, and each one is a measured fact rather than a preference.
   - 12 are fill + a 2px ink frame: 3a and 8m checked boxes, 3e's switch (D-20), 6d "Home brewer", 8i's five weekdays, 8j "An idea", 8l "Words".
   - The segmented options are an ink fill with no frame: 2a "All", 2b "Month", 3a "Brewer", 3c "Light", 3e "Grinder", 3f "Newest", 3g "Light" (added 2026-10-09), 5d "Barista", 5e "Ready-to-drink".
   - Not options: 3b / 4a "Default" and 8d "This week" are 9px badges.
-  - A 2px ink outline on the card colour is a pressable control or a frame: icon buttons, My gear / My beans, switch knobs, **unchecked checkboxes and unselected radio markers** (decided 2026-10-12, as 3a draws them; 8c's `border.muted` box is the disabled look, not the unchecked one).
+  - A 2px ink outline on the card colour is a pressable control: icon buttons, switch knobs, **unchecked checkboxes and unselected radio markers**; a frame that holds things is 2px `border.container` since Design Round 22 (§1 Border colour) (decided 2026-10-12, as 3a draws them; 8c's `border.muted` box is the disabled look, not the unchecked one).
   - Keep it that way. The one exception, 8f's "juicy 9", is drift D-23.
 - **A label that cannot be pressed looks like a Badge**: tinted fill, no `border.muted` outline, badge sizes.
 - **Except one display form, the attribute tag** (8d "Blackcurrant"; 6a's "Acidity high" until 2026-10-21): a 1.5 `border.muted` outline on no fill, padding 7/9, 11px label. It is never pressable on its own; on 8d it describes a suggestion and leads nowhere. 6a now shows its band names as Badges (Design Round 11, D6): outline tags would read as options inside a card that is a button.
@@ -295,6 +317,7 @@ Grouped by role. Every hex is a value that qualified **inside that role** (≥3 
 | `color.text.accentStrong` | `#8A4602` | 4 screens; paired with `accent`, used on tinted grounds |
 | ~~`color.text.link`~~ | ~~`#05639C`~~ | **Removed 2026-10-20**: its use was text actions, which are ink (§1 Tap affordance; Design's T-6 reply). Blue stays as `color.action.bg` / `state.pressed.action` (in force) |
 | `color.text.success` | `#4A6640` | 5 screens; "set", "done" confirmations |
+| `color.text.destructive` | `#B4153F` | **a command that deletes** (Design Round 24, 26a): its label, and the bin as `color.icon.destructive`. Never a fill, frame or shadow; nothing else (§1 Tap affordance). 5.82 on ground, 6.59 on raised, 4.74 on `state.pressed.surface`; ΔE00 9.2 from `axis.roast` |
 | `color.text.onInverse` | `#F4EDEA` | text on `#273D22` grounds |
 
 `#5C5049` / `#6B5D55` are **two deliberate tiers** (ΔE00 4.84, both qualifying in the same roles) — Gate A. Never merge them. Same for `#9E5202` / `#8A4602` (ΔE00 5.35).
@@ -318,6 +341,7 @@ Grouped by role. Every hex is a value that qualified **inside that role** (≥3 
 | `color.border.subtle` | `#E4D6CC` | 18 screens; the weakest divider |
 | `color.border.medium` | `#B3A69E` | 5 screens; the AxisReadout fill, the 5c ghost / delta (and the retiring display axis) |
 | `color.border.accent` | `#8A4602` | tinted badges and brown-bordered chips |
+| `color.border.container` | `#C8BCB4` | alias of `border.muted` (Design Round 22): a container's 2px frame and chrome edges (§1 Border colour) |
 
 `color.border.muted` / `soft` / `subtle` all qualify independently (Gate A, ΔE00 3.07–3.63). They are three real tiers.
 
@@ -351,6 +375,16 @@ Only one hairline tier exists in the whole product.
 | `color.icon.accent` | `#9E5202` | absorbed `#8A4602`(icon-stroke) |
 | `color.icon.onAction` | `#FFFFFF` | absorbed `#F4EDEA`(icon-stroke) |
 | `color.icon.rating` | `#C9821A` | 8 screens — **fill, not stroke**; rating stars only |
+
+### Taste axes (identity; Design Round 21, 23a, 2026-11-06)
+The four axes only, never as text (§1 Colour roles). Contrast on track / card / ground.
+
+| token | value | contrast |
+|---|---|---|
+| `color.axis.acidity` | `#7C7D0F` | 3.08 / 4.28 / 3.78 |
+| `color.axis.body` | `#614A87` | 5.21 / 7.24 / 6.40 |
+| `color.axis.roast` | `#9D3D36` | 4.69 / 6.52 / 5.75 |
+| `color.axis.sweetness` | `#AE5A84` | 3.22 / 4.47 / 3.95 |
 
 ### Action
 | token | value | notes |
@@ -418,10 +452,10 @@ The old display axis's parts `axis.rail.derived`, `axis.needle` (12 × 30) and `
 | part | value | notes |
 |---|---|---|
 | `tabBar.slot` | `60 × 40` | Visual box of each tab. The touch area stretches to the bar's inner height (56) to clear `size.tapTarget` |
-| `tabBar.addSlot` | `68 × 40` | The centre add slot |
+| ~~`tabBar.addSlot`~~ | ~~`68 × 40`~~ | Removed 2026-11-08 (Round 23): the + is its own piece now |
 | `tabBar.icon.active` | alias `color.action.bg` (`#067BC2`) | the current tab's fill glyph |
 | `tabBar.icon.inactive` | `#9B8F87` | 6 screens / 23 uses. No in-role sibling to merge into: the fill-icon role otherwise holds only the rating gold |
-| `tabBar.add` | `color.surface.inverse` square, `color.text.onInverse` plus | 44 × 34 glyph, square (no radius) |
+| ~~`tabBar.add`~~ | ~~`color.surface.inverse` square, `color.text.onInverse` plus~~ | Removed 2026-11-08 (Round 23). The blue +'s plus is `icon.lg.size` at `icon.sm.strokeWidth` (22 / 2.6) |
 
 **Removed 2026-10-20 — `tabBar.icon.accentInactive` (`#C6BBD3`) and `accentActive`**: they coloured the calendar glyph's binding marks, a placeholder for the Try next icon. The Try next icon that replaced it (icon-footer-trynext.svg, 2026-10-10) is one fill, so nothing used them (drift D-45). This was the review trigger written here; it fired.
 
@@ -442,7 +476,8 @@ React Native has no `em` and no unitless line height, so both are converted: `le
 |---|---|---|---|---|---|
 | `display.lg` | 40 | 400 | 41 | 40/1, 40/1.02, 44/1.02, 44/0.8, 42/1.04, 38/1.06, 36/1.08, 34/1.08, 33/1.1 | 12 screens / 29 uses |
 | `display.sm` | 30 | 400 | 31 | 30/1, 30/0.9, 30/1.1, 32/1, 31/1, 28/1, 27/1.1 | 14 screens / 25 uses |
-| `numeral.hero` | 96 | 400 | 79 | 96/0.82 | 3 screens / 3 uses |
+| `numeral.hero` | 96 | 400 | 79 | 96/0.82 | 3 screens / 3 uses. Unused since 2026-11-09 (Home's total took `numeral.lg`); kept, Design's call |
+| `numeral.lg` | 64 | 400 | 52 | the hero's 0.82 (Design Round 22 §5, 2026-11-07) | Home's cups total, in its panel |
 | `numeral.inline` | 22 | 400 | 22 | 22/1, 26/1, 24/1, 21/1, 19 | 10 screens / 33 uses |
 | `text.note` | 20 (**upright** since 2026-10-12) | 400 | 28 | 20/1.4 italic in the mock (formerly E-3) | My words: 5b's input, 2c's display. **No italics in the app** (§1 Type). Its `min-height: 84` stays local to the field |
 
@@ -475,9 +510,11 @@ Measured from the font file (Instrument Serif, per 1000):
 | `body` | 14 | 500 | 21 | — | — | 14/500 (1.5/1.55/1.6), 13/500, 13.5/500, 15/500/1.6 | 12 screens / 26 uses |
 | `body.sm` | 12 | 500 | 18 | — | — | 12/500 (1.4/1.5), 12.5/500/1.45 | 26 screens / 85 uses |
 | `body.sm.tabular` | 12 | 500 | 18 | — | — | none (Design Round 10, 19, 2026-10-21) | `body.sm` with tabular numerals: 8l's result heading, whose count changes as you type |
+| `count.tabular` | 14 | 600 | 21 | — | — | none (Design Round 17, 21a, 2026-10-31) | a count read against others in a column: 8g's My numbers ("14 notes") |
 | `meta` | 12 | 600 | 17 | — | — | 12/600, 13/600, 11/600, 14/600, 16/600, 12.5/600 | 11 screens / 49 uses |
 | `label.caps` | 12 | 700 | 未找到 | 0.96 | uppercase | 12/.06–.12em, 13/.06–.12em | 22 screens / 93 uses |
-| `label.eyebrow` | 10 | 700 | 未找到 | 1.60 | uppercase | 10/.08–.16em, 11/.04–.22em, 9/.1–.12em | 28 screens / 235 uses |
+| `title.caps` | 13 | 700 | 未找到 | 1.56 | uppercase | 13/.12em (8f 21d, 8g 21a/21b, and 8b 8c 8e 8h–8o 6d) | a pushed page's title beside Back (added 2026-11-10) |
+| `label.eyebrow` | 10 | 700 | 未找到 | 1.20 (was 1.60, 2026-11-09) | uppercase | 10/.08–.16em, 11/.04–.22em, 9/.1–.12em | 28 screens / 235 uses |
 | `button.caps` | 16 | 700 | 未找到 | 0.96 | uppercase | 16/.06em, 15/.06em, 14/.08em | 17 screens / 22 uses |
 | `text.weekday` | 10 | 700 | 未找到 | 0.20 | — | 10/700/.02em | 3 screens / 21 uses |
 | `text.inlineAction` | 11 | 700 | 未找到 | 0.88 | uppercase + underline | 11/700/.08em + underline | 2 screens / 5 uses **A** |
@@ -485,7 +522,7 @@ Measured from the font file (Instrument Serif, per 1000):
 
 **`body` (14) and `label` (15) are kept separate on purpose.** 14 is the explanatory paragraph (1–2 per screen); 15 is the button label and inline emphasis (~4 per screen). They are different jobs at adjacent sizes.
 
-**`text.weekday` shares family, size and weight with `label.eyebrow` but is a separate style**: its content is already a single uppercase letter so it carries no `text-transform`, and its letter spacing is 0.20 against 1.60 — an 8× difference — to keep a single glyph optically centred. Deliberately distinct, not a variant.
+**`text.weekday` shares family, size and weight with `label.eyebrow` but is a separate style**: its content is already a single uppercase letter so it carries no `text-transform`, and its letter spacing is 0.20 against 1.20 (1.60 until 2026-11-09) — a 6× difference — to keep a single glyph optically centred. Deliberately distinct, not a variant.
 
 **`text.inlineAction`** (3f "Reopen bag", 5d "Go to first") defines the underline that §1 Tap affordance now applies to **every** text-only action (2026-10-09). This style is its 11px caps instance; other text actions keep their own size and take only the underline. It pairs with `color.text.primary` (ink, §1 Tap affordance; Design 2026-10-20: blue means "in force", not "pressable". It paired with `color.text.link` until then). Two screens is a reflection of how many screens have inline actions so far. In RN, `textDecorationLine: 'underline'` is supported; `textDecorationColor` is a separate property — confirm it inherits the text colour, and add it to the token if it does not.
 
@@ -496,6 +533,7 @@ The shipped screens define no long-text behaviour (`text-overflow` / `line-clamp
 | preset | lines | applies to |
 |---|---|---|
 | `name` | 2 | user-supplied names: café, bean, roaster, gear, drink, profile name — list-row titles, field-row values, card titles |
+| `shelf` | 1 | **the one exception to `name`**: names in Home's shelf rows (Design Round 15, B3). Both sides keep equal heights so the swipe doesn't jump; a second line would break that. The full names are on Gear & beans (17c / 17d), which keeps `name` |
 | `meta` | 1 | the provenance / secondary line under a name (`body.sm`, `meta`) |
 | `note` | 3 | tasting-note and memo previews |
 | `none` | — | fixed copy (labels, buttons, chips), and detail screens where the full text belongs |
@@ -531,14 +569,15 @@ Each face's natural line box (ascent + descent + lineGap) comes from its font fi
 | Instrument Serif | 990 / 310 / 0 | 1.300 em | 52 at 40 |
 | Archivo (500/600/700) | 878 / 210 / 0 | 1.088 em | 15.2 at 14 |
 
-All four serif styles carry a `lineHeight` below their natural box (`display.lg` 41 < 52, `display.sm` 31 < 39, `numeral.hero` 79 < 124.8, `numeral.inline` 22 < 28.6). No Archivo style does.
+All five serif styles carry a `lineHeight` below their natural box (`display.lg` 41 < 52, `display.sm` 31 < 39, `numeral.hero` 79 < 124.8, `numeral.lg` 52 < 83.2, `numeral.inline` 22 < 28.6). No Archivo style does.
 - **CSS / web** spreads the deficit evenly as negative half-leading, and ink overflows the box without clipping. The token values describe the design correctly in these terms.
 - **iOS** takes the whole deficit from *above* the baseline, keeps the full descent *below* it, and clips the text to its frame. Measured on `display.lg`: frame 41, baseline 28.6 from the top, tallest ink ("f", 29.9 above the baseline) cut flat at the frame top, and 12.4 of empty descent above the rule.
 
 This is a platform difference, not a token error.
 
 **iOS adjustment**: `resolveTextStyle` drops a `lineHeight` that is shorter than the face's natural box, so those styles render on the natural box. That box contains every glyph by construction (ascent 39.6 ≥ "f" 29.9; descent 12.4 ≥ "g" 8.6 at 40). Spacing around such text is then set by its container, never by line-box leftover (see §9 Screen shell for the header).
-- The rule applies to all four serif styles. Only `display.lg` is in use today; `display.sm`, `numeral.hero` and `numeral.inline` get taller boxes on iOS (e.g. 124.8 for the hero numeral). Their containers must be set when each is first used.
+- Home's top panel takes CSS's half of the deficit off each side of `numeral.lg` and its `numeral.inline` values (negative margins from the metrics), so it measures as 23b does: the panel 136 tall, the Taste DNA card's top at 369 on 402 × 874 (measured 369.7, 2026-11-09).
+- The rule applies to all five serif styles. Only `display.lg` is in use today; `display.sm`, `numeral.hero` and `numeral.inline` get taller boxes on iOS (e.g. 124.8 for the hero numeral). Their containers must be set when each is first used.
 - Web keeps the CSS behaviour; it is a harness target, not a ship target.
 - Android is unverified. Check it on the first Android build.
 
@@ -719,8 +758,9 @@ Every screen is `layout.screen.top` (60) → content → `layout.screen.bottom` 
 - **Vertical alignment**: the control is centred on the **title's cap band** (cap top to baseline), measured from the title's own text layout (`onTextLayout`: ascender, capHeight). It is not centred on the line box, and there is no fixed optical constant: the old +4 described a title + date column that no longer exists.
   - Measured on iPhone 14: control centre minus cap-band centre is 0 for "Log a cup" and 0.3 for "Tasting note".
   - It holds for any title and any font; for ja this replaces the per-language +4 / 0 split.
+- **Title (2026-11-10, Uryu)**: `title.caps` in ink on every compact header, the pages that aren't tabs, as 8f / 8g draw it (21a, 21d). Was `display.lg`, which the other boards still draw.
 - **Collapse**:
-  - the row rises to the safe-area top and the title scales (left-centre);
+  - the row rises to the safe-area top; the title no longer scales (`title.caps` is already small; it scaled while it was `display.lg`);
   - the control moves with the row and stays centred on the scaled cap band (never fades, §1);
   - the meta fades.
 - Superseded (the 2026-10-05 layout below): the date / time under the title, and the header ending on it with `inset.container.v`.
@@ -763,7 +803,7 @@ Section heading = a `size.dot.bullet` square (`marker.required` / `marker.option
 - This holds wherever they appear (list rows, field values, pickers); the full name is reached on the detail screen.
 
 ### Card
-`2px solid color.border.strong` on `color.surface.raised`, `inset.container`, internal groups separated by `gap.section`, meta separated by `divider.soft`. No radius, no shadow unless it is a control.
+`2px solid color.border.container` (ink until Design Round 22; §1 Border colour) on `color.surface.raised`, `inset.container`, internal groups separated by `gap.section`, meta separated by `divider.soft`. No radius, no shadow unless it is a control.
 
 ### Notice (13a / 13b, Design Round 5, 2026-10-13)
 A one-line confirmation above the bottom bar, today only after a delete: **"‹cup title› deleted."** (the title by 2a's rule, `cupTitle`).
@@ -791,10 +831,11 @@ Planned uses (2026-10-09 / -10):
 
 | tab | eyebrow | source |
 |---|---|---|
-| Home | MoreCoffee | 1b |
+| Home | Extract Press (renders EXTRACT PRESS; the mock's "MoreCoffee" until the rename, 2026-11-08) | 1b |
 | Records | The archive | 2a |
-| Try next | Based on {n} cups (the real count; "cup" at 1) | 8d ("Based on 147 cups") |
-| Profile | Morecoffee (renders MORECOFFEE) | 6a |
+| Profile | Extract Press (the mock's "Morecoffee" until the rename, 2026-11-08) | 6a |
+
+Try next's "Based on {n} cups" (8d) went with its tab (2026-11-08: no Try next tab in V1).
 
 1b and 2a set it at 11 / .22em, which `label.eyebrow` already folds in (11 / .04–.22em, §3), so this is not drift. Record coffee (5a) has none.
 
@@ -904,7 +945,23 @@ Swiping horizontally moves between the four tab screens: Home → Records → Tr
 - **Scope**: tab screens only. The Record overlay is above the pager, not inside it, so swiping in it never pages. No back gesture yet, because no detail screen exists.
 - Measured (390pt simulator, programmatic animated page changes): 60 fps on the JS thread, p95 17.5 ms, one ~25 ms frame per page change at settle (the bar re-rendering; screens are memoised and do not re-render). Footer taps land on the right page in all four directions. Gesture arbitration with real fingers needs a physical device: the simulator cannot inject swipes here.
 
-### Bottom bar — formerly "Floating bar" (revised 2026-10-05)
+### Bottom bar (2026-11-08, Design Round 23; 25a / 25b)
+**Bottom bar (2026-11-08, Round 23).** Two pieces, floating: a body with three tabs (Home · Records · Profile) and the + to its right.
+- **Both pieces**: 56 tall (`size.tabBar.height`), square corners, a 2px frame, `space[12]` apart.
+- **Position**: inset by `layout.gutter` at the sides, and the home-indicator inset less `space[8]` above the bottom edge.
+- **Both pieces are controls** (handoff-round23 v2; Uryu on 25a): a `border.strong` frame and `shadow.floating`.
+  - The body is on `surface.raised`. Its three slots share its width, and each is the whole touch area.
+  - The + is on `color.action.bg` and darkens to `state.pressed.action`.
+- **The band**: behind the bar, from `space[12]` above it to the edge, plain ground hides the content (no rule, no fade). Screens keep the band plus `space[20]` under their content.
+
+*The 2026-10-05 objection (elevation over a full list read as noise) is met by the band: the shadows fall on plain ground, never on rows.* (v1, built 2026-11-08 and replaced 2026-11-09: a quiet `border.container` body with no shadow.)
+
+**Built 2026-11-08**:
+- `FooterNav` draws the two pieces. `AppShell` ends the tab pager at the band, so the fixed `DotTexture` shows through.
+- The tab screens keep `space[20]` under their content; the toast sits `space[12]` above the band.
+- **Open**: an iPhone with no home indicator (SE) has no inset. There the bar sits `space[12]` above the edge. That value is ours, for Design to confirm.
+
+### Bottom bar, 2026-10-05 to 2026-11-08 (superseded: kept as history)
 **The bar no longer hides (decided on device, 2026-10-12)**: it stays put while a page scrolls; the hide / reveal below is superseded.
 
 ~~**Hide and reveal (2026-10-06)**~~: the bar **hides on downward scroll**, sliding its full height off the bottom edge. **Any upward scroll brings it fully back at once**: no threshold, no waiting for the top, because + is the primary action and scrolling back up the list is when a missed cup comes to mind.
@@ -917,7 +974,8 @@ Swiping horizontally moves between the four tab screens: Home → Records → Tr
 **Current spec (base `FooterNav`)**: the tab bar spans the **full screen width on the bottom edge**, on `color.surface.raised`, with **no hard shadow**. Its `2px` ink top rule is the boundary: with the bar on the screen edge, that line does the separating work the shadow used to do.
 - **Row**: `size.tabBar.height` (**56** since 2026-10-18, to carry the tab names; 48 from 2026-10-12, 60 before that), with **the home-indicator inset less `space.8`** below it (34 − 8 = 26 on notched iPhones; 2026-10-15, on device: a little taller than 2026-10-12's inset less `space.14` (20), the row unchanged; the indicator, ~8 above the edge and 5 tall, stays clear). The 40 slot box sits centred, 8 above and below; the touch area is the whole row (≥ 44). The bar is 2 + 56 + 26 = 84 on notched iPhones.
 - **Tab names (2026-10-18, ours, not synced with Design)**: under each tab glyph, its name in `textStyle.tabLabel` (Archivo 10 / 600, line 12, 0.2 tracking; 10 is the smallest size on the scale, as iOS's own tab labels), sentence case, `gap.tight` (4) below the glyph, in the glyph's colour (`component.tabBar.icon`: active blue, inactive `#9B8F87`), crossfading with it as the pager moves. Each glyph sits centred in a 20 box (`component.tabBar.glyph`; Profile's is 19) so the names share one baseline. Glyph + gap + name = 36, centred in the 40 slot box. The + has no name. It sits `component.tabBar.addLift` (`space.4`) above the block's centre (on device, centred, it read low: the tabs' weight is in the glyphs), so its centre is at 24 in the row, halfway between the block's (28) and the glyphs' (20). Only the drawing moves.
-- **Slots**: the icons sit inside the screen gutter: the two outer slots take `layout.gutter` (22) of padding on their outer side, then all five share the remaining width equally, so the icons are evenly spaced and the centre + sits exactly in the middle. The outer slots still reach the screen edge, so the gutter is part of their touch area (the icons move in; the touch areas do not shrink). Measured at 390pt: icon centres every 69 (56.7 / 126 / 195 / 264.3 / 333.3); touch areas Home 0–91.3 and Profile 298.7–390 (both start at the screen edge, 0pt), inner slots 69 wide, all 60 tall. Superseded: five equal 78pt slots with centres 39 … 351 (2026-10-05).
+- **Slots: four, Home · Records · + · Profile (2026-11-08, planner, layout A)**. Try next is no longer a tab: V1 shows it as a card on Home (`try-next-v1.md`), and its placeholder screen would fail App Review. The icons sit inside the screen gutter: the two outer slots take `layout.gutter` (22) of padding on their outer side, then all four share the remaining width equally, so the icons are evenly spaced. **The + is no longer in the middle**: it sits right of centre, at about 5/8 of the width (61 %). Even spacing was chosen over a centred + with two tabs left and one right (lopsided) and over a + at the end (the thumb has learned it inside). **Reach is to be checked on Uryu's phone (15 Pro Max)** before this is final. The outer slots still reach the screen edge, so the gutter is part of their touch area. At 390pt: icon centres every 86.5 (65.3 / 151.8 / 238.3 / 324.8); touch areas Home 0–108.5, Records 108.5–195, + 195–281.5, Profile 281.5–390, all 60 tall.
+  - Superseded 2026-11-08, five slots with the + exactly in the middle: the icons sit inside the screen gutter: the two outer slots take `layout.gutter` (22) of padding on their outer side, then all five share the remaining width equally, so the icons are evenly spaced and the centre + sits exactly in the middle. The outer slots still reach the screen edge, so the gutter is part of their touch area (the icons move in; the touch areas do not shrink). Measured at 390pt: icon centres every 69 (56.7 / 126 / 195 / 264.3 / 333.3); touch areas Home 0–91.3 and Profile 298.7–390 (both start at the screen edge, 0pt), inner slots 69 wide, all 60 tall. Superseded: five equal 78pt slots with centres 39 … 351 (2026-10-05).
 - **Pressed** (§1, by surface): the tab icons are bare glyphs, so they scale to `state.pressed.scale` over `motion.press`. There is no square fill behind them any more. The + is an ink square, a surface whose fill has no darker tier, so it scales too (§1 "no darker tier left"; 2026-10-18, it showed no change before). Both give a light impact haptic. Measured: Home glyph 20 → 17.6 while held, its touch area fixed at 0–91.3 × 60; the + touch area fixed at 69.3 × 60. (Superseded 2026-10-06: a `state.pressed.surface` fill in the 60 × 40 / 68 × 40 slot box.)
 - **No fade band** (removed on review, 2026-10-05): with the bar on the screen edge, the 30pt fade above the rule only covered the content just above the bar. The rule alone separates. Rebuilt tab screens keep `layout.empty.block` of room under their content.
 
@@ -1051,11 +1109,13 @@ The display of computed values: 1b / 4a / 4b (the profile), 5c (the change after
 | part | value | from beanFreshness |
 |---|---|---|
 | track | `size.meter.track` (4), `surface.muted` | same |
-| fill | **from 50 to the value**, `border.medium` | changed: it fills from the left there, in freshness colours |
-| marker | 2 × 14, `text.muted`, at the value | same geometry (todayMarker); neutral colour |
+| fill | **from 50 to the value**, the axis's `color.axis.*` (Round 21; was `border.medium`) | changed: it fills from the left there, in freshness colours |
+| marker | 2 × 14 at the value: computed `text.muted`, entered `border.accent` | same geometry (todayMarker) |
+| key | 12 × 4 (`size.axis.key`) in the axis colour, `gap.row` before the left pole label (`AxisPoles`), on every readout, also at 50 and when not noted | — |
 | ticks | **none** | — |
 | gradient | **none** | — |
 
+- **Round 21 (2026-11-06) supersedes the two tones' fills below.** The fill is the axis's colour in both tones (3.08–5.21:1 on the track, so it can carry direction and distance); the tone sets **the marker only**: computed `text.muted`, entered `border.accent`. 2c's brown fill is retired. 5c's ghost is unchanged (`border.muted`, under the coloured fill). The marker stays: at 50 there is no fill, and the role lives on it. The "Moved N points" lines below are replaced by change tags (`DnaChange.js`, `Badge` with the axis key).
 - **Two tones (2026-10-11)**, by §1 Colour roles:
   - **computed** (1b / 4a / 4b / 8f, and **5c**, whose before / after are the profile: both computed, so both neutral; decided 2026-10-11): fill `border.medium`, marker `text.muted` — the table above. 5c's movement reads weakly by design (the fill only helps); the line "Moved N points toward ‹pole›" carries it. Check on a device; do not fix it with colour first.
   - **entered — 2c only** ("Where it sat": the values entered for that one cup): fill `color.icon.accent` (#9E5202, the entered slider handle's fill; 4.04:1 on the track), marker `color.border.accent` (#8A4602, the selected flavour chip's frame; 5.0:1 on the track, 6.95:1 on a card). Same 4pt shape, so it is still plainly not operable; an inoperable slider was rejected because its shape invites a drag.
@@ -1069,7 +1129,7 @@ The display of computed values: 1b / 4a / 4b (the profile), 5c (the change after
   - Moving away from 50, the extra current fill is the movement; moving toward 50, the exposed lighter fill is.
   - It reads weakly, so the copy under the axis carries the movement ("Moved 6 points brighter"; `gaps.md` 13).
 - Built 2026-10-11: `axis.rail.derived`, `axis.needle.derived`, `dashed.track` and the `derived` mode of `AxisSlider` are removed, with their dev pages. `axis.ghost` / `axis.delta` removed too (decided 2026-10-11): §9's ghost and delta above use other tokens. **Value null**: see below.
-- **Value null** (nothing noted on that axis; Design 10b, decided 2026-10-12): the bare track with **"Not noted yet" centred on it** (a profile, `computed`; on one cup's own values, `entered` — 2c, 11a — **"Not noted"**: they can't change, so no "yet"; 2026-10-14), on a `surface.raised` patch padded `space.8` each side, so the gap reads as "no value", never "balanced". Every readout sits in a 17pt slot (`meta`'s line height) with the track centred, so filled and empty rows are the same height.
+- **Value null** (nothing noted on that axis; Design 10b, decided 2026-10-12): the bare track with **"Not noted yet" centred on it** (a profile, `computed`; on one cup's own values, `entered` — 2c, 11a — **"Not noted"**: they can't change, so no "yet"; 2026-10-14), on a `surface.raised` patch padded `space.8` each side, in `text.placeholder` (2026-11-09, Uryu on device: `text.muted` read as noise beside the pale track; 3.08:1 on raised, the 3:1 floor), so the gap reads as "no value", never "balanced". Every readout sits in a 17pt slot (`meta`'s line height) with the track centred, so filled and empty rows are the same height.
   - **The two words are two states, not a wobble. Do not unify them** (confirmed 2026-10-23, Round 13, B1). "Yet" promises the gap will fill.
     - **A profile's empty axis** (Home, 8f, 5c) = **"Not noted yet"**: nothing noted so far; a later cup that notes it fills it.
     - **A cup's own empty axis** (2c, 11a) = **"Not noted"**: this cup was logged without it, and a cup's axes can't be edited, so it never fills.
@@ -1335,3 +1395,17 @@ One line per change to this document or to the token values, with the reason.
 - 2026-10-26 — `SegmentedControl` `compact` (Uryu): new `inset.controlCompact` (`{ v: space.14, h: space.6 }`), `gap.tight` between chips, each chip at least 44 wide (`size.tapTarget`); still 44 tall. Used by 2a's category chips (row 304 wide: one line from 375pt; was 393, two lines even at 430pt) and 2b's Group by (333: one line from 390pt; was 425). Widths from Archivo Bold's advances at `label.caps`, not yet measured on device. 5a's maker chips and 8l's scopes keep `inset.control`.
 - 2026-10-26 — `inset.controlCompact` → `{ v: space.8, h: space.8 }` (Uryu, on device: h 6 too tight, v 14 too tall). The compact chip is 32 tall with a 6 hit-slop above and below (44 target). 2a's chips: row 317, one line from 375pt. 2b's Group by: 349, one line from 402pt (390 / 393 wrap one chip).
 - 2026-10-26 — Compact chips: new `gap.controlCompact` (`space.6`) between them, was `gap.tight` (Uryu: a little more room). 2a's row 323 (one line from 375pt), 2b's Group by 355 (from 402pt).
+- 2026-10-27 — Design Round 14 built: Home's shelf (17a / 17b) and Gear & beans (17c / 17d, 3b and 3d merged). New tokens `size.thumbnail.compact` (44; D-51 settled for Home), `size.statusColumn` (84: the mini bar, and the status column's least width; it grows with "Last · …"), `component.pageIndicator` (24 / 10, ink / `border.muted`, `size.meter.track`, gap `space.4`). Tab label and count `labelCaps`, status word and slot label `meterLabel`, gear line 2 `bodySm`; tab gap `space.20`. Bean status uses `component.beanFreshness` (Round 7). On device (Uryu): Gear & beans' two sides start under the tab's underline, gear with no first-row rule, beans' first card `gap.section` under it; the underlines fade with the scroll, and the slot count crossfades over `motion.expand`.
+- 2026-10-27 — Design Round 15: Round 14's bean colour table withdrawn (Round 7 stands); Home's shelf: "Sealed" alone for a sealed bag, an empty column without a roast date, both after Resting; kettle and scale empty; §3.1 adds `shelf` (1 line, Home's shelf rows only); 1b's "See all" takes the › (was →); `inset.controlCompact` / `gap.controlCompact` carry a "use for" note. Addendum: C8 as built accepted (17c / 17d follow: no gear first-row rule, 46 thumbnails, beans 12 under the underline); Home's shelf rows stay unpressable; › goes to another place, → is the next step in the same sheet (5a keeps it).
+- 2026-10-31 — Design Round 17 built (8g, 21a–21e): §3 `text.countTabular` (14 / 600, tabular) for My numbers' counts. 21a's "7 more to lock in" (12 / 700) takes `meta` (12 / 600), and its 9pt rule bullet keeps `size.dot.bullet` (6): neither has a style or a size of its own.
+- 2026-11-06 — Design Round 21 built (23a–23h). New tokens: `color.axis.{acidity,body,roast,sweetness}` (identity, the four axes only, never text; §1, §2), `size.axis.key` (12 × 4), `size.statColumn` (150, Home's stat column; not the shelf's `statusColumn`). AxisReadout: fill in the axis colour, marker by role, the key on every readout (`AxisPoles`); AxisSlider: the key only, hung outside the 260 track. 5c / 2c: change tags replace the per-axis lines. Home: the This week panel goes; total, three stats (glyphs `calendar`, `store` new, Bags takes 6a's `beanBag`; `icon.sm`) and a month strip (`size.dot.bullet`, today's underline square + 2 × `borderWidth.box`, derived). Build questions (same day): the stat column hugs its content from a four-digit total; 6a's Week streak becomes Cafés (ink). Bags (Home and 6a, `countBags`): every bag added plus deleted bags my cups still name (by name + roaster + roast date); Uryu, overturning 23c's "bags across my cups", sent back to Design.
+- 2026-11-07 — Design Round 22 built (24b; 24d not applied): §1 Border colour — controls keep `border.strong`, containers and chrome edges go to `border.container` (new alias of `border.muted`, same hex; `border.control` proposed too, not added: controls already say `border.strong`). 22 frames moved; widths unchanged. 8d's shadow: 8d isn't built.
+- 2026-11-08 — §9 Bottom bar: four slots (Home · Records · + · Profile), layout A (planner). Try next is no tab in V1 (a card on Home instead), and its placeholder would fail App Review. The + moves right of centre (about 5/8). Reach is to be checked on device. §1's clearable chip is built for the first time (SegmentedControl `clearable`, 3c / 3g's Process): the selected chip presses by scale.
+- 2026-11-08 — Design Round 23 built (E, 25a / 25b): §9 Bottom bar is two floating pieces, the three-tab body (quiet frame, no shadow) and a blue + (`border.strong`, `shadow.floating`). A band of ground hides the content behind it. §1: the + moves from scale to darken (`state.pressed.action`). Tokens: `tabBar.addSlot`, `addLift` and the ink `add` removed; `tabBar.add` is now the plus glyph's size and stroke (icon.lg's 22 at icon.sm's 2.6).
+- 2026-11-08 — Design Round 23 built (B, C): Try next's card on Home (`TryNextCard`, 25c / 25d) and Restore's row and sheets (`RestoreSheet`, 25e–25g). New glyphs `restore` and `spark`. **Token gap, reported to Design**: 25c / 25d set the card's reason, the hidden line and 8n's "New phone?" at 13 / 1.45, and no text style has 13. They take `body` (14 / 21) until Design picks a token.
+- 2026-11-09 — Design's handoff index (`handoff-README.md`) checked against the build. Two parts had been built from stale copies. §9 Bottom bar: the tab body takes the +'s `border.strong` frame and `shadow.floating` (handoff-round23 v2; v1's quiet frame was built on 2026-11-08). `tabBar.add` removed as handoff-round23 §0 says: the plus reads `icon.lg.size` / `icon.sm.strokeWidth` directly. Home's top block (Round 22 §5, which the copy built from on 2026-11-06 didn't have): one panel (`surface.raised`, 2px `border.muted`, `inset.container`, `space[4]` under the header), the total in the new `numeral.lg` (64 / 52), the row centre-aligned, no hairline under the stats, rows `space[6]` apart. Measured on 402 × 874: bar body x 22–312, + x 324–380, both y 792–848; Taste DNA card top 369.7.
+- 2026-11-09 — (Superseded the same day by Round 24, below.) Destructive actions take the warning colour (Uryu): `Button` `destructive` (primary: `state.error.action` fill; secondary / text: `state.error.text` label), new `state.error.action` (`bg` / `pressed` / `fg`, the error set's own hexes). Applied to every delete command (§1 Tap affordance lists them). Conflicts with §1's "never brown on an action"; flagged to Design.
+- 2026-11-09 — §1 Tap affordance: destructive actions are red (`color.text.destructive`), label and glyph only; delete confirm sheets lose their primary. `state.error.action.*` removed (Round 24). Built: `color.text.destructive` / `color.icon.destructive` (`#B4153F`); `Button` `destructive` on secondary and text only; the three delete sheets' delete is secondary on top; 3g / 3e's rows red label and bin, hint muted; 18a's Clear back to ink.
+- 2026-11-09 — §3 `label.eyebrow` letter spacing 1.60 → 1.20 (.16em → .12em), on Uryu's ask: every eyebrow and section label (the tabs' eyebrows, Profile's MY SHELF / MY DATA, …) reads tighter. Still inside the mocks' range (10/.08–.16em). Not yet told to Design.
+- 2026-11-10 — §3 `title.caps` (13 / 700, .12em, uppercase; code `titleCaps`): the title beside Back on 8f and 8g, as 21a / 21d draw it, and on Licences (no board; the 8-series settings pages all draw it so). It never scales on collapse, the row only rises. Then, the same day, Uryu: **every page that isn't a tab** (every `ScreenFrame` `compact`: 2c, 3a, 3c, 3e / 3g, 3f, 5a Log a cup, 5b, 11a, 17c, 8f, 8g, Licences) takes it, though those boards draw `display.lg` (drift D-71). The tabs (Home, Records, Profile) and 5c's "Noted." keep `display.lg`.
+- 2026-11-09 — §9 AxisReadout: an empty axis's "Not noted yet" / "Not noted" in `text.placeholder` (was `text.muted`; Uryu on device: too dark beside the track, read as noise). 3.08:1 on raised, the 3:1 floor `border.medium` failed on 2026-10-09.

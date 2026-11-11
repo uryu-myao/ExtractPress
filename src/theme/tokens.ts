@@ -28,6 +28,14 @@ export const color = {
     accent: '#9E5202',
     accentStrong: '#8A4602',
     success: '#4A6640',
+    /**
+     * A command that deletes something saved, or throws away input lost by
+     * leaving (Design Round 24, 26a / 26b): its label only, never a fill,
+     * frame or shadow (§1 Tap affordance). 5.82:1 on ground, 6.59:1 on
+     * raised, 4.74:1 on state.pressed.surface. Used for nothing else; apart
+     * from axis.roast by form (words, never a bar or key) and hue (ΔE00 9.2).
+     */
+    destructive: '#B4153F',
     onInverse: '#F4EDEA',
   },
   surface: {
@@ -45,6 +53,14 @@ export const color = {
     subtle: '#E4D6CC',
     medium: '#B3A69E',
     accent: '#8A4602',
+    /**
+     * Alias of border.muted (Design Round 22, 24b): the 2px frame of a box
+     * that holds things or leads elsewhere — cards, form sections, list
+     * blocks, a sheet's top edge — and chrome edges (the bottom bar's and a
+     * foot panel's top rule). A control's frame stays border.strong. Its own
+     * name because border.muted also means "unselected" and "disabled".
+     */
+    container: '#C8BCB4',
   },
   badge: {
     bg: {
@@ -69,6 +85,8 @@ export const color = {
     accent: '#9E5202',
     onAction: '#FFFFFF',
     rating: '#C9821A',
+    /** A delete row's bin (Design Round 24): alias of text.destructive. */
+    destructive: '#B4153F',
   },
   action: {
     bg: '#067BC2',
@@ -88,6 +106,21 @@ export const color = {
   },
   /** Modal sheet scrim. The page behind it also drops to opacity 0.45. */
   scrim: 'rgba(39, 61, 34, 0.42)',
+  /**
+   * The four taste axes' identity colours (Design Round 21, 23a). Used for
+   * the four taste axes only (AxisReadout's fill and key, AxisSlider's key,
+   * the change tags' key), never as text, never for anything else. They say
+   * which axis and nothing more: not good or bad, not entered or computed
+   * (the marker says that), not in force. Outside §1's three roles, like
+   * icon.rating. Contrast on track / card / ground: 3.08–5.21 / 4.28–7.24 /
+   * 3.78–6.40.
+   */
+  axis: {
+    acidity: '#7C7D0F',
+    body: '#614A87',
+    roast: '#9D3D36',
+    sweetness: '#AE5A84',
+  },
 } as const;
 
 /** Mechanism-bound state colors (class A: promoted regardless of frequency). */
@@ -161,6 +194,8 @@ export const textStyle = {
   /** 3d's "Finished bags" entry (2026-10-14, from the mock). */
   displayXs:     { fontFamily: 'Instrument Serif', fontSize: 24, fontWeight: '400', lineHeight: 24 },
   numeralHero:   { fontFamily: 'Instrument Serif', fontSize: 96, fontWeight: '400', lineHeight: 79 },
+  /** Home's cups total in its panel (Design Round 22 §5, 2026-11-07): 64 at the hero's 0.82. */
+  numeralLg:     { fontFamily: 'Instrument Serif', fontSize: 64, fontWeight: '400', lineHeight: 52 },
   numeralInline: { fontFamily: 'Instrument Serif', fontSize: 22, fontWeight: '400', lineHeight: 22 },
   /**
    * My words (5b's input, 2c's display). Upright since 2026-10-12: the app
@@ -181,10 +216,14 @@ export const textStyle = {
   /** bodySm with tabular numerals: 8l's result heading, whose count changes as you type (Design Round 10, 19). */
   bodySmTabular: { fontFamily: 'Archivo', fontSize: 12, fontWeight: '500', lineHeight: 18, fontVariant: ['tabular-nums'] },
   meta:          { fontFamily: 'Archivo', fontSize: 12, fontWeight: '600', lineHeight: 17 },
+  /** A count read against others in a column: 8g's My numbers, "14 notes" (Design Round 17, 21a; 14 / 600, tabular). */
+  countTabular:  { fontFamily: 'Archivo', fontSize: 14, fontWeight: '600', lineHeight: 21, fontVariant: ['tabular-nums'] },
   /** lineHeight UNDECLARED · 0.08em x 12 */
   labelCaps:     { fontFamily: 'Archivo', fontSize: 12, fontWeight: '700', letterSpacing: 0.96, textTransform: 'uppercase' },
-  /** lineHeight UNDECLARED · 0.16em x 10 */
-  labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.6, textTransform: 'uppercase' },
+  /** A pushed page's title in caps beside Back: 8f, 8g (21a, 21d) and Licences. 13 / 700 · 0.12em x 13. 2026-11-10. */
+  titleCaps:     { fontFamily: 'Archivo', fontSize: 13, fontWeight: '700', letterSpacing: 1.56, textTransform: 'uppercase' },
+  /** lineHeight UNDECLARED · 0.12em x 10 (was 0.16em; tightened on Uryu's ask, 2026-11-09) */
+  labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
   /** lineHeight UNDECLARED · 0.06em x 16 */
   buttonCaps:    { fontFamily: 'Archivo', fontSize: 16, fontWeight: '700', letterSpacing: 0.96, textTransform: 'uppercase' },
   /**
@@ -230,8 +269,12 @@ export const spacing = {
     container: { v: space[14], h: space[16] },
     control:   { v: space[14], h: space[16] },
     /**
-     * A control row that should hold one line on narrow phones (Uryu,
-     * 2026-10-26): 2a's category chips, 2b's Group by. 32 tall; a hit-slop
+     * Use for: chip rows that must hold one line (Design Round 15, F3).
+     * Everything else keeps inset.control at 44 (5a's maker chips, 8l's
+     * scopes). Pair with gap.controlCompact.
+     * Added 2026-10-26 (Uryu) for 2a's category chips (gone with Design
+     * Round 15; search's Kind and flavour chips use it now) and 2b's Group by,
+     * which took two lines on narrow phones. 32 tall; a hit-slop
      * of control.v − controlCompact.v above and below keeps the 44 target
      * (size.tapTarget). h 6 was too tight on device.
      */
@@ -261,7 +304,8 @@ export const spacing = {
     /** taste-axis groups only — an internal rhythm of the axis component */
     axis:    space[20],
     /**
-     * between compact chips only (inset.controlCompact; Uryu, 2026-10-26):
+     * Use for: between the chips of a row that must hold one line, with
+     * inset.controlCompact (Design Round 15, F3). Uryu, 2026-10-26:
      * tight (4) read cramped; row (8) would push 2b's Group by off one line
      * at 402pt.
      */
@@ -295,8 +339,26 @@ export const size = {
   button: { primary: 56, row: 44, compact: 40, small: 36 },
   control: { row: 52 },
   field: { height: 46 },
-  /** list: the list row (2a). summary: the one-cup summary row (5b). */
-  thumbnail: { list: 66, summary: 40 },
+  /**
+   * list: the list row (2a). summary: the one-cup summary row (5b).
+   * compact: Home's shelf rows (Round 14, 17a / 17b; settles D-51 for Home).
+   * photoField: a form's photo slot, 3c's (and 3e / 3g's) 76 square, 2026-11-01.
+   */
+  thumbnail: { list: 66, summary: 40, compact: 44, photoField: 76 },
+  /**
+   * Home's shelf rows, the status column on the right (Round 14, 17a / 17b):
+   * the mini freshness bar's width, and the column's least width. The column
+   * hugs its text past this (2026-10-27): "Last · 6 days ago" and "Last · Apr
+   * 12, 2025" measure 90 and 101 in bodySm, so a fixed 84 would not hold them.
+   */
+  statusColumn: 84,
+  /**
+   * Home's top block (Design Round 21, 23b): the stat column (This month,
+   * Bags, Cafés) beside the hero numeral. Fixed until the total reaches four
+   * digits, then it hugs its content (build questions, 5). Not the shelf's
+   * statusColumn above.
+   */
+  statColumn: 150,
   avatar: 88,
   /**
    * tabBar.height: the bar's row above the home-indicator inset. 56 since
@@ -319,8 +381,10 @@ export const size = {
    * "Switch and the axis handle"): border 2 + inset 2 on each side, so
    * handle = rail − 8. Stops are (260 − 2·2 − 2·2 − 26) / 4 = 56.5pt apart and
    * stop 0 sits 17 in from the track's outer edge. dot: the 5 stop marks.
+   * key: the axis's colour key before its left pole label (Design Round 21,
+   * 23a), on every readout, slider and change tag; h is meter.track.
    */
-  axis: { rail: 34, railWidth: 260, inset: 2, handle: { w: 26, h: 26 }, dot: 6 },
+  axis: { rail: 34, railWidth: 260, inset: 2, handle: { w: 26, h: 26 }, dot: 6, key: { w: 12, h: 4 } },
   meter: { track: 4 },
   marker: { line: { w: 2, h: 14 } },
   dot: { bullet: 6 },
@@ -544,34 +608,53 @@ export const component = {
     grip: axisGrip,
   },
   /**
-   * Bottom tab bar, carried by the floating bar (design-system.md §9).
-   * Four tab slots + one wider add slot, centred in the bar.
+   * Bottom bar (design-system.md §9; Design Round 23, 2026-11-08): the tab
+   * body's slots and the +'s glyph. The pieces' height is size.tabBar.height.
+   * Removed 2026-11-08: addSlot (68 × 40), addLift and add, the ink + among
+   * the tabs (handoff-round23 §0); the blue +'s plus takes icon tokens.
    * The two raw icon colours were missed by the original extraction (lowercase
    * hex in the source) and added 2026-10-04: 6 and 5 screens, see changelog.
    */
   tabBar: {
     slot: { w: 60, h: 40 },
-    addSlot: { w: 68, h: 40 },
     /**
      * The glyphs' box (2026-10-18): the glyphs are 19–20 tall, so each sits
      * centred in 20 and the names under them share one baseline.
      */
     glyph: 20,
-    /**
-     * Optical: the + rises this far off the glyph-and-name block's centre
-     * (2026-10-18, on device it read low). The tabs' weight is in the glyphs,
-     * so the + centres halfway between the block's centre (28 in the row) and
-     * the glyphs' (20): 24.
-     */
-    addLift: space[4],
     icon: {
       active: color.action.bg,
       inactive: '#9B8F87',
     },
-    /** the add button: ink square with a ground-coloured plus */
-    add: { background: color.surface.inverse, mark: color.text.onInverse },
   },
   requiredBar,
+  /**
+   * Home's shelf: which of the two sides is open (Round 14, 17a / 17b). Two
+   * square-ended bars at the left of the action row, not dots: the open side
+   * longer and in ink, so width says it as well as colour. The mock moves
+   * them over 0.2s; there is no 200 motion, so they take motion.expand (a
+   * change between states), not press.
+   */
+  pageIndicator: {
+    height: size.meter.track,
+    gap: space[4],
+    active: { w: 24, color: color.text.primary },
+    inactive: { w: 10, color: color.border.muted },
+  },
+  /**
+   * Search's field block, FilterToken (Design Round 15, 18x): a filter held
+   * in the field (Kind, Rating, a bag, a piece of gear), removable only.
+   * 30 tall (the mock's; no size step fits), ink fill, label.caps on inverse,
+   * then the × (icon.xs), whose touch area is size.tapTarget.
+   */
+  filterToken: {
+    height: 30,
+    inset: { h: space[8] },
+    gap: space[6],
+    background: color.surface.inverse,
+    label: color.text.onInverse,
+    close: icon.xs,
+  },
   /**
    * The chevron that says a whole row or block opens something
    * (design-system.md §1 Tap affordance; Design Round 11, C, 2026-10-23).

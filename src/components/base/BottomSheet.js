@@ -13,7 +13,7 @@ import { color, layout, motion, opticalMargin, shape, size, space, spacing } fro
  * the date picker (3c Roasted on), the search sheet (5b flavours, later the
  * bag's Origin) and stage 3's pickers.
  *
- * 2b's sheet: pinned bottom, surface.raised, 2px ink top border, padding
+ * 2b's sheet: pinned bottom, surface.raised, 2px border.container top edge (Design Round 22), padding
  * 22 22 34 (layout.gutter / layout.screen.bottom), gap.section inside, a
  * size.sheet.handle bar (border.soft) centred at the top with the -6 optical
  * margin. Behind it the page drops to opacity 0.45 under color.scrim: drawn
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   sheet: {
     backgroundColor: color.surface.raised,
     borderTopWidth: shape.borderWidth.box,
-    borderTopColor: color.border.strong,
+    borderTopColor: color.border.container,
     paddingTop: layout.gutter,
     paddingHorizontal: layout.gutter,
     paddingBottom: layout.screen.bottom,

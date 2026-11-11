@@ -43,8 +43,14 @@ export const schema = {
      * anything. The UI's internal "mine" becomes "made_it" when it is wired up.
      */
     mode: { type: 'TEXT', nullable: false, values: ['made_it', 'barista', 'packaged'] },
+    /**
+     * A PHOTO'S ID, NOT A URI (2026-11-01, despite the name): the basename
+     * both files follow from, Documents/photos/<id>.jpg (the original) and
+     * <id>-styled.jpg (what the app shows); data/photos.ts. Never a full path:
+     * the app's container moves on every reinstall and update.
+     */
     photo_uri: { type: 'TEXT', nullable: true },
-    /** My words (5b): stored as written, never rewritten (8h's merges live elsewhere). */
+    /** My words (5b): a free memo, stored as written, never rewritten; never feeds Taste DNA (2026-10-31). */
     note: { type: 'TEXT', nullable: true },
     /** Flavour tags (5b): the words themselves, in the order chosen, at most 5. Not ids. */
     flavours: { type: 'TEXT', nullable: false, json: 'string[]' },
@@ -103,6 +109,22 @@ export const schema = {
      * it. Cups from before migration 3 were replayed once.
      */
     dna_change: { type: 'TEXT', nullable: true },
+    /**
+     * The café's name, COPIED at logging (migration 6, todo.md T-13): a
+     * reference (place_id) plus the name as it was, the same shape as the
+     * bag and the gear. Renaming a place never rewrites past cups; changing
+     * the café in 11a copies the new one's name. Read this, not places.name,
+     * for what a cup shows.
+     */
+    place_name: { type: 'TEXT', nullable: true },
+    /**
+     * ALWAYS EMPTY IN V1 — on purpose. V1 has no way to enter where a
+     * Packaged cup was bought, so bought_at_place_id and this stay NULL. It is
+     * for when "bought at" is built, and it has the same reference + copy
+     * shape as the bag, the gear and the café. Not a source of truth for
+     * anything until then (the products table was left like that, migration 4).
+     */
+    bought_at_name: { type: 'TEXT', nullable: true },
 
     /*
      * NO PRICE COLUMN — deliberate. A hand-entered price is always partial, and
@@ -139,6 +161,12 @@ export const schema = {
     /** NULL = open (takes one of the 5 slots); set = finished, in 3f. Reopen clears it. */
     finished_at: { type: 'INTEGER', nullable: true },
     size_g: { type: 'INTEGER', nullable: true },
+    /**
+     * A PHOTO'S ID, NOT A URI (2026-11-01, despite the name): the basename
+     * both files follow from, Documents/photos/<id>.jpg (the original) and
+     * <id>-styled.jpg (what the app shows); data/photos.ts. Never a full path:
+     * the app's container moves on every reinstall and update.
+     */
     photo_uri: { type: 'TEXT', nullable: true },
   },
 
@@ -152,6 +180,12 @@ export const schema = {
     settings_note: { type: 'TEXT', nullable: true },
     /** 0 / 1. 5a pre-fills the default brewer and grinder. */
     is_default: { type: 'INTEGER', nullable: false },
+    /**
+     * A PHOTO'S ID, NOT A URI (2026-11-01, despite the name): the basename
+     * both files follow from, Documents/photos/<id>.jpg (the original) and
+     * <id>-styled.jpg (what the app shows); data/photos.ts. Never a full path:
+     * the app's container moves on every reinstall and update.
+     */
     photo_uri: { type: 'TEXT', nullable: true },
     added_at: { type: 'INTEGER', nullable: false },
   },
@@ -168,22 +202,49 @@ export const schema = {
   },
 
   /**
-   * The two V1 settings, one row (id = 1), both from first setup and NULL when
-   * skipped (data-model.md):
+   * One row (id = 1). drinks_out and coffee_style come from first setup and
+   * are NULL when skipped (data-model.md); what each is for:
    *   drinks_out    8c "I mostly drink out" (0 / 1): read once, for the first
    *                 cup's mode; later cups take the last cup's mode
    *   coffee_style  8n "How do you take your coffee?": read on every cup, to
-   *                 order the flavour suggestions (not the axes). No settings
-   *                 screen in V1 (gaps.md 22)
+   *                 order the flavour suggestions (not the axes)
    */
   settings: {
     id: { type: 'INTEGER', nullable: false, pk: true },
+    /**
+     * ALWAYS EMPTY IN V1 — on purpose, as drinks_out and coffee_style both.
+     * V1 never reads them, and has no way to set them: first setup (8n / 8c)
+     * is V1.5 (gaps.md 22, closed 2026-11-09). They are used in V1.5, built
+     * with first setup, the flavour reordering (constants/flavours.js) and
+     * the first cup's mode from drinks_out, and a place to change both.
+     */
     drinks_out: { type: 'INTEGER', nullable: true },
     coffee_style: { type: 'TEXT', nullable: true, values: ['black', 'with_milk', 'depends'] },
-    /** Reset my taste DNA (V1.5): only cups logged from this time count. */
+    /** Reset my taste DNA (6b, built 2026-11-09): only cups logged from this time count. NULL: never reset. */
     reset_at: { type: 'INTEGER', nullable: true },
     /** 0 / 1: the first setup (8a / 8n / 8c / 8o) was finished or skipped. */
     setup_done: { type: 'INTEGER', nullable: false },
+  },
+
+  /**
+   * Search's "Recent searches" (Design Round 15, 18a): the terms typed, the
+   * last 5 kept, one row per term ignoring case. Clear empties it.
+   */
+  search_history: {
+    id: { type: 'INTEGER', nullable: false, pk: true },
+    term: { type: 'TEXT', nullable: false },
+    searched_at: { type: 'INTEGER', nullable: false },
+  },
+
+  /**
+   * Try next's "Not for me" (migration 7, 2026-11-08): one row per dismissed
+   * suggestion, which never comes back. key: bag:… / cafe:… / brewer:… / tag:…
+   * (migrations.ts says what each names).
+   */
+  try_next_dismissed: {
+    key: { type: 'TEXT', nullable: false, pk: true },
+    kind: { type: 'TEXT', nullable: false, values: ['bag', 'cafe', 'brewer', 'tag'] },
+    dismissed_at: { type: 'INTEGER', nullable: false },
   },
 } as const satisfies Record<string, Record<string, ColumnDef>>;
 

@@ -4,72 +4,103 @@ import BagForm from '../components/BagForm';
 import BeanFreshness from '../components/BeanFreshness';
 import DateSheet from '../components/DateSheet';
 import DiscardSheet from '../components/DiscardSheet';
+import PhotoSheet from '../components/PhotoSheet';
+import ItemCups, { useFilteredCups } from '../components/ItemCups';
+import SaveBar from '../components/SaveBar';
 import BottomSheet from '../components/base/BottomSheet';
 import Button from '../components/base/Button';
-import DashedRule from '../components/base/DashedRule';
 import Glyph from '../components/base/Glyph';
 import IconButton from '../components/base/IconButton';
+import PhotoPlaceholder from '../components/base/PhotoPlaceholder';
+import SectionLabel from '../components/base/SectionLabel';
 import Text from '../components/base/Text';
 import { formatDay, startOfDay } from '../constants/dates';
+import { bagFilter } from '../constants/search';
 import { useDatabase } from '../data/DatabaseProvider';
-import { bagUse, deleteBag, updateBag } from '../data/repository';
-import { color, dashed, icon, shape, space, spacing, state } from '../theme/tokens';
+import { deletePhoto, keepPhoto } from '../data/photos';
+import { deleteBag, finishBag, setBagPhoto, updateBag } from '../data/repository';
+import { requestPush, requestShell } from '../navigation';
+import { color, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
- * 3g — Edit bag (minimal, 2026-10-14), from a 3d card's upper half. Open and
- * not-yet-opened bags; finished bags aren't edited.
+ * 3g — the bag page (Design Round 15, 19a / 19b; was "Edit bag", minimal,
+ * 2026-10-14). A page arrived at to look, from a 3d card, a search result
+ * (finished bags too) or a cup's bag; its details can be corrected in place.
  *
- * Header: compact, "N / Cups logged" in the stat (3g).
- * Fields (minimal): Bean name (required, as 3c), Roaster, Roasted on, and
- * Opened on for a bag that is open (an unopened bag is opened from 3d).
- * Photo, origin, region, roast level, process and size are not at this
- * stage (no inputs for them yet).
+ * Header: compact, ‹ (a page you go back from, not a form you dismiss) and
+ * the bag's name as the title (user data, 2 lines, as 2c). The "Cups logged"
+ * count is gone from it: the cup list carries it.
+ * Body, top to bottom (19a: status, cups, details, end actions):
+ *   facts      under the title, each after its label (labelEyebrow muted,
+ *              then the value in body): "ROASTER Blue Bottle  SIZE 250 g"
+ *              (Uryu, 2026-10-28; 19a draws a bare "Blue Bottle · 250 g")
+ *   status     the photo, then beanFreshness
+ *              stacked (19a: the day and state over the bar) from the roast
+ *              date being edited, and "Roasted Mar 30 ·
+ *              opened Apr 6". Sealed: 3d's sealed line. Finished: "Finished
+ *              Mar 2".
+ *   cups       ItemCups: "Cups from this bag · N", 5 rows, "All N cups ›"
+ *              (search with the bag as a block); none: "No cups from this
+ *              bag yet." and, for an open bag, "Log a cup from it ›" (Log a
+ *              cup with the bag preselected)
+ *   details    "Details", then BagForm (minimal: Bean name, Roaster, Process
+ *              (2026-11-08), Roasted on, Opened on for an opened bag). Origin,
+ *              region and size have no inputs yet; the photo sits in the
+ *              status block (above).
+ *   end        "Finish bag" (secondary, a normal step of a bag's life) for an
+ *              open bag, then "Delete this bag" (the weak 1.5 frame) with
+ *              "Not finish — erases it" (19a); where there is no Finish
+ *              beside it (sealed, finished) its line stays Round 6's "For a
+ *              bag added by mistake".
+ * Save (19b): SaveBar, absent until the first edit; reverting the edits
+ * takes it away. "Save changes", then "Applies to the N cups already logged
+ * from this bag." when there are any (counts grouped, tabular). Saving
+ * stays on the page: the bar goes, the title takes the new name.
+ * Finish stays on the page too: the bag shows as finished.
  * Date limits (design-missing.md 33 / 34, Design Round 6):
  *   Roasted on  up to the first cup from the bag (or its opening, or today,
  *               whichever is first); the line under it names the limit when
  *               there is a cup — "Up to Apr 6, your first cup from it."
- *   Opened on   from the roast date to the first cup (no cups: today) —
- *               "From Mar 30, the roast date, to Apr 6, your first cup from
- *               it." / "Up to Apr 6, …" with no roast date / no line with
- *               neither.
- * Under a dashed rule: beanFreshness from the date being edited, and
- * "Freshness on My beans counts from this date." (42), empty date or not.
- * Under the card: "Delete this bag" (1.5 border.muted frame, as 3g) with
- * "For a bag added by mistake" (Round 6). No Finish here: Finish is 3d's.
- * Footer: Save changes, and "Edits apply to the N cups already logged from
- * this bag." when there are any (35). Counts are grouped from 1,000 and
- * tabular, as 3e's (Design Round 12, 10).
- * Leaving with changes asks first (Round 4's sheet; the bag's own body).
- * Delete: 11b's sheet with "bag" (Round 6, 36); back to 3d with 13b's
- * notice.
+ *   Opened on   from the roast date to the first cup (no cups: today).
+ * Leaving with edits asks first (Round 4's sheet; the bag's own body).
+ * Delete: 11b's sheet with "bag" (Round 6, 36); back with 13b's notice.
+ * Photo (2026-11-02, Uryu): the status block's square is the photo and the
+ * way to change it: it opens PhotoSheet (take, choose, remove; the same
+ * sheet as 3c's, PROVISIONAL until Design Round 19). With none, "No photo
+ * yet. Tap to add one." beside it (19c's line). A change applies at once,
+ * not through the Save bar: the sheet's "Use this photo" is its own confirm,
+ * as Finish is. The replaced photo's files go with it.
  */
 const countFormat = new Intl.NumberFormat('en-US');
 
 export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   const db = useDatabase();
-  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at });
+  // The bag as stored: the title, the sub line and what counts as an edit.
+  const [stored, setStored] = useState(bag);
+  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at, process: bag.process ?? null });
   const [openedAt, setOpenedAt] = useState(bag.opened_at);
-  const [use, setUse] = useState({ cups: 0, firstCupAt: null });
+  const cups = useFilteredCups(bagFilter(bag));
   const [nameMissing, setNameMissing] = useState(false);
   // 'roasted' | 'opened' | 'discard' | 'delete' | null
   const [sheet, setSheet] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [photoSheet, setPhotoSheet] = useState(false);
 
-  useEffect(() => {
-    let alive = true;
-    bagUse(db, bag.id).then(
-      (u) => alive && setUse(u),
-      (error) => console.error('[3g] could not read the cups', error)
-    );
-    return () => {
-      alive = false;
-    };
-  }, [db, bag.id]);
+  const cupCount = cups?.length ?? 0;
+  const firstCupAt = cups?.length ? cups[cups.length - 1].logged_at : null;
+  const finished = stored.finished_at != null;
+  const opened = stored.opened_at != null;
+  const open = opened && !finished;
 
   const name = form.name.trim();
   const roaster = form.roaster.trim() || null;
-  const dirty = name !== bag.name || roaster !== (bag.roaster ?? null) || form.roastedAt !== bag.roasted_at || openedAt !== bag.opened_at;
+  const dirty =
+    name !== stored.name ||
+    roaster !== (stored.roaster ?? null) ||
+    form.roastedAt !== stored.roasted_at ||
+    form.process !== (stored.process ?? null) ||
+    openedAt !== stored.opened_at;
   useEffect(() => {
     guardLeave?.(dirty && !busy, () => {
       Keyboard.dismiss();
@@ -78,9 +109,25 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   }, [guardLeave, dirty, busy]);
   const leave = () => onBack({ force: true });
 
+  // A new photo is kept, set on the bag, and the old one's files removed;
+  // null removes the photo.
+  const changePhoto = async (next) => {
+    setPhotoSheet(false);
+    try {
+      if (next) await keepPhoto(next.id);
+      const before = await setBagPhoto(db, stored.id, next?.id ?? null);
+      deletePhoto(before);
+      setStored((s) => ({ ...s, photo_uri: next?.id ?? null }));
+    } catch (error) {
+      if (next) deletePhoto(next.id);
+      console.error('[3g] could not change the photo', error);
+      Alert.alert("The photo wasn't changed", String(error?.message ?? error));
+    }
+  };
+
   // Limits. The first cup's day and today are whole days (the sheets pick days).
   const today = startOfDay(new Date());
-  const firstCupDay = use.firstCupAt != null ? startOfDay(new Date(use.firstCupAt)) : null;
+  const firstCupDay = firstCupAt != null ? startOfDay(new Date(firstCupAt)) : null;
   const cupLimit = firstCupDay ?? today;
   const openedDay = openedAt != null ? startOfDay(new Date(openedAt)) : null;
   const roastMax = Math.min(cupLimit, openedDay ?? cupLimit);
@@ -93,24 +140,35 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   else if (firstCupLine) openedHint = `Up to ${firstCupLine}.`;
 
   const save = async () => {
-    if (busy) return;
+    if (busy || !dirty) return;
     if (!name) {
       setNameMissing(true);
       return;
     }
-    if (!dirty) {
-      leave();
-      return;
-    }
     setBusy(true);
     try {
-      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, openedAt });
-      leave();
+      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, process: form.process, openedAt });
+      Keyboard.dismiss();
+      setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, process: form.process, opened_at: openedAt }));
+      setForm((f) => ({ ...f, name, roaster: roaster ?? '' }));
     } catch (error) {
       console.error('[3g] could not save', error);
       Alert.alert("Couldn't save your changes", String(error?.message ?? error));
-      setBusy(false);
     }
+    setBusy(false);
+  };
+
+  const finish = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await finishBag(db, bag.id);
+      setStored((s) => ({ ...s, finished_at: Date.now() }));
+    } catch (error) {
+      console.error('[3g] could not finish', error);
+      Alert.alert("Couldn't finish this bag", String(error?.message ?? error));
+    }
+    setBusy(false);
   };
 
   const remove = async () => {
@@ -119,7 +177,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     try {
       await deleteBag(db, bag.id);
       setSheet(null);
-      onDeleted(bag.name);
+      onDeleted(stored.name);
     } catch (error) {
       console.error('[3g] could not delete', error);
       Alert.alert("Couldn't delete this bag", String(error?.message ?? error));
@@ -127,85 +185,158 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     }
   };
 
-  const cupsWord = `${use.cups} ${use.cups === 1 ? 'cup' : 'cups'}`;
+  // Under the title, each fact after its own label (Uryu, 2026-10-28: a bare
+  // "Blue Bottle · 250 g" hung there unexplained).
+  const facts = [stored.roaster ? { label: 'Roaster', value: stored.roaster } : null, stored.size_g ? { label: 'Size', value: `${stored.size_g} g` } : null].filter(Boolean);
+  const dates = [form.roastedAt != null ? `Roasted ${formatDay(form.roastedAt)}` : null, openedAt != null ? `opened ${formatDay(openedAt)}` : null]
+    .filter(Boolean)
+    .join(' · ');
   return (
     <View style={styles.screen}>
-      <ScreenFrame
-        scroll
-        compact
-        title="Edit bag"
-        leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
-        stat={{ value: String(use.cups), label: 'Cups logged' }}
-        footer={
-          <View style={styles.footer}>
-            <Button label="Save changes" onPress={save} />
-            {use.cups > 0 ? (
-              <Text variant="bodySmTabular" color="secondary" style={styles.centred}>
-                {`Edits apply to the ${use.cups === 1 ? 'cup' : `${countFormat.format(use.cups)} cups`} already logged from this bag.`}
-              </Text>
+      <View style={styles.page}>
+        <ScreenFrame scroll compact userTitle title={stored.name} leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
+          <View style={styles.body}>
+            {facts.length ? (
+              <View style={styles.facts}>
+                {facts.map((f) => (
+                  <View key={f.label} style={styles.fact} accessible accessibilityLabel={`${f.label}, ${f.value}`}>
+                    <Text variant="labelEyebrow" color="muted">
+                      {f.label}
+                    </Text>
+                    <Text variant="body" color="primary" numberOfLines={1} style={styles.factValue}>
+                      {f.value}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             ) : null}
+
+            <View style={styles.status}>
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setPhotoSheet(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={stored.photo_uri ? 'Bag photo, change or remove' : 'Add a photo of the bag'}>
+                {({ pressed }) => (
+                  <View>
+                    <PhotoPlaceholder size={size.thumbnail.list} photo={stored.photo_uri} />
+                    {pressed ? <View style={styles.photoPressed} /> : null}
+                  </View>
+                )}
+              </Pressable>
+              <View style={styles.statusText}>
+                {finished ? (
+                  <Text variant="meterLabel" color="muted">
+                    {`Finished ${formatDay(stored.finished_at)}`}
+                  </Text>
+                ) : !opened ? (
+                  <BeanFreshness sealed />
+                ) : (
+                  <BeanFreshness roastedAt={form.roastedAt} stacked />
+                )}
+                {dates ? (
+                  <Text variant="bodySm" color="muted">
+                    {dates}
+                  </Text>
+                ) : null}
+                {stored.photo_uri ? null : (
+                  <Text variant="bodySm" color="muted">
+                    No photo yet. Tap to add one.
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            {cups ? (
+              <ItemCups
+                cups={cups}
+                heading="Cups from this bag"
+                emptyLine="No cups from this bag yet."
+                logLabel="Log a cup from it"
+                // A cup is logged from an opened bag; Log a cup takes this one.
+                onLog={open ? () => requestShell({ record: { bag: stored } }) : undefined}
+                onOpen={(id) => requestPush({ name: 'cup', id })}
+                onAll={() => requestPush({ name: 'search', filter: bagFilter(stored) })}
+              />
+            ) : null}
+
+            <View style={styles.details}>
+              <SectionLabel variant="plain" label="Details" />
+              <BagForm
+                value={form}
+                onChange={(next) => {
+                  if (next.name.trim()) setNameMissing(false);
+                  setForm(next);
+                }}
+                nameMissing={nameMissing}
+                autoFocusName={false}
+                roastedPlaceholder="Optional"
+                roastedHint={roastedHint}
+                onPickDate={() => {
+                  Keyboard.dismiss();
+                  setSheet('roasted');
+                }}
+                datePicking={sheet === 'roasted'}
+                opened={
+                  opened
+                    ? {
+                        value: openedAt,
+                        hint: openedHint,
+                        picking: sheet === 'opened',
+                        onPick: () => {
+                          Keyboard.dismiss();
+                          setSheet('opened');
+                        },
+                      }
+                    : undefined
+                }
+              />
+            </View>
+
+            <View style={styles.end}>
+              {open ? <Button variant="secondary" label="Finish bag" onPress={finish} /> : null}
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setSheet('delete');
+                }}
+                accessibilityRole="button"
+                accessibilityHint={open ? 'Not finish — erases it' : 'For a bag added by mistake'}
+                style={({ pressed }) => [styles.delete, pressed && styles.pressed]}>
+                {/* 3g: the bin (3g draws 17, icon.md is 18) before the label; both
+                    in color.text.destructive (Design Round 24). */}
+                <View style={styles.deleteLabel}>
+                  <Glyph name="trash" token={icon.md} color={color.icon.destructive} />
+                  <Text variant="labelCaps" color="destructive">
+                    Delete this bag
+                  </Text>
+                </View>
+                <Text variant="bodySm" color="muted" style={styles.deleteHint}>
+                  {open ? 'Not finish — erases it' : 'For a bag added by mistake'}
+                </Text>
+              </Pressable>
+            </View>
           </View>
-        }>
-        <View style={styles.body}>
-          <BagForm
-            value={form}
-            onChange={(next) => {
-              if (next.name.trim()) setNameMissing(false);
-              setForm(next);
-            }}
-            nameMissing={nameMissing}
-            autoFocusName={false}
-            roastedPlaceholder="Optional"
-            roastedHint={roastedHint}
-            onPickDate={() => {
-              Keyboard.dismiss();
-              setSheet('roasted');
-            }}
-            datePicking={sheet === 'roasted'}
-            opened={
-              bag.opened_at != null
-                ? {
-                    value: openedAt,
-                    hint: openedHint,
-                    picking: sheet === 'opened',
-                    onPick: () => {
-                      Keyboard.dismiss();
-                      setSheet('opened');
-                    },
-                  }
-                : undefined
-            }>
-            <View style={styles.freshness}>
-              <DashedRule token={dashed.dividerSoft} />
-              <BeanFreshness roastedAt={form.roastedAt} />
-              <Text variant="meta" color="muted">
-                Freshness on My beans counts from this date.
-              </Text>
-            </View>
-          </BagForm>
+        </ScreenFrame>
+      </View>
 
-          <Pressable
-            onPress={() => {
-              Keyboard.dismiss();
-              setSheet('delete');
-            }}
-            accessibilityRole="button"
-            accessibilityHint="For a bag added by mistake"
-            style={({ pressed }) => [styles.delete, pressed && styles.pressed]}>
-            {/* 3g: the bin (icon.accent; 3g draws 17, icon.md is 18) before the label. */}
-            <View style={styles.deleteLabel}>
-              <Glyph name="trash" token={icon.md} color={color.icon.accent} />
-              <Text variant="labelCaps" color="primary">
-                Delete this bag
-              </Text>
-            </View>
-            <Text variant="bodySm" color="muted">
-              For a bag added by mistake
-            </Text>
-          </Pressable>
-        </View>
-      </ScreenFrame>
+      <SaveBar visible={dirty}>
+        <Button label="Save changes" onPress={save} />
+        {cupCount > 0 ? (
+          <Text variant="bodySmTabular" color="secondary" style={styles.centred}>
+            {`Applies to the ${cupCount === 1 ? 'cup' : `${countFormat.format(cupCount)} cups`} already logged from this bag.`}
+          </Text>
+        ) : null}
+      </SaveBar>
 
+      <PhotoSheet
+        visible={photoSheet}
+        onClose={() => setPhotoSheet(false)}
+        onChosen={changePhoto}
+        onRemove={stored.photo_uri ? () => changePhoto(null) : undefined}
+      />
       <DateSheet
         visible={sheet === 'roasted'}
         onClose={() => setSheet(null)}
@@ -222,7 +353,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
         minimum={form.roastedAt != null ? new Date(form.roastedAt) : undefined}
         maximum={new Date(cupLimit)}
         // The same day keeps the stored moment (3c stores when it was opened).
-        onChange={(day) => setOpenedAt(bag.opened_at != null && day === startOfDay(new Date(bag.opened_at)) ? bag.opened_at : day)}
+        onChange={(day) => setOpenedAt(stored.opened_at != null && day === startOfDay(new Date(stored.opened_at)) ? stored.opened_at : day)}
       />
       <DiscardSheet
         visible={sheet === 'discard'}
@@ -239,17 +370,17 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
           Delete this bag?
         </Text>
         <Text variant="body" color="secondary">
-          {use.cups > 0
-            ? `It's removed from My beans for good. Your ${cupsWord === '1 cup' ? 'logged cup keeps' : `${countFormat.format(use.cups)} logged cups keep`} its details.`
+          {cupCount > 0
+            ? `It's removed from My beans for good. Your ${cupCount === 1 ? 'logged cup keeps' : `${countFormat.format(cupCount)} logged cups keep`} its details.`
             : "It's removed from My beans for good."}
         </Text>
-        {bag.opened_at != null ? (
+        {open ? (
           <Text variant="body" color="secondary">
             Drank it? Finish it instead. A finished bag can be reopened.
           </Text>
         ) : null}
         <View style={styles.sheetActions}>
-          <Button label="Delete this bag" onPress={remove} />
+          <Button variant="secondary" destructive label="Delete this bag" onPress={remove} />
           <Button variant="secondary" label="Keep it" onPress={() => setSheet(null)} />
         </View>
       </BottomSheet>
@@ -261,11 +392,50 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
+  page: {
+    flex: 1,
+  },
   body: {
     gap: space[20],
+    // Room under the end actions, off the home indicator (as 2c, 3f).
+    paddingBottom: layout.empty.block,
   },
-  freshness: {
+  // Roaster, then Size, on one line; wraps when a roaster's name is long.
+  facts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: space[20],
+    rowGap: spacing.gap.tight,
+  },
+  fact: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    flexShrink: 1,
     gap: spacing.gap.row,
+  },
+  factValue: {
+    flexShrink: 1,
+  },
+  status: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[14],
+  },
+  // The photo has a surface, so pressed darkens it (§1), never opacity.
+  photoPressed: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: state.pressed.row,
+  },
+  statusText: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.gap.row,
+  },
+  details: {
+    gap: spacing.gap.row,
+  },
+  end: {
+    gap: spacing.gap.section,
   },
   // 3g: the delete row, the weak 1.5 frame (it's not the screen's main act).
   delete: {
@@ -283,11 +453,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space[8],
   },
+  deleteHint: {
+    flexShrink: 1,
+    textAlign: 'right',
+  },
   pressed: {
     backgroundColor: state.pressed.surface,
-  },
-  footer: {
-    gap: spacing.gap.row,
   },
   centred: {
     textAlign: 'center',

@@ -4,6 +4,7 @@ import Text from '../components/base/Text';
 import ScreenFrame from '../screens/ScreenFrame';
 import { spacing } from '../theme/tokens';
 import { inTransaction, openDatabase } from './migrate';
+import { sweepPhotos } from './photos';
 
 const DatabaseContext = createContext(null);
 
@@ -50,6 +51,9 @@ export default function DatabaseProvider({ children }) {
           }
         }
         if (!cancelled) setState({ db, error: null });
+        // Photo files no row points at (a deleted bag's), and pending leftovers.
+        // Not awaited: the app doesn't wait on housekeeping.
+        if (Platform.OS !== 'web') sweepPhotos(db);
       } catch (error) {
         console.error('[db] failed to open', error);
         if (!cancelled) setState({ db: null, error });
@@ -65,7 +69,7 @@ export default function DatabaseProvider({ children }) {
   // checkpoint, so the rows lived only in morecoffee.db-wal (the .db stayed a
   // 4 KB header for weeks). iOS backs up all three files together and replays
   // the WAL on restore, so nothing was lost — but folding the WAL in before
-  // iOS suspends us (and backs up) leaves morecoffee.db complete on its own.
+  // iOS suspends us (and backs up) leaves the .db complete on its own.
   // A busy checkpoint just does less; the next one catches up. Busy does not
   // throw: the pragma returns a row (busy, log, checkpointed) with busy = 1,
   // so the row is read (todo.md T-7). Neither failure stops the app.

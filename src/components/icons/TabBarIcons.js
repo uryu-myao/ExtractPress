@@ -1,12 +1,12 @@
-import Svg, { Path, Rect } from 'react-native-svg';
-import { component } from '../../theme/tokens';
+import Svg, { Path } from 'react-native-svg';
+import { color, component, icon as iconToken } from '../../theme/tokens';
 
 /**
  * Tab bar glyphs. Paths are verbatim from the design source (1b, 2a, 6a, 8d);
  * colours come from component.tabBar. Fill glyphs: active fills with the
  * action blue, inactive with the warm grey.
  */
-const { icon, add } = component.tabBar;
+const { icon } = component.tabBar;
 
 const fillFor = (isActive) => (isActive ? icon.active : icon.inactive);
 
@@ -57,13 +57,15 @@ export function ProfileIcon({ isActive = false }) {
   );
 }
 
-/** The add button: a square ink block with a plus (square per the source — no rx). */
+/**
+ * The +'s glyph (Design Round 23, 25b): a stroked plus, 22 at 2.6 (icon.lg's
+ * size at icon.sm's stroke), in color.action.fg on the blue button (FooterNav draws the button). Was an ink
+ * square with a filled plus (2026-10-18 to 2026-11-08).
+ */
 export function AddCoffeeIcon() {
   return (
-    <Svg width={44} height={34} viewBox="0 0 44 34" fill="none">
-      <Rect width={44} height={34} fill={add.background} />
-      <Rect x={12} y={15} width={20} height={4} fill={add.mark} />
-      <Rect x={20} y={27} width={20} height={4} transform="rotate(-90 20 27)" fill={add.mark} />
+    <Svg width={iconToken.lg.size} height={iconToken.lg.size} viewBox="0 0 24 24" fill="none" stroke={color.action.fg} strokeWidth={iconToken.sm.strokeWidth} strokeLinecap="round">
+      <Path d="M12 5v14M5 12h14" />
     </Svg>
   );
 }

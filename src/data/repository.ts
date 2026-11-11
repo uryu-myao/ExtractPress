@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import type { Bag, CupMode, Gear, GearCategory, Place, Row } from './schema';
 import { changeOf, computeDna, dnaCupFromRow, lastShift, type Dna, type DnaShift } from './tasteDna';
+import { pickTryNext, type Suggestion, type TryNextCup } from './tryNext';
 
 /**
  * The reference rows Record coffee pre-fills its field sets with. Until the
@@ -20,8 +21,9 @@ export async function loadRecordDefaults(db: SQLiteDatabase): Promise<RecordDefa
   // Café, product and store are NOT pre-filled (2026-10-11): no V1 screen lets
   // the user choose or create one, so "the newest row" could only ever be the
   // dev seed's, and a cup would record a café / product nobody picked. A
-  // record must be a fact. They come back with their pickers (Packaged's
-  // product name: design-missing.md 6; Barista: not at this stage).
+  // record must be a fact. Packaged's product name (design-missing.md 6)
+  // and Barista's café (2026-10-30) have their own sheets and start empty:
+  // a café is never guessed from where the phone is.
   const [bag, brewer, grinder] = await Promise.all([
     db.getFirstAsync<Bag & { notes: string }>('SELECT * FROM bags WHERE finished_at IS NULL AND opened_at IS NOT NULL ORDER BY opened_at DESC, id DESC LIMIT 1'),
     db.getFirstAsync<Gear>("SELECT * FROM gear WHERE category = 'brewer' AND is_default = 1"),
@@ -52,7 +54,8 @@ export async function countOpenBags(db: SQLiteDatabase): Promise<number> {
 }
 
 /** What 3c's Bag form hands over (minimal set: name required, the rest optional). */
-export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; open: boolean };
+/** photo: a kept photo's id (data/photos.ts), or null. process: null is "don't know". */
+export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; process?: Bag['process']; open: boolean; photo?: string | null };
 
 /**
  * Add a bag: opened now (3c "Open this bag"), or not yet (3c "Add without
@@ -62,16 +65,32 @@ export type NewBag = { name: string; roaster: string | null; roastedAt: number |
  */
 export async function insertBag(db: SQLiteDatabase, bag: NewBag): Promise<Bag> {
   if ((await countOpenBags(db)) >= OPEN_BAG_LIMIT) throw new Error(`All ${OPEN_BAG_LIMIT} slots are taken. Finish a bag to free one up.`);
-  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, opened_at) VALUES (?, ?, ?, ?)', [
+  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, process, opened_at, photo_uri) VALUES (?, ?, ?, ?, ?, ?)', [
     bag.name,
     bag.roaster,
     bag.roastedAt,
+    bag.process ?? null,
     bag.open ? Date.now() : null,
+    bag.photo ?? null,
   ]);
   const row = await db.getFirstAsync<Bag & { notes: string }>('SELECT * FROM bags WHERE id = ?', [result.lastInsertRowId]);
   if (!row) throw new Error('The bag was not stored.');
   notifyShelfChanged();
   return { ...row, notes: JSON.parse(row.notes as unknown as string) };
+}
+
+/**
+ * Reset my taste DNA (6b): from now on, only cups logged from this moment
+ * count. No cup is touched; Records keeps every one (taste-dna.md item 7).
+ * Now, not the start of today: right after a reset the profile is empty, as
+ * the confirm sheet says ("only cups from now on count").
+ * No undo (Uryu, 2026-11-09): cups logged after a reset store a change worked
+ * out from the empty profile, so moving reset_at back would leave their
+ * stored changes wrong.
+ */
+export async function resetTasteDna(db: SQLiteDatabase, now = Date.now()): Promise<void> {
+  await db.runAsync('UPDATE settings SET reset_at = ?', [now]);
+  notifyCupsChanged();
 }
 
 /** Taste DNA now, from every counted cup (computed on read, never stored). */
@@ -130,31 +149,95 @@ export async function loadDnaPage(
 }
 
 /**
- * 6a's personal card: every bag ever added (finished ones too, beside the
- * all-time cup count) and every cup's time (the first gives "Logging
- * since", all of them the week streak).
+ * 8g (How my DNA is built): the profile, and how many cups since the reset
+ * count for nothing (no axis noted, no bundled tag). Every V1 cup has a
+ * rating, so "nothing noted" is the only reason a cup is left out.
  */
-export async function loadProfile(db: SQLiteDatabase): Promise<{ bags: number; cupTimes: number[] }> {
-  const [bags, cups] = await Promise.all([
-    db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM bags'),
-    db.getAllAsync<{ logged_at: number }>('SELECT logged_at FROM cups ORDER BY logged_at'),
+export async function loadDnaBuilt(db: SQLiteDatabase): Promise<{ dna: Dna; idle: number }> {
+  const settings = await db.getFirstAsync<{ reset_at: number | null }>('SELECT reset_at FROM settings');
+  const resetAt = settings?.reset_at ?? null;
+  const [dna, all] = await Promise.all([
+    loadTasteDna(db),
+    db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM cups WHERE (? IS NULL OR logged_at >= ?) AND logged_at <= ?', [
+      resetAt,
+      resetAt,
+      Date.now(),
+    ]),
   ]);
-  return { bags: bags?.n ?? 0, cupTimes: cups.map((c) => c.logged_at) };
+  return { dna, idle: Math.max(0, (all?.n ?? 0) - dna.cups) };
 }
 
-/** One cup as 2c shows it: every stored field, with its place names. */
-export type CupRecord = Row<'cups'> & {
-  place_name: string | null;
-  bought_at_name: string | null;
-};
+/**
+ * 6a's personal card: every cup's time (the first gives "Logging since";
+ * the count, Cups), and Bags and Cafés counted as Home counts them
+ * (countBags, countCupCafes; 6a and Home count the same things, Design
+ * Round 21 build questions, 7).
+ */
+export async function loadProfile(db: SQLiteDatabase): Promise<{ bags: number; cafes: number; cupTimes: number[] }> {
+  const [bags, cafes, cups] = await Promise.all([
+    countBags(db),
+    countCupCafes(db),
+    db.getAllAsync<{ logged_at: number }>('SELECT logged_at FROM cups ORDER BY logged_at'),
+  ]);
+  return { bags, cafes, cupTimes: cups.map((c) => c.logged_at) };
+}
+
+/**
+ * What the user has made, as Restore's rule reads it (backupFormat.ts isEmpty):
+ * 6b shows Restore only while all four are 0 (Design Round 23, 25e), and the
+ * "Only on an empty app" sheet names them.
+ */
+export async function countOwnRecords(db: SQLiteDatabase): Promise<{ cups: number; bags: number; gear: number; places: number }> {
+  const row = await db.getFirstAsync<{ cups: number; bags: number; gear: number; places: number }>(
+    `SELECT (SELECT COUNT(*) FROM cups) AS cups, (SELECT COUNT(*) FROM bags) AS bags,
+            (SELECT COUNT(*) FROM gear) AS gear, (SELECT COUNT(*) FROM places) AS places`
+  );
+  return row ?? { cups: 0, bags: 0, gear: 0, places: 0 };
+}
+
+export type TryNextSuggestion = Suggestion<Bag, Gear, Place>;
+
+/**
+ * Home's Try next card (Design Round 23, 25c): the one suggestion to show, or
+ * null (no card). The rules are tryNext.ts's; this reads what they need.
+ */
+export async function loadTryNext(db: SQLiteDatabase, now = Date.now()): Promise<TryNextSuggestion | null> {
+  const [cups, bags, gear, places, dismissed] = await Promise.all([
+    db.getAllAsync<Omit<TryNextCup, 'flavours'> & { flavours: string }>(
+      'SELECT id, logged_at, rating, mode, flavours, bag_id, bean_name, bean_roaster, brewer_id, place_id FROM cups'
+    ),
+    db.getAllAsync<Bag & { notes: string }>('SELECT * FROM bags'),
+    db.getAllAsync<Gear>('SELECT * FROM gear'),
+    db.getAllAsync<Place>("SELECT * FROM places WHERE kind = 'cafe'"),
+    db.getAllAsync<{ key: string }>('SELECT key FROM try_next_dismissed'),
+  ]);
+  return pickTryNext({
+    cups: cups.map((c) => ({ ...c, flavours: JSON.parse(c.flavours) })),
+    bags: bags.map((b) => ({ ...b, notes: JSON.parse(b.notes as unknown as string) })),
+    gear,
+    places,
+    dismissed: new Set(dismissed.map((d) => d.key)),
+    now,
+  });
+}
+
+/** "Not for me" (25d): the suggestion never comes back. */
+export async function dismissTryNext(db: SQLiteDatabase, suggestion: { key: string; kind: string }): Promise<void> {
+  await db.runAsync('INSERT OR REPLACE INTO try_next_dismissed (key, kind, dismissed_at) VALUES (?, ?, ?)', [suggestion.key, suggestion.kind, Date.now()]);
+}
+
+/** 25d's Undo: the dismissal is taken back. */
+export async function undoDismissTryNext(db: SQLiteDatabase, key: string): Promise<void> {
+  await db.runAsync('DELETE FROM try_next_dismissed WHERE key = ?', [key]);
+}
+
+/** One cup as 2c shows it: every stored field, its place names as copied (migration 6). */
+/** before_reset: 1 when the cup was logged before Reset my taste DNA, so it no longer counts; reset_at: when (2c's line, Design Round 25, A2). */
+export type CupRecord = Row<'cups'> & { before_reset?: number; reset_at?: number | null };
 
 export async function getCup(db: SQLiteDatabase, id: number): Promise<CupRecord | null> {
   const row = await db.getFirstAsync<CupRecord & { flavours: string }>(
-    `SELECT c.*, p.name AS place_name, bp.name AS bought_at_name
-       FROM cups c
-       LEFT JOIN places p ON p.id = c.place_id
-       LEFT JOIN places bp ON bp.id = c.bought_at_place_id
-      WHERE c.id = ?`,
+    'SELECT c.*, (s.reset_at IS NOT NULL AND c.logged_at < s.reset_at) AS before_reset, s.reset_at FROM cups c, settings s WHERE c.id = ?',
     [id]
   );
   return row ? { ...row, flavours: JSON.parse(row.flavours as unknown as string) } : null;
@@ -172,6 +255,19 @@ export async function listOpenBags(db: SQLiteDatabase): Promise<Bag[]> {
 export async function listShelfBags(db: SQLiteDatabase): Promise<Bag[]> {
   const rows = await db.getAllAsync<Bag & { notes: string }>(
     'SELECT * FROM bags WHERE finished_at IS NULL ORDER BY opened_at IS NULL, opened_at DESC, id DESC'
+  );
+  return rows.map((row) => ({ ...row, notes: JSON.parse(row.notes as unknown as string) }));
+}
+
+/**
+ * Every bag, finished ones too (search's BEANS, Design Round 15, 18d): the
+ * shelf's order (listShelfBags), then finished bags, the latest finished
+ * first.
+ */
+export async function listAllBags(db: SQLiteDatabase): Promise<Bag[]> {
+  const rows = await db.getAllAsync<Bag & { notes: string }>(
+    `SELECT * FROM bags
+      ORDER BY finished_at IS NOT NULL, finished_at DESC, opened_at IS NULL, opened_at DESC, id DESC`
   );
   return rows.map((row) => ({ ...row, notes: JSON.parse(row.notes as unknown as string) }));
 }
@@ -220,17 +316,8 @@ export async function reopenBag(db: SQLiteDatabase, id: number): Promise<void> {
   notifyShelfChanged();
 }
 
-/** What 3g needs beside the bag: how many cups were logged from it, and the first one's time. */
-export async function bagUse(db: SQLiteDatabase, id: number): Promise<{ cups: number; firstCupAt: number | null }> {
-  const row = await db.getFirstAsync<{ cups: number; first: number | null }>(
-    'SELECT COUNT(*) AS cups, MIN(logged_at) AS first FROM cups WHERE bag_id = ?',
-    [id]
-  );
-  return { cups: row?.cups ?? 0, firstCupAt: row?.first ?? null };
-}
-
-/** What 3g (minimal) edits. */
-export type BagEdit = { name: string; roaster: string | null; roastedAt: number | null; openedAt: number | null };
+/** What 3g (minimal, plus Process) edits. */
+export type BagEdit = { name: string; roaster: string | null; roastedAt: number | null; process: Bag['process']; openedAt: number | null };
 
 /**
  * Save 3g. The cups logged from the bag carry copies of its details
@@ -249,17 +336,19 @@ export async function updateBag(db: SQLiteDatabase, id: number, edit: BagEdit): 
       if (at != null && at > latest) throw new Error("A date can't be after the first cup from this bag, or in the future.");
     }
     if (edit.roastedAt != null && edit.openedAt != null && edit.openedAt < edit.roastedAt) throw new Error("A bag can't be opened before it was roasted.");
-    await tx.runAsync('UPDATE bags SET name = ?, roaster = ?, roasted_at = ?, opened_at = ? WHERE id = ?', [
+    await tx.runAsync('UPDATE bags SET name = ?, roaster = ?, roasted_at = ?, process = ?, opened_at = ? WHERE id = ?', [
       edit.name,
       edit.roaster,
       edit.roastedAt,
+      edit.process,
       edit.openedAt,
       id,
     ]);
-    await tx.runAsync('UPDATE cups SET bean_name = ?, bean_roaster = ?, bean_roasted_at = ? WHERE bag_id = ?', [
+    await tx.runAsync('UPDATE cups SET bean_name = ?, bean_roaster = ?, bean_roasted_at = ?, bean_process = ? WHERE bag_id = ?', [
       edit.name,
       edit.roaster,
       edit.roastedAt,
+      edit.process,
       id,
     ]);
   });
@@ -272,6 +361,17 @@ export async function updateBag(db: SQLiteDatabase, id: number, edit: BagEdit): 
  * keep their copies of its details (the copy rule); only their link goes
  * (bag_id → NULL by the foreign key), so Taste DNA is unchanged.
  */
+/**
+ * A bag's photo (the bag page, 19a; 2026-11-02): a kept photo's id, or null to
+ * remove it. Returns the one it replaces, whose files the caller deletes.
+ */
+export async function setBagPhoto(db: SQLiteDatabase, id: number, photo: string | null): Promise<string | null> {
+  const before = await db.getFirstAsync<{ photo_uri: string | null }>('SELECT photo_uri FROM bags WHERE id = ?', [id]);
+  await db.runAsync('UPDATE bags SET photo_uri = ? WHERE id = ?', [photo, id]);
+  notifyShelfChanged();
+  return before?.photo_uri ?? null;
+}
+
 export async function deleteBag(db: SQLiteDatabase, id: number): Promise<void> {
   await db.runAsync('DELETE FROM bags WHERE id = ?', [id]);
   notifyShelfChanged();
@@ -294,11 +394,112 @@ export async function listProductHistory(db: SQLiteDatabase): Promise<{ name: st
   );
 }
 
-/** Every piece of gear with the cups logged with it (4a: "Brewer · 2 cups"); defaults first. */
-export async function listGearWithUse(db: SQLiteDatabase): Promise<(Gear & { cups: number })[]> {
-  return db.getAllAsync<Gear & { cups: number }>(
-    `SELECT g.*, (SELECT COUNT(*) FROM cups c WHERE c.brewer_id = g.id OR c.grinder_id = g.id) AS cups
-       FROM gear g ORDER BY g.is_default DESC, g.added_at, g.id`
+/**
+ * A Barista cup's café as the café sheet hands it over, before Save: one
+ * already stored (id), or one from the map or typed by hand (id null; stored
+ * by placeIdFor on Save, so a pick that is never saved leaves no row).
+ */
+export type CafeChoice = {
+  id: number | null;
+  name: string;
+  /** MapKit's identifier; null when typed by hand (or before iOS 18). */
+  externalId: string | null;
+  lat: number | null;
+  lng: number | null;
+};
+
+/**
+ * The places row for a café: its own id when stored; else the row with the
+ * same MapKit id, whatever its kind (one row per MapKit place: external_id is
+ * unique, so a store already in the table is used as it is); else, for a
+ * name with no MapKit id, the row typed by hand with that name (ignoring
+ * case), so a café typed twice has one history. Otherwise a new row.
+ *
+ * A row is never renamed here: cups read the café's name through place_id,
+ * so renaming a row would rename it on every past cup (design/data-model.md).
+ */
+async function placeIdFor(tx: SQLiteDatabase, cafe: CafeChoice | null): Promise<number | null> {
+  if (!cafe) return null;
+  if (cafe.id != null) return cafe.id;
+  const found = cafe.externalId
+    ? await tx.getFirstAsync<{ id: number }>('SELECT id FROM places WHERE external_id = ?', [cafe.externalId])
+    : await tx.getFirstAsync<{ id: number }>('SELECT id FROM places WHERE external_id IS NULL AND lower(name) = lower(?) ORDER BY id LIMIT 1', [cafe.name]);
+  if (found) return found.id;
+  const result = await tx.runAsync("INSERT INTO places (name, kind, lat, lng, external_id) VALUES (?, 'cafe', ?, ?, ?)", [
+    cafe.name,
+    cafe.lat,
+    cafe.lng,
+    cafe.externalId,
+  ]);
+  return result.lastInsertRowId;
+}
+
+/** A café with Barista cups logged at it (the café sheet's first rows). */
+export type LoggedCafe = Place & { visits: number; last_visit: number };
+
+/** Every café a cup was logged at, the latest visit first, with how many cups. */
+export async function listLoggedCafes(db: SQLiteDatabase): Promise<LoggedCafe[]> {
+  return db.getAllAsync<LoggedCafe>(
+    `SELECT p.*, COUNT(c.id) AS visits, MAX(c.logged_at) AS last_visit
+       FROM places p JOIN cups c ON c.place_id = p.id
+      GROUP BY p.id
+      ORDER BY last_visit DESC, p.id DESC`
+  );
+}
+
+/**
+ * The drinks logged before, for the drink sheet (Uryu, 2026-10-30: at the
+ * same café the same drink is ordered most often):
+ *   here  this café's drinks, the last one ordered first
+ *   all   every drink, most used first, then most recent
+ * Grouped ignoring case; the latest spelling is shown.
+ */
+export async function listDrinkHistory(db: SQLiteDatabase, placeId: number | null): Promise<{ here: string[]; all: string[] }> {
+  const [here, all] = await Promise.all([
+    placeId == null
+      ? []
+      : db.getAllAsync<{ name: string }>(
+          `SELECT (SELECT c2.drink_type FROM cups c2 WHERE c2.place_id = c.place_id AND lower(c2.drink_type) = lower(c.drink_type)
+                    ORDER BY c2.logged_at DESC, c2.id DESC LIMIT 1) AS name
+             FROM cups c
+            WHERE c.place_id = ? AND c.drink_type IS NOT NULL
+            GROUP BY lower(c.drink_type)
+            ORDER BY MAX(c.logged_at) DESC, MAX(c.id) DESC`,
+          [placeId]
+        ),
+    db.getAllAsync<{ name: string }>(
+      `SELECT (SELECT c2.drink_type FROM cups c2 WHERE lower(c2.drink_type) = lower(c.drink_type) ORDER BY c2.logged_at DESC, c2.id DESC LIMIT 1) AS name
+         FROM cups c
+        WHERE c.drink_type IS NOT NULL
+        GROUP BY lower(c.drink_type)
+        ORDER BY COUNT(*) DESC, MAX(c.logged_at) DESC`
+    ),
+  ]);
+  return { here: here.map((r) => r.name), all: all.map((r) => r.name) };
+}
+
+/** The last drink logged at a café: 5a pre-fills it once the café is picked ("What you ordered here last time"). */
+export async function lastDrinkAt(db: SQLiteDatabase, placeId: number): Promise<string | null> {
+  const row = await db.getFirstAsync<{ drink_type: string }>(
+    'SELECT drink_type FROM cups WHERE place_id = ? AND drink_type IS NOT NULL ORDER BY logged_at DESC, id DESC LIMIT 1',
+    [placeId]
+  );
+  return row?.drink_type ?? null;
+}
+
+export type GearWithUse = Gear & { cups: number; last_used_at: number | null };
+
+/**
+ * Every piece of gear with the cups logged with it and the latest one's
+ * logged_at (Home's status column, Round 14 §4: "2 cups · Last · today");
+ * defaults first, then oldest added (3b's order).
+ */
+export async function listGearWithUse(db: SQLiteDatabase): Promise<GearWithUse[]> {
+  return db.getAllAsync<GearWithUse>(
+    `SELECT g.*, COUNT(c.id) AS cups, MAX(c.logged_at) AS last_used_at
+       FROM gear g LEFT JOIN cups c ON c.brewer_id = g.id OR c.grinder_id = g.id
+      GROUP BY g.id
+      ORDER BY g.is_default DESC, g.added_at, g.id`
   );
 }
 
@@ -310,12 +511,6 @@ export async function listGear(db: SQLiteDatabase, category: GearCategory): Prom
 /** Gear on the shelf: what takes 3a's 8 slots. */
 export async function countGear(db: SQLiteDatabase): Promise<number> {
   const row = await db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM gear');
-  return row?.n ?? 0;
-}
-
-/** What 3e needs beside the gear: how many cups were logged with it. */
-export async function gearUse(db: SQLiteDatabase, id: number): Promise<number> {
-  const row = await db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM cups WHERE brewer_id = ? OR grinder_id = ?', [id, id]);
   return row?.n ?? 0;
 }
 
@@ -411,7 +606,8 @@ export type NewCup = {
   brewMethod: string | null;
   grinderId: number | null;
   grinder: string | null;
-  placeId: number | null;
+  /** Barista: the café as chosen (stored on Save, placeIdFor). */
+  cafe: CafeChoice | null;
   drinkType: string | null;
   /** Packaged: the name as typed, brand included. */
   productName: string | null;
@@ -426,6 +622,7 @@ export type NewCup = {
  * Insert a cup. A local SQLite insert: it completes in milliseconds and has
  * nothing to wait on. Only the active mode's columns are written; the others
  * stay NULL. created_at defaults to now and logged_at follows it (trigger).
+ * A Barista cup's café is stored or matched here, in the same transaction.
  *
  * The bag's details are COPIED onto the cup here, at logging (data-model.md):
  * the cup keeps them even if the bag is later deleted. One statement, so the
@@ -440,16 +637,20 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
   const bagId = madeIt ? cup.bagId : null;
   let id = 0;
   await db.withExclusiveTransactionAsync(async (tx) => {
+    const placeId = barista ? await placeIdFor(tx, cup.cafe) : null;
     const result = await tx.runAsync(
       `INSERT INTO cups (rating, mode, note, flavours, axis_acidity, axis_body, axis_roast, axis_sweetness,
                          bag_id, bean_name, bean_roaster, bean_origin, bean_region, bean_process, bean_roast_level, bean_roasted_at,
                          brewer_id, brew_method, grinder_id, grinder,
-                         place_id, drink_type, product_name, bought_at_place_id)
+                         place_id, place_name, drink_type, product_name, bought_at_place_id, bought_at_name)
        SELECT ?, ?, ?, ?, ?, ?, ?, ?,
               b.id, b.name, b.roaster, b.origin, b.region, b.process, b.roast_level, b.roasted_at,
               ?, ?, ?, ?,
-              ?, ?, ?, ?
-         FROM (SELECT 1) LEFT JOIN bags b ON b.id = ?`,
+              p.id, p.name, ?, ?, bp.id, bp.name
+         FROM (SELECT 1)
+         LEFT JOIN bags b ON b.id = ?
+         LEFT JOIN places p ON p.id = ?
+         LEFT JOIN places bp ON bp.id = ?`,
       [
         cup.rating,
         cup.mode,
@@ -463,11 +664,12 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
         madeIt ? cup.brewMethod : null,
         madeIt ? cup.grinderId : null,
         madeIt ? cup.grinder : null,
-        barista ? cup.placeId : null,
         barista ? cup.drinkType : null,
         packaged ? cup.productName : null,
-        packaged ? cup.boughtAtPlaceId : null,
         bagId,
+        // The places' names are copied with their ids (migration 6, T-13).
+        placeId,
+        packaged ? cup.boughtAtPlaceId : null,
       ]
     );
     id = result.lastInsertRowId;
@@ -495,7 +697,8 @@ export async function getBag(db: SQLiteDatabase, id: number): Promise<Bag | null
 }
 
 /**
- * What 11a can change on a cup: the bag, the gear, when, My words. The
+ * What 11a can change on a cup: the bag, the gear, when, My words; a
+ * Packaged cup's product, a Barista cup's café and drink. The
  * rating, axes and flavours are not editable (Taste DNA counted them at save).
  */
 export type CupEdit = {
@@ -508,6 +711,9 @@ export type CupEdit = {
   note: string | null;
   /** Packaged: the product name as typed. */
   productName: string | null;
+  /** Barista: a café chosen in 11a; undefined keeps the cup's own. */
+  cafe?: CafeChoice | null;
+  drinkType: string | null;
 };
 
 /**
@@ -538,16 +744,19 @@ export async function updateCup(db: SQLiteDatabase, id: number, edit: CupEdit): 
         [edit.bagId, id]
       );
     }
-    await tx.runAsync('UPDATE cups SET brewer_id = ?, brew_method = ?, grinder_id = ?, grinder = ?, logged_at = ?, note = ?, product_name = ? WHERE id = ?', [
-      edit.brewerId,
-      edit.brewMethod,
-      edit.grinderId,
-      edit.grinder,
-      edit.loggedAt,
-      edit.note,
-      edit.productName,
-      id,
-    ]);
+    // A café chosen here is copied as at logging (migration 6); an unchanged
+    // one keeps the cup's own name, whatever the place is called now.
+    if (edit.cafe !== undefined) {
+      const placeId = await placeIdFor(tx, edit.cafe);
+      await tx.runAsync('UPDATE cups SET (place_id, place_name) = (SELECT p.id, p.name FROM (SELECT 1) LEFT JOIN places p ON p.id = ?) WHERE id = ?', [
+        placeId,
+        id,
+      ]);
+    }
+    await tx.runAsync(
+      'UPDATE cups SET brewer_id = ?, brew_method = ?, grinder_id = ?, grinder = ?, logged_at = ?, note = ?, product_name = ?, drink_type = ? WHERE id = ?',
+      [edit.brewerId, edit.brewMethod, edit.grinderId, edit.grinder, edit.loggedAt, edit.note, edit.productName, edit.drinkType, id]
+    );
   });
   notifyCupsChanged();
 }
@@ -607,6 +816,12 @@ function notifyShelfChanged() {
   shelfListeners.forEach((listener) => listener());
 }
 
+/** Everything was replaced at once (a restore, backup.ts): every subscriber reloads. */
+export function notifyEverythingChanged() {
+  notifyCupsChanged();
+  notifyShelfChanged();
+}
+
 /** A cup with the names it points at, for the Records list (2a). The bean names are the cup's own copies. */
 export type CupListItem = {
   id: number;
@@ -614,8 +829,12 @@ export type CupListItem = {
   rating: number;
   mode: CupMode;
   note: string | null;
-  /** Flavour tags, parsed: 8l's Words search reads them with the note. */
+  /** Flavour tags, parsed: search's WORDS reads them with the note. */
   flavours: string[];
+  /** The links, for the bag and gear pages' cup lists (Design Round 15, 19a / 19c). */
+  bag_id: number | null;
+  brewer_id: number | null;
+  grinder_id: number | null;
   drink_type: string | null;
   bean_name: string | null;
   bean_roaster: string | null;
@@ -632,13 +851,45 @@ export async function countCups(db: SQLiteDatabase): Promise<number> {
   return row?.n ?? 0;
 }
 
-/** Which cup this is, counting from the first logged (5c's "Cup 4"). */
-/** When each cup since `from` was logged: 1b's week count and strip. */
+/** When each cup since `from` was logged: 1b's This month count and month strip. */
 export async function cupTimesSince(db: SQLiteDatabase, from: number): Promise<number[]> {
   const rows = await db.getAllAsync<{ logged_at: number }>('SELECT logged_at FROM cups WHERE logged_at >= ?', [from]);
   return rows.map((r) => r.logged_at);
 }
 
+/**
+ * 1b's and 6a's Bags: every bag I've added — sealed, open or finished —
+ * plus each deleted bag my cups still name (bag_id set NULL; counted by its
+ * copied bean_name + bean_roaster + bean_roasted_at, so the same coffee
+ * bought twice is two bags; a null date is a value like any other). Uryu,
+ * 2026-11-06: someone who adds a sealed bag has two bags, not one, so this
+ * replaces Design Round 21's "bags across my cups". Design Round 23 (D2)
+ * took this rule into 23c as written; Uryu may still say a deleted bag
+ * shouldn't count at all.
+ * Counts of records: Taste DNA's reset_at doesn't apply.
+ */
+export async function countBags(db: SQLiteDatabase): Promise<number> {
+  const row = await db.getFirstAsync<{ n: number }>(
+    `SELECT (SELECT COUNT(*) FROM bags)
+          + (SELECT COUNT(*) FROM (SELECT 1 FROM cups WHERE mode = 'made_it' AND bag_id IS NULL AND bean_name IS NOT NULL
+                                    GROUP BY bean_name, bean_roaster, bean_roasted_at)) AS n`
+  );
+  return row?.n ?? 0;
+}
+
+/**
+ * 1b's and 6a's Cafés (Design Round 21, 23c; build questions, 7): the distinct cafés my cups point at
+ * (cups.place_id, places.kind = 'cafe'). Where a Packaged cup was bought
+ * (bought_at_place_id) doesn't count. Not reset with Taste DNA.
+ */
+export async function countCupCafes(db: SQLiteDatabase): Promise<number> {
+  const row = await db.getFirstAsync<{ n: number }>(
+    `SELECT COUNT(DISTINCT c.place_id) AS n FROM cups c JOIN places p ON p.id = c.place_id WHERE p.kind = 'cafe'`
+  );
+  return row?.n ?? 0;
+}
+
+/** Which cup this is, counting from the first logged (5c's "Cup 4"). */
 export async function cupOrdinal(db: SQLiteDatabase, id: number): Promise<number> {
   const row = await db.getFirstAsync<{ n: number }>(
     `SELECT COUNT(*) AS n FROM cups c, (SELECT logged_at, id FROM cups WHERE id = ?) t
@@ -653,10 +904,40 @@ export async function listCups(db: SQLiteDatabase): Promise<CupListItem[]> {
   const rows = await db.getAllAsync<CupListItem>(
     `SELECT c.id, c.logged_at, c.rating, c.mode, c.note, c.flavours, c.drink_type,
             c.bean_name, c.bean_roaster, c.bean_process, c.brew_method, c.grinder,
-            c.product_name, p.name AS place_name
+            c.bag_id, c.brewer_id, c.grinder_id,
+            c.product_name, c.place_name
        FROM cups c
-       LEFT JOIN places p ON p.id = c.place_id
       ORDER BY c.logged_at DESC, c.id DESC`
   );
   return rows.map((row) => ({ ...row, flavours: JSON.parse(row.flavours as unknown as string) }));
+}
+
+/**
+ * Search's "Recent searches" (Design Round 15, 18a): the last terms typed,
+ * newest first. Kept to SEARCH_HISTORY rows; a term searched again (any
+ * case) moves to the top with the spelling just typed.
+ */
+export const SEARCH_HISTORY = 5;
+
+export async function listSearchTerms(db: SQLiteDatabase): Promise<string[]> {
+  const rows = await db.getAllAsync<{ term: string }>('SELECT term FROM search_history ORDER BY searched_at DESC, id DESC LIMIT ?', [SEARCH_HISTORY]);
+  return rows.map((r) => r.term);
+}
+
+export async function addSearchTerm(db: SQLiteDatabase, term: string): Promise<void> {
+  const t = term.trim();
+  if (!t) return;
+  await db.withExclusiveTransactionAsync(async (tx) => {
+    await tx.runAsync('DELETE FROM search_history WHERE lower(term) = lower(?)', [t]);
+    await tx.runAsync('INSERT INTO search_history (term, searched_at) VALUES (?, ?)', [t, Date.now()]);
+    await tx.runAsync(
+      'DELETE FROM search_history WHERE id NOT IN (SELECT id FROM search_history ORDER BY searched_at DESC, id DESC LIMIT ?)',
+      [SEARCH_HISTORY]
+    );
+  });
+}
+
+/** "Clear": at once, no confirm (18a: a typed term is cheap to lose). */
+export async function clearSearchTerms(db: SQLiteDatabase): Promise<void> {
+  await db.runAsync('DELETE FROM search_history');
 }

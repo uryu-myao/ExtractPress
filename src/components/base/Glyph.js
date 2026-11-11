@@ -40,12 +40,33 @@ const SHAPES = {
   dripper: [<Path key="a" d="M5 4h11l-1 6a5 5 0 0 1-9 0z" />, <Path key="b" d="M16 5h2.5a2.5 2.5 0 0 1 0 5H16" />, <Path key="c" d="M4 20h13" />],
   beanBag: [<Path key="a" d="M6 3h12v5a6 6 0 0 1-2 4.5V21H8v-8.5A6 6 0 0 1 6 8z" />, <Path key="b" d="M9 7h6" />],
   download: [<Path key="a" d="M12 4v11" />, <Path key="b" d="M7 11l5 5 5-5" />, <Path key="c" d="M4 20h16" />],
+  // 6b's Restore from a backup (Design Round 23, 25e), verbatim: Export's arrow turned up, out of the tray.
+  restore: [<Path key="a" d="M12 20V9" />, <Path key="b" d="M7 14l5-5 5 5" />, <Path key="c" d="M5 4h14" />],
+  // Try next's eyebrow on Home (Design Round 23, 25c), verbatim.
+  spark: [<Path key="p" d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18" />],
   // beanFreshness's clock (3d / 4b), verbatim.
   clock: [<Circle key="c" cx="12" cy="12" r="9" />, <Path key="p" d="M12 7v5l3.5 2" />],
   // 3g's Delete this bag (the bin), verbatim.
   trash: [<Path key="a" d="M5 7h14" />, <Path key="b" d="M9 7V4h6v3" />, <Path key="c" d="M7 7l1 13h8l1-13" />],
   // 2c's edit button (the pencil), verbatim.
   pencil: [<Path key="a" d="M4 20h4l10-10-4-4L4 16z" />, <Path key="b" d="M14 6l4 4" />],
+  // 6b's "How my DNA is built" (the six-point asterisk), verbatim.
+  asterisk: [<Path key="a" d="M12 3v18" />, <Path key="b" d="M5 8l14 8" />, <Path key="c" d="M19 8L5 16" />],
+  // 6b's Reset my taste DNA (Design Round 23, 25e: the arrow turning back), verbatim.
+  reset: [<Path key="a" d="M3 12a9 9 0 1 0 3-6.7L3 8" />, <Path key="b" d="M3 3v5h5" />],
+  // 6c's Licences (an i in a circle; not 15a's info, whose dot and stem differ), verbatim.
+  licences: [<Circle key="c" cx="12" cy="12" r="9" />, <Path key="a" d="M12 8h.01" />, <Path key="b" d="M11.4 11.5h1.2V16" />],
+  // 6c's Privacy policy (the shield with a tick), verbatim.
+  shield: [<Path key="a" d="M12 3l7 3v6c0 4.4-2.9 7.6-7 9-4.1-1.4-7-4.6-7-9V6z" />, <Path key="b" d="M9 12l2.2 2.2L15.5 10" />],
+  // Home's This month (Design Round 21, 23b), verbatim, at icon.sm. Bags there is beanBag above (Round 21 build questions, 1).
+  calendar: [<Rect key="r" x="4" y="5" width="16" height="16" />, <Path key="p" d="M4 10h16M9 3v4M15 3v4" />],
+  // Cafés, Home's and 6a's (Design Round 21, 23b; the door is final, build questions 2), verbatim.
+  store: [
+    <Path key="a" d="M3 9l1.5-5h15L21 9" />,
+    <Path key="b" d="M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z" />,
+    <Path key="c" d="M5 12.5V20h14v-7.5" />,
+    <Path key="d" d="M10 20v-5h4v5" />,
+  ],
 };
 
 export const GLYPH_NAMES = Object.keys(SHAPES);

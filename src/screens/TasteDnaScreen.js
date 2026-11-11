@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import IconButton from '../components/base/IconButton';
+import InlineAction from '../components/base/InlineAction';
 import SectionLabel from '../components/base/SectionLabel';
 import Text from '../components/base/Text';
-import { DnaAxes, DnaStamp } from '../components/TasteDnaCard';
+import { DnaAxes, DnaStamp, dnaNoneLine } from '../components/TasteDnaCard';
 import { formatDay, daysSince } from '../constants/dates';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { loadDnaPage, onCupsChanged } from '../data/repository';
 import { bandOf } from '../data/tasteDna';
-import { requestDnaInfo } from '../navigation';
+import { requestDnaInfo, requestPush } from '../navigation';
 import { color, layout, shape, space, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -18,7 +19,8 @@ import ScreenFrame from './ScreenFrame';
  * Reached from Profile (6a's card; until 6a, the placeholder's row) and 2c's
  * "Feeds my taste DNA" (D-48).
  *
- *   header   compact, Back, "My taste DNA", the state's stamp (DnaStamp: its ⓘ
+ *   header   compact, Back, "My taste DNA" in titleCaps (13 / 700 caps, as
+ *            21d draws it; 2026-11-10), the state's stamp (DnaStamp: its ⓘ
  *            opens 15b's sheet, Design Round 8). 8f draws the stamp small
  *            (9px on surface.inverse); the shared stamp is kept: there is no
  *            9px style.
@@ -26,29 +28,37 @@ import ScreenFrame from './ScreenFrame';
  *            Design Round 10, D12): display.lg, ink, as 8f's. None when no
  *            axis is left.
  *   meta     "From N cups · shifted N days ago" (meta, accent). The shift part
- *            only when there was one. With nothing noted, one line under it:
- *            "Rate a cup and note one taste to start." (Design Round 11, B).
+ *            only when there was one. With nothing noted, one line over it,
+ *            first under the title (as 27a puts it on the card):
+ *            "Rate a cup and note one taste to start." (Design Round 11, B);
+ *            after a reset, "Starting again from Nov 10. …" (dnaNoneLine,
+ *            Design Round 25, A1).
  *   axes     the Taste DNA card's axes in a 2px frame on raised, each with its
  *            band name under it (DnaAxes bands).
  *   Flavours I pick most  (Design Round 11, B) the top 4 flavour tags with
  *            their counts, "Peach 12", from the cups the profile counts.
  *            Heading label.caps (Design's word); tags as 8f's word tags (1.5
  *            border.muted on raised, the count in accent). Not pressable.
- *            Hidden until a tag has been picked. When 8h brings "What you
- *            keep saying" under it, each block gets its sub-heading ("From
- *            the flavour list" / "In my own words"); alone, it needs none.
+ *            Hidden until a tag has been picked. Alone on the page: no
+ *            sub-heading (Round 11's pair assumed "What you keep saying";
+ *            asked again in Design Round 18).
  *   Last shift  one line per axis that moved: "Sweetness moved from Lightly
  *            sweet to Medium sweet on Oct 17." Band names, not the mock's "low
  *            to medium" (written before the bands were). The mock's cause
  *            ("after three naturals in August") is not built: there is no rule
  *            for it, and the app doesn't guess (Uryu, 2026-10-21; Design
  *            Round 11, B). A plain section, no frame (Round 11, C).
+ *   How it is built  the page's last item (InlineAction), opening 8g. No
+ *            footer bar in V1 (Design Round 17, B3, 21d): a link to an
+ *            explainer needn't stay in reach, and alone in a bar it looks
+ *            unfinished. The bar comes back with Try next (V2), this link at
+ *            its left.
  *
- * Not built in V1:
- *   - "What you keep saying": My words' counts (8h); it comes with 8h.
- *     Tapping a word will open 8l's Words search for it.
- *   - the footer's "How it is built" (8g) and "Try next" (8d): out of V1, so
- *     no footer; the page ends after its last block.
+ * Not built:
+ *   - "What you keep saying": My words' counts. Never (2026-10-31, Uryu):
+ *     My words are free memos with no repeated words; Flavours I pick most
+ *     carries what repeats.
+ *   - the footer's "Try next" (8d): V2.
  *
  * The shift is read from the stored changes (taste-dna.md item 5), so its
  * "to" band can differ from today's: the profile is computed on read.
@@ -116,6 +126,11 @@ export default function TasteDnaScreen({ onBack }) {
       {dna ? (
         <View style={styles.body}>
           <View style={styles.head}>
+            {dna.state === 'none' ? (
+              <Text variant="body" color="secondary">
+                {dnaNoneLine(dna)}
+              </Text>
+            ) : null}
             {summary ? (
               <Text variant="displayLg" color="primary">
                 {summary}
@@ -124,11 +139,6 @@ export default function TasteDnaScreen({ onBack }) {
             <Text variant="meta" color="accent">
               {meta}
             </Text>
-            {dna.state === 'none' ? (
-              <Text variant="body" color="secondary">
-                Rate a cup and note one taste to start.
-              </Text>
-            ) : null}
           </View>
           <View style={styles.card}>
             <DnaAxes dna={dna} bands />
@@ -162,6 +172,9 @@ export default function TasteDnaScreen({ onBack }) {
               ))}
             </View>
           ) : null}
+          <View style={styles.howBuilt}>
+            <InlineAction label="How it is built" onPress={() => requestPush({ name: 'dnaBuilt' })} />
+          </View>
         </View>
       ) : null}
     </ScreenFrame>
@@ -173,9 +186,12 @@ const styles = StyleSheet.create({
     gap: spacing.gap.axis,
     paddingBottom: layout.screen.bottom,
   },
+  howBuilt: {
+    flexDirection: 'row',
+  },
   card: {
     borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
+    borderColor: color.border.container,
     backgroundColor: color.surface.raised,
     paddingVertical: spacing.inset.container.v,
     paddingHorizontal: spacing.inset.container.h,

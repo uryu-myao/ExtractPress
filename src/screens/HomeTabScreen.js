@@ -1,15 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Button from '../components/base/Button';
 import RecordRow from '../components/base/RecordRow';
 import Text from '../components/base/Text';
-import HomeStats, { weekStart } from '../components/HomeStats';
+import HomeStats, { monthStart } from '../components/HomeStats';
 import ShelfBlock from '../components/ShelfBlock';
 import TasteDnaCard from '../components/TasteDnaCard';
+import TryNextCard from '../components/TryNextCard';
 import { MODE_BADGE, cupTitle } from '../constants/cups';
 import { useDatabase } from '../data/DatabaseProvider';
-import { countCups, cupTimesSince, listCups, loadTasteDna, onCupsChanged } from '../data/repository';
-import { requestDnaInfo, requestOpenCup, requestPush, requestShell } from '../navigation';
+import {
+  countBags,
+  countCupCafes,
+  countCups,
+  cupTimesSince,
+  dismissTryNext,
+  listCups,
+  loadTasteDna,
+  loadTryNext,
+  onCupsChanged,
+  onShelfChanged,
+  undoDismissTryNext,
+} from '../data/repository';
+import { onTabLeave, requestDnaInfo, requestOpenCup, requestPush, requestShell } from '../navigation';
 import { layout, space, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -17,22 +30,30 @@ import ScreenFrame from './ScreenFrame';
  * Home (1b; 4a / 4b are Home with My gear / My beans below), top to bottom:
  *   - title: a greeting by part of day — 1b's "Good morning"; "Good
  *     afternoon" / "Good evening" ours, confirmed (Design Round 7); eyebrow
- *     "MoreCoffee"
- *   - HomeStats: cups total, this week (count + strip)
+ *     the app's name, "Extract Press" (1b's mock says "MoreCoffee"; renamed
+ *     2026-11-08)
+ *   - HomeStats: cups total; This month, Bags, Cafés; the month strip
+ *     (Design Round 21, 23b)
  *   - "Record a coffee" (primary) → the Record sheet, as the bar's +
  *   - the Taste DNA card; its stamp opens 15b's sheet (over the bar, so
  *     AppShell hosts it: DnaInfoHost); its foot row "Open my taste DNA ›"
  *     opens 8f (Design Round 11, B)
- *   - "Recently sipped" (display.sm) with "See all" (→ Records) and the three
+ *   - Try next (Design Round 23, 25c): one suggestion, only when there is
+ *     one (TryNextCard; the rules in data/tryNext.ts). "Not for me" leaves
+ *     the hidden line with Undo until Home is left; the next suggestion, or
+ *     none, shows when Home is shown again.
+ *   - "Recently sipped" (display.sm) with "See all ›" (to Records; the ›
+ *     since Design Round 15, B4, as the shelf's action) and the three
  *     latest cups as list rows (title, mode badge, rating, date) → their 2c
- *   - My gear / My beans
- * Not shown: Try next's box (V2), the line under the counts (dropped for V1,
- * Design Round 10, C10).
+ *   - My gear / My beans (Round 14, 17a / 17b: three rows a side, swiped
+ *     or tabbed; "See all gear & beans ›" opens 17c / 17d on that side)
+ * Not shown: the line under the counts (dropped for V1,
+ * Design Round 10, C10; gone in Round 21's 23b too).
  *
- * Screens opened from Home — 3d (Manage my beans), 3c (Add a bag), 3a (Add
- * gear) — are pushed over Home and the bottom bar (ShellStack; their mocks
+ * Screens opened from Home — Gear & beans (17c / 17d), 3c (Add a bag), 3a
+ * (Add gear) — are pushed over Home and the bottom bar (ShellStack; their mocks
  * draw no bar). Back or a swipe from the left edge returns.
- * Everything is read on open and again whenever a cup is saved.
+ * Everything is read on open and again whenever a cup or the shelf changes.
  */
 /**
  * The greeting by the hour (Design Round 7, 16): morning before 12:00,
@@ -49,30 +70,73 @@ const dayFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'num
 export default function HomeTabScreen() {
   const db = useDatabase();
   const [data, setData] = useState(null);
+  // A Try next suggestion just dismissed: its hidden line stays until Home is left.
+  const [dismissed, setDismissed] = useState(null);
   const push = (name) => requestPush({ name });
 
-  useEffect(() => {
-    const load = () => {
-      const now = Date.now();
-      Promise.all([loadTasteDna(db), countCups(db), cupTimesSince(db, weekStart(now)), listCups(db)]).then(
-        ([dna, total, week, cups]) => setData({ dna, total, week, recent: cups.slice(0, 3), now }),
-        (error) => console.error('[home] could not read', error)
-      );
-    };
-    load();
-    return onCupsChanged(load);
+  const load = useCallback(() => {
+    const now = Date.now();
+    Promise.all([
+      loadTasteDna(db),
+      countCups(db),
+      cupTimesSince(db, monthStart(now)),
+      countBags(db),
+      countCupCafes(db),
+      listCups(db),
+      loadTryNext(db, now),
+    ]).then(
+      ([dna, total, month, bags, cafes, cups, tryNext]) => setData({ dna, total, month, bags, cafes, recent: cups.slice(0, 3), tryNext, now }),
+      (error) => console.error('[home] could not read', error)
+    );
   }, [db]);
+
+  useEffect(() => {
+    load();
+    // The shelf too: adding a bag changes Bags without touching a cup.
+    const offCups = onCupsChanged(load);
+    const offShelf = onShelfChanged(load);
+    const offLeave = onTabLeave((tab) => {
+      if (tab !== 'home') return;
+      setDismissed(null);
+      load();
+    });
+    return () => {
+      offCups();
+      offShelf();
+      offLeave();
+    };
+  }, [load]);
+
+  const dismiss = async (suggestion) => {
+    try {
+      await dismissTryNext(db, suggestion);
+      setDismissed(suggestion);
+    } catch (error) {
+      console.error('[home] could not dismiss', error);
+    }
+  };
+  const undo = async () => {
+    try {
+      await undoDismissTryNext(db, dismissed.key);
+    } catch (error) {
+      console.error('[home] could not undo', error);
+    }
+    setDismissed(null);
+    load();
+  };
+  const tryNext = dismissed ?? data?.tryNext;
 
 
   const greeting = greetingAt(new Date(data?.now ?? Date.now()));
   return (
     <View style={styles.screen}>
-      <ScreenFrame scroll title={greeting} eyebrow="MoreCoffee">
+      <ScreenFrame scroll title={greeting} eyebrow="Extract Press">
         {data ? (
           <View style={styles.body}>
-            <HomeStats total={data.total} cupTimes={data.week} now={data.now} />
+            <HomeStats total={data.total} monthCupTimes={data.month} bags={data.bags} cafes={data.cafes} now={data.now} />
             <Button label="Record a coffee" onPress={() => requestShell({ record: true })} />
             <TasteDnaCard dna={data.dna} onStampPress={() => requestDnaInfo(data.dna)} onOpen={() => push('dna')} />
+            {tryNext ? <TryNextCard suggestion={tryNext} hidden={dismissed != null} onDismiss={() => dismiss(tryNext)} onUndo={undo} /> : null}
             {data.recent.length ? (
               <View>
                 <View style={styles.recentHead}>
@@ -80,7 +144,7 @@ export default function HomeTabScreen() {
                     Recently sipped
                   </Text>
                   <View style={styles.seeAll}>
-                    <Button variant="text" label="See all" trailingIcon="arrowRight" onPress={() => requestShell({ tab: 'records' })} />
+                    <Button variant="text" label="See all" trailingIcon="chevronRight" onPress={() => requestShell({ tab: 'records' })} />
                   </View>
                 </View>
                 {data.recent.map((cup, i) => (
@@ -99,7 +163,13 @@ export default function HomeTabScreen() {
                 ))}
               </View>
             ) : null}
-            <ShelfBlock onManageBeans={() => push('beans')} onManageGear={() => push('gear')} onAddBag={() => push('addBag')} onAddGear={() => push('addGear')} />
+            <ShelfBlock
+              onSeeAll={(side) => requestPush({ name: 'shelf', side })}
+              onAddBag={() => push('addBag')}
+              onAddGear={() => push('addGear')}
+              onOpenBag={(bag) => requestPush({ name: 'editBag', bag })}
+              onOpenGear={(gear) => requestPush({ name: 'editGear', gear })}
+            />
           </View>
         ) : null}
       </ScreenFrame>
@@ -114,15 +184,18 @@ const styles = StyleSheet.create({
   body: {
     // 1b's blocks sit 20 apart (each section's padding-bottom).
     gap: space[20],
-    // Room under the last block so the bottom bar never covers it (as 2a).
-    paddingBottom: layout.empty.block,
+    // Room under the last block; the pager already ends at the bar's band
+    // (Design Round 23: the band plus space.20).
+    paddingBottom: space[20],
   },
+  // space.2 under it (Round 14, was 14), so "Recently sipped" and the
+  // shelf's tabs sit the same distance from their rows.
   recentHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.gap.section,
-    paddingBottom: space[14],
+    paddingBottom: space[2],
   },
   // Optical (on device, 2026-10-18): centred on the title's box, the caps
   // read high beside a mostly lowercase serif. Its cap centre sits 0.5 under

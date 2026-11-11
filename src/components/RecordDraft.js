@@ -3,7 +3,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Alert, Platform } from 'react-native';
 import { FLAVOUR_LIMIT } from '../constants/flavours';
 import { useDatabase } from '../data/DatabaseProvider';
-import { insertCup, loadRecordDefaults } from '../data/repository';
+import { insertCup, lastDrinkAt, loadRecordDefaults } from '../data/repository';
+import { useKept } from './SearchSheet';
 
 /**
  * The one cup being recorded, shared by both steps of the Record sheet: 5a
@@ -22,7 +23,9 @@ import { insertCup, loadRecordDefaults } from '../data/repository';
  *   made_it    the rating; the bag and the method too when the shelf fills
  *              them (a required mark promises "always filled", §1 Required
  *              marks, so with an empty shelf they are not required)
- *   barista    the rating (café and drink can't be entered at this stage)
+ *   barista    the rating and the café (Uryu, 2026-10-30, as 5d draws it).
+ *              Always marked: a café can always be filled, since a name can
+ *              be typed by hand (§1 Required marks). The drink is optional
  *   packaged   the rating and the product name (required since Round 9)
  * They are required on both steps. Save stays pressable (5d, decided
  * 2026-10-11): with any missing, save() saves nothing, sets `missing` and
@@ -44,16 +47,23 @@ const EMPTY_DEFAULTS = { bag: null, brewer: null, grinder: null, cafe: null, sto
 const EMPTY_AXES = { acidity: null, body: null, roast: null, sweetness: null };
 
 /** [{ key, label, filled }] — what this cup needs before it can be saved (see above). */
-function requiredFields(mode, defaults, rating, productName) {
+function requiredFields(mode, defaults, rating, productName, cafe) {
   const fields = [{ key: 'rating', label: 'Rating', filled: rating > 0 }];
   if (mode === 'made_it' && defaults?.bag && (defaults.brewer || defaults.grinder)) {
     fields.push({ key: 'bag', label: 'Bag', filled: true }, { key: 'method', label: 'Method', filled: true });
   }
+  if (mode === 'barista') fields.push({ key: 'cafe', label: 'Café', filled: Boolean(cafe) });
   if (mode === 'packaged') fields.push({ key: 'product', label: 'Product', filled: Boolean(productName) });
   return fields;
 }
 
-export function RecordDraftProvider({ onSaved, children }) {
+/**
+ * preset: the bag or gear this cup is logged with, from a bag or gear page's
+ * "Log a cup with it ›" (Design Round 15, 19c): { bag } | { brewer } |
+ * { grinder }, laid over the shelf's defaults once they are read. This cup
+ * only; the shelf's defaults stay.
+ */
+export function RecordDraftProvider({ onSaved, preset, children }) {
   const db = useDatabase();
   const [defaults, setDefaults] = useState(null);
   const [rating, setRating] = useState(0);
@@ -62,10 +72,17 @@ export function RecordDraftProvider({ onSaved, children }) {
   const [flavours, setFlavours] = useState([]);
   // Packaged: the product name as typed or picked from past ones (never pre-filled).
   const [productName, setProductName] = useState(null);
+  // Barista: the café as chosen (a CafeChoice with its visits / distance for
+  // 5a's meta), never pre-filled from where the phone is (2026-10-30: no
+  // rule for "close enough to be the same café"; a wrong guess would record
+  // a café nobody chose). The drink, and whether it is the café's last one
+  // pre-filled (5a's "What you ordered here last time").
+  const [cafe, setCafe] = useState(null);
+  const [drink, setDrink] = useState({ name: null, prefilled: false });
   const noteRef = useRef('');
   const [noteFilled, setNoteFilled] = useState(false);
   const [missing, setMissing] = useState(false);
-  const required = useMemo(() => requiredFields(mode, defaults, rating, productName), [mode, defaults, rating, productName]);
+  const required = useMemo(() => requiredFields(mode, defaults, rating, productName, cafe), [mode, defaults, rating, productName, cafe]);
   const missingFields = useMemo(() => required.filter((f) => !f.filled), [required]);
   useEffect(() => {
     if (missingFields.length === 0) setMissing(false);
@@ -75,7 +92,7 @@ export function RecordDraftProvider({ onSaved, children }) {
   useEffect(() => {
     let alive = true;
     loadRecordDefaults(db).then(
-      (d) => alive && setDefaults(d),
+      (d) => alive && setDefaults(preset ? { ...d, ...preset } : d),
       (error) => {
         console.error('[record] could not read defaults', error);
         if (!alive) return;
@@ -99,6 +116,51 @@ export function RecordDraftProvider({ onSaved, children }) {
    */
   const chooseGear = useCallback((gear) => setDefaults((prev) => ({ ...(prev ?? EMPTY_DEFAULTS), ...gear })), []);
 
+  /**
+   * Barista's café, from the café sheet. Picking one pre-fills the drink
+   * with the last one logged there (5a, "What you ordered here last time";
+   * Uryu, 2026-10-30), like any default: saved untouched, it is the record.
+   * A drink the user chose stays; one pre-filled from another café goes.
+   */
+  // Names added and places picked while logging this cup stay in their
+  // sheets until it is saved or discarded (withChosen, Uryu 2026-11-01).
+  const [kept, keep] = useKept();
+  const pickedCafe = useRef(null);
+  const chooseCafe = useCallback(
+    async (next) => {
+      pickedCafe.current = next;
+      setCafe(next);
+      // A map place or a typed name is in no list until saved.
+      if (next.id == null) keep('cafes', next);
+      let last = null;
+      if (next.id != null) {
+        try {
+          last = await lastDrinkAt(db, next.id);
+        } catch (error) {
+          console.error('[record] could not read the last drink', error);
+        }
+      }
+      if (pickedCafe.current !== next) return;
+      setDrink((prev) => (prev.name && !prev.prefilled ? prev : { name: last, prefilled: last != null }));
+    },
+    [db, keep]
+  );
+  const chooseDrink = useCallback((name) => setDrink({ name, prefilled: false }), []);
+  const addDrink = useCallback(
+    (name) => {
+      keep('drinks', name);
+      chooseDrink(name);
+    },
+    [chooseDrink, keep]
+  );
+  const addProduct = useCallback(
+    (name) => {
+      keep('products', name);
+      setProductName(name);
+    },
+    [keep]
+  );
+
   /** Select / deselect a flavour. Reaching the limit gives one light impact (§1 Selection limit). */
   const toggleFlavour = useCallback((word) => {
     setFlavours((prev) => {
@@ -109,6 +171,14 @@ export function RecordDraftProvider({ onSaved, children }) {
       return next;
     });
   }, []);
+
+  const addFlavour = useCallback(
+    (word) => {
+      keep('flavours', word);
+      toggleFlavour(word);
+    },
+    [keep, toggleFlavour]
+  );
 
   const save = useCallback(
     async ({ withNote }) => {
@@ -128,10 +198,10 @@ export function RecordDraftProvider({ onSaved, children }) {
           brewMethod: defaults.brewer?.name ?? null,
           grinderId: defaults.grinder?.id ?? null,
           grinder: defaults.grinder?.name ?? null,
-          placeId: defaults.cafe?.id ?? null,
-          // Never a fixed drink: a cup records only what was entered
-          // (2026-10-11; "Flat white" was written for every Barista cup).
-          drinkType: null,
+          cafe,
+          // Only what was entered or pre-filled from this café's last cup
+          // (2026-10-11: a fixed "Flat white" was once written for every cup).
+          drinkType: drink.name,
           productName,
           boughtAtPlaceId: defaults.store?.id ?? null,
           ...(withNote ? { axes, flavours, note: note || null } : {}),
@@ -156,7 +226,7 @@ export function RecordDraftProvider({ onSaved, children }) {
         saving.current = false;
       }
     },
-    [axes, db, defaults, flavours, missingFields, mode, onSaved, productName, rating]
+    [axes, cafe, db, defaults, drink, flavours, missingFields, mode, onSaved, productName, rating]
   );
 
   const saveRef = useRef(null);
@@ -171,6 +241,13 @@ export function RecordDraftProvider({ onSaved, children }) {
       chooseGear,
       productName,
       setProductName,
+      addProduct,
+      cafe,
+      chooseCafe,
+      drink,
+      chooseDrink,
+      addDrink,
+      kept,
       rating,
       setRating,
       mode,
@@ -179,6 +256,7 @@ export function RecordDraftProvider({ onSaved, children }) {
       setAxis,
       flavours,
       toggleFlavour,
+      addFlavour,
       noteRef,
       setNoteFilled,
       hasTastingInput,
@@ -187,7 +265,7 @@ export function RecordDraftProvider({ onSaved, children }) {
       missingFields,
       save,
     }),
-    [axes, defaults, flavours, hasTastingInput, missing, missingFields, mode, productName, rating, required, save, setAxis, toggleFlavour, chooseBag, chooseGear]
+    [axes, cafe, chooseCafe, drink, chooseDrink, addDrink, addProduct, addFlavour, kept, defaults, flavours, hasTastingInput, missing, missingFields, mode, productName, rating, required, save, setAxis, toggleFlavour, chooseBag, chooseGear]
   );
   return <RecordDraftContext.Provider value={value}>{children}</RecordDraftContext.Provider>;
 }

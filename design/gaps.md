@@ -120,6 +120,7 @@ Plus, globally:
 - **Disabled — decided for Button only** (§9). Still undesigned for chips, rows and fields.
 - **Button secondary height (2026-10-06)**: the mocks draw every full-width secondary at 52 (primary 56). `Button` renders both at 56. Pending: which token the secondary takes (`size.control.row` is 52 but named for list rows), then the fix. `drift.md` D-17 was withdrawn for this.
 - **Loading — deliberately not needed.** This is not deferred pending design. Saves write to local SQLite and are instant, so there is no in-flight state to show. Revisit only when Step 5 introduces real async (MapKit lookup, barcode lookup).
+  - **Update 2026-10-30**: MapKit lookup is here (Barista's café sheet). Its one in-flight state is a muted line under the search field ("Searching the map…", `CafeSheet.js`), ours until Design draws it (`design-brief-next.md`). Saves stay instant.
 
 ---
 
@@ -132,6 +133,8 @@ Plus, globally:
 **What happens if left alone**: a new user sees blank screens on first launch — the worst possible first impression for a logging app whose whole premise is accumulating records.
 
 **Needs designing**: first-run empty state per list, and whether empty differs from loading.
+
+**Status 2026-11-01 (Uryu): open, narrowed to one thing.** Most V1 surfaces have their empty state now (5a's empty shelf, Records, search, Taste DNA with nothing noted, Home's shelf side, the café sheet's no results; `v1-status.md`, the four V1-path gaps). Left: **a first run as a whole, Home and Profile on a fresh install**, not yet looked at as one. Notifications, Try next and My words are out of V1.
 
 ---
 
@@ -149,9 +152,11 @@ Plus, globally:
 
 **Needs designing**: save failure, offline, and per-field inline error, reusing the 5d vocabulary.
 
+**Status 2026-11-01 (Uryu): open.** The save-failure copy is still the stand-in above, and the per-field inline error is undecided. Built since: the café sheet's map states (Round 16 B2).
+
 ---
 
-## 7. Nowrap chips will overflow once the UI is translated
+## 7. Nowrap chips will overflow once the UI is translated — **CLOSED 2026-11-01: moved to `i18n-notes.md`**
 
 **Parts affected**: the 40 `nowrap` uses — **all fixed copy, none user-supplied**: brew-method chips `Filter / Espresso / Cold brew` (12), maker chips `I made it / Barista / Packaged` (12; the mocks still say "Ready-to-drink"), dates `Apr 8 / Apr 7 / Apr 6` (12), status label `Early signs` (4).
 
@@ -162,6 +167,8 @@ Plus, globally:
 **Note (2026-10-06)**: user-supplied names (café, brand, drink, product) are never `nowrap`. They follow the truncation rule in item 1.
 
 **Update (2026-10-04)**: the maker chip "Ready-to-drink" is renamed **"Packaged"** (ja 市販品, zh 市售) (decided 2026-10-04). The three maker chips now fit on one line at 390 / 393pt. Brew-method chips and `Best rated` are unchanged.
+
+**Closed 2026-11-01 (Uryu)**: V1 is English only (8m, language, is not in V1), so this is a translation problem, not a V1 gap. Carried to `i18n-notes.md`, "Scheduled for the V1.1 i18n pass".
 
 ---
 
@@ -202,7 +209,7 @@ Plus, globally:
 
 ---
 
-## 9. The weekday strip's active-day underline is unimplemented
+## 9. The weekday strip's active-day underline is unimplemented — **CLOSED 2026-11-01**
 
 **Parts affected**: the "This week" strip on 1b, 4a, 4b.
 
@@ -214,6 +221,7 @@ Plus, globally:
 
 **Built 2026-10-12 from 1b's export**: the export draws today's underline in ink (2px), so the strip does: today's letter in ink and an ink underline under its date.
 
+**Closed 2026-11-01 (Uryu)**: built 2026-10-12 from 1b's export (above); nothing left open.
 
 ---
 
@@ -231,7 +239,7 @@ Plus, globally:
 
 ---
 
-## 11. Screen-reader roles and states — every component (added 2026-10-07)
+## 11. Screen-reader roles and states — every component (added 2026-10-07) — **CLOSED 2026-11-01 after an audit**
 
 **Parts affected**: every pressable, a separate axis from the visual states.
 
@@ -248,6 +256,13 @@ Plus, globally:
 - plus the selection limit's disabled hint.
 
 **Needs doing**: each component spec lists its role and states; the not-started components (switch, checkbox list, settings row, …) take them from the start.
+
+**Audited 2026-11-01 before closing** (Uryu: a rule in §1 is not proof it is followed; T-6 had found two §1 rules unbuilt, one of them for the screen reader). Every pressable in the live code (30 files; the retired screens left out), pressables first:
+- **Right as built**: Button (button + disabled), IconButton, ClearButton, InlineAction (button + disabled), AddButton, MenuRow (button + disabled), FieldRow (button; text when read only), ItemRow / RecordRow (button only when pressable), FilterToken (×), BottomSheet's scrim ("Dismiss"), RadioList (radiogroup / radio + checked, disabled; Add row a button), CheckboxList (checkbox + checked, disabled; Add row disabled at the limit), SegmentedControl (radio + checked), StarRating (radio + checked), Switch (switch + checked), ShelfTabs and search's result tabs (tab + selected), FooterNav (tab + selected; + a button), AxisSlider (adjustable, value as the step name, increment / decrement / Clear), Home's shelf rows, Gear & beans rows, bag / gear page rows, Profile's Taste DNA card, the Taste DNA stamp and card foot, 2c's "Feeds my taste DNA", search's chips and term rows.
+- **Fixed in the audit**: (1) 5b's flavour chip locked at the limit was disabled but announced as available: its state now carries `disabled`. (2) Search's Rating chips sat in a `radiogroup` though each is a button that starts a search: the group role is gone.
+- **Display only**, checked after: the axis readouts, freshness, the week strip and the page indicator carry labels; badges and change lines are plain text; glyphs are decorative.
+- **Kept as is**: search's Kind row is SegmentedControl (radios, none checked) whose pick becomes the filter; a radio that applies a choice is acceptable.
+New components keep the rule (§1 Tap affordance); this item doesn't stay open for them.
 
 ---
 
@@ -285,8 +300,18 @@ Plus, globally:
 
 **Needs designing**: the 6 missing phrasings and the threshold. Copy, decided separately from the axis slider spec.
 
+**Status 2026-11-01**: the copy is settled and built (`DnaChangeLines.js`: all 8 phrasings, a move counts once it rounds to 1 point, Design's summary rule; design-missing 12, Round 12, D-54). **Still open: the combinations have not been seen on device.** Dogfood shows the first two by itself; the rest need making on purpose:
+- one axis moved;
+- two moved (both in the summary);
+- three or more moved (the summary names the two largest; check it doesn't read as contradicting the lines under it);
+- an axis's first value ("Starts at …");
+- nothing moved.
+Close once all five are seen.
+
 ---
 
+
+**Status 2026-11-06 (Design Round 21)**: the per-axis lines are gone. Each moved axis is a tag, `‹pole label› +N` (always positive; the pole carries the direction), a first value `Starts at ‹step›`; the summary sentence stays, and "first ‹Axis› reading(s)" covers first values alone (`DnaChange.js`). The combinations above still need seeing on device, now as tags.
 ## 14. Taste axis: Clear's touch slop over the track's bottom right — accepted (added 2026-10-08, accepted 2026-10-09)
 
 **Parts affected**: `AxisSlider` on 5b (entered axes, where Clear shows). Not a scrolling problem: the only text button outside the dev harness is this Clear.
@@ -349,7 +374,7 @@ Plus, globally:
 
 ---
 
-## 17. "Finish bag" has no confirmation and no immediate undo (added 2026-10-09)
+## 17. "Finish bag" has no confirmation and no immediate undo (added 2026-10-09) — **CLOSED 2026-11-01, accepted**
 
 **Parts affected**: 3d's "Finish bag".
 
@@ -364,6 +389,8 @@ Plus, globally:
 **2026-10-14**: 3f wasn't built, so Finish had neither. 3f (minimal) is now in V1 ahead of 3g, restoring the settled recovery; Finish stays unconfirmed (design-missing.md 27–31).
 
 **At this stage (2026-10-12)**: 3f is not built, so **a finished bag cannot be reopened**. Accepted for own use: a slip costs one of five slots; the cups and notes stay. Return here with 3f.
+
+**Closed 2026-11-01 (Uryu): accepted.** A slip costs little: the bag leaves the shelf (one of 5 slots), and its cups and notes stay. The recovery is 3f's Reopen bag, built 2026-10-14 (from Gear & beans' Finished bags; Reopen needs a free slot). No confirmation and no immediate undo. Look again if 3f is ever taken out or reworked.
 
 ---
 
@@ -418,7 +445,7 @@ Plus, globally:
 
 ---
 
-## 19. 36pt buttons fall short of the 44pt tap target (added 2026-10-09)
+## 19. 36pt buttons fall short of the 44pt tap target (added 2026-10-09) — **CLOSED 2026-11-01**
 
 **Parts affected**: the 36-tall compact button. 3e and 3g photo "Replace" / "Remove photo" (1.5 frame, 11px caps); 7a "Mark all read" (1.5 `border.muted`, no fill).
 
@@ -429,6 +456,8 @@ Plus, globally:
 The photo pair sits beside a 76 thumbnail, so 44 would still fit its height.
 
 **Status**: recorded, not decided. The button itself is a Button variant (`components.md` #3), not built.
+
+**Closed 2026-11-01 (Uryu): keep the drawn size, pad the touch to 44 with `hitSlop`.** That is how every small control already built reaches 44: the switch, compact chips, `InlineAction`, text buttons, `FilterToken`. The 36pt buttons named above (3e / 3g's photo Replace / Remove, 7a's Mark all read) are not built yet: they take the same `hitSlop` when they are (photos: the photo report).
 
 ---
 
@@ -454,7 +483,7 @@ The photo pair sits beside a 76 thumbnail, so 44 would still fit its height.
 The user sees the past rewritten.
 
 **Triggers**:
-- **"Read my words"** (8g) toggled. Out of V1: the setting screen is not in V1, so it cannot be toggled yet.
+- ~~**"Read my words"** (8g) toggled.~~ Gone: the setting was abolished (2026-10-31), My words never shape the profile.
 - **Editing a cup**: in the design. 2c has an edit button (pencil); its destination is not drawn. Changing a past cup's rating or axes moves every later shift.
 - **Deleting a cup**: **not in the design.** No screen offers it (2c: back, edit, share only), so not in V1.
 - A change to the arithmetic in a later release.
@@ -463,13 +492,19 @@ The user sees the past rewritten.
 
 ---
 
-## 22. A first-setup choice that cannot be changed in V1 (added 2026-10-10)
+## 22. A first-setup choice that cannot be changed in V1 (added 2026-10-10) — **CLOSED 2026-11-09: outside V1**
 
 **What**: 8n's "How do you take your coffee?" (Black / With milk / Depends on the day) is stored in V1 and read on every cup: it orders the tasting-note suggestions. **V1 has no settings screen**, so once chosen it cannot be changed. "Skip all" leaves it unset.
 
 **Contrast**: 8c's "I mostly drink out" is read once (the first cup's default) and stops mattering after; it needs no editing.
 
 **Status**: recorded, not solved. Options when the settings screen comes (V1.5): an entry for it there; or, before that, a way back into first setup.
+
+**Closed 2026-11-09 (Uryu): outside V1.** First setup moves to V1.5 whole (`v1-status.md`), and both settings with it.
+- **Why not add two rows to Profile**: in V1 the two settings have no effect, not only no way in. The 8n reordering isn't built (`constants/flavours.js`), and nothing reads `drinks_out`. Rows would be two switches that change nothing, which is worse than none.
+- **What makes them work, all at once (V1.5)**: the flavour suggestions' reordering by `coffee_style`; 5a's first-cup mode from `drinks_out`; and a place to change both, which Design has to draw (6b, 6c and 6d have none).
+- **The choices, as drawn**: 8n (setup 1 of 3) "How do you take your coffee?" / "Sets which tasting notes show first when you log a cup.": one pick of three, Black ("Acidity, origin"), With milk ("Body, sweetness"), Depends on the day. 8c (2 of 3) "How do you usually brew?": gear picks plus "I mostly drink out". Each step can be skipped ("Skip all").
+- In V1 both columns stay NULL, and `schema.ts` says why.
 
 ---
 
@@ -501,7 +536,7 @@ The user sees the past rewritten.
 
 ---
 
-## 24. Gear cap: 8 or 3 (added 2026-10-10; facts only, not decided)
+## 24. Gear cap: 8 or 3 (added 2026-10-10; facts only, not decided) — **CLOSED 2026-11-01: 8**
 
 - **8, a total across categories**:
   - 3a "3 / 8 Selected" over its Brewer / Grinder / Kettle / Scale tabs, with "5 slots left";
@@ -514,6 +549,8 @@ The user sees the past rewritten.
   - 8c's 3 could be a smaller cap for first setup only.
   - 6a's "of 3" then contradicts 3a / 3b / 4a.
 - **Bags**: 5 open, everywhere: 3c, 3d, 4b, 6a "4 of 5", and 8j's "my five open bags". The mocks give no reason for 5 or for 8. Bags are consumables with a finish / archive cycle; gear is inventory.
+
+**Closed 2026-11-01 (Uryu): 8**, a total across categories (`GEAR_LIMIT`, as 3a / 3b / 4a and every screen V1 has). The 3 appears only on 8c (first setup) and 6a's mock (whose row V1 shows as "of 8"); neither is in V1. **Check again when first setup (8c) is built**: whether 8c's "up to three" is a smaller first-setup cap or an error.
 
 ---
 
@@ -537,13 +574,36 @@ The user sees the past rewritten.
 
 ---
 
-## 27. Flavour words grow without limit, with no way to prune (added 2026-10-10)
+## 27. Candidates are made from the cups, so a name never leaves while a cup carries it (added 2026-10-10 for flavours; rewritten 2026-11-01)
 
-**What**: Search's "Add \"xxx\"" adds a new flavour word without limit. 8h (rename / merge / clean up) is not in V1. So the user has no way to reduce the words that pile up; in half a year, words used once crowd the candidates.
+**What**: four sheets offer names built from the cups themselves, each with `Add "…"` for a new one:
 
-**Now**: no limit (decided). Ordering by use count is expected to sink rarely used words (report 2026-10-10).
+| Kind | Candidates come from | Can a saved name be fixed on the cup? |
+|---|---|---|
+| Flavour tags (5b) | `cups.flavours` | **No**: flavours are Taste DNA's input, read only in 11a (`taste-dna.md`, Editing a cup). Only deleting the cup removes it |
+| Drinks (Barista) | `cups.drink_type` | Yes, 11a, one cup at a time |
+| Product names (Packaged) | `cups.product_name` | Yes, 11a, one cup at a time |
+| Cafés (Barista) | `places` rows with a cup (`cups.place_id`; the name shown on a cup is its copy, `place_name`) | The cup can be moved to another café in 11a; the place row itself is never renamed |
 
-**Status**: recorded. 8h, or a limit, later.
+So a name stays a candidate for as long as any cup carries it. Removing it means changing every such cup.
+- **How a typo spreads**: picking from the list is the easiest way to fill the field, so a misspelling saved once is picked again, and each pick saves it on one more cup.
+- **Fixing it costs N edits**: 11a fixes one cup; a typo on N cups takes N edits (and a flavour typo can't be fixed at all).
+- **Flavours: the "read only" rule covers only half of the spellings** (Uryu, 2026-11-01). The rating, axes and flavours are read only because a changed input under an unchanged `dna_change` makes the history false. That holds for a flavour's *value* (which word it is), not always for its *spelling*. Taste DNA looks a word up in the bundled table ignoring case (`tasteDna.ts` `wordsOf`), so:
+  - **(a) The fix turns it into a bundled word** ("Jasmin" → "Jasmine"): the typo fed no axis, the fix feeds one, and the profile moves. A rewrite of history; the rule rightly covers it.
+  - **(b) Neither spelling is bundled** ("syrupyy" → "syrupy", both added by the user): neither feeds an axis, so Taste DNA, the profile and every `dna_change` stay exactly as they are. Only the candidate list and what the cup shows change. Fixing it would be harmless.
+  - (A case-only fix, "jasmine" → "Jasmine", is (b) too: the lookup ignores case.)
+  - Today's blanket rule blocks (b) for (a)'s reason. **When renaming across cups is weighed, "flavours can't be edited" is not a stop**: it covers (a) only.
+- **The asymmetry**: flavours are the kind most likely to be mistyped (new words are typed by hand on 5b, and picked on nearly every cup) and the hardest to fix (not in 11a; only deleting the cup).
+- **What is already in place (2026-10-31 / 11-01)**: a name added by mistake and not yet saved goes by itself (pick another; once the cup is saved or discarded it is in no list). New drinks, products and flavours take one written form (spaces, first letter), so case alone doesn't split them (products since 2026-11-01).
+
+**Two ways to solve it, neither decided**:
+- **(a) Rename across cups**, as 3g / 3e do for a bag or gear: an explicit edit that says how far it reaches ("Applies to the N cups already logged from this bag."). A rewrite the user asks for, with its reach shown, is the same kind as 3g's, so it fits "a record is the fact it was" the way 3g does. It would not fit flavours unless their Taste DNA effect is settled first: a renamed word can change which axis it feeds (`taste-dna.md` item 6, the word table).
+- **(b) A table of names hidden from the candidates.** Cups are never touched, but the hidden names then need their own way to be seen and undone, which is a small management screen of its own.
+- Decide between them only after working out how each sits with that principle, per kind.
+
+**Not now (Uryu, 2026-11-01)**: no delete, no rename. Uryu's Packaged and Barista records are still few, and nothing has gone wrong yet; how the lists actually get messy should decide the fix.
+
+**When it counts as happened** (so it doesn't stay "too early" forever): **any one sheet shows 3 or more candidates that are plainly duplicates or misspellings of another** (e.g. "Jasmin" beside "Jasmine", "Oat late" beside "Oat latte", "Fuglen" and "Fuglen Tomigaya" for one place). Check when looking at the sheets in dogfood; on the first sheet that meets it, pick (a) or (b) for that kind.
 
 ---
 
@@ -585,25 +645,32 @@ The user sees the past rewritten.
 
 ---
 
-## 31. My words do not shape Taste DNA in V1 (added 2026-10-11)
+## 31. My words do not shape Taste DNA in V1 (added 2026-10-11) — **closed 2026-10-31**
 
 **What**: only the ten bundled flavour words have a word → axis entry. My words (free text) and words users add are not matched in V1: matching free text needs normalising, synonyms and negation ("not too bitter"). "Read my words" (8g) does not exist in V1, which is the same as it being off.
 
 **Copy to adjust when 8g is built**: 8g's "Your words are matched, not read — 'juicy' maps to acidity and sweetness" and 7a's "Taste DNA now reads your notes" describe more than V1 does. Even 8g's example word, "juicy", is not a bundled word, so it has no entry.
+- **8g, built 2026-10-30**: its words line now reads "Flavour tags nudge, sliders decide — Peach leans brighter and sweeter. Tags make up at most a third of an axis. Your own words don't count." (Design Round 17, B1, confirmed). The switch is not built. 7a is still not built.
+
+**Closed 2026-10-31 (Uryu)**: not "in V1" any more. My words never shape the profile, by design: flavour tags describe the taste, My words is a free memo (`taste-dna.md` item 6). "Read my words" is abolished, so V1's behaviour and the rule are the same thing. What's left is copy, not a gap: 8g's "don't count" reads as "not yet", so Design rewrites it as the division of roles (Round 18); 7a / 7b's "Taste DNA now reads your notes" is void (Round 18).
 
 ---
 
-## 32. 2c's share button is not shown (added 2026-10-11)
+## 32. 2c's share button is not shown (added 2026-10-11) — **CLOSED 2026-11-01**
 
 **What**: 2c's header has a share button (an arrow out of a tray), but no mock says what it shares: text, an image, a file. Not shown in V1 (decided 2026-10-11).
 
+**Closed 2026-11-01 (Uryu)**: decided out of V1 (2026-10-11). If sharing is ever wanted, start from what it shares.
+
 ---
 
-## 33. 2c's method line drops "22 clicks" and "My default brewer" (added 2026-10-11)
+## 33. 2c's method line drops "22 clicks" and "My default brewer" (added 2026-10-11) — **CLOSED 2026-11-01**
 
 **What**: 2c's Method meta reads "My default brewer, 22 clicks". Neither is shown in V1:
 - **"22 clicks"** is the grind setting (`cups.grind_setting`, V1.5): there is no input, so it is always empty. **Return here when V1.5 adds the grind input.**
 - **"My default brewer"**: whether the brewer was the default *when the cup was logged* is not stored. Judging it by today's default would not be history.
+
+**Closed 2026-11-01 (Uryu)**: both decided not shown. "22 clicks" is carried by `todo.md` T-11 (the grind setting, with its two other parts); "My default brewer" can't be history without storing it at logging.
 
 ---
 
@@ -620,6 +687,10 @@ The user sees the past rewritten.
 **What**: the photo placeholder (Design 10a) is on every thumbnail, but **not** in 2c's photo area. A list thumbnail is small and keeps the row's shape; 2c's area is a quarter of the screen, and the same drawing on every cup would take the largest space while saying nothing.
 
 **Return**: show it when the camera arrives.
+
+**Status 2026-11-01**: open; goes with the photo report (Uryu, next).
+
+**Size, for deciding cup photos (measured 2026-11-01)**: each photo is kept twice, the original at 1200 px and its styled copy (`photoStyle.js`). A real photo comes to roughly 250–400 KB as the original and 400–600 KB styled (a dither makes the JPEG about 1.8× larger; a generated label measured 153 / 265 KB). **A photo on every cup at two cups a day is about 0.6–0.7 GB a year**: an upper bound (not every cup will have one), but the order to know. Bags and gear come to about 25 MB a year. Photos live in `Documents/photos/`, inside the iCloud / Finder backup, as the database does. **When cup photos are decided, report whether they can be kept out of the backup** (and what is then lost on a restore); not looked into yet.
 
 ---
 

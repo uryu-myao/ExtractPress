@@ -8,7 +8,8 @@ import { useFooterHeight } from './FooterNav';
 /**
  * 13a / 13b — the one-line notice after a delete ("Ethiopia Guji deleted."),
  * Design Round 5 (2026-10-13). AppShell mounts it over the tabs. Also after
- * 3f's Reopen ("Kenya Kirinyaga reopened.", 2026-10-14; the verb is ours).
+ * 3f's Reopen ("Kenya Kirinyaga reopened.", 2026-10-14; the verb is ours)
+ * and 6b's Reset my taste DNA ("Taste DNA reset.", 2026-11-10, ours too).
  *
  *   look     surface.inverse + text.onInverse, square, no border, no shadow;
  *            min size.notice.minHeight (48), padding 16 a side; gap.section
@@ -28,7 +29,8 @@ const easing = Easing.bezier(...motion.expand.controlPoints);
 const RISE = space[8];
 
 export default function Notice() {
-  const bottom = useFooterHeight() + spacing.gap.section;
+  // space.12 above the bar's band (Design Round 23).
+  const bottom = useFooterHeight() + space[12];
   const [notice, setNotice] = useState(null); // { name, key }
   const opacity = useRef(new Animated.Value(0)).current;
   const lift = useRef(new Animated.Value(0)).current;

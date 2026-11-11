@@ -17,6 +17,7 @@ import Text from './Text';
  *   value     the user's choice — truncated with the `name` preset
  *   meta      secondary line — truncated with the `meta` preset (wraps in full when `error`)
  *   swatch    show the 46px thumbnail frame
+ *   photo     a photo's id for the swatch (data/photos.ts); the placeholder without one
  *   icon      Glyph name drawn inside the swatch (implies `swatch`)
  *   divided   hairline above the row
  *   error     5d missing-field state: dashed swatch with a plus, error-toned text
@@ -33,6 +34,7 @@ export default function FieldRow({
   value,
   meta,
   swatch = false,
+  photo,
   icon: iconName,
   divided = false,
   error = false,
@@ -52,7 +54,7 @@ export default function FieldRow({
       testOnly_pressed={testOnly_pressed}
       style={({ pressed }) => [styles.row, divided && styles.divided, pressed && styles.pressed]}>
       {/* A plain swatch is a photo slot with no photo: the placeholder (10a). */}
-      {hasSwatch && !error && !iconName ? <PhotoPlaceholder size={size.field.height} /> : null}
+      {hasSwatch && !error && !iconName ? <PhotoPlaceholder size={size.field.height} photo={photo} /> : null}
       {hasSwatch && (error || iconName) ? (
         <View style={[styles.swatch, error && styles.swatchError]}>
           {error ? (

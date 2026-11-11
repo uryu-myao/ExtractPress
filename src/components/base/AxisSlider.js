@@ -5,6 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { component, motion, size, spacing, state, textStyle } from '../../theme/tokens';
+import { AxisKey } from './AxisReadout';
 import Button from './Button';
 import { GESTURE_LOG, logGesture } from './gestureLog';
 import Text from './Text';
@@ -34,7 +35,15 @@ import Text from './Text';
  *
  * Runs on the UI thread (Reanimated + gesture-handler, §1 Animation systems).
  *
+ * The axis's colour key (Design Round 21, 23d) is the one addition: the
+ * 12 × 4 AxisKey hung outside the 260 track, its right edge gap.row left of
+ * the left pole label, so the labels keep their places (Low / High
+ * sweetness still fits). Never on the track, never beside the handle:
+ * handle, track and dots stay §9's, so brown keeps meaning "entered".
+ * Decorative: the screen reader hears nothing new.
+ *
  * Props
+ *   axis        the axis's key (TASTE_AXES), for its colour key
  *   from, to    pole labels (low pole on the left)
  *   steps       the five step names, low to high
  *   value       0–100 or null (empty)
@@ -135,7 +144,7 @@ function Pole({ label, align }) {
   );
 }
 
-function AxisSlider({ from, to, steps, value = null, onChange }) {
+function AxisSlider({ axis, from, to, steps, value = null, onChange }) {
   const isEntered = value != null;
   const committedStep = value == null ? MIDDLE : valueToStep(value);
   const who = `axis:${from}`;
@@ -291,6 +300,9 @@ function AxisSlider({ from, to, steps, value = null, onChange }) {
   return (
     <View style={[styles.axis, styles.axisSized]} {...a11y}>
       <View style={styles.poles}>
+        <View style={styles.keyHang}>
+          <AxisKey axis={axis} />
+        </View>
         <Pole label={from} />
         <Pole label={to} align="right" />
       </View>
@@ -327,6 +339,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: spacing.gap.row,
+  },
+  // Out of flow, left of the 260 width: its right edge gap.row before the left pole label.
+  keyHang: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: -(spacing.gap.row + size.axis.key.w),
+    justifyContent: 'center',
   },
   textRight: {
     textAlign: 'right',

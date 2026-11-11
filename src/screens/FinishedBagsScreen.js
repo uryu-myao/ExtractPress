@@ -82,7 +82,7 @@ export default function FinishedBagsScreen({ onBack }) {
         {(data?.bags ?? []).map((bag) => (
           <View key={bag.id} style={styles.card}>
             <View style={styles.top}>
-              <PhotoPlaceholder size={size.field.height} />
+              <PhotoPlaceholder size={size.field.height} photo={bag.photo_uri} />
               <View style={styles.text}>
                 <Text variant="title" truncate="name">
                   {bag.name}

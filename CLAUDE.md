@@ -12,13 +12,18 @@ npx expo start
 npx expo start --ios
 npx expo start --android
 npx expo start --web
+
+# Release build onto Uryu's iPhone (JS bundled in, no Metro needed; free
+# provisioning, so it stops opening after 7 days until rebuilt). Phone
+# connected by cable or "Connect via network". Records survive a reinstall.
+npm run ios:device
 ```
 
 No test or lint scripts are configured yet.
 
 ## Architecture
 
-MoreCoffee is a React Native + Expo mobile app for logging and tracking coffee consumption.
+Extract Press (internal name MoreCoffee) is a React Native + Expo mobile app for logging and tracking coffee consumption. The GitHub repository is `uryu-myao/ExtractPress`; `expo.slug`, `package.json` `name` and code identifiers keep the internal name; what the user sees says Extract Press (`design/rename-plan.md`).
 
 **Entry point:** `App.js` → renders `src/AppShell.js`
 

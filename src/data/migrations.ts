@@ -316,6 +316,86 @@ export const migrations: readonly Migration[] = [
       `CREATE INDEX cups_bought_at_place_id ON cups (bought_at_place_id)`,
     ],
   },
+  {
+    /*
+     * Search history (Design Round 15 · Search, 18a): the last terms typed
+     * into search, newest first. One row per term, ignoring case: a term
+     * searched again moves to the top (repository.ts addSearchTerm keeps 5).
+     * Overturns Design Round 10, 22 ("no recent searches in V1").
+     */
+    version: 5,
+    name: 'search history',
+    statements: [
+      `CREATE TABLE search_history (
+        id INTEGER PRIMARY KEY,
+        term TEXT NOT NULL,
+        searched_at INTEGER NOT NULL
+      )`,
+    ],
+  },
+  {
+    /*
+     * The café's name copied onto the cup (todo.md T-13, Uryu 2026-10-31),
+     * as the bag's and the gear's already are: a cup is the fact it was, so
+     * renaming a place never rewrites past cups. place_id stays, the same
+     * reference + copy shape as bag_id / bean_name and brewer_id / brew_method.
+     *   - cups.place_name: the Barista café's name when the cup was logged
+     *   - cups.bought_at_name: Packaged's "bought at", the same shape. V1 has
+     *     no way to enter it, so it stays empty (schema.ts says why)
+     * Existing cups take their place's current name, once.
+     *
+     * And drink names in one form (Uryu, 2026-10-31): a drink added by hand
+     * now takes the flavour tags' form (constants/drinks.js normalizeDrink),
+     * and the ones stored before are put in it once. Only spaces and the
+     * first letter change, never what was ordered: left as they were, a
+     * lower-case "latte" would keep coming back, since the sheet shows the
+     * latest spelling and picking it saves it again.
+     */
+    version: 6,
+    name: 'place names copied onto cups',
+    statements: [
+      `ALTER TABLE cups ADD COLUMN place_name TEXT`,
+      `ALTER TABLE cups ADD COLUMN bought_at_name TEXT`,
+      `UPDATE cups SET place_name = (SELECT name FROM places WHERE places.id = cups.place_id) WHERE place_id IS NOT NULL`,
+      `UPDATE cups SET bought_at_name = (SELECT name FROM places WHERE places.id = cups.bought_at_place_id) WHERE bought_at_place_id IS NOT NULL`,
+    ],
+    backfill: async (db) => {
+      // Frozen here, not imported: a shipped migration must not change when
+      // the app's normalizer does.
+      const form = (text: string) => {
+        const t = text.trim().replace(/\s+/g, (run) => run[0]);
+        return t.charAt(0).toUpperCase() + t.slice(1);
+      };
+      const rows = await db.all<{ id: number; drink_type: string }>('SELECT id, drink_type FROM cups WHERE drink_type IS NOT NULL');
+      for (const row of rows) {
+        const next = form(row.drink_type) || null;
+        if (next !== row.drink_type) await db.run('UPDATE cups SET drink_type = ? WHERE id = ?', [next, row.id]);
+      }
+    },
+  },
+  {
+    /*
+     * Try next's "Not for me" (design/try-next-v1.md, "the shape of migration
+     * 7"; Design Round 23, 25d; 2026-11-08). One row per dismissed suggestion,
+     * never shown again. settings is one typed row, so a list doesn't go there.
+     * key says what was dismissed, by kind (repository.ts loadTryNext):
+     *   bag:<name>\u001f<roaster>   the bean, lower-cased: buying it again makes
+     *                               a new bag row, which mustn't bring it back
+     *   cafe:<place id>
+     *   brewer:<bag id>:<gear id>
+     *   tag:<word>                  lower-cased
+     * Undo (25d) deletes the row.
+     */
+    version: 7,
+    name: 'try next dismissals',
+    statements: [
+      `CREATE TABLE try_next_dismissed (
+        key TEXT PRIMARY KEY,
+        kind TEXT NOT NULL CHECK (kind IN ('bag', 'cafe', 'brewer', 'tag')),
+        dismissed_at INTEGER NOT NULL
+      )`,
+    ],
+  },
 ];
 
 /** The bookkeeping table. Created before any migration runs. */
