@@ -5,7 +5,7 @@
 > - §3 Bags counting rule → `handoff-round23.md` §4 (every bag added).
 > - Everything else here stands.
 
-Reference frames in `MoreCoffee design.dc.html`, Turn 22: **23a** (axis colours, spec), **23b** (Home), **23c** (Home top, states and counting rules), **23d** (5b), **23e / 23f** (5c and tag states), **23g** (2c and 11a), **23h** (8f). The reasoning is in `design-response-next.md`, Round 21.
+Reference frames in `ExtractPress-design.dc.html`, Turn 22: **23a** (axis colours, spec), **23b** (Home), **23c** (Home top, states and counting rules), **23d** (5b), **23e / 23f** (5c and tag states), **23g** (2c and 11a), **23h** (8f). The reasoning is in `design-response-next.md`, Round 21.
 
 The three parts are independent. Build them in any order.
 

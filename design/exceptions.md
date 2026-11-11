@@ -4,7 +4,7 @@ Five values that are genuinely one-off (six until 2026-10-06, when E-3 was promo
 
 Started from ~60 low-frequency values; after role-scoped thresholds, the two merge gates, mechanism-bound (class A) promotion and the orphan-alias rule, six remain.
 
-Source: `MoreCoffee design.dc.html` · 30 screens · 2026-09-20
+Source: `ExtractPress-design.dc.html` · 30 screens · 2026-09-20
 
 ---
 

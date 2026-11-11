@@ -4,7 +4,7 @@
 > - **§5 was added on 2026-11-07, after this file first went out.** If your copy ends at §4, it is stale: Home's top block (panel, total 64) is in §5.
 > - §2's "bottom bar's 2px top rule" no longer applies: the bar is floating now (`handoff-round23.md` §1).
 
-Decided by Uryu 2026-11-07: **24b**. Reference frames in `MoreCoffee design.dc.html`, Turn 23: **24a** 5a as now, **24b** 5a as decided, **24c** the rule, **24e** pressed. **24d** (the reference's fuller version, buttons pale too) was **not chosen** — don't apply it. Reasoning: `design-response-next.md`, Round 22.
+Decided by Uryu 2026-11-07: **24b**. Reference frames in `ExtractPress-design.dc.html`, Turn 23: **24a** 5a as now, **24b** 5a as decided, **24c** the rule, **24e** pressed. **24d** (the reference's fuller version, buttons pale too) was **not chosen** — don't apply it. Reasoning: `design-response-next.md`, Round 22.
 
 One rule, applied by you across the app. No screen list: sort each 2px frame by the categories in §2.
 

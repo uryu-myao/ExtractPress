@@ -3,7 +3,7 @@
 > **Version 2, 2026-11-08 (updated 2026-11-09). Read `handoff-README.md` first.**
 > - **v2 change: the tab body takes the +'s ink frame and hard shadow** (2px `border.strong` + `shadow.floating`), Uryu's comment on 25a. Version 1 had a quiet `border.container` frame and no shadow. If your copy says "no shadow" on the body, it is v1.
 
-The reference frames are in `MoreCoffee design.dc.html`, Turn 24:
+The reference frames are in `ExtractPress-design.dc.html`, Turn 24:
 
 | Frame | Shows |
 |---|---|

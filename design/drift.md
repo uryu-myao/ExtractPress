@@ -2,7 +2,7 @@
 
 Values in the shipped designs that contradict a token established in `design-system.md`. Each one is a design-side fix, not a token change — the token side already carries the correct value.
 
-Source: `MoreCoffee design.dc.html` · 30 screens · 2026-09-20.
+Source: `ExtractPress-design.dc.html` · 30 screens · 2026-09-20.
 
 **Status (added 2026-10-10)**: every entry carries one.
 - **Active**: the correct value is decided, or marked "value open", and not yet applied.

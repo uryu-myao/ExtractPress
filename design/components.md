@@ -2,7 +2,7 @@
 
 Inventory only: what exists, where, how far it is built, and which states are known or missing. **No specs here.** Specs are written component by component, in the order chosen on review.
 
-Source: `MoreCoffee design.dc.html`, the 30 in-scope screens. Compiled 2026-10-07.
+Source: `ExtractPress-design.dc.html`, the 30 in-scope screens. Compiled 2026-10-07.
 **Screens added since** (read directly, 2026-10-09 / -10):
 - **3g** Edit bag (see "3g Edit bag" below);
 - **8n** First setup 1/3: a single choice with a sub-line per option ("Black · Acidity, origin" / "With milk · Body, sweetness" / "Depends on the day"), the radio-row form of #26;

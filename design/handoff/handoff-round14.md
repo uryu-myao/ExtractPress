@@ -7,7 +7,7 @@
 > - **§3 "Cups total" is withdrawn.** `numeralHero` (lineHeight 79) and the 12px label margin (D-34) stay as they are.
 > - New §0 maps every value to a token. New §4 covers gear usage data.
 
-Reference frames in `MoreCoffee design.dc.html`: **17a / 17b** (Home), **17c / 17d** (full list). Header divider removal is already in code and is not covered here.
+Reference frames in `ExtractPress-design.dc.html`: **17a / 17b** (Home), **17c / 17d** (full list). Header divider removal is already in code and is not covered here.
 
 All type is Archivo unless noted. Colours: ink `#273D22`, muted `#6B5D55`, accent `#9E5202`, line `#D8C9BF`.
 

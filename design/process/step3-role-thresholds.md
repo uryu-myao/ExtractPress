@@ -2,7 +2,7 @@
 
 The ≥3-screen threshold from Step 2 was aggregate. It is re-applied here **inside each role**: one row per (value, role) pair, judged independently.
 
-- Source: `MoreCoffee design.dc.html` · 30 unique screens (same scope as `evidence.md` / `roles.md`)
+- Source: `ExtractPress-design.dc.html` · 30 unique screens (same scope as `evidence.md` / `roles.md`)
 - **role screens / role uses** = occurrences of that value *in that role only*
 - Class A (mechanism-bound: scrim, fade, error shadow, focus, empty, disabled, loading) is exempt from the threshold and promoted regardless — flagged `A` in the verdict column
 - `collapse →` names the nearest qualifying value **in the same role**, with the per-channel RGB delta (colors) or px delta (numbers). A delta large enough to be visible is reported as a real exception instead.

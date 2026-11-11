@@ -53,8 +53,8 @@ What the survey kept and this change still keeps: the repository (renamed later:
 | `src/data/schema.ts:2`, `src/theme/tokens.ts:2` header comments | keep (internal name) |
 | `src/data/DatabaseProvider.js:69` "morecoffee.db-wal" | keep: history (what happened in October) |
 | `src/screens/ProfileScreen.js` 144 "Rate MoreCoffee", 168 "Join MoreCoffee 21 days", 176 "Copyright 2026 MoreCoffee" | keep: a retired screen, not in the bundle. If 6a's rows are ever built from it, take the name and the copyright line from the store metadata instead |
-| `design/screens/MoreCoffee design.dc.html`: 1b / 6a eyebrows, "Rate MoreCoffee", "MoreCoffee 1.4.0 (2026.09)", "System permission is on for MoreCoffee.", "Only shown to you — MoreCoffee has no social feed." | Design's file: for Design's next round. None of these four sentences is in the code |
-| `design/*.md` titles ("MoreCoffee — …") and sources (`MoreCoffee design.dc.html`) | keep: history and file names |
+| `design/screens/ExtractPress-design.dc.html`: 1b / 6a eyebrows, "Rate MoreCoffee", "MoreCoffee 1.4.0 (2026.09)", "System permission is on for MoreCoffee.", "Only shown to you — MoreCoffee has no social feed." | Design's file: for Design's next round. None of these four sentences is in the code |
+| `design/*.md` titles ("MoreCoffee — …") | keep: history. The canvas itself was renamed `ExtractPress-design.dc.html` by Design (2026-11-11), and every reference to it follows |
 | `design/design-system.md` §9 eyebrow table (Home "MoreCoffee", Profile "Morecoffee") | **changed 2026-11-08**; Design is told in Round 23 |
 | `design/data-model.md` 46–50 (`Documents/SQLite/morecoffee.db`) | **line 46 changed 2026-11-08** to `extract.db`; 48–50 kept as history |
 | `design/release-checklist.md` 14, 22 | updated in this change |

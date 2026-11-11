@@ -8,7 +8,7 @@ Four requests. When they are done, this round of Design work is closed. Apply ev
 
 We record 21 drift entries as "Applied (Design, A)" on your report alone; the repo has no export showing them.
 
-**Please export `MoreCoffee design.dc.html` with groups A, the addendum and the drift fixes below applied.** We will check each entry against it, one by one:
+**Please export `ExtractPress-design.dc.html` with groups A, the addendum and the drift fixes below applied.** We will check each entry against it, one by one:
 
 > D-1, D-2, D-4, D-5, D-6, D-19, D-20, D-21, D-22, D-23, D-24, D-26, D-27, D-28, D-29, D-30, D-31, D-33, D-36, D-41
 > (D-3 is withdrawn: 3b's sheet no longer exists.)

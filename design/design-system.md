@@ -2,7 +2,7 @@
 
 Reverse-extracted from the shipped screen designs, then revised by decisions recorded in this file (each dated, see §12 Changelog).
 
-- **Source**: `MoreCoffee design.dc.html`, inline styles. 42 boards in the file as of 2026-10-10.
+- **Source**: `ExtractPress-design.dc.html`, inline styles. 42 boards in the file as of 2026-10-10.
 - **Token extraction (Step 3, sealed 2026-09-20)** was run on **30 screens**, from `process/evidence.md` (raw frequency), `process/roles.md` (role annotation) and `process/step3-role-thresholds.md` (role-scoped threshold pass). The token values trace there.
 - **Screens covered now (33)**: the 30, plus three added to the mocks later and read directly, not through the evidence pass: **3g** Edit bag (2026-10-09), **8n** First setup 1/3 and **8o** First setup 3/3 (2026-10-10).
   - The 30: 1b · 2a · 2b · 3a · 3b · 3c · 3d · 3e · 3f · 4a · 4b · 5a · 5b · 5c · 5d · 5e · 6a · 6d · 7a · 7b · 8c · 8d · 8e · 8f · 8g · 8h · 8i · 8j · 8l · 8m.

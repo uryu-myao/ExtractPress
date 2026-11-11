@@ -1,6 +1,6 @@
 # MoreCoffee — Step 2: raw value frequency (evidence layer)
 
-Transcribed verbatim from the inline styles of `MoreCoffee design.dc.html`. No rounding, no merging of near-identical values.
+Transcribed verbatim from the inline styles of `ExtractPress-design.dc.html`. No rounding, no merging of near-identical values.
 
 - Frames parsed: **32** · unique screens: **30**
 - Excluded per Step 1: `9a` `9b` `8a` (Welcome), `1a` (rejected direction), `2c` (superseded by 5a), `8b` `8k` (sign-in / account, held with Welcome)
