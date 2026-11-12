@@ -78,9 +78,9 @@ Checked against the code 2026-11-01; Design's open questions are in `design-brie
 | 8n / 8c / 8o First setup | release build | not started | `settings.setup_done` ready; 8o reuses the Bag form |
 | 8a / 9a / 9b Welcome | release build (out of the token set) | not started | designed separately |
 | 8b / 8k Sign-in / account | held | not started | |
-| 7a / 7b Notifications | release build | not started | |
+| 7a / 7b Notifications · Home's bell | **yes** (Uryu, 2026-11-11; Design Round 26) | **built 2026-11-11, not yet seen on device** | Notices ship in the app (`constants/notices.js`; Notice to everyone, Update to updaters only). 7a: This month / Earlier, unread square, no Mark all read; 7b: optional action as primary, Next / Back to list. Bell with the blue dot on Home (23b, C1). Welcome text PROVISIONAL (Round 27 D2) |
 | 8h My words | **not built: its premise doesn't hold** (Uryu, 2026-10-31) | — | My words are free memos with no repeated words to count, rename or merge. Its jobs are covered: finding a memo (search's Words), what repeats (8f's Flavours I pick most), the memo itself (2c). Also not built: 8f's What you keep saying, 6a's My words heading, Read my words |
-| 8i Reminders · 8j Feedback · 8m Language | release build | not started | |
+| 8i Reminders → 6c's stale switch · 8j Feedback → Mail · 8m Language | 8i / 8j: **folded into 6c** (Design Round 26 B1, A6); 8m: not in V1 | **6c built 2026-11-11, not yet seen on device**; the reminders need the native rebuild (expo-notifications) | 6c: Support & feedback (Send feedback by Mail, Review on App Store, Share the app; shown once `SUPPORT_EMAIL` / `APP_STORE_ID` are set; Buy me a coffee not built yet), App (Bag going stale, Privacy policy, Licences). Stale: 21 days after opening, 9:00, one notification a morning; 6a's "· 1 stale". Reset moved into 6b's Taste DNA (28f) |
 | 18a–18f Search (was 8l) | **yes** | **done** | Round 15: the empty state (Kind, Rating, Flavours I use most, Recent searches), hits and terms while typing, results in five tabs (ALL / CUPS / WORDS / BEANS / GEAR); Kind / Rating / bag / gear as a block (FilterToken) with the archive's shape. Recent searches stored (migration 5). **Seen on device** (2026-10-31) |
 | 8d / 8e Try next | **out (V2)** | placeholder tab | |
 

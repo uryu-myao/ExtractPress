@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import type { Bag, CupMode, Gear, GearCategory, Place, Row } from './schema';
+import { staleOf } from './freshness';
 import { changeOf, computeDna, dnaCupFromRow, lastShift, type Dna, type DnaShift } from './tasteDna';
 import { pickTryNext, type Suggestion, type TryNextCup } from './tryNext';
 
@@ -278,6 +279,16 @@ export async function listAllBags(db: SQLiteDatabase): Promise<Bag[]> {
 export async function openBag(db: SQLiteDatabase, id: number): Promise<void> {
   await db.runAsync('UPDATE bags SET opened_at = ? WHERE id = ? AND opened_at IS NULL', [Date.now(), id]);
   notifyShelfChanged();
+}
+
+/**
+ * 6a's "· 1 stale" (Design Round 26 C3): open bags opened 21+ days ago
+ * (staleOf: the opening date only). Counted whether the reminder switch is
+ * on or not: it's a fact about the shelf.
+ */
+export async function countStaleBags(db: SQLiteDatabase, now = Date.now()): Promise<number> {
+  const rows = await db.getAllAsync<{ opened_at: number }>('SELECT opened_at FROM bags WHERE finished_at IS NULL AND opened_at IS NOT NULL');
+  return rows.filter((r) => staleOf(r.opened_at, now)?.stale).length;
 }
 
 /** Finish a bag (3d): it leaves the open bags and frees its slot; its cups keep their copies. */

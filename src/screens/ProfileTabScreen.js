@@ -1,18 +1,20 @@
 import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, Share, StyleSheet, View } from 'react-native';
 import Badge from '../components/base/Badge';
 import DashedRule from '../components/base/DashedRule';
 import Chevron from '../components/base/Chevron';
 import MenuRow from '../components/base/MenuRow';
 import Text from '../components/base/Text';
+import StaleSwitchRow from '../components/StaleSwitchRow';
 import { GEAR_LIMIT } from '../constants/gear';
 import { daysBetween } from '../constants/dates';
-import { PRIVACY_POLICY_URL } from '../constants/links';
+import { APP_STORE_ID, PRIVACY_POLICY_URL, SUPPORT_EMAIL, appStoreReviewUrl, appStoreUrl } from '../constants/links';
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { shareBackup, shareCupsCsv } from '../data/export';
-import { OPEN_BAG_LIMIT, countGear, countOpenBags, countOwnRecords, loadDnaPage, loadProfile, onCupsChanged, onShelfChanged } from '../data/repository';
+import { OPEN_BAG_LIMIT, countGear, countOpenBags, countOwnRecords, countStaleBags, loadDnaPage, loadProfile, onCupsChanged, onShelfChanged } from '../data/repository';
 import { bandOf } from '../data/tasteDna';
 import { requestPush, requestResetDna, requestRestore } from '../navigation';
 import { color, dashed, layout, shape, space, spacing, state } from '../theme/tokens';
@@ -71,17 +73,24 @@ import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
  *                the CSV is for reading, the zip is for putting back.
  *                6b's Backup row is not shown: V1 has no automatic backup,
  *                so it would lead nowhere (drift.md).
- *                Reset my taste DNA closes the block, where 6b and 25e draw
- *                it: red label and glyph (Design Round 24), Round 12's line
- *                (both boards since Round 25, B1). It asks first
- *                (ResetDnaSheet), so no chevron: a sheet, not a screen.
- *   Legal        6c's last block (2026-11-09). Privacy policy opens its page
- *                in the browser, shown only once constants/links.js has its
- *                URL (todo.md T-18). Licences → its page (LicencesScreen).
- *                Terms of use is not built: with no terms of our own, Apple's
- *                standard EULA applies (drift.md). 6c's other blocks (App,
- *                Help & feedback, Support us) are out of V1.
- *   version      6c's line under Legal: "Extract Press 1.0.0 (1)", the
+ *   Taste DNA    How my DNA is built, then Reset my taste DNA (Design Round
+ *                26, 28f: Reset is about the profile, not data, so it left My
+ *                data; Uryu, 2026-11-11). Reset stays the block's last row:
+ *                red label and glyph (Design Round 24), Round 12's line. It
+ *                asks first (ResetDnaSheet), so no chevron: a sheet, not a
+ *                screen.
+ *   Support & feedback  6c after Design Round 26 (B5, 28a): Send feedback
+ *                (Mail, prefilled with the version, build, iOS and model;
+ *                shown once constants/links.js has SUPPORT_EMAIL), Review on
+ *                App Store and Share the app (once APP_STORE_ID is known).
+ *                Out-arrow on a row that leaves the app, chevron on one that
+ *                stays (the share sheet). TODO: Buy me a coffee (28e / 28g)
+ *                joins as the second row when its screen is built.
+ *   App          6c (28a): Bag going stale (StaleSwitchRow, 8i folded in),
+ *                Privacy policy (out-arrow; shown once its URL is set, T-18),
+ *                Licences → its page. Terms of use is not built: Apple's
+ *                standard EULA applies (drift.md).
+ *   version      closes the screen, centred, outside any block (28a): "Extract Press 1.0.0 (1)", the
  *                version and the build number from app.json (ios.buildNumber),
  *                the pair App Store Connect shows, so a report can be matched
  *                to an upload. 6c's "(2026.09)" is a date. 6c draws 11 / 500,
@@ -101,6 +110,17 @@ function sinceLine(first, now) {
   const weeks = Math.floor(daysBetween(first, now) / 7);
   const since = `Logging since ${sinceFormat.format(new Date(first))}`;
   return weeks > 0 ? `${since} · ${weeks === 1 ? '1 week' : `${weeks} weeks`}` : since;
+}
+
+/**
+ * Send feedback's mail (Design Round 26 A6: no 8j, Mail instead). The body
+ * starts empty for the user's words; under it, what makes a report usable
+ * (Uryu): version and build, iOS, the model. Nothing else: no cups, no notes.
+ */
+function feedbackMailto(address) {
+  const info = [versionLine(Constants.expoConfig), `iOS ${Platform.Version}`, Device.modelName].filter(Boolean).join(' · ');
+  const body = `\n\n\n—\n${info}`;
+  return `mailto:${address}?subject=${encodeURIComponent('Extract Press feedback')}&body=${encodeURIComponent(body)}`;
 }
 
 /** "Extract Press 1.0.0 (1)"; a missing part is left out. */
@@ -215,9 +235,9 @@ export default function ProfileTabScreen() {
 
   useEffect(() => {
     const load = () =>
-      Promise.all([loadProfile(db), loadDnaPage(db), countGear(db), countOpenBags(db), countOwnRecords(db)]).then(
-        ([profile, page, gear, bags, own]) =>
-          setData({ profile, page, gear, bags, empty: own.cups + own.bags + own.gear + own.places === 0, now: Date.now() }),
+      Promise.all([loadProfile(db), loadDnaPage(db), countGear(db), countOpenBags(db), countOwnRecords(db), countStaleBags(db)]).then(
+        ([profile, page, gear, bags, own, stale]) =>
+          setData({ profile, page, gear, bags, stale, empty: own.cups + own.bags + own.gear + own.places === 0, now: Date.now() }),
         (error) => console.error('[profile] could not read', error)
       );
     load();
@@ -250,10 +270,18 @@ export default function ProfileTabScreen() {
           <DnaLink dna={data.page.dna} shift={data.page.shift} />
           <Section title="My shelf" caption="The shelf is what keeps a log down to 15 seconds.">
             <MenuRow icon="dripper" label="My gear" value={`${data.gear} of ${GEAR_LIMIT}`} onPress={() => requestPush({ name: 'shelf', side: 'gear' })} />
-            <MenuRow icon="beanBag" label="My beans" value={`${data.bags} of ${OPEN_BAG_LIMIT}`} onPress={() => requestPush({ name: 'shelf', side: 'beans' })} />
+            <MenuRow
+              icon="beanBag"
+              label="My beans"
+              value={`${data.bags} of ${OPEN_BAG_LIMIT}`}
+              // 6a's "4 of 5 · 1 stale" (Design Round 26 C3); nothing stale, "4 of 5" alone.
+              valueNote={data.stale ? `${data.stale} stale` : undefined}
+              onPress={() => requestPush({ name: 'shelf', side: 'beans' })}
+            />
           </Section>
           <Section title="Taste DNA">
             <MenuRow icon="asterisk" label="How my DNA is built" onPress={() => requestPush({ name: 'dnaBuilt' })} />
+            <MenuRow icon="reset" destructive chevron={false} label="Reset my taste DNA" sub="Counts from today. Older cups stay in Records." onPress={requestResetDna} disabled={busy} />
           </Section>
           {/* Restore only on an empty app (Design Round 23, 25e): the row while it
               can work, then a sentence under the block instead, not a dead row. */}
@@ -271,10 +299,19 @@ export default function ProfileTabScreen() {
                 The sub line is Design's (Round 23, 25e). */}
             <MenuRow icon="download" label="Export everything" sub="Cups, bags, gear and photos" onPress={onExport(shareBackup)} disabled={busy} />
             {data.empty ? <MenuRow icon="restore" label="Restore from a backup" sub="From an Export everything file" onPress={requestRestore} disabled={busy} /> : null}
-            <MenuRow icon="reset" destructive chevron={false} label="Reset my taste DNA" sub="Counts from today. Older cups stay in Records." onPress={requestResetDna} disabled={busy} />
           </Section>
-          <Section title="Legal">
-            {PRIVACY_POLICY_URL ? <MenuRow icon="shield" label="Privacy policy" onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} /> : null}
+          {SUPPORT_EMAIL || APP_STORE_ID ? (
+            <Section title="Support & feedback">
+              {SUPPORT_EMAIL ? (
+                <MenuRow icon="mail" label="Send feedback" sub="Ideas, requests and problems, by email" external onPress={() => Linking.openURL(feedbackMailto(SUPPORT_EMAIL))} />
+              ) : null}
+              {APP_STORE_ID ? <MenuRow icon="review" label="Review on App Store" external onPress={() => Linking.openURL(appStoreReviewUrl(APP_STORE_ID))} /> : null}
+              {APP_STORE_ID ? <MenuRow icon="share" label="Share the app" onPress={() => Share.share({ url: appStoreUrl(APP_STORE_ID) })} /> : null}
+            </Section>
+          ) : null}
+          <Section title="App">
+            <StaleSwitchRow />
+            {PRIVACY_POLICY_URL ? <MenuRow icon="shield" label="Privacy policy" external onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} /> : null}
             <MenuRow icon="licences" label="Licences" onPress={() => requestPush({ name: 'licences' })} />
           </Section>
           <Text variant="bodySm" color="muted" style={styles.version}>

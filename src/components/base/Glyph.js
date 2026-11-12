@@ -67,6 +67,14 @@ const SHAPES = {
     <Path key="c" d="M5 12.5V20h14v-7.5" />,
     <Path key="d" d="M10 20v-5h4v5" />,
   ],
+  // 6c's rows after Design Round 26 (28a), verbatim: Send feedback, the
+  // out-arrow (a row that leaves the app), Buy me a coffee, Review on App
+  // Store, Share the app.
+  mail: [<Path key="a" d="M3 6h18v12H3z" />, <Path key="b" d="M3 7l9 6 9-6" />],
+  external: [<Path key="a" d="M14 4h6v6" />, <Path key="b" d="M20 4l-9 9" />, <Path key="c" d="M18 14v6H4V6h6" />],
+  mug: [<Path key="a" d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" />, <Path key="b" d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17" />, <Path key="c" d="M9 3v3M13 3v3" />],
+  review: [<Path key="p" d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z" />],
+  share: [<Path key="a" d="M12 3v12" />, <Path key="b" d="M7 8l5-5 5 5" />, <Path key="c" d="M5 13v8h14v-8" />],
   // Home's bell, the way into 7a (4a, 23b; Design Round 26 C1, 28c), verbatim. 7a's empty state in text.muted.
   bell: [<Path key="a" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />, <Path key="b" d="M13.7 21a2 2 0 0 1-3.4 0" />],
 };
