@@ -5,7 +5,7 @@ import Chevron from '../components/base/Chevron';
 import Glyph from '../components/base/Glyph';
 import IconButton from '../components/base/IconButton';
 import Text from '../components/base/Text';
-import { NOTICES, NOTICE_KIND_LABEL } from '../constants/notices';
+import { NOTICES, noticeBadge } from '../constants/notices';
 import { formatDay } from '../constants/dates';
 import { useDatabase } from '../data/DatabaseProvider';
 import { asSqlDb } from '../data/migrate';
@@ -25,10 +25,12 @@ import ScreenFrame from './ScreenFrame';
  *   groups   "This month" (the notice's date in this calendar month) and
  *            "Earlier", each a labelEyebrow heading over a 2px
  *            border.container frame on raised, as Profile's sections
- *   row      unread: the blue square (space[8], the bell's dot, C1), the
- *            badge, the date, the title, the summary. Read: no square, the
- *            title only, in text.secondary. Every row opens 7b and ends in
- *            the chevron (D-28)
+ *   row      the badge, the date, the title, the summary. Unread: the blue
+ *            square (space[8], the bell's dot, C1) and the text at full
+ *            strength. Read: no square, the title and summary in
+ *            text.muted. The badge never changes: a greyed badge read as a
+ *            different kind (Uryu, 2026-11-12). Every row opens 7b and ends
+ *            in the chevron (D-28)
  *   empty    the bell in text.muted, "Nothing yet" (displaySm), "News about
  *            Extract Press shows up here." No action (28c)
  *
@@ -38,7 +40,6 @@ import ScreenFrame from './ScreenFrame';
  *   - No tinted background on unread rows (7a's #FFF8F1 has no token; 28c
  *     doesn't say).
  *   - No dividers between rows (Design Round 9).
- *   - Badges: 'selected' (ink) while unread, 'neutral' once read.
  *   - The empty bell is icon.lg (22); 28c draws 28, which has no token.
  */
 const dayOf = (date) => {
@@ -120,24 +121,22 @@ function NoticeRow({ notice: n, onPress }) {
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={[unread ? 'Unread' : null, NOTICE_KIND_LABEL[n.kind], date, n.title].filter(Boolean).join(', ')}
+      accessibilityLabel={[unread ? 'Unread' : 'Read', noticeBadge(n), date, n.title].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
       <View style={[styles.dot, unread && styles.dotUnread]} />
       <View style={styles.text}>
         <View style={styles.meta}>
-          <Badge label={NOTICE_KIND_LABEL[n.kind]} tone={unread ? 'selected' : 'neutral'} />
+          <Badge label={noticeBadge(n)} tone="selected" />
           <Text variant="meta" color="muted">
             {date}
           </Text>
         </View>
-        <Text variant="label" color={unread ? 'primary' : 'secondary'}>
+        <Text variant="label" color={unread ? 'primary' : 'muted'}>
           {n.title}
         </Text>
-        {unread ? (
-          <Text variant="bodySm" color="secondary">
-            {n.summary}
-          </Text>
-        ) : null}
+        <Text variant="bodySm" color={unread ? 'secondary' : 'muted'}>
+          {n.summary}
+        </Text>
       </View>
       <Chevron />
     </Pressable>

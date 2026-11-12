@@ -11,6 +11,8 @@ export type NoticeKind = 'notice' | 'update';
 export type BundledNotice = {
   id: string;
   kind: NoticeKind;
+  /** The badge's word instead of the kind's (the welcome's "Welcome"). */
+  badge?: string;
   version: string;
   date: string;
   title: string;

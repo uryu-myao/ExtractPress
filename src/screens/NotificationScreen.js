@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Badge from '../components/base/Badge';
 import Button from '../components/base/Button';
 import IconButton from '../components/base/IconButton';
-import InlineAction from '../components/base/InlineAction';
 import Text from '../components/base/Text';
-import { NOTICES, NOTICE_KIND_LABEL } from '../constants/notices';
+import { NOTICES, noticeBadge } from '../constants/notices';
 import { formatDayWithYear } from '../constants/dates';
 import { useDatabase } from '../data/DatabaseProvider';
 import { asSqlDb } from '../data/migrate';
@@ -16,8 +15,7 @@ import ScreenFrame from './ScreenFrame';
 
 /**
  * 7b Notification (Design Round 26 B4, 28d), pushed from 7a (ShellStack
- * 'notification'). Opening it marks the notice read. Next notification walks
- * 7a's order without going back; each one opened is marked read.
+ * 'notification'). Opening it marks the notice read. Back returns to 7a.
  *
  *   header   compact: Back, "Notifications", meta "1 of 5" (its place in 7a)
  *   head     the badge and the date line, then the title (displaySm). An
@@ -27,9 +25,10 @@ import ScreenFrame from './ScreenFrame';
  *            (divider.hairline), no icons: a bold lead-in, then its sentences
  *            (Design Round 27 D2, 29e)
  *   footer   the notice's action, when it has one, as the screen's primary
- *            (blue, 56): it is what the notice is for. Then "Next
- *            notification" (not on the last) and "Back to list". Without an
- *            action, only those two; nothing stands in for it
+ *            (blue, 56): it is what the notice is for. Without one, no
+ *            footer. 28d's "Next notification" / "Back to list" are not
+ *            built (Uryu, 2026-11-12): with a handful of notices they add
+ *            nothing Back doesn't, and crowded the button
  *
  * Kept from before 28d, PROVISIONAL:
  *   - The title is displaySm (30); 7b draws 36, which has no text style.
@@ -64,14 +63,12 @@ const GO = {
 
 export default function NotificationScreen({ id, order, onBack }) {
   const db = useDatabase();
-  const [current, setCurrent] = useState(id);
-  const notice = NOTICES.find((n) => n.id === current);
-  const at = order.indexOf(current);
-  const next = at >= 0 && at < order.length - 1 ? order[at + 1] : null;
+  const notice = NOTICES.find((n) => n.id === id);
+  const at = order.indexOf(id);
 
   useEffect(() => {
-    markNoticeRead(asSqlDb(db), current);
-  }, [db, current]);
+    markNoticeRead(asSqlDb(db), id);
+  }, [db, id]);
 
   if (!notice) return null;
   const go = notice.action ? GO[notice.action.to] : null;
@@ -89,19 +86,11 @@ export default function NotificationScreen({ id, order, onBack }) {
           </Text>
         ) : undefined
       }
-      footer={
-        <View style={styles.footer}>
-          {go ? <Button label={notice.action.label} onPress={go} /> : null}
-          <View style={styles.links}>
-            {next ? <InlineAction label="Next notification" onPress={() => setCurrent(next)} /> : <View />}
-            <InlineAction label="Back to list" onPress={onBack} />
-          </View>
-        </View>
-      }>
+      footer={go ? <Button label={notice.action.label} onPress={go} /> : undefined}>
       <View style={styles.body}>
         <View style={styles.head}>
           <View style={styles.meta}>
-            <Badge label={NOTICE_KIND_LABEL[notice.kind]} tone="selected" />
+            <Badge label={noticeBadge(notice)} tone="selected" />
             <Text variant="meta" color="muted">
               {[formatDayWithYear(dayOf(notice.date)), notice.kind === 'update' ? `v${notice.version}` : null].filter(Boolean).join(' · ')}
             </Text>
@@ -165,13 +154,5 @@ const styles = StyleSheet.create({
     borderTopWidth: shape.borderWidth.divider,
     borderTopColor: color.divider.hairline,
     paddingTop: space[14],
-  },
-  footer: {
-    gap: spacing.gap.row,
-  },
-  links: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
 });

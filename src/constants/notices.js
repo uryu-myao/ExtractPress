@@ -26,6 +26,8 @@
  * Each notice:
  *   id        stable, never reused (a delivered id is never delivered again)
  *   kind      'notice' | 'update' (above). 7a / 7b's badge says which
+ *   badge     optional, the badge's word instead of the kind's: the welcome
+ *             wears "Welcome" (Uryu, 2026-11-12). Delivery still follows kind
  *   version   the app version it ships with ("1.1.0")
  *   date      'YYYY-MM-DD', shown on 7a / 7b (an update's line adds its version)
  *   title     7a's row and 7b's heading
@@ -45,8 +47,11 @@
  */
 export const NOTICE_TARGETS = ['record', 'records', 'beans', 'tasteDna', 'dnaBuilt', 'myData', 'support'];
 
-/** 7a / 7b's badge: Update and Notice only (Round 26 B3; no Tip in V1). */
+/** 7a / 7b's badge: Update and Notice (Round 26 B3; no Tip in V1); a notice's own `badge` wins (the welcome's "Welcome"). */
 export const NOTICE_KIND_LABEL = { notice: 'Notice', update: 'Update' };
+
+/** The badge a notice wears on 7a / 7b. */
+export const noticeBadge = (n) => n.badge ?? NOTICE_KIND_LABEL[n.kind];
 
 export const NOTICES = [
   {
@@ -72,6 +77,7 @@ export const NOTICES = [
      */
     id: 'welcome',
     kind: 'notice',
+    badge: 'Welcome',
     version: '1.0.0',
     date: '2026-12-01',
     title: 'Welcome to Extract Press',
