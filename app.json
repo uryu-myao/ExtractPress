@@ -62,6 +62,12 @@
         }
       ],
       [
+        "expo-notifications",
+        {
+          "enableRemoteNotifications": false
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "ios": {

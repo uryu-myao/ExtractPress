@@ -20,6 +20,9 @@ const fullDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'shor
 /** "8 Nov 2026": the day a backup was made (Restore's confirm, Design Round 23, 25f). */
 export const formatFullDate = (date) => fullDate.format(date);
 
+/** "Sep 10, 2026": always with the year (7b's date line, Design Round 26, 28d). */
+export const formatDayWithYear = (ms) => withYear.format(new Date(ms));
+
 /** "Apr 1" (3c), with the year only when it is not this year. */
 export const formatDay = (ms) => {
   const d = new Date(ms);

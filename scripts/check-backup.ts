@@ -121,7 +121,19 @@ const cup = fromV5.prepare('SELECT place_name, drink_type FROM cups WHERE id = 1
 if (cup?.place_name !== 'Fuglen') fail(`v5 file: place_name ${cup?.place_name}, expected Fuglen (migration 6's copy)`);
 if (cup?.drink_type !== 'Flat white') fail(`v5 file: drink_type "${cup?.drink_type}", expected "Flat white" (migration 6's backfill)`);
 
-// 5. Refusals.
+// 5. This phone's tables (LOCAL_TABLES) never go in a file, and a restore leaves them as they were.
+const fresh = await appDb();
+fresh.prepare("INSERT INTO notices (id, delivered_at, read_at) VALUES ('welcome', 5, 6)").run();
+fresh.prepare("UPDATE device SET notices_version = '1.0.0', notify_stale = 1 WHERE id = 1").run();
+const localBody = await bodyOf(fresh);
+if ('notices' in localBody.tables || 'device' in localBody.tables) fail('a backup carries notices or device (this phone\'s own)');
+await restore(fresh, zip);
+const kept = fresh.prepare('SELECT read_at FROM notices WHERE id = ?').get('welcome') as { read_at: number } | undefined;
+if (kept?.read_at !== 6) fail('a restore wiped or changed the notices delivered on this phone');
+const device = fresh.prepare('SELECT notices_version, notify_stale FROM device WHERE id = 1').get() as { notices_version: string; notify_stale: number } | undefined;
+if (device?.notices_version !== '1.0.0' || device?.notify_stale !== 1) fail("a restore changed this phone's device row");
+
+// 6. Refusals.
 const body = await bodyOf(source);
 await refuses('another app', 'not_a_backup', async () => parseBackup(json({ ...body, app: 'Other' })));
 await refuses('not JSON', 'not_a_backup', async () => parseBackup(new TextEncoder().encode('hello')));
@@ -137,4 +149,4 @@ if (problems.length) {
   console.error(`check:backup FAILED (${problems.length})\n  - ${problems.slice(0, 30).join('\n  - ')}`);
   process.exit(1);
 }
-console.log(`check:backup OK — ${cups} cups and a photo round-trip through the zip; format 1 and app 'MoreCoffee' read; a v5 file migrates up; only into an empty app; 7 refusals.`);
+console.log(`check:backup OK — ${cups} cups and a photo round-trip through the zip; format 1 and app 'MoreCoffee' read; a v5 file migrates up; only into an empty app; this phone's notices and device row untouched; 7 refusals.`);

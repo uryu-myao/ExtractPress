@@ -22,10 +22,16 @@ import Text from './Text';
  *          delete hint.
  *   chevron false: pressable, but no chevron, for a row that opens a
  *          confirm sheet, not a screen (6b's Reset, Design Round 25, B1).
+ *   external  the out-arrow instead of the chevron: the row leaves the app
+ *          (Mail, the App Store, the privacy page; Design Round 26 B5, 28a)
+ *   valueNote  after the value, in text.muted: 6a's "· 1 stale" (Round 26 C3)
+ *   trailing  a control in the chevron's place (6c's switch); the row itself
+ *          then doesn't press
  *
- * Props: icon (Glyph name), label, sub, value, onPress, disabled, destructive, chevron
+ * Props: icon (Glyph name), label, sub, value, valueNote, onPress, disabled,
+ * destructive, chevron, external, trailing
  */
-export default function MenuRow({ icon: glyph, label, sub, value, onPress, disabled = false, destructive = false, chevron = true }) {
+export default function MenuRow({ icon: glyph, label, sub, value, valueNote, onPress, disabled = false, destructive = false, chevron = true, external = false, trailing }) {
   const pressable = Boolean(onPress);
   return (
     <Pressable
@@ -33,7 +39,7 @@ export default function MenuRow({ icon: glyph, label, sub, value, onPress, disab
       disabled={!pressable || disabled}
       accessibilityRole={pressable ? 'button' : 'text'}
       accessibilityState={pressable ? { disabled } : undefined}
-      accessibilityLabel={[label, sub, value].filter(Boolean).join(', ')}
+      accessibilityLabel={[label, sub, value, valueNote].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       {glyph ? <Glyph name={glyph} token={icon.md} color={destructive ? color.icon.destructive : color.text.primary} /> : null}
       <View style={styles.text}>
@@ -49,9 +55,10 @@ export default function MenuRow({ icon: glyph, label, sub, value, onPress, disab
       {value ? (
         <Text variant="meta" color="accent">
           {value}
+          {valueNote ? <Text variant="meta" color="muted">{` · ${valueNote}`}</Text> : null}
         </Text>
       ) : null}
-      {pressable && chevron ? <Chevron /> : null}
+      {trailing ?? (pressable && external ? <Glyph name="external" token={icon.sm} color={color.text.secondary} /> : pressable && chevron ? <Chevron /> : null)}
     </Pressable>
   );
 }

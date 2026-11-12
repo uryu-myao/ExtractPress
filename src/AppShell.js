@@ -10,6 +10,7 @@ import Notice from './components/Notice';
 import { ResetDnaHost } from './components/ResetDnaSheet';
 import { RestoreHost } from './components/RestoreSheet';
 import ShellStack from './components/ShellStack';
+import { NotificationsHost } from './data/notifications';
 import { TABS } from './constants/navigation';
 import { SCREEN_COMPONENTS } from './screens';
 import { ScreenBackdropContext } from './screens/ScreenFrame';
@@ -123,6 +124,8 @@ export default function AppShell() {
       <FooterNav activeTab={activeTab} position={position} onTabPress={selectTab} onAddPress={() => openRecord()} />
       {/* 3d / 3c / 3a / 11a, pushed over the tabs and the bar (their mocks have none). */}
       <ShellStack />
+      {/* Bag reminders: kept in step with the shelf; a tapped one opens its bag. After ShellStack, so a launch tap finds it listening. */}
+      <NotificationsHost />
       {/* 13b: "‹cup› deleted." above the bar, over Records. */}
       <Notice />
       {/* 15b: Home's Taste DNA stamp opens its sheet over the tabs and the bar. */}

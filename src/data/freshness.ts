@@ -1,4 +1,4 @@
-import { daysSince } from '../constants/dates';
+import { daysBetween, daysSince } from '../constants/dates.js';
 
 /**
  * Bean freshness (gaps.md 8, decided 2026-10-14). See data-model.md
@@ -20,7 +20,13 @@ import { daysSince } from '../constants/dates';
  *   pastPeak   day 22 +      the bar stays full past `span`
  *
  * "Stale" (8i, 6a) is a different signal: 21+ days since OPENING (oxidation
- * after opening). Not built at this stage.
+ * after opening), whatever dates the bag has: staleOf() below.
+ *
+ * A best-before date (migration 9) is a third clock and a different kind of
+ * fact: the maker's quality guarantee, not a flavour peak. It gives days left
+ * and whether the date has passed (bestBeforeOf), never a state, a day N or a
+ * bar (data-model.md "Best-before"). With a roast date too, the roast clock
+ * drives the display.
  */
 export const FRESHNESS_TUNING = {
   /** first day of the drinking window */
@@ -50,3 +56,37 @@ export const FRESHNESS_WORDS: Record<FreshnessState, string> = {
   drinkNow: 'drink now',
   pastPeak: 'past peak',
 };
+
+/** Stale from this many days after opening (8i "around day 21 after opening"; oxidation, not the roast). */
+export const STALE_AFTER_DAYS = 21;
+
+export type Stale = { daysOpen: number; stale: boolean };
+
+/**
+ * Days since the bag was opened, and whether it is stale. Looks at the
+ * opening date only (Uryu, 2026-11-11): a roast date, a best-before date,
+ * both or neither make no difference. null for a sealed bag (never stale).
+ * The caller leaves finished bags out.
+ */
+export function staleOf(openedAt: number | null, now = Date.now()): Stale | null {
+  if (openedAt == null) return null;
+  const daysOpen = Math.max(0, daysBetween(openedAt, now));
+  return { daysOpen, stale: daysOpen >= STALE_AFTER_DAYS };
+}
+
+/** The best-before reminder comes this many days before the date (8i; Uryu, 2026-11-11). */
+export const BEST_BEFORE_WARN_DAYS = 7;
+
+export type BestBefore = { daysLeft: number; passed: boolean };
+
+/**
+ * Whole calendar days from today to the best-before date: 0 on the day
+ * itself (still within it), negative after. passed: the day is behind today.
+ * A guarantee, not a peak: nothing here says how the coffee tastes.
+ * null without a date.
+ */
+export function bestBeforeOf(bestBefore: number | null, now = Date.now()): BestBefore | null {
+  if (bestBefore == null) return null;
+  const daysLeft = daysBetween(now, bestBefore);
+  return { daysLeft, passed: daysLeft < 0 };
+}

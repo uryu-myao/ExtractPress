@@ -24,10 +24,13 @@ import {
 } from '../data/repository';
 import { onTabLeave, requestDnaInfo, requestOpenCup, requestPush, requestShell } from '../navigation';
 import { layout, space, spacing } from '../theme/tokens';
+import BellButton from '../components/BellButton';
 import ScreenFrame from './ScreenFrame';
 
 /**
  * Home (1b; 4a / 4b are Home with My gear / My beans below), top to bottom:
+ *   - the bell (23b; Design Round 26 C1): the way into 7a, the blue dot
+ *     while a notice is unread (BellButton)
  *   - title: a greeting by part of day — 1b's "Good morning"; "Good
  *     afternoon" / "Good evening" ours, confirmed (Design Round 7); eyebrow
  *     the app's name, "Extract Press" (1b's mock says "MoreCoffee"; renamed
@@ -130,7 +133,7 @@ export default function HomeTabScreen() {
   const greeting = greetingAt(new Date(data?.now ?? Date.now()));
   return (
     <View style={styles.screen}>
-      <ScreenFrame scroll title={greeting} eyebrow="Extract Press">
+      <ScreenFrame scroll title={greeting} eyebrow="Extract Press" trailing={<BellButton />}>
         {data ? (
           <View style={styles.body}>
             <HomeStats total={data.total} monthCupTimes={data.month} bags={data.bags} cafes={data.cafes} now={data.now} />

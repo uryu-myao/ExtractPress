@@ -54,21 +54,30 @@ export class BackupError extends Error {
   }
 }
 
-/** Never in a backup's tables: the bookkeeping is the live database's own. */
-const SKIP = new Set(['schema_migrations']);
+/**
+ * This phone's own tables (migration 8): which notices were delivered and
+ * read here, and 8i's switch, whose iOS permission is per phone. Never
+ * written to a file, never read from one, and a restore leaves the live
+ * ones as they are. Not optional: copyInto empties every table the rebuild
+ * returns, so a table missing here would be wiped by a restore.
+ */
+export const LOCAL_TABLES = new Set(['notices', 'device']);
+/** Never in a backup's tables: the bookkeeping is the live database's own, and so are LOCAL_TABLES. */
+const SKIP = new Set(['schema_migrations', ...LOCAL_TABLES]);
 /** "Empty" for a restore (planner, 2026-11-08): what the user made. Settings and search history don't count. */
 const OWN_TABLES = ['cups', 'bags', 'gear', 'places'];
 
 /** A photo id as photos.ts makes them (base36). Anything else in a zip is ignored, never used as a path. */
 export const isPhotoId = (id: unknown): id is string => typeof id === 'string' && /^[a-z0-9]{1,40}$/.test(id);
 
-/** Every table, as stored, for the file. */
+/** Every table, as stored, for the file (LOCAL_TABLES left out). */
 export async function readTables(db: SqlDb): Promise<{ schemaVersion: number; tables: Tables }> {
   const names = await db.all<{ name: string }>(
     "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
   );
   const tables: Tables = {};
   for (const { name } of names) {
+    if (LOCAL_TABLES.has(name)) continue;
     // Names come from sqlite_master, not from input; quoted as identifiers.
     tables[name] = await db.all<Row>(`SELECT * FROM ${quote(name)}`);
   }

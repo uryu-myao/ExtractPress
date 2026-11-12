@@ -23,7 +23,8 @@ import { originalBytes } from './photos';
  * The JSON inside the zip (2026-10-20):
  *
  * Every table as stored, rows untouched (ids, epoch-ms times, JSON columns as
- * their text), found from sqlite_master so a new table is never left out.
+ * their text), found from sqlite_master so a new table is never left out —
+ * except this phone's own (notices, device: backupFormat.ts LOCAL_TABLES).
  * schema_migrations rides along: it says which schema the rows are in.
  *
  * Read through SQL, never by copying the database file: the rows mostly live

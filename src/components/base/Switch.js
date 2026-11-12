@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { color, shape, size, space, state } from '../../theme/tokens';
 
 /**
@@ -14,21 +15,30 @@ import { color, shape, size, space, state } from '../../theme/tokens';
  * Moves at once (no animation drawn). The 30pt track sits in a 44pt touch
  * area (size.tapTarget) through hitSlop.
  *
- * Props: value, onValueChange, accessibilityLabel, disabled
+ *   disabled  §9's disabled look (ground fill, border.muted frames, the knob
+ *        at the start) and no flip. With warnWhenDisabled a press gives the
+ *        warning haptic instead, for a switch whose reason is on screen (6c's
+ *        Bag going stale when iOS has notifications off, Design Round 26 B2;
+ *        §1 Pressed, the disabled rule)
+ *
+ * Props: value, onValueChange, accessibilityLabel, disabled, warnWhenDisabled
  */
 const SLOP = (size.tapTarget - size.switch.h) / 2;
 
-export default function Switch({ value, onValueChange, accessibilityLabel, disabled = false }) {
+export default function Switch({ value, onValueChange, accessibilityLabel, disabled = false, warnWhenDisabled = false }) {
+  const warn = () => {
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  };
   return (
     <Pressable
-      onPress={() => onValueChange(!value)}
-      disabled={disabled}
+      onPress={() => (disabled ? warn() : onValueChange(!value))}
+      disabled={disabled && !warnWhenDisabled}
       hitSlop={{ top: SLOP, bottom: SLOP, left: space[8], right: space[8] }}
       accessibilityRole="switch"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: value, disabled }}
-      style={[styles.track, value ? styles.trackOn : styles.trackOff]}>
-      {({ pressed }) => <View style={[styles.knob, value ? styles.knobOn : styles.knobOff, pressed && styles.knobPressed]} />}
+      style={[styles.track, disabled ? styles.trackDisabled : value ? styles.trackOn : styles.trackOff]}>
+      {({ pressed }) => <View style={[styles.knob, value && !disabled ? styles.knobOn : styles.knobOff, pressed && !disabled && styles.knobPressed]} />}
     </Pressable>
   );
 }
@@ -50,6 +60,11 @@ const styles = StyleSheet.create({
   trackOff: {
     borderColor: color.border.muted,
     backgroundColor: color.surface.sunken,
+    justifyContent: 'flex-start',
+  },
+  trackDisabled: {
+    borderColor: color.border.muted,
+    backgroundColor: color.surface.ground,
     justifyContent: 'flex-start',
   },
   knob: {

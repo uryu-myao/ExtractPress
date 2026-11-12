@@ -88,8 +88,11 @@ const belowBaseline = (line) => line.height - line.ascender;
  *             scrolls (title shrinks, foot rises; §9 Header collapse)
  *   footer    optional node in the footer panel at the end of the page; it sits at
  *             the bottom when the content is short and follows it when it is long
- *   trailing  compact only: a control at the row's right end (2c's edit
- *             pencil). Moves with the row like `leading`; never fades
+ *   trailing  a control at the header's right end. Compact: at the row's
+ *             end (2c's edit pencil), moving with the row like `leading`.
+ *             Standard: right-aligned at the title's baseline (Home's bell,
+ *             23b; Design Round 26 C1), riding the title's baseline on
+ *             collapse so it stays beside the shrunk title. Never fades
  *   compact   every page that isn't a tab (Log a cup, Tasting note, 3c, 3a, 2c,
  *             8f, 8g…; revised 2026-10-07): the leading control and the title
  *             on one row at the left, centred on the title's cap band; meta as
@@ -399,6 +402,11 @@ export default function ScreenFrame({
           {titleText}
         </Animated.View>
       </View>
+      {trailing ? (
+        // A control: never fades. Its foot at the title's baseline (the
+        // header's 8 + 12.4 descent ≈ space[12] above the foot), moving with it.
+        <Animated.View style={[styles.trailingStandard, anim && { transform: [{ translateY: anim.title }] }]}>{trailing}</Animated.View>
+      ) : null}
       {stat ? (
         <View style={statPlaced} onLayout={onPart('stat')}>
           <Animated.View onLayout={onPart('number')} style={anim && { transform: [{ translateY: anim.stat }] }}>
@@ -565,6 +573,9 @@ const styles = StyleSheet.create({
   },
   trailing: {
     marginLeft: 'auto',
+  },
+  trailingStandard: {
+    paddingBottom: space[12],
   },
   body: {
     flexGrow: 1,

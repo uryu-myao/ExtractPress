@@ -1,9 +1,12 @@
+import Constants from 'expo-constants';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { AppState, Platform, StyleSheet, View } from 'react-native';
 import Text from '../components/base/Text';
 import ScreenFrame from '../screens/ScreenFrame';
 import { spacing } from '../theme/tokens';
-import { inTransaction, openDatabase } from './migrate';
+import { NOTICES } from '../constants/notices';
+import { asSqlDb, inTransaction, openDatabase } from './migrate';
+import { deliverNotices } from './notices';
 import { sweepPhotos } from './photos';
 
 const DatabaseContext = createContext(null);
@@ -49,6 +52,14 @@ export default function DatabaseProvider({ children }) {
               for (const s of seed) await tx.runAsync(s.sql, s.params);
             });
           }
+        }
+        // This launch's notices (7a / 7b: the welcome on a first launch, a new
+        // version's on an update), before anything reads them. A failure here
+        // only costs the notices, never the app.
+        try {
+          await deliverNotices(asSqlDb(db), Constants.expoConfig?.version ?? '0.0.0', NOTICES);
+        } catch (error) {
+          console.error('[notices] delivery failed', error);
         }
         if (!cancelled) setState({ db, error: null });
         // Photo files no row points at (a deleted bag's), and pending leftovers.

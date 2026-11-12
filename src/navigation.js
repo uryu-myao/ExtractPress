@@ -15,7 +15,8 @@
  *                        { name: 'cup', id } | { name: 'search', filter } from a bag / gear page,
  *                        { name: 'dna' } (8f) from Profile and 2c,
  *                        { name: 'dnaBuilt' } (8g) from 8f, Profile and 15b,
- *                        { name: 'licences' } (6c) from Profile
+ *                        { name: 'licences' } (6c) from Profile,
+ *                        { name: 'notifications' } (7a) from Home's bell
  *   requestCloseCup()    Records closes its open cup (after a delete in 11a)
  *   requestNotice(text)  AppShell shows 13b's one-line notice above the bar
  *   requestDnaInfo(dna)  AppShell shows 15b's Taste DNA info sheet over the
@@ -26,6 +27,8 @@
  *                        picker, then its sheets (6b's row, Design Round 23)
  *   requestResetDna()    AppShell asks Reset my taste DNA's confirmation
  *                        over the tabs and the bar (6b's row)
+ *   requestCloseStack()  ShellStack drops every pushed screen, so a tab shows
+ *                        (7b's action to Records or Profile, Round 26 B4)
  */
 const cupListeners = new Set();
 const shellListeners = new Set();
@@ -154,4 +157,15 @@ export function requestResetDna() {
 export function onResetDnaRequest(listener) {
   resetDnaListeners.add(listener);
   return () => resetDnaListeners.delete(listener);
+}
+
+const stackCloseListeners = new Set();
+
+export function requestCloseStack() {
+  stackCloseListeners.forEach((l) => l());
+}
+
+export function onCloseStackRequest(listener) {
+  stackCloseListeners.add(listener);
+  return () => stackCloseListeners.delete(listener);
 }

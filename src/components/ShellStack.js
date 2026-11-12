@@ -4,6 +4,8 @@ import AddGearScreen from '../screens/AddGearScreen';
 import CupRecordScreen from '../screens/CupRecordScreen';
 import DnaBuiltScreen from '../screens/DnaBuiltScreen';
 import LicencesScreen from '../screens/LicencesScreen';
+import NotificationScreen from '../screens/NotificationScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import EditBagScreen from '../screens/EditBagScreen';
 import EditCupScreen from '../screens/EditCupScreen';
 import EditGearScreen from '../screens/EditGearScreen';
@@ -12,7 +14,7 @@ import GearBeansScreen from '../screens/GearBeansScreen';
 import TasteDnaScreen from '../screens/TasteDnaScreen';
 import { ScreenBackdropContext } from '../screens/ScreenFrame';
 import { cupTitle } from '../constants/cups';
-import { onPushRequest, requestCloseCup, requestNotice } from '../navigation';
+import { onCloseStackRequest, onPushRequest, requestCloseCup, requestNotice } from '../navigation';
 import PushedScreen from './PushedScreen';
 import RecordsSearch from './RecordsSearch';
 
@@ -52,6 +54,8 @@ import RecordsSearch from './RecordsSearch';
  *   dnaBuilt  8g, from 8f's footer, 6b's row on Profile and 15b's way on
  *             (Home's and 8f's; not 5c's)
  *   licences  6c's Licences, from Profile's Legal block
+ *   notifications  7a, from Home's bell (BellButton; 23b, Round 26 C1)
+ *   notification   7b ({ id, order }: the notice and 7a's order), from 7a
  */
 /** What a pushed screen shows: one bag's page and another's are two screens. */
 const subject = (e) => e.bag?.id ?? e.gear?.id ?? e.cup?.id ?? e.id ?? (e.filter ? `${e.filter.type}:${e.filter.value}` : null);
@@ -65,6 +69,9 @@ export default function ShellStack() {
   const leaving = (key) => setStack((s) => s.map((e) => (e.key === key ? { ...e, leaving: true } : e)));
   const popKey = (key) => setStack((s) => s.filter((e) => e.key !== key));
   useEffect(() => onPushRequest(push), []);
+  // 7b's action to a tab (Round 26 B4): every pushed screen goes at once.
+  // TODO: no slide-out; the tab simply shows. Polish if it reads abrupt on device.
+  useEffect(() => onCloseStackRequest(() => setStack([])), []);
 
   const render = (entry, goBack, guardLeave) => {
     switch (entry.name) {
@@ -118,6 +125,10 @@ export default function ShellStack() {
         return <DnaBuiltScreen onBack={goBack} />;
       case 'licences':
         return <LicencesScreen onBack={goBack} />;
+      case 'notifications':
+        return <NotificationsScreen onBack={goBack} onOpen={(id, order) => push({ name: 'notification', id, order })} />;
+      case 'notification':
+        return <NotificationScreen id={entry.id} order={entry.order} onBack={goBack} />;
       case 'addBag':
         return (
           <AddBagScreen

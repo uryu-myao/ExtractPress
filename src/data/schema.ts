@@ -168,6 +168,12 @@ export const schema = {
      * the app's container moves on every reinstall and update.
      */
     photo_uri: { type: 'TEXT', nullable: true },
+    /**
+     * The best-before date printed on the bag, a local midnight (migration 9).
+     * A quality guarantee, not a flavour peak: it gives days left, never a
+     * state or a bar (data-model.md "Best-before"). Not copied onto cups.
+     */
+    best_before: { type: 'INTEGER', nullable: true },
   },
 
   /** Registered gear (3a 3b 3e, 8c). One default per category (a partial unique index). */
@@ -245,6 +251,31 @@ export const schema = {
     key: { type: 'TEXT', nullable: false, pk: true },
     kind: { type: 'TEXT', nullable: false, values: ['bag', 'cafe', 'brewer', 'tag'] },
     dismissed_at: { type: 'INTEGER', nullable: false },
+  },
+
+  /**
+   * Notices delivered on this phone (migration 8; 7a / 7b). The text ships in
+   * the app (src/constants/notices.js); a row is the delivery and the read
+   * state. This phone's own: never in a backup (backupFormat.ts LOCAL_TABLES).
+   */
+  notices: {
+    /** The bundled notice's id. */
+    id: { type: 'TEXT', nullable: false, pk: true },
+    delivered_at: { type: 'INTEGER', nullable: false },
+    /** NULL: unread. */
+    read_at: { type: 'INTEGER', nullable: true },
+  },
+
+  /**
+   * This phone's state, one row (id = 1; migration 8). Never in a backup:
+   * notification permission is per phone.
+   */
+  device: {
+    id: { type: 'INTEGER', nullable: false, pk: true },
+    /** The app version whose notices were last delivered. NULL: a new install (notices, no updates; constants/notices.js). */
+    notices_version: { type: 'TEXT', nullable: true },
+    /** 0 / 1: 6c's "Bag going stale" (stale and best-before reminders). Off until the user turns it on. */
+    notify_stale: { type: 'INTEGER', nullable: false },
   },
 } as const satisfies Record<string, Record<string, ColumnDef>>;
 

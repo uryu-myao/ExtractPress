@@ -396,6 +396,47 @@ export const migrations: readonly Migration[] = [
       )`,
     ],
   },
+  {
+    /*
+     * Notices and this phone's notification state (7a / 7b, 8i; Uryu,
+     * 2026-11-11). The notices themselves ship in the app
+     * (src/constants/notices.js); a row is only that one was delivered here,
+     * and when it was read:
+     *   notices  id (the bundled notice's), delivered_at, read_at (NULL: unread)
+     *   device   one row: notices_version, the app version whose notices were
+     *            last delivered (NULL: a new install, which gets notices but
+     *            no updates), and notify_stale, the "Bag going stale" switch
+     *            (off until the user turns it on, when iOS asks for permission)
+     * Both are this phone's, so neither goes in a backup (backupFormat.ts
+     * LOCAL_TABLES): a restore never touches them, and permission is per phone.
+     */
+    version: 8,
+    name: 'notices and device state',
+    statements: [
+      `CREATE TABLE notices (
+        id TEXT PRIMARY KEY,
+        delivered_at INTEGER NOT NULL,
+        read_at INTEGER
+      )`,
+      `CREATE TABLE device (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        notices_version TEXT,
+        notify_stale INTEGER NOT NULL DEFAULT 0 CHECK (notify_stale IN (0, 1))
+      )`,
+      `INSERT INTO device (id) VALUES (1)`,
+    ],
+  },
+  {
+    /*
+     * A bag's best-before date (data-model.md "Best-before"; Uryu, 2026-11-11):
+     * supermarket beans print it instead of a roast date. A local midnight,
+     * like roasted_at. Both may be set. Not copied onto cups. Existing bags
+     * get NULL, which shows exactly what they showed before.
+     */
+    version: 9,
+    name: 'best-before date on bags',
+    statements: [`ALTER TABLE bags ADD COLUMN best_before INTEGER`],
+  },
 ];
 
 /** The bookkeeping table. Created before any migration runs. */

@@ -3,7 +3,8 @@
 # Taste DNA's arithmetic loses a property it depends on (design/taste-dna.md),
 # when "Export my cups" stops writing a CSV a spreadsheet reads back,
 # when a backup no longer restores to the rows it was made from, or when
-# Try next's rules stop holding.
+# Try next's rules stop holding, or the notices and bag reminders stop
+# following their rules.
 # Installed by `npm install` (package.json "prepare" sets core.hooksPath).
 # Runs in well under a second; bypass only deliberately with --no-verify.
 npm run -s check:schema || {
@@ -24,5 +25,9 @@ npm run -s check:backup || {
 }
 npm run -s check:trynext || {
   echo "pre-commit: check:trynext failed — Try next's rules no longer hold (src/data/tryNext.ts)." >&2
+  exit 1
+}
+npm run -s check:notices || {
+  echo "pre-commit: check:notices failed — notices or bag reminders no longer follow their rules (src/data/notices.ts, bagReminders.ts)." >&2
   exit 1
 }
