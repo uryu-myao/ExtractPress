@@ -163,7 +163,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[12],
-    paddingVertical: spacing.inset.listRow.v,
+    // 16 over the badge (Uryu, 2026-11-12: listRow's 12 read tight above
+    // it; 28c draws 15). The bottom keeps 12: the summary's line height
+    // already adds room under the text.
+    paddingTop: space[16],
+    paddingBottom: spacing.inset.listRow.v,
     paddingHorizontal: spacing.inset.listRow.h,
   },
   rowPressed: {
