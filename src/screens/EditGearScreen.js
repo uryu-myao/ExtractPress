@@ -17,7 +17,7 @@ import { GEAR_CATEGORY, onCups } from '../constants/gear';
 import { gearFilter } from '../constants/search';
 import { useDatabase } from '../data/DatabaseProvider';
 import { removeGear, updateGear } from '../data/repository';
-import { requestPush, requestShell } from '../navigation';
+import { requestPush, requestShell, requestNotice } from '../navigation';
 import { color, dashed, icon, layout, shape, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -93,6 +93,8 @@ export default function EditGearScreen({ gear, onBack, onRemoved, guardLeave }) 
       Keyboard.dismiss();
       setStored((g) => ({ ...g, name, maker, is_default: form.isDefault ? 1 : 0 }));
       setForm((f) => ({ ...f, name, maker: maker ?? '' }));
+      // The Save bar slides away; this says it worked (Uryu, 2026-11-12: Save gave no feedback). 13b's notice, verb ours.
+      requestNotice({ name, verb: 'saved' });
     } catch (error) {
       console.error('[3e] could not save', error);
       Alert.alert("Couldn't save your changes", String(error?.message ?? error));

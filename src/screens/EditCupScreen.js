@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AxisReadout, { AxisPoles } from '../components/base/AxisReadout';
 import Badge from '../components/base/Badge';
 import BottomSheet from '../components/base/BottomSheet';
@@ -14,6 +15,7 @@ import DateSheet from '../components/DateSheet';
 import DiscardSheet from '../components/DiscardSheet';
 import NoteField from '../components/NoteField';
 import PickerSheet from '../components/PickerSheet';
+import SaveBar from '../components/SaveBar';
 import SearchSheet, { useKept, withChosen } from '../components/SearchSheet';
 import { dayLine, dayTimeLine } from '../components/WhenMeta';
 import { cupTitle } from '../constants/cups';
@@ -22,7 +24,7 @@ import { drinkItems, normalizeDrink, normalizeProduct } from '../constants/drink
 import { TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deleteCup, deleteDropsLockIn, getBag, listDrinkHistory, listGear, listOpenBags, listProductHistory, updateCup } from '../data/repository';
-import { color, dashed, shape, space, spacing } from '../theme/tokens';
+import { color, dashed, layout, shape, space, spacing } from '../theme/tokens';
 import { Stars } from './CupRecordScreen';
 import { RATING_COPY } from './RecordCoffeeScreen';
 import ScreenFrame from './ScreenFrame';
@@ -37,8 +39,14 @@ import ScreenFrame from './ScreenFrame';
  * "As logged": the rating, axes and flavours in 2c's read-only display (§1:
  * values shown, not disabled), under a plain heading and the line that gives
  * the way out. Taste DNA counted them at save; they never change here.
- * Footer: "Save changes" (primary), "Delete this cup" (text action, ink,
- * underlined, no warning colour), which opens 11b.
+ * Save and Delete as on the bag and gear pages (Uryu, 2026-11-12):
+ *   "Save changes" (primary) in SaveBar, absent until the first edit, then
+ *   pinned at the foot outside the scroll; reverting the edits takes it
+ *   away. Saving goes back to 2c.
+ *   "Delete this cup" (text action, destructive) closes the page's content,
+ *   always there, and opens 11b.
+ * (Was ScreenFrame's footer, which follows the content when it is long, so
+ * Save scrolled out of reach.)
  *
  * The bag picker (11c): the date wins. A bag roasted after this cup's day is
  * shown, not hidden, in §1's disabled look, its meta saying why ("roasted
@@ -162,6 +170,9 @@ function DeleteSheet({ visible, onClose, cup, dropsLockIn, onDelete }) {
 }
 
 export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
+  // Room under Delete this cup: what the footer panel it sat in gave it, the
+  // home indicator's inset (layout.screen.bottom at least).
+  const bottom = Math.max(useSafeAreaInsets().bottom, layout.screen.bottom);
   const db = useDatabase();
   const [bag, setBag] = useState(() =>
     cup.bag_id != null || cup.bean_name ? { id: cup.bag_id, name: cup.bean_name, roaster: cup.bean_roaster, roasted_at: cup.bean_roasted_at } : null
@@ -280,100 +291,100 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
 
   return (
     <View style={styles.screen}>
-      <ScreenFrame
-        scroll
-        compact
-        title="Edit cup"
-        leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
-        footer={
-          <>
-            <Button label="Save changes" onPress={save} />
-            <Button variant="text" stacked destructive label="Delete this cup" onPress={askDelete} />
-          </>
-        }>
-        <View style={styles.sections}>
-          {madeIt ? (
-            <Section label="From my shelf">
-              <View style={styles.card}>
-                {bag ? (
-                  <FieldRow swatch photo={bag.photo_uri} label="Bag" value={bag.name} meta={bagMeta(bag)} onPress={() => setSheet('bag')} />
-                ) : (
-                  <FieldRow swatch label="Bag" value="No bag noted" placeholder onPress={() => setSheet('bag')} />
-                )}
-                {method ? (
-                  <FieldRow divided label="Method" value={method} onPress={() => setSheet('gear')} />
-                ) : (
-                  <FieldRow divided label="Method" value="No gear noted" placeholder onPress={() => setSheet('gear')} />
-                )}
-              </View>
-            </Section>
-          ) : null}
+      <View style={styles.page}>
+        <ScreenFrame scroll compact title="Edit cup" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
+          <View style={styles.sections}>
+            {madeIt ? (
+              <Section label="From my shelf">
+                <View style={styles.card}>
+                  {bag ? (
+                    <FieldRow swatch photo={bag.photo_uri} label="Bag" value={bag.name} meta={bagMeta(bag)} onPress={() => setSheet('bag')} />
+                  ) : (
+                    <FieldRow swatch label="Bag" value="No bag noted" placeholder onPress={() => setSheet('bag')} />
+                  )}
+                  {method ? (
+                    <FieldRow divided label="Method" value={method} onPress={() => setSheet('gear')} />
+                  ) : (
+                    <FieldRow divided label="Method" value="No gear noted" placeholder onPress={() => setSheet('gear')} />
+                  )}
+                </View>
+              </Section>
+            ) : null}
 
-          {cup.mode === 'packaged' ? (
-            <Section label="Product" variant="plain">
+            {cup.mode === 'packaged' ? (
+              <Section label="Product" variant="plain">
+                <View style={styles.card}>
+                  <FieldRow
+                    swatch
+                    icon="can"
+                    label="Product"
+                    value={productName ?? 'No product noted'}
+                    placeholder={!productName}
+                    onPress={async () => {
+                      try {
+                        setProducts(await listProductHistory(db));
+                      } catch (error) {
+                        console.error('[edit] could not read past products', error);
+                      }
+                      setSheet('product');
+                    }}
+                  />
+                </View>
+              </Section>
+            ) : null}
+
+            {barista ? (
+              <Section label="Café details" variant="plain">
+                <View style={styles.card}>
+                  {/* TODO(Design Round 16, B5): the short address as meta. None
+                      is stored yet (todo.md T-15); no distance or visit count. */}
+                  <FieldRow icon="pin" label="Café" value={cafe?.name ?? 'No café noted'} placeholder={!cafe} onPress={() => setSheet('cafe')} />
+                  <FieldRow
+                    divided
+                    label="Drink"
+                    value={drinkType ?? 'No drink noted'}
+                    placeholder={!drinkType}
+                    onPress={async () => {
+                      try {
+                        setDrinks(drinkItems(await listDrinkHistory(db, cafe?.id ?? null)));
+                      } catch (error) {
+                        console.error('[edit] could not read past drinks', error);
+                        setDrinks(drinkItems({ here: [], all: [] }));
+                      }
+                      setSheet('drink');
+                    }}
+                  />
+                </View>
+              </Section>
+            ) : null}
+
+            <Section label="When">
               <View style={styles.card}>
                 <FieldRow
-                  swatch
-                  icon="can"
-                  label="Product"
-                  value={productName ?? 'No product noted'}
-                  placeholder={!productName}
-                  onPress={async () => {
-                    try {
-                      setProducts(await listProductHistory(db));
-                    } catch (error) {
-                      console.error('[edit] could not read past products', error);
-                    }
-                    setSheet('product');
-                  }}
+                  label="Date & time"
+                  value={dayTimeLine(new Date(loggedAt))}
+                  meta={roastDay != null ? `From ${formatDay(roastDay)}, the bag's roast date, to today` : undefined}
+                  onPress={() => setSheet('date')}
                 />
               </View>
             </Section>
-          ) : null}
 
-          {barista ? (
-            <Section label="Café details" variant="plain">
-              <View style={styles.card}>
-                {/* TODO(Design Round 16, B5): the short address as meta. None
-                    is stored yet (todo.md T-15); no distance or visit count. */}
-                <FieldRow icon="pin" label="Café" value={cafe?.name ?? 'No café noted'} placeholder={!cafe} onPress={() => setSheet('cafe')} />
-                <FieldRow
-                  divided
-                  label="Drink"
-                  value={drinkType ?? 'No drink noted'}
-                  placeholder={!drinkType}
-                  onPress={async () => {
-                    try {
-                      setDrinks(drinkItems(await listDrinkHistory(db, cafe?.id ?? null)));
-                    } catch (error) {
-                      console.error('[edit] could not read past drinks', error);
-                      setDrinks(drinkItems({ here: [], all: [] }));
-                    }
-                    setSheet('drink');
-                  }}
-                />
-              </View>
+            <Section label="My words" variant="optional">
+              <NoteField value={note} onChangeText={setNote} />
             </Section>
-          ) : null}
 
-          <Section label="When">
-            <View style={styles.card}>
-              <FieldRow
-                label="Date & time"
-                value={dayTimeLine(new Date(loggedAt))}
-                meta={roastDay != null ? `From ${formatDay(roastDay)}, the bag's roast date, to today` : undefined}
-                onPress={() => setSheet('date')}
-              />
+            <AsLogged cup={cup} />
+
+            <View style={{ paddingBottom: bottom }}>
+              <Button variant="text" stacked destructive label="Delete this cup" onPress={askDelete} />
             </View>
-          </Section>
+          </View>
+        </ScreenFrame>
+      </View>
 
-          <Section label="My words" variant="optional">
-            <NoteField value={note} onChangeText={setNote} />
-          </Section>
-
-          <AsLogged cup={cup} />
-        </View>
-      </ScreenFrame>
+      <SaveBar visible={dirty}>
+        <Button label="Save changes" onPress={save} />
+      </SaveBar>
 
       <PickerSheet
         visible={sheet === 'bag'}
@@ -497,6 +508,9 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
 
 const styles = StyleSheet.create({
   screen: {
+    flex: 1,
+  },
+  page: {
     flex: 1,
   },
   sections: {

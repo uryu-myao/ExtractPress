@@ -20,7 +20,7 @@ import { bagFilter } from '../constants/search';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deletePhoto, keepPhoto } from '../data/photos';
 import { deleteBag, finishBag, setBagPhoto, updateBag } from '../data/repository';
-import { requestPush, requestShell } from '../navigation';
+import { requestPush, requestShell, requestNotice } from '../navigation';
 import { color, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -154,6 +154,8 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
       Keyboard.dismiss();
       setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, best_before: form.bestBefore, process: form.process, opened_at: openedAt }));
       setForm((f) => ({ ...f, name, roaster: roaster ?? '' }));
+      // The Save bar slides away; this says it worked (Uryu, 2026-11-12: Save gave no feedback). 13b's notice, verb ours.
+      requestNotice({ name, verb: 'saved' });
     } catch (error) {
       console.error('[3g] could not save', error);
       Alert.alert("Couldn't save your changes", String(error?.message ?? error));
