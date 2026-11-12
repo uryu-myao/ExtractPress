@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
+import { bestBeforeCardLine, bestBeforeSentence, sealedBestBeforeLine } from '../constants/bagDates';
 import { FRESHNESS_TUNING, FRESHNESS_WORDS, freshnessOf } from '../data/freshness';
-import { component, icon, spacing } from '../theme/tokens';
+import { color, component, icon, spacing } from '../theme/tokens';
 import Glyph from './base/Glyph';
 import Text from './base/Text';
 
@@ -20,12 +21,46 @@ import Text from './base/Text';
  *
  * stacked (the bag page, Design Round 15, 19a): "Day 7 · drink now" on its
  * own line, the bar under it at the column's full width, no clock glyph.
+ *
+ * bestBefore (Design Round 27, 29b–29d): a bag with a best-before date and
+ * no roast date says its date, never a state. No bar, no band, no state
+ * colour (constants/bagDates.js):
+ *   row      the calendar glyph and "Best before Oct 1 · 142 days left"
+ *            (meterLabel, text.muted; "· passed" in text.secondary)
+ *   sealed   the same glyph, "Sealed · best before Oct 1": its clock runs
+ *            sealed, so not "clock starts when opened" (C1)
+ *   stacked  19a: one sentence in the serif, "142 days to its best-before
+ *            date" (displayXs; 29b draws 26, which has no style); passed in
+ *            text.secondary
+ * With a roast date the roast clock leads, as before.
  */
 const { drinkFrom, drinkUntil, span } = FRESHNESS_TUNING;
 const BAND = { left: `${(drinkFrom / span) * 100}%`, width: `${((drinkUntil - drinkFrom) / span) * 100}%` };
 const meter = component.beanFreshness;
 
-export default function BeanFreshness({ roastedAt, sealed = false, stacked = false }) {
+export default function BeanFreshness({ roastedAt, bestBefore = null, sealed = false, stacked = false }) {
+  const bag = { roasted_at: roastedAt ?? null, best_before: bestBefore };
+  const dated = sealed ? sealedBestBeforeLine(bag) : stacked ? null : bestBeforeCardLine(bag);
+  if (dated) {
+    return (
+      <View style={styles.row}>
+        <Glyph name="calendar" token={icon.sm} color={color.text.muted} />
+        <Text variant="meterLabel" color={dated.passed ? 'secondary' : 'muted'} style={styles.sealedLabel}>
+          {dated.text}
+        </Text>
+      </View>
+    );
+  }
+  if (stacked && !sealed) {
+    const sentence = bestBeforeSentence(bag);
+    if (sentence) {
+      return (
+        <Text variant="displayXs" color={sentence.passed ? 'secondary' : 'primary'}>
+          {sentence.text}
+        </Text>
+      );
+    }
+  }
   if (sealed) {
     return (
       <View style={styles.row}>

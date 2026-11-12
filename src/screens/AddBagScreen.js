@@ -9,7 +9,8 @@ import Text from '../components/base/Text';
 import { useRecordDraftIfAny } from '../components/RecordDraft';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deletePhoto, dropPhoto, keepPhoto } from '../data/photos';
-import { OPEN_BAG_LIMIT, countCups, countOpenBags, insertBag } from '../data/repository';
+import { startOfDay } from '../constants/dates';
+import { OPEN_BAG_LIMIT, countCups, countOpenBags, getBagDateKind, insertBag, setBagDateKind } from '../data/repository';
 import { spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -38,11 +39,21 @@ import ScreenFrame from './ScreenFrame';
  * prefill: { name, roaster } from Try next's "Add it to my beans" (Design
  * Round 23, 25d: buying a bean again); the fields start filled, still editable.
  */
+/** 3c's date sheet's two kinds (29a). */
+const DATE_KINDS = [
+  { value: 'roasted', label: 'Roasted on' },
+  { value: 'bestBefore', label: 'Best before' },
+];
+
 export default function AddBagScreen({ onBack, onAdded, prefill }) {
   const db = useDatabase();
   // In the Record sheet the new bag becomes the cup's bag; from 3d it just joins the shelf.
   const chooseBag = useRecordDraftIfAny()?.chooseBag;
-  const [form, setForm] = useState({ name: prefill?.name ?? '', roaster: prefill?.roaster ?? '', roastedAt: null, process: null });
+  const [form, setForm] = useState({ name: prefill?.name ?? '', roaster: prefill?.roaster ?? '', process: null });
+  // The date printed on the bag and its kind (Design Round 27 B1, 29a): one
+  // date here; the bag's other one is added on its page (19a). The kind
+  // starts where it was last left (device.bag_date_kind).
+  const [bagDate, setBagDate] = useState({ kind: 'roasted', value: null });
   const [picking, setPicking] = useState(false);
   // 5d's way (decided 2026-10-11): the button stays pressable; pressed with no
   // name, the field says it is required. Typing a name ends it.
@@ -59,6 +70,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
   useEffect(() => {
     let alive = true;
     countOpenBags(db).then((n) => alive && setOpen(n), () => alive && setOpen(0));
+    getBagDateKind(db).then((kind) => alive && setBagDate((d) => ({ ...d, kind })), () => {});
     if (chooseBag) countCups(db).then((n) => alive && setFirstCup(n === 0), () => {});
     return () => {
       alive = false;
@@ -81,7 +93,15 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
         kept = photo.id;
         pending.current = null;
       }
-      const bag = await insertBag(db, { name, roaster: form.roaster.trim() || null, roastedAt: form.roastedAt, process: form.process, open: opened, photo: kept });
+      const bag = await insertBag(db, {
+        name,
+        roaster: form.roaster.trim() || null,
+        roastedAt: bagDate.kind === 'roasted' ? bagDate.value : null,
+        bestBefore: bagDate.kind === 'bestBefore' ? bagDate.value : null,
+        process: form.process,
+        open: opened,
+        photo: kept,
+      });
       // Only an opened bag can be the cup's bag.
       if (opened) chooseBag?.(bag);
       (onAdded ?? onBack)();
@@ -131,10 +151,14 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
             setForm(next);
           }}
           nameMissing={nameMissing}
-          datePicking={picking}
-          onPickDate={() => {
-            Keyboard.dismiss();
-            setPicking(true);
+          bagDate={{
+            kind: bagDate.kind,
+            value: bagDate.value,
+            picking,
+            onPick: () => {
+              Keyboard.dismiss();
+              setPicking(true);
+            },
           }}
           photo={{
             uri: photo?.uri ?? null,
@@ -162,13 +186,24 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
             : undefined
         }
       />
+      {/* Roasted on can't be in the future; Best before can be either side of today (29a). */}
       <DateSheet
         visible={picking}
         onClose={() => setPicking(false)}
-        label="Roasted on"
-        value={form.roastedAt}
-        maximum={new Date()}
-        onChange={(roastedAt) => setForm((f) => ({ ...f, roastedAt }))}
+        label="Date on the bag"
+        value={bagDate.value}
+        maximum={bagDate.kind === 'roasted' ? new Date() : undefined}
+        onChange={(value) => setBagDate((d) => ({ ...d, value }))}
+        kinds={{
+          options: DATE_KINDS,
+          value: bagDate.kind,
+          onChange: (kind) => {
+            setBagDateKind(db, kind).catch(() => {});
+            // A future best-before date can't stay a roast date: it stops at today.
+            setBagDate((d) => ({ kind, value: kind === 'roasted' && d.value != null ? Math.min(d.value, startOfDay(new Date())) : d.value }));
+          },
+        }}
+        note="Supermarket bags print a best-before date. Both on one bag? Add the other in the bag's page later."
       />
     </View>
   );

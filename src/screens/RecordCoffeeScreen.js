@@ -22,6 +22,7 @@ import { drinkItems, normalizeDrink, normalizeProduct } from '../constants/drink
 import { distanceLine, visitLine } from '../constants/places';
 import { color, icon, motion, shape, size, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
+import { bestBeforeShort } from '../constants/bagDates';
 import { FRESHNESS_WORDS, freshnessOf } from '../data/freshness';
 
 /**
@@ -99,7 +100,8 @@ function Section({ label, status, plain, children }) {
 function bagMeta(bag) {
   if (!bag) return undefined;
   const f = freshnessOf(bag.roasted_at);
-  return [bag.roaster, f ? `day ${f.day}, ${FRESHNESS_WORDS[f.state]}` : null].filter(Boolean).join(' · ') || undefined;
+  // A best-before bag: "Key Coffee · best before Oct 1" (Design Round 27, 29c).
+  return [bag.roaster, f ? `day ${f.day}, ${FRESHNESS_WORDS[f.state]}` : bestBeforeShort(bag)].filter(Boolean).join(' · ') || undefined;
 }
 
 /**

@@ -19,6 +19,7 @@ import { formatDay } from './dates';
 import { MODE_LABEL, cupTitle } from './cups';
 import { GEAR_CATEGORY, onCups } from './gear';
 import { freshnessOf } from '../data/freshness';
+import { bestBeforeShort } from './bagDates';
 
 /** 18a's Kind: 2a's categories without "All" (in search, All is just 2a). */
 export const KINDS = Object.entries(MODE_LABEL).map(([value, label]) => ({ value, label }));
@@ -182,7 +183,8 @@ function bagStatus(bag) {
   if (bag.finished_at != null) return `finished ${formatDay(bag.finished_at)}`;
   if (bag.opened_at == null) return 'sealed';
   const f = freshnessOf(bag.roasted_at);
-  return f ? `day ${f.day}` : null;
+  // A best-before bag: "best before Oct 1" / "best before passed" (Design Round 27, 29c).
+  return f ? `day ${f.day}` : bestBeforeShort(bag);
 }
 
 /** A gear row's meta line in GEAR: "Grinder · Timemore". */

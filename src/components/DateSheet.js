@@ -5,6 +5,7 @@ import { color } from '../theme/tokens';
 import { startOfDay } from '../constants/dates';
 import BottomSheet from './base/BottomSheet';
 import Button from './base/Button';
+import SegmentedControl from './base/SegmentedControl';
 import Text from './base/Text';
 
 /**
@@ -32,8 +33,12 @@ import Text from './base/Text';
  *   maximum   latest pickable day (Date); the roast date stops at today (T-5)
  *   mode      'date' (default) | 'datetime'
  *   onChange  (ms) => void — a local midnight in date mode
+ *   kinds     optional { options, value, onChange }: a SegmentedControl over
+ *             the wheels, which kind of date this is (3c's "Date on the bag":
+ *             Roasted on | Best before, Design Round 27 B1, 29a)
+ *   note      optional line under the wheels (bodySm, secondary)
  */
-export default function DateSheet({ visible, onClose, label, value, minimum, maximum, mode = 'date', onChange }) {
+export default function DateSheet({ visible, onClose, label, value, minimum, maximum, mode = 'date', onChange, kinds, note }) {
   const pick = (date) => (mode === 'date' ? startOfDay(date) : date.getTime());
   const [shown, setShown] = useState(() => new Date(value ?? Date.now()));
   useEffect(() => {
@@ -56,6 +61,7 @@ export default function DateSheet({ visible, onClose, label, value, minimum, max
           }}
         />
       </View>
+      {kinds ? <SegmentedControl options={kinds.options} value={kinds.value} onChange={(next) => next && kinds.onChange(next)} /> : null}
       <DateTimePicker
         value={shown}
         mode={mode}
@@ -70,6 +76,11 @@ export default function DateSheet({ visible, onClose, label, value, minimum, max
           onChange(pick(date));
         }}
       />
+      {note ? (
+        <Text variant="bodySm" color="secondary">
+          {note}
+        </Text>
+      ) : null}
     </BottomSheet>
   );
 }

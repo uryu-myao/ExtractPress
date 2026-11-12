@@ -95,7 +95,7 @@ export default function BeansList({ bags, finished, onAddBag, onFinished, onEdit
                     </Text>
                   </View>
                 </View>
-                <BeanFreshness roastedAt={bag.roasted_at} sealed={!bag.opened_at} />
+                <BeanFreshness roastedAt={bag.roasted_at} bestBefore={bag.best_before} sealed={!bag.opened_at} />
               </View>
               <Chevron />
             </Pressable>
@@ -113,9 +113,16 @@ export default function BeansList({ bags, finished, onAddBag, onFinished, onEdit
       {/* Once, under the last card (Design Round 7, 40): the freshness
           windows are a guide. Only when some card draws one: an opened bag
           with a roast date (a sealed card has no bar). */}
-      {bags.some((b) => b.opened_at && b.roasted_at != null) ? (
+      {/* Design Round 27 (29c, 3): a second sentence once a best-before-only
+          bag is shown, saying what its line is instead. */}
+      {bags.some((b) => b.opened_at && b.roasted_at != null) || bags.some((b) => b.roasted_at == null && b.best_before != null) ? (
         <Text variant="bodySm" color="secondary">
-          The windows are a rough guide. Your own taste is the better judge.
+          {[
+            bags.some((b) => b.opened_at && b.roasted_at != null) ? 'The windows are a rough guide. Your own taste is the better judge.' : null,
+            bags.some((b) => b.roasted_at == null && b.best_before != null) ? 'Bags with only a best-before date show how long is left until it.' : null,
+          ]
+            .filter(Boolean)
+            .join(' ')}
         </Text>
       ) : null}
       {left > 0 ? <AddButton icon="plus" iconToken={icon.sm} label="Add a bag" tag={left === 1 ? '1 slot left' : `${left} slots left`} onPress={onAddBag} /> : null}

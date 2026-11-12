@@ -3,6 +3,7 @@ import { Animated, Easing, Pressable, StyleSheet, useWindowDimensions, View } fr
 import { FreshnessTrack } from './BeanFreshness';
 import ShelfTabs, { useShelfPager } from './ShelfTabs';
 import { useDatabase } from '../data/DatabaseProvider';
+import { bestBeforeStatus, drinkFirstRank } from '../constants/bagDates';
 import { FRESHNESS_WORDS, freshnessOf } from '../data/freshness';
 import { listGearWithUse, listShelfBags, onCupsChanged, onShelfChanged } from '../data/repository';
 import { formatLastUsed } from '../constants/dates';
@@ -129,12 +130,17 @@ function homeGear(gear) {
   return [...gear].sort((a, b) => b.is_default - a.is_default || b.cups - a.cups).slice(0, ROWS);
 }
 
-/** What to drink first (Round 14; Round 15, B2 for the last two). */
-const DRINK_ORDER = { pastPeak: 0, drinkNow: 1, resting: 2 };
+/**
+ * What to drink first (Round 14; Round 15, B2; Design Round 27, B3): date
+ * passed and past peak (longest past first), drink now, best-before by
+ * nearest date, resting, neither date, sealed (constants/bagDates.js).
+ */
 function homeBeans(bags) {
-  const rank = (b) => (!b.opened_at ? 4 : b.roasted_at == null ? 3 : DRINK_ORDER[freshnessOf(b.roasted_at).state]);
-  return [...bags]
-    .sort((a, b) => rank(a) - rank(b) || (a.roasted_at ?? 0) - (b.roasted_at ?? 0) || a.id - b.id)
+  const now = Date.now();
+  const ranked = bags.map((b) => [drinkFirstRank(b, now), b]);
+  return ranked
+    .sort(([x, a], [y, b]) => x[0] - y[0] || x[1] - y[1] || a.id - b.id)
+    .map(([, b]) => b)
     .slice(0, ROWS);
 }
 
@@ -157,7 +163,10 @@ function BeanRow({ bag, first, onPress }) {
     status = <Status word="Sealed" wordColor={component.beanFreshness.sealed.label} />;
   } else {
     const f = freshnessOf(bag.roasted_at);
+    const dated = f ? null : bestBeforeStatus(bag);
     if (f) status = <Status word={FRESHNESS_WORDS[f.state]} wordColor={component.beanFreshness[f.state].label} track={f} />;
+    // A best-before bag: "Best before" / "Date passed" over the date, no bar (Round 27, 29c).
+    else if (dated) status = <Status word={dated.word} wordColor={dated.passed ? 'secondary' : 'muted'} line={dated.line} />;
   }
   return <Row first={first} name={bag.name} meta={meta} status={status} photo={bag.photo_uri} onPress={onPress} />;
 }

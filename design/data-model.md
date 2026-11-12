@@ -422,6 +422,12 @@ Design Round 15 (Search, 18a) brings back "Recent searches", which Round 10, 22 
 
 **These windows are a reference, not a prediction.** The real drinking window depends on the roast level, the packaging (a valve or not), storage temperature, the brew method, and whole bean vs ground — none of which the app knows. The app takes the industry's most-used ranges and shows them **as a guide**, to the user too.
 
+**A best-before date is a quality guarantee, not a flavour peak (recorded 2026-11-11, Uryu's dogfood).** Supermarket beans print only a best-before date (賞味期限), no roast date. A best-before date can't be turned back into a roast date: makers set it anywhere from 3 months to 2 years after roasting. So a bag can carry two different clocks, and they say different things:
+- **From the roast date** (the windows above): a guide to the flavour peak — "Day N", resting / drink now / past peak, the bar and its peak band.
+- **From a best-before date**: only what the maker guarantees — how many days are left until that date, and whether it has passed. Nothing about the peak.
+- **What the app must not say of a bag without a roast date**: "drink now", "resting", "past peak", "Day N", or a peak band. Best-before is not a peak, and the app doesn't know the roast.
+- Both dates may be on one bag (some specialty roasters print both). Stored, shown and notified as below (Design Round 27, answered 2026-11-11).
+
 The numbers live in one constant, `FRESHNESS_TUNING` (`src/data/freshness.ts`), tunable later like `DNA_TUNING`.
 
 - **Counted from the roast date**, not opening: degassing starts at the roast; 3g says "Recounted from the roast date"; and two bags side by side share one "today".
@@ -437,7 +443,25 @@ The numbers live in one constant, `FRESHNESS_TUNING` (`src/data/freshness.ts`), 
 - **Past peak ≠ stale.**
   - **past peak** = 22+ days since **roasting** (advances even unopened);
   - **stale** = 21+ days since **opening** (oxidation once open; 8i "Bag going stale — around day 21 after opening", 6a "1 stale").
-  - A bag can be both. **Stale is not built at this stage** (8i and 6a are out of scope).
+  - A bag can be both.
+- **Stale looks at the opening date only (2026-11-11, Uryu).** It does not depend on whether the bag has a roast date, a best-before date, both or neither: every opened, unfinished bag goes stale on day 21 after opening. A sealed bag is never stale. `STALE_AFTER_DAYS` and `staleOf()` (`src/data/freshness.ts`). Built for V1: 6c's notification switch and 6a's "· 1 stale" (counted whether the switch is on or not, Round 26 C3).
+
+### Best-before (decided 2026-11-11, Uryu)
+
+- **`bags.best_before`** (migration 9): a local midnight, like `roasted_at`. Nullable; every bag from before migration 9 has none, and nothing changes for it.
+- **Both dates may be stored.** Neither replaces the other.
+- **Shown**: with a roast date, the roast clock above (Day N, state, bar) — it says more. Best-before alone: days left until it, or that it has passed, as text. **No bar**: the bags have no purchase date to measure from, and a bar months long would be an empty track. `bestBeforeOf()` (`src/data/freshness.ts`).
+- **Sealed**: best-before is the maker's guarantee for the sealed bag, so its clock runs before opening. "Clock starts when opened" is true of the roast clock only: a sealed best-before bag reads "Sealed · best before Oct 1" (Design Round 27 C1).
+- **Not copied onto cups.** `bean_roasted_at` is copied for 2c's "day 7 when brewed" and the CSV's Roast day; a best-before date says nothing about how a cup tasted. The CSV stays at 27 columns. One side effect: `gaps.md` 37.
+- **Input** (Design Round 27 B1 / B2): 3c asks for "Date on the bag", one date and its kind (Roasted on | Best before, switched in the date sheet, which remembers the last kind: `device.bag_date_kind`, migration 10). 19a always shows Roasted on and Best before; the second date is added there. A best-before date may be either side of today, never before the roast.
+- **Words** (Round 27 B2 / B3, 29b / 29c): one rule, a best-before bag says its date, never a state. The calendar glyph and text.muted; "passed" in text.secondary, never a warning. All in `src/constants/bagDates.js`. Home orders: date passed and past peak, drink now, best-before by nearest date, resting, neither, sealed.
+- **Notifications** (6c's "Bag reminders" switch covers both; 8i folded into 6c, Design Round 26 B1, renamed in Round 27 C3):
+  - **stale**: 21 days after opening, at 9:00;
+  - **best-before**: 7 days before the date (`BEST_BEFORE_WARN_DAYS`), at 9:00, **sealed or open**; "‹Bag›, best before ‹Oct 1›" (Round 27 C2);
+  - none for a finished bag, none whose moment has passed;
+  - if both fall within 3 days of each other, only the earlier one is sent;
+  - bags due the same morning share one notification of each kind ("2 bags open 3 weeks", Design Round 26 C2); a tap opens the bag's page, or My beans for several;
+  - planned by `planBagReminders()`, worded by `reminderText()` (`src/data/bagReminders.ts`).
 
 ---
 

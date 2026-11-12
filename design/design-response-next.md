@@ -1,5 +1,303 @@
 # Design response — design-missing.md
 
+## Round 27 · Best-before bags, bag reminders, the welcome (2026-11-11)
+
+Mock:
+
+- **New: Turn 28.**
+  - **29a**: 3c's date row and its sheet.
+  - **29b**: 19a for a best-before bag.
+  - **29c**: the three kinds in the six places.
+  - **29d**: the sealed line, the best-before notification and 6c's row.
+  - **29e**: the welcome.
+- **Edited.**
+  - **28c**: both notices are Notices; the welcome's row has the new lead.
+  - **28d**: the "without an action" sample is now the moving-phones Notice, since the welcome has an action.
+
+### A. Decided
+
+**Agreed, no board breaks.**
+
+- **A3 (no bar) and A6 (stale is about opening only)** are what keep the two clocks apart. Every board below follows them.
+- **A7's switch**: the switch still covers both reminders, but it's renamed (C3).
+
+### B. Drawn
+
+1. **B1 — 3c (29a). Agreed: ask for the date printed on the bag.**
+   - **Label**: "Date on the bag".
+   - **Empty**: "Roasted on or best before, whichever it prints". It no longer promises "when it's at its best".
+   - **Filled**: "Roasted Apr 1" / "Best before Oct 1". The label stays.
+   - **Sheet**: title "Date on the bag".
+     - First the kind, a two-way SegmentedControl: **Roasted on | Best before**.
+     - Then the wheel.
+     - Then one line: "Supermarket bags print a best-before date. Both on one bag? Add the other in the bag's page later."
+     - Then Done.
+   - **Default kind**: Roasted on. The sheet remembers the last kind chosen, so a supermarket shopper flips it once.
+   - **The wheel follows the kind**: Roasted on can't be in the future; Best before can be either side of today.
+2. **B2 — 19a (29b).**
+   - **Status block, best-before only**: one serif sentence.
+     - "142 days to its best-before date".
+     - At 1 day: "1 day to its best-before date".
+     - On the day: "Its best-before date is today".
+     - Passed: "Its best-before date has passed", in `text.secondary`.
+     - No bar, band, state word or colour: it's a computed fact, so neutral (§1).
+   - **The line under it** carries the dates, with the year because these dates run long: "Best before Oct 1, 2027 · opened Apr 6". When passed: "… · 12 days ago".
+   - **Both dates**: the roast clock exactly as today. The best-before date joins the line under it: "Roasted Mar 30 · opened Apr 6 · best before Sep 30". It never draws on the bar.
+   - **Details**: Roasted on and Best before, always both, then Opened on.
+     - An empty date reads "Add" in `text.muted`, with its chevron.
+     - It opens the date sheet with that kind fixed (no switch).
+3. **B3 — the three kinds, six places (29c).** One rule: a best-before bag says its date, never a state.
+   - It uses a calendar glyph (the date's, not the clock) and `text.muted`. "Passed" is in `text.secondary`, one step stronger, still not a warning.
+   - **The six places**:
+
+     | # | Place | Roast-date bag (today) | Best-before bag | Passed |
+     |---|---|---|---|---|
+     | 1 | 19a | as today | see B2 | see B2 |
+     | 2 | 3d card | clock, bar, "DAY 7 · DRINK NOW" | calendar glyph, "BEST BEFORE OCT 1 · 142 DAYS LEFT" | "BEST BEFORE OCT 1 · PASSED" |
+     | 3 | 3d footnote | "The windows are a rough guide…" | adds "Bags with only a best-before date show how long is left until it." (only when such a bag is shown) | — |
+     | 4 | Home shelf, 84 column | state word over bar | "BEST BEFORE" over the date | "DATE PASSED" over the date |
+     | 5 | Search line | "Bag · Blue Bottle · day 7" | "Bag · Key Coffee · best before Oct 1" | "… · best before passed" |
+     | 6 | 5a bag line | "Blue Bottle · day 7, drink now" | "Key Coffee · best before Oct 1" | "Seijo Ishii · best before passed" |
+
+   - **Bags with neither date**: unchanged everywhere. Nothing shows.
+   - **Home's order**, close to yours with one step added:
+     1. date passed and past peak (longest past first);
+     2. drink now;
+     3. **best-before by nearest date**;
+     4. resting;
+     5. neither.
+   - **Why best-before goes above resting**: a best-before bag can be drunk any day, so it comes before bags that are meant to wait.
+
+### C. Written
+
+1. **C1 — a sealed best-before bag: "Sealed · best before Oct 1".**
+   - Passed: "Sealed · best before passed".
+   - It drops "clock starts when opened", which is only true of the roast clock.
+   - A sealed roast-date bag keeps today's line.
+2. **C2 — the best-before notification.**
+
+   | Case | Title | Body |
+   |---|---|---|
+   | Opened | **‹Bag›, best before ‹Oct 1›** | **That's a week away. Brew it soon, or mark it finished.** |
+   | Sealed | **‹Bag›, best before ‹Oct 1›** | **That's a week away, and it's still sealed. Open it soon, or mark it finished.** |
+   | Several, same morning | **‹n› bags, best before next week** | **‹A› and ‹B›. Brew them soon, or mark them finished.** |
+
+   - **The titles keep the two apart**: this one names the date, stale's names the time open ("‹Bag›, open 3 weeks").
+   - **No taste claim** in either.
+   - **Round 26's pattern, agreed**:
+     - grouped by morning;
+     - a tap opens the bag's page, or My beans for several;
+     - a stale bag and a best-before bag on the same morning stay two notifications, because they say different things.
+3. **C3 — the row becomes "Bag reminders"**, with the sub line "At 9:00, when a bag has been open 3 weeks, and a week before a best-before date".
+   - "Bag going stale" named only one of its two jobs.
+   - It replaces 28a / 28b's title and sub line. The denied state is unchanged.
+   - **6a's "· 1 stale" keeps its word**: it counts the stale rule only.
+
+### D. Follow-ups
+
+1. **D1 — done.** 28c's "Move to a new phone" is now a Notice. The welcome stays a Notice, so V1 ships no Update.
+2. **D2 — the welcome (29e).** The words are polished; the structure is as you built it.
+   - **Lead**: "Log a cup, and Extract Press works out what you like. It isn't a diary: the cups you rate and note add up to a profile of your taste."
+     - "Rate and note", because a rating alone doesn't move the profile.
+   - **1. A cup in 15 seconds.** "Rate it and you're done; a café cup also needs its café. The beans, the gear and the four taste axes are there when you want them."
+   - **2. Your taste DNA builds itself.** "Acidity, body, roast and sweetness, from what you note. Cups you rated higher count for more, and recent cups count more than old ones."
+     - Both weights, said without numbers.
+     - "From what you note" covers the flavour tags too.
+   - **3. It stays on your phone.** "No account, no server. Your cups are never sent to us."
+     - This stays true with exports and iCloud backups.
+   - **Action**: **How my DNA is built** → 8g. 8g joins B4's fixed set.
+   - **No picture.** The text carries it.
+   - **Layout**: each point is a bold lead-in and its sentences, on hairlines, no icons.
+   - **In 7a**, the row shows the title and the lead's first two sentences.
+3. **D3 — checked: my Round 26 "For Code" has no "Turn 10".**
+   - The only "Turn 10" in this file is in Round 2 ("Drawn: items 7, 8, 9 … Turn 10"), and that one is right: those boards are in Turn 10.
+   - Your copy may have been edited after it left me.
+   - To make sure, Round 26's For Code now ends with "Boards: Turn 27 (28a–28g)".
+
+### For Code
+
+- **Bag**:
+  - `roasted_on` and `best_before`, both nullable;
+  - with both set, the roast clock leads;
+  - no bar and no state for best-before only.
+- **Copy**: the strings in B2, B3, C1 and C2, as listed.
+- **Notifications**:
+  - best-before at 9:00, 7 days before the date, opened or sealed;
+  - within 3 days of the same bag's stale notification, send only the earlier one (A7);
+  - grouped per morning per kind.
+- **6c's row**: title "Bag reminders", the C3 sub line.
+- **Home's order**: date passed and past peak, drink now, best-before by nearest date, resting, neither.
+- **The welcome**: D2's words, action → 8g.
+- **No new tokens.** The calendar glyph is the existing `calendar.svg` (Round 21).
+- **Boards**: Turn 28 (29a–29e).
+
+---
+
+## Round 26 · Notifications in V1, 6c, notices, tips (2026-11-11)
+
+Mock:
+
+- **New: Turn 27.**
+  - **28a**: 6c after the changes.
+  - **28b**: the stale switch's states, the notification and 6a.
+  - **28c**: 7a, its empty state and the bell.
+  - **28d**: 7b's optional action.
+  - **28e / 28g**: Buy me a coffee.
+  - **28f**: 6b regrouped.
+- **Marked "Not in V1"**: 8i and 8j get a stamp, as 8h did. They're kept as material for later.
+- Nothing else is edited.
+
+### A. Decided
+
+No board breaks. Two of these change boards, as drawn:
+
+- **A2 / A3 → 8i folds into 6c** (B1).
+- **A8 → 6b's Taste DNA section is left with one row** (28f, below).
+
+The rest is agreed as written. 7a's samples and footnote follow A2, A5 and A8 (B3).
+
+### B. Drawn
+
+1. **B1 — 8i goes. Its one switch moves into 6c (28a).**
+   - A screen holding one switch is a detour: tap a row, read a title, flip, go back. In 6c the switch is flipped where it's read.
+   - 6c's old "Reminders · Daily 08:00" row goes with it.
+   - The switch row is "Bag going stale" / "21 days after a bag is opened, at 9:00". The old "Around day 21 after opening" hedged; the rule is exact now.
+   - No permission line while things work. The permission only shows when it's in the way (B2).
+2. **B2 — denied (28b).** The reason and the way out sit on the row itself.
+   - **The switch** takes §9's disabled look (ground fill, `border.muted`) and can't be flipped. A switch that springs back to off says nothing; a disabled one with its reason under it says everything.
+   - **Under it**: "Notifications for Extract Press are off in iOS Settings, so this can't be turned on here." Then the text action **Open Settings**, which opens the app's page in iOS Settings.
+   - **Pressing the disabled switch** gives the warning haptic. The reason is on screen (§1 Pressed, the disabled rule).
+   - **Back from Settings** with permission on, the row returns to off, ready to flip.
+   - **The flow**: off by default. The first turn-on asks iOS. Allowed → on. Declined → back to off, in this state.
+3. **B3 — 7a (28c).**
+   - **Empty**: the bell glyph in `text.muted`, "Nothing yet", "News about Extract Press shows up here." No action.
+   - **Samples replaced** with what V1 can really say: the welcome Notice, and an Update about moving phones (Restore, Round 23).
+     - **Two kinds only: Update and Notice.** Tip goes with Brewing tips.
+     - "Backups moved to nightly" goes.
+   - **No footnote** (A5).
+   - **"‹n› unread"** is set in `text.muted`. The mock's brown was off-role: brown is entered values.
+   - **Mark all read goes.** With a handful of notices, opening them is how they get read.
+4. **B4 — 7b: agreed. An optional action per notice; the context card goes (28d).**
+   - **With an action**, it's the screen's primary (blue, 56, `shadow.primary`), because it's what that notice is for.
+   - **Without one**, the foot holds only Next notification and Back to list. No button stands in for it.
+   - **Label**: a verb and its object, ≤ 22 characters ("Log a café cup", "Open My data").
+   - **Destinations, a fixed set**, each opened as it is elsewhere:
+     - Record a coffee (optionally with a mode)
+     - Records
+     - My beans
+     - My taste DNA (8f)
+     - My data (6b)
+     - Support & feedback (6c)
+     - A new destination is a new build.
+   - **Date line**: an Update shows the version it came with; a Notice shows only the date.
+5. **B5 — 6c (28a). Two sections, no single rows.**
+   - **Support & feedback**, 4 rows: Send feedback, Buy me a coffee, Review on App Store, Share the app. The mock's Help & feedback (one row once Report a problem merges in) and Support us become one section.
+   - **App**, 3 rows: Bag going stale, Privacy policy, Licences.
+   - **The version line**, "Extract Press 1.0.0 (1)", closes the screen, centred, outside any block.
+   - **Trailing marks say where a row goes**:
+     - chevron = a screen in the app (Buy me a coffee, Share the app's share sheet, Licences);
+     - out-arrow = it leaves the app (Mail, the App Store, the privacy page).
+   - Send feedback's sub line now covers problems: "Ideas, requests and problems, by email".
+   - Rate MoreCoffee becomes Review on App Store.
+6. **B6 — Buy me a coffee: a pushed screen (28e, 28g). Redrawn 2026-11-11 after Uryu's reference.**
+   - **6c's row** ends in a chevron, not "¥300+": it opens its own screen.
+   - **The screen**, top to bottom:
+     - back and the title "Buy me a coffee";
+     - one picture: the cup glyph, 48, `text.accent`, in a 96 raised tile with a quiet frame (not pressable);
+     - one line: "Extract Press has no ads and no account. A tip keeps it that way.";
+     - the tips;
+     - the small print at the foot: "One-time, nothing recurring. Apple takes the payment; Extract Press never sees your card."
+   - **The tips.** Two show first, then a third on request:
+     - **A drip coffee ¥300** and **A pour-over ¥600**.
+     - Each row is one control: ink frame, paper fill, 64 tall, a small glyph of what it buys, the name, and the price in a tag on the right.
+     - Tapping a row opens Apple's payment sheet at once, with no confirm of ours.
+     - **"Support more"** is a text action with a down chevron. It opens **A bag of beans ¥1,500** in place, with "Show less" under it (`motion.expand`).
+   - **Kept from the reference**: its structure (picture, line, tip rows with price right, Support more).
+   - **Not kept**: the dark ground, round pills and hearts. They aren't the house style.
+   - **After it goes through**, on the same screen:
+     - the line becomes "Thank you. That's a pour-over on you. It goes into the next update.";
+     - the paid row turns ink (the chosen role) with a check until the screen is left;
+     - nothing unlocks;
+     - it can be tipped again.
+   - **Cancelled**: nothing.
+   - **Failed**: one line under the rows, below a dashed soft divider: "That didn't go through. Nothing was charged." No error colour.
+   - **Ask to Buy**: "Waiting for approval. It goes through once it's approved."
+   - **Pressed**: `state.pressed.surface`.
+   - **Prices**: three consumable IAPs at App Store Connect price points, shown with StoreKit's localised strings.
+
+### C. Checked and written
+
+1. **C1 — the bell: a dot, never a count (28c).**
+   - **The dot**: an 8 × 8 blue square at the glyph's top-right, with a 2px ground ring so it separates from the stroke.
+   - **Same mark as 7a's unread rows.** 7a's 9 snaps to `space[8]`, so the dot reads as "there's one of those".
+   - **Why not a count**: it would make a few notices look like a backlog. The count is on 7a.
+   - **At none unread**: the same glyph, no dot. It stays as the way into 7a.
+   - **Screen reader**: "Notifications, 1 unread" / "Notifications".
+   - It goes on 23b's bell (the current Home), as it was on 4a.
+2. **C2 — the stale notification (28b).**
+
+   | Case | Title | Body |
+   |---|---|---|
+   | One bag | **‹Bag›, open 3 weeks** | **Opened ‹date›. Brew it soon, or mark it finished.** |
+   | Two bags the same morning (one notification) | **2 bags open 3 weeks** | **‹A› and ‹B›. Brew them soon, or mark them finished.** |
+   | Three or more | same title, with the count | "‹A›, ‹B› and ‹n› more. …" |
+
+   - It states the fact, how long the bag has been open, and the two things to do. It makes no taste claim: no peak, no "past its best", so it stays true for best-before bags in Round 27.
+   - **Tap**: the bag's page, or My beans when there are several.
+3. **C3 — 6a's "4 of 5 · 1 stale": keep it as drawn (28b).**
+   - Same place, `text.muted`.
+   - It's counted whether the switch is on or not: it's a fact about the shelf, and the switch only decides the notification.
+   - With nothing stale, it reads "4 of 5" alone.
+
+### Not asked: 6b (28f)
+
+- **The problem.** A8 removes How adventurous, which leaves 6b's Taste DNA section with one row (How my DNA is built).
+- **The fix: Reset my taste DNA moves up into that section.** It's about the profile, not about data. Each section then has two rows or more:
+  - **Taste DNA**: How my DNA is built, then Reset (still the last row, still red, with Round 12's line).
+  - **My data**: Export my cups, Export everything (+ Restore while empty).
+
+### Round 27
+
+Noted. Best-before bags wait for Code's investigation.
+
+C2's notification copy and 6a's count were written to hold for both kinds of bag.
+
+### For Code
+
+**6c**:
+- Two sections, as listed in B5.
+- The stale switch row and its denied state (B2).
+- Send feedback opens `mailto:`.
+- The version line sits outside the blocks.
+
+**Notification**:
+- Stale: 9:00 local, 21 days after `opened_at`.
+- Bags due the same morning go in one notification, with C2's copy.
+- Tap opens the bag's page, or My beans when there are several.
+
+**7a / 7b**:
+- Kinds are Update | Notice.
+- Unread dot 8.
+- "‹n› unread" in `text.muted`.
+- No Mark all read, no footnote.
+- Each notice has an optional `{label, destination}`, from B4's set.
+
+**Home bell**: the 8 blue dot while anything is unread.
+
+**Tips**:
+- A pushed screen from 6c (28e / 28g).
+- Two tips, then Support more for the third.
+- Three consumable IAPs.
+- Prices from StoreKit.
+
+**6b**: Reset moves into the Taste DNA section.
+
+**No new tokens.**
+
+**Boards**: Turn 27 (28a–28g).
+
+---
+
 ## Round 25 · After a reset, 6b's rows (2026-11-10)
 
 Mock:
@@ -1123,7 +1421,7 @@ Token names below follow `tokens.ts`. Every colour maps to an existing token; no
 This round uses `uploads/design-system-174ec2c3.md`, read end to end. The stale copies are deleted: the root copy, `uploads/design-system.md` and `-04f729b2`.
 
 ### Drawn: items 7, 8, 9
-They're in `MoreCoffee design.dc.html`, Turn 10. Every value is a token.
+They're in `ExtractPress-design.dc.html`, Turn 10. Every value is a token.
 - **10a, photo placeholder**:
   - fill `surface.mutedStrong`;
   - a hand-drawn cup in `icon.muted`, sized by the icon token for each size (38, 22, 18, 16), square caps, no frame.

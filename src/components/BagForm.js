@@ -12,7 +12,8 @@ import Text from './base/Text';
 /**
  * Bag form (design/components.md "Adding a bag…"): the fields of one bag.
  * Two field sets, one component:
- *   minimal  Bean name (required), Roaster, Roasted on — 8o's set; 3c (minimal)
+ *   minimal  Bean name (required), Roaster, the date on the bag (3c, Round
+ *            27) or Roasted on / Best before (19a) — 8o's set; 3c (minimal)
  *   full     + Roast level, Size, Photo, Origin / Region / Process — 3c / 3g;
  *            built so far: Photo (3c) and Process (both, 2026-11-08)
  *
@@ -52,6 +53,14 @@ import Text from './base/Text';
  *   roastedHint a line under Roasted on (3g: its limit)
  *   opened      3g: { value, hint, onPick, picking } — an Opened on field
  *               under Roasted on, for a bag that is open
+ *   bagDate     3c (Design Round 27 B1, 29a): { kind, value, onPick, picking }
+ *               — one "Date on the bag" row in Roasted on's place, the date
+ *               printed on the bag, of either kind. Empty: "Roasted on or best
+ *               before, whichever it prints"; filled: "Roasted Apr 1" /
+ *               "Best before Oct 1". The kind is picked in the date sheet
+ *   bestBefore  19a: { value, hint, onPick, picking } — a Best before row
+ *               under Roasted on, always shown, "Add" while empty (29b); the
+ *               bag's other date is added here
  *   children    3g: drawn last inside the card (the freshness block)
  *   autoFocusName  3c: the keyboard comes up on Bean name; 3g: off (it opens to correct, not to type)
  *   photo       3c: { uri, onPress } — the photo slot over the fields
@@ -67,9 +76,11 @@ export default function BagForm({
   onPickDate,
   datePicking = false,
   nameMissing = false,
-  roastedPlaceholder = "Add it to see when it's at its best.",
+  roastedPlaceholder = 'Add',
   roastedHint,
   opened,
+  bagDate,
+  bestBefore,
   children,
   autoFocusName = true,
   photo,
@@ -85,15 +96,27 @@ export default function BagForm({
         </Text>
         <SegmentedControl options={PROCESS_OPTIONS} value={value.process ?? null} onChange={(process) => onChange({ ...value, process })} clearable />
       </View>
-      <DayField
-        label="Roasted on"
-        value={value.roastedAt}
-        // 3c: says what it gives, not that it's optional (Design Round 7, 41).
-        placeholder={roastedPlaceholder}
-        hint={roastedHint}
-        onPress={onPickDate}
-        focused={datePicking}
-      />
+      {bagDate ? (
+        <DayField
+          label="Date on the bag"
+          value={bagDate.value}
+          shown={bagDate.value != null ? `${bagDate.kind === 'bestBefore' ? 'Best before' : 'Roasted'} ${formatDay(bagDate.value)}` : null}
+          placeholder="Roasted on or best before, whichever it prints"
+          onPress={bagDate.onPick}
+          focused={bagDate.picking}
+        />
+      ) : (
+        <DayField
+          label="Roasted on"
+          value={value.roastedAt}
+          // 3g: "Optional" (3g corrects, it doesn't ask).
+          placeholder={roastedPlaceholder}
+          hint={roastedHint}
+          onPress={onPickDate}
+          focused={datePicking}
+        />
+      )}
+      {bestBefore ? <DayField label="Best before" value={bestBefore.value} placeholder="Add" hint={bestBefore.hint} onPress={bestBefore.onPick} focused={bestBefore.picking} /> : null}
       {opened ? <DayField label="Opened on" value={opened.value} hint={opened.hint} onPress={opened.onPick} focused={opened.picking} /> : null}
       {children}
     </View>
@@ -168,8 +191,9 @@ function PhotoField({ uri, onPress }) {
 }
 
 /** A field whose value is picked, not typed: the same line, as a button. */
-function DayField({ label, value, placeholder, hint, onPress, focused }) {
+function DayField({ label, value, shown, placeholder, hint, onPress, focused }) {
   const filled = value != null;
+  const text = filled ? (shown ?? formatDay(value)) : placeholder;
   return (
     <View style={styles.field}>
       <Text variant="labelEyebrow" color="muted">
@@ -178,10 +202,10 @@ function DayField({ label, value, placeholder, hint, onPress, focused }) {
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${label}, ${filled ? formatDay(value) : 'not set'}`}
+        accessibilityLabel={`${label}, ${filled ? text : 'not set'}`}
         style={[styles.input, styles.dayField, focused && styles.inputFocused]}>
         <Text variant="title" color={filled ? 'primary' : 'placeholder'}>
-          {filled ? formatDay(value) : placeholder}
+          {text}
         </Text>
       </Pressable>
       {hint ? (

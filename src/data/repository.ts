@@ -55,7 +55,8 @@ export async function countOpenBags(db: SQLiteDatabase): Promise<number> {
 
 /** What 3c's Bag form hands over (minimal set: name required, the rest optional). */
 /** photo: a kept photo's id (data/photos.ts), or null. process: null is "don't know". */
-export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; process?: Bag['process']; open: boolean; photo?: string | null };
+/** bestBefore: the best-before date (migration 9), a local midnight, or null. 3c takes one date; either may be set. */
+export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; bestBefore?: number | null; process?: Bag['process']; open: boolean; photo?: string | null };
 
 /**
  * Add a bag: opened now (3c "Open this bag"), or not yet (3c "Add without
@@ -65,10 +66,11 @@ export type NewBag = { name: string; roaster: string | null; roastedAt: number |
  */
 export async function insertBag(db: SQLiteDatabase, bag: NewBag): Promise<Bag> {
   if ((await countOpenBags(db)) >= OPEN_BAG_LIMIT) throw new Error(`All ${OPEN_BAG_LIMIT} slots are taken. Finish a bag to free one up.`);
-  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, process, opened_at, photo_uri) VALUES (?, ?, ?, ?, ?, ?)', [
+  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, best_before, process, opened_at, photo_uri) VALUES (?, ?, ?, ?, ?, ?, ?)', [
     bag.name,
     bag.roaster,
     bag.roastedAt,
+    bag.bestBefore ?? null,
     bag.process ?? null,
     bag.open ? Date.now() : null,
     bag.photo ?? null,
@@ -317,15 +319,15 @@ export async function reopenBag(db: SQLiteDatabase, id: number): Promise<void> {
 }
 
 /** What 3g (minimal, plus Process) edits. */
-export type BagEdit = { name: string; roaster: string | null; roastedAt: number | null; process: Bag['process']; openedAt: number | null };
+export type BagEdit = { name: string; roaster: string | null; roastedAt: number | null; bestBefore: number | null; process: Bag['process']; openedAt: number | null };
 
 /**
  * Save 3g. The cups logged from the bag carry copies of its details
  * (data-model.md, the copy rule); an edit rewrites those copies in the same
  * transaction (decided 2026-10-09, option B: "Edits apply to the N cups
  * already logged from this bag"). Refuses a roast or open date after the
- * first cup from the bag or in the future, and an open date before the
- * roast (the date sheets stop there too).
+ * first cup from the bag or in the future, an open date before the roast,
+ * and a best-before date before the roast (the date sheets stop there too).
  */
 export async function updateBag(db: SQLiteDatabase, id: number, edit: BagEdit): Promise<void> {
   const endOfToday = new Date(new Date().setHours(23, 59, 59, 999)).getTime();
@@ -336,10 +338,14 @@ export async function updateBag(db: SQLiteDatabase, id: number, edit: BagEdit): 
       if (at != null && at > latest) throw new Error("A date can't be after the first cup from this bag, or in the future.");
     }
     if (edit.roastedAt != null && edit.openedAt != null && edit.openedAt < edit.roastedAt) throw new Error("A bag can't be opened before it was roasted.");
-    await tx.runAsync('UPDATE bags SET name = ?, roaster = ?, roasted_at = ?, process = ?, opened_at = ? WHERE id = ?', [
+    // Best-before may be in the future or the past; only never before the roast.
+    if (edit.roastedAt != null && edit.bestBefore != null && edit.bestBefore < edit.roastedAt) throw new Error("A best-before date can't be before the roast date.");
+    // best_before is the bag's only: not copied onto cups (data-model.md "Best-before").
+    await tx.runAsync('UPDATE bags SET name = ?, roaster = ?, roasted_at = ?, best_before = ?, process = ?, opened_at = ? WHERE id = ?', [
       edit.name,
       edit.roaster,
       edit.roastedAt,
+      edit.bestBefore,
       edit.process,
       edit.openedAt,
       id,
@@ -940,4 +946,20 @@ export async function addSearchTerm(db: SQLiteDatabase, term: string): Promise<v
 /** "Clear": at once, no confirm (18a: a typed term is cheap to lose). */
 export async function clearSearchTerms(db: SQLiteDatabase): Promise<void> {
   await db.runAsync('DELETE FROM search_history');
+}
+
+/**
+ * The kind 3c's date sheet starts on (Design Round 27 B1, 29a): Roasted on
+ * by default, then whichever was chosen last, so a supermarket shopper flips
+ * it once. This phone's own (device table).
+ */
+export type BagDateKind = 'roasted' | 'bestBefore';
+
+export async function getBagDateKind(db: SQLiteDatabase): Promise<BagDateKind> {
+  const row = await db.getFirstAsync<{ bag_date_kind: BagDateKind | null }>('SELECT bag_date_kind FROM device WHERE id = 1');
+  return row?.bag_date_kind ?? 'roasted';
+}
+
+export async function setBagDateKind(db: SQLiteDatabase, kind: BagDateKind): Promise<void> {
+  await db.runAsync('UPDATE device SET bag_date_kind = ? WHERE id = 1', [kind]);
 }

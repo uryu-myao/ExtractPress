@@ -437,6 +437,17 @@ export const migrations: readonly Migration[] = [
     name: 'best-before date on bags',
     statements: [`ALTER TABLE bags ADD COLUMN best_before INTEGER`],
   },
+  {
+    /*
+     * 3c's date sheet remembers the kind last chosen (Design Round 27 B1,
+     * 29a): Roasted on by default, so a supermarket shopper flips it once.
+     * This phone's own (device). NULL: Roasted on. Its own migration, not
+     * folded into 9: a dev build may already have run 9.
+     */
+    version: 10,
+    name: "the date sheet's last kind",
+    statements: [`ALTER TABLE device ADD COLUMN bag_date_kind TEXT CHECK (bag_date_kind IN ('roasted', 'bestBefore'))`],
+  },
 ];
 
 /** The bookkeeping table. Created before any migration runs. */

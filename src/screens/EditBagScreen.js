@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import BagForm from '../components/BagForm';
 import BeanFreshness from '../components/BeanFreshness';
+import { bagDatesLine } from '../constants/bagDates';
 import DateSheet from '../components/DateSheet';
 import DiscardSheet from '../components/DiscardSheet';
 import PhotoSheet from '../components/PhotoSheet';
@@ -78,11 +79,11 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   const db = useDatabase();
   // The bag as stored: the title, the sub line and what counts as an edit.
   const [stored, setStored] = useState(bag);
-  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at, process: bag.process ?? null });
+  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at, bestBefore: bag.best_before ?? null, process: bag.process ?? null });
   const [openedAt, setOpenedAt] = useState(bag.opened_at);
   const cups = useFilteredCups(bagFilter(bag));
   const [nameMissing, setNameMissing] = useState(false);
-  // 'roasted' | 'opened' | 'discard' | 'delete' | null
+  // 'roasted' | 'bestBefore' | 'opened' | 'discard' | 'delete' | null
   const [sheet, setSheet] = useState(null);
   const [busy, setBusy] = useState(false);
   const [photoSheet, setPhotoSheet] = useState(false);
@@ -99,6 +100,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     name !== stored.name ||
     roaster !== (stored.roaster ?? null) ||
     form.roastedAt !== stored.roasted_at ||
+    form.bestBefore !== (stored.best_before ?? null) ||
     form.process !== (stored.process ?? null) ||
     openedAt !== stored.opened_at;
   useEffect(() => {
@@ -130,7 +132,8 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   const firstCupDay = firstCupAt != null ? startOfDay(new Date(firstCupAt)) : null;
   const cupLimit = firstCupDay ?? today;
   const openedDay = openedAt != null ? startOfDay(new Date(openedAt)) : null;
-  const roastMax = Math.min(cupLimit, openedDay ?? cupLimit);
+  // Never after the best-before date either (updateBag refuses it).
+  const roastMax = Math.min(cupLimit, openedDay ?? cupLimit, form.bestBefore ?? cupLimit);
   const firstCupLine = firstCupDay != null ? `${formatDay(firstCupDay)}, your first cup from it` : null;
   let roastedHint;
   if (openedDay != null && openedDay < cupLimit) roastedHint = `Up to ${formatDay(openedDay)}, the day it was opened.`;
@@ -147,9 +150,9 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     }
     setBusy(true);
     try {
-      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, process: form.process, openedAt });
+      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, bestBefore: form.bestBefore, process: form.process, openedAt });
       Keyboard.dismiss();
-      setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, process: form.process, opened_at: openedAt }));
+      setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, best_before: form.bestBefore, process: form.process, opened_at: openedAt }));
       setForm((f) => ({ ...f, name, roaster: roaster ?? '' }));
     } catch (error) {
       console.error('[3g] could not save', error);
@@ -188,9 +191,10 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   // Under the title, each fact after its own label (Uryu, 2026-10-28: a bare
   // "Blue Bottle · 250 g" hung there unexplained).
   const facts = [stored.roaster ? { label: 'Roaster', value: stored.roaster } : null, stored.size_g ? { label: 'Size', value: `${stored.size_g} g` } : null].filter(Boolean);
-  const dates = [form.roastedAt != null ? `Roasted ${formatDay(form.roastedAt)}` : null, openedAt != null ? `opened ${formatDay(openedAt)}` : null]
-    .filter(Boolean)
-    .join(' · ');
+  // The line under the status (Design Round 27, 29b): "Roasted Mar 30 · opened
+  // Apr 6 · best before Sep 30"; best-before only: "Best before Oct 1, 2027 ·
+  // opened Apr 6" (· "12 days ago" once passed).
+  const dates = bagDatesLine({ roasted_at: form.roastedAt, best_before: form.bestBefore, opened_at: openedAt });
   return (
     <View style={styles.screen}>
       <View style={styles.page}>
@@ -232,9 +236,9 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
                     {`Finished ${formatDay(stored.finished_at)}`}
                   </Text>
                 ) : !opened ? (
-                  <BeanFreshness sealed />
+                  <BeanFreshness roastedAt={form.roastedAt} bestBefore={form.bestBefore} sealed />
                 ) : (
-                  <BeanFreshness roastedAt={form.roastedAt} stacked />
+                  <BeanFreshness roastedAt={form.roastedAt} bestBefore={form.bestBefore} stacked />
                 )}
                 {dates ? (
                   <Text variant="bodySm" color="muted">
@@ -272,13 +276,22 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
                 }}
                 nameMissing={nameMissing}
                 autoFocusName={false}
-                roastedPlaceholder="Optional"
+                // Design Round 27 (29b): an empty date reads "Add".
+                roastedPlaceholder="Add"
                 roastedHint={roastedHint}
                 onPickDate={() => {
                   Keyboard.dismiss();
                   setSheet('roasted');
                 }}
                 datePicking={sheet === 'roasted'}
+                bestBefore={{
+                  value: form.bestBefore,
+                  picking: sheet === 'bestBefore',
+                  onPick: () => {
+                    Keyboard.dismiss();
+                    setSheet('bestBefore');
+                  },
+                }}
                 opened={
                   opened
                     ? {
@@ -344,6 +357,15 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
         value={form.roastedAt}
         maximum={new Date(roastMax)}
         onChange={(roastedAt) => setForm((f) => ({ ...f, roastedAt }))}
+      />
+      {/* Best before (29b): either side of today, never before the roast. The kind is fixed here: no switch. */}
+      <DateSheet
+        visible={sheet === 'bestBefore'}
+        onClose={() => setSheet(null)}
+        label="Best before"
+        value={form.bestBefore}
+        minimum={form.roastedAt != null ? new Date(form.roastedAt) : undefined}
+        onChange={(bestBefore) => setForm((f) => ({ ...f, bestBefore }))}
       />
       <DateSheet
         visible={sheet === 'opened'}

@@ -276,6 +276,8 @@ export const schema = {
     notices_version: { type: 'TEXT', nullable: true },
     /** 0 / 1: 6c's "Bag going stale" (stale and best-before reminders). Off until the user turns it on. */
     notify_stale: { type: 'INTEGER', nullable: false },
+    /** 3c's date sheet: the kind chosen last (migration 10; Design Round 27 B1). NULL: Roasted on. */
+    bag_date_kind: { type: 'TEXT', nullable: true, values: ['roasted', 'bestBefore'] },
   },
 } as const satisfies Record<string, Record<string, ColumnDef>>;
 

@@ -706,6 +706,16 @@ So a name stays a candidate for as long as any cup carries it. Removing it means
 
 ---
 
+## 37. Two deleted bags of the same supermarket coffee count as one (added 2026-11-11)
+
+**What**: 1b's and 6a's Bags (`countBags`, repository.ts) count every bag row, plus each **deleted** bag that cups still name. A deleted bag is told apart by the cups' copies: `bean_name` + `bean_roaster` + `bean_roasted_at`. Supermarket beans have no roast date, and `best_before` is not copied onto cups (`data-model.md`, Best-before). So the same coffee bought twice, both bags logged from and both deleted, counts as **one** bag.
+
+**Why it stays**: it needs two deletes of the same coffee, each with cups. Copying `best_before` onto cups only to tell them apart would add a CSV column for nothing a cup shows.
+
+**If the count ever looks short**, this is the first place to look.
+
+---
+
 ## Step 4 device verification — RESOLVED (2026-10-04)
 
 The base component library (Step 4) was checked in the web harness during the build. These items needed a real device and were confirmed on device by the author under Expo SDK 57.
