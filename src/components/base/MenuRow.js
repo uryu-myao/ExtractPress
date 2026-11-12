@@ -27,11 +27,14 @@ import Text from './Text';
  *   valueNote  after the value, in text.muted: 6a's "· 1 stale" (Round 26 C3)
  *   trailing  a control in the chevron's place (6c's switch); the row itself
  *          then doesn't press
+ *   subWraps  the sub line wraps instead of truncating to one line: a sub
+ *          that states a rule and must be read whole (6c's Bag reminders,
+ *          29d draws it on three lines)
  *
- * Props: icon (Glyph name), label, sub, value, valueNote, onPress, disabled,
- * destructive, chevron, external, trailing
+ * Props: icon (Glyph name), label, sub, subWraps, value, valueNote, onPress,
+ * disabled, destructive, chevron, external, trailing
  */
-export default function MenuRow({ icon: glyph, label, sub, value, valueNote, onPress, disabled = false, destructive = false, chevron = true, external = false, trailing }) {
+export default function MenuRow({ icon: glyph, label, sub, subWraps = false, value, valueNote, onPress, disabled = false, destructive = false, chevron = true, external = false, trailing }) {
   const pressable = Boolean(onPress);
   return (
     <Pressable
@@ -47,7 +50,7 @@ export default function MenuRow({ icon: glyph, label, sub, value, valueNote, onP
           {label}
         </Text>
         {sub ? (
-          <Text variant="bodySm" color="muted" truncate="meta">
+          <Text variant="bodySm" color="muted" truncate={subWraps ? 'none' : 'meta'}>
             {sub}
           </Text>
         ) : null}

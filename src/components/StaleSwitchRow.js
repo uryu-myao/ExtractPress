@@ -44,6 +44,7 @@ export default function StaleSwitchRow() {
         icon="bell"
         label="Bag reminders"
         sub={denied ? undefined : 'At 9:00, when a bag has been open 3 weeks, and a week before a best-before date'}
+        subWraps
         trailing={<Switch value={on} onValueChange={flip} disabled={denied} warnWhenDisabled accessibilityLabel="Bag reminders" />}
       />
       {denied ? (
