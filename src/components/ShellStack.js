@@ -22,8 +22,8 @@ import RecordsSearch from './RecordsSearch';
  * Screens pushed over the tabs AND the bottom bar (AppShell mounts this after
  * FooterNav): the mocks of 3d (My beans; 17c / 17d since Round 14), 3c (Add a bag), 3a (Add gear) and
  * 11a (Edit cup) draw no bar, and their footer buttons sat under it
- * (device, 2026-10-13). 2c stays inside Records, under the bar (its mock has
- * one). Screens ask with requestPush({ name, ... }) (navigation.js).
+ * (device, 2026-10-13). Since 2026-11-12 every 2c is here too, over the bar (Uryu). Screens
+ * ask with requestPush({ name, ... }) (navigation.js).
  *
  * A screen is pushed at most once (a quick double tap pushed 'addBag' twice,
  * 2026-10-13) — the same screen of the same thing: two bag pages can stack
@@ -43,9 +43,10 @@ import RecordsSearch from './RecordsSearch';
  *   addGear   3a
  *   editGear  3e, the gear page ({ gear }), from a gear row or a search
  *             result; a removal returns with 13b's notice ("‹name› removed.")
- *   cup       2c ({ id }), from a bag or gear page's cup rows, or search
- *             opened from them (Design Round 15, 19a). Records' own 2c
- *             stays inside Records, under the bar.
+ *   cup       2c ({ id }), from Records' rows and its search, 5c's "See
+ *             this record", Home's recently sipped (Uryu, 2026-11-12: no
+ *             global bar on the record page), and a bag or gear page's cup
+ *             rows or the search opened from them (Design Round 15, 19a)
  *   search    search with a block ({ filter }): a bag or gear page's "All N
  *             cups ›" (19a), in the archive's shape (18e)
  *   editCup   11a ({ cup }); a delete also closes the cup (in Records, or

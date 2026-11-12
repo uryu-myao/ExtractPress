@@ -8,10 +8,8 @@ import RecordsSearch, { SEARCH_PLACEHOLDER } from '../components/RecordsSearch';
 import { DEFAULT_GROUP, DEFAULT_SORT, arrangeCups } from '../constants/records';
 import { useDatabase } from '../data/DatabaseProvider';
 import { listCups, onCupsChanged } from '../data/repository';
-import { onCloseCupRequest, onOpenCupRequest, onTabLeave, onTabReset, requestPush, requestSortSheet } from '../navigation';
-import PushedScreen from '../components/PushedScreen';
+import { onOpenCupRequest, onTabLeave, onTabReset, requestPush, requestSortSheet } from '../navigation';
 import { color, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
-import CupRecordScreen from './CupRecordScreen';
 import ScreenFrame from './ScreenFrame';
 
 /**
@@ -35,10 +33,11 @@ import ScreenFrame from './ScreenFrame';
  * Each heading pins under the header until the next one pushes it up
  * (RecordGroup; Uryu, 2026-10-24).
  *
- * A row pushes the cup (2c, CupRecordScreen) over the list, which stays
- * mounted: Back, a swipe from the left edge, or the Records icon returns to it.
- * 2c's pencil asks ShellStack for 11a (over the bottom bar); a delete there
- * closes the cup here.
+ * A row opens the cup (2c, CupRecordScreen) through ShellStack ('cup'), over
+ * the tabs AND the bottom bar (Uryu, 2026-11-12: the record page shows no
+ * global bar; 2c's mock draws one). The list stays mounted under it: Back or
+ * a swipe from the left edge returns to it. 2c's pencil pushes 11a on top;
+ * a delete there closes both (ShellStack).
  *
  * No category chips since Design Round 15 ("2a: remove the chip row"):
  * search's Kind chips filter by mode (18a), and 2a is the archive itself,
@@ -55,10 +54,12 @@ import ScreenFrame from './ScreenFrame';
 const countFormat = new Intl.NumberFormat();
 const monthFormat = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
 
+/** 2c over the tabs and the bar (ShellStack 'cup'). */
+const openCup = (id) => requestPush({ name: 'cup', id });
+
 export default function RecordsScreen() {
   const db = useDatabase();
   const [cups, setCups] = useState(null);
-  const [openId, setOpenId] = useState(null);
   const [order, setOrder] = useState({ sort: DEFAULT_SORT, group: DEFAULT_GROUP });
   const [searching, setSearching] = useState(false);
   // The list's y in the page (where its headings start to pin).
@@ -78,19 +79,16 @@ export default function RecordsScreen() {
     return onCupsChanged(load);
   }, [load]);
 
-  // 5c's "See this record" opens the cup here; the Records icon pressed while
-  // a cup is open returns to the list (2026-10-12).
-  useEffect(() => onOpenCupRequest(setOpenId), []);
+  // 5c's "See this record" and Home's recently sipped open the cup, over
+  // everything (ShellStack), with Records under it.
+  useEffect(() => onOpenCupRequest(openCup), []);
   useEffect(
     () =>
       onTabReset((tab) => {
-        if (tab !== 'records') return;
-        setOpenId(null);
-        setSearching(false);
+        if (tab === 'records') setSearching(false);
       }),
     []
   );
-  useEffect(() => onCloseCupRequest(() => setOpenId(null)), []);
   // Leaving Records closes the search: coming back shows the list (Uryu,
   // 2026-10-28). An open cup stays, as before.
   useEffect(
@@ -104,7 +102,7 @@ export default function RecordsScreen() {
   return (
     <View style={styles.screen}>
       {searching ? (
-        <RecordsSearch onOpenCup={setOpenId} onCancel={() => setSearching(false)} />
+        <RecordsSearch onOpenCup={openCup} onCancel={() => setSearching(false)} />
       ) : (
         <ScreenFrame
           scroll
@@ -142,17 +140,12 @@ export default function RecordsScreen() {
             ) : null}
             {groups
               ? groups.map((group) => (
-                  <RecordGroup key={group.key} group={group} sort={order.sort} top={0} listY={listY} onOpen={setOpenId} />
+                  <RecordGroup key={group.key} group={group} sort={order.sort} top={0} listY={listY} onOpen={openCup} />
                 ))
               : null}
           </View>
         </ScreenFrame>
       )}
-      {openId != null ? (
-        <PushedScreen key={openId} onBack={() => setOpenId(null)}>
-          {(goBack) => <CupRecordScreen id={openId} onBack={goBack} onEdit={(cup) => requestPush({ name: 'editCup', cup })} />}
-        </PushedScreen>
-      ) : null}
     </View>
   );
 }
