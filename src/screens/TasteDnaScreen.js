@@ -6,10 +6,9 @@ import SectionLabel from '../components/base/SectionLabel';
 import Text from '../components/base/Text';
 import { DnaAxes, DnaStamp, dnaNoneLine } from '../components/TasteDnaCard';
 import { formatDay, daysSince } from '../constants/dates';
-import { TASTE_AXES } from '../constants/tasteAxes';
+import { axisById, STEP_WORDS, stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { loadDnaPage, onCupsChanged } from '../data/repository';
-import { bandOf } from '../data/tasteDna';
 import { requestDnaInfo, requestPush } from '../navigation';
 import { color, layout, shape, space, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
@@ -72,29 +71,30 @@ export function shiftedLabel(at) {
 }
 
 /**
- * The profile in words (Design Round 10, D12): band names only. Of the noted
- * axes, drop those in the middle band (Medium …, Balanced), keep the two
- * farthest from 50, farthest first; the first word capitalised, the rest
- * lowercase, joined by ", ". Ties keep the axes' order (ours). Null when no
- * axis is left.
+ * The profile in words. TODO(Turn 30, 31d): 31d's line is adjectives per
+ * axis ("Bright and sweet, light on bitterness": the two strongest and the
+ * weakest noted axes), which needs a word per axis and step that no board
+ * gives yet. Interim, mechanical and with no midpoint: the two strongest
+ * noted axes, then the weakest when a third is noted, each as "‹step word›
+ * ‹axis›" ("Bold acidity, medium body, light bitterness"). Ties keep the
+ * registry's order. Null when nothing is noted.
  */
 export function dnaSummary(dna) {
-  const words = TASTE_AXES.map((a) => ({ a, value: dna.axes[a.key].value }))
-    .filter(({ value }) => value != null && bandOf(value) !== MIDDLE_BAND)
-    .sort((x, y) => Math.abs(y.value - 50) - Math.abs(x.value - 50))
-    .slice(0, 2)
-    .map(({ a, value }) => a.steps[bandOf(value)].toLowerCase());
-  if (!words.length) return null;
+  const noted = TASTE_AXES.map((a) => ({ a, value: dna.axes[a.id].value }))
+    .filter(({ value }) => value != null)
+    .sort((x, y) => y.value - x.value);
+  if (!noted.length) return null;
+  const picked = noted.length > 2 ? [...noted.slice(0, 2), noted[noted.length - 1]] : noted;
+  const words = picked.map(({ a, value }) => `${stepWordOf(value).toLowerCase()} ${a.label.toLowerCase()}`);
   words[0] = words[0][0].toUpperCase() + words[0].slice(1);
   return words.join(', ');
 }
-const MIDDLE_BAND = 2;
 
 function shiftLines(shift) {
   const day = formatDay(shift.at);
   return shift.axes.map(({ axis, from, to }) => {
-    const a = TASTE_AXES.find((t) => t.key === axis);
-    return `${a.name} moved from ${a.steps[from]} to ${a.steps[to]} on ${day}.`;
+    const a = axisById(axis);
+    return `${a.label} moved from ${STEP_WORDS[from]} to ${STEP_WORDS[to]} on ${day}.`;
   });
 }
 

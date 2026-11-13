@@ -44,7 +44,8 @@ import { useKept } from './SearchSheet';
 const RecordDraftContext = createContext(null);
 
 const EMPTY_DEFAULTS = { bag: null, brewer: null, grinder: null, cafe: null, store: null };
-const EMPTY_AXES = { acidity: null, body: null, roast: null, sweetness: null };
+/** No axis noted: no key (cup_axes: not noted is no row). Clearing sets null, which writes nothing. */
+const EMPTY_AXES = {};
 
 /** [{ key, label, filled }] — what this cup needs before it can be saved (see above). */
 function requiredFields(mode, defaults, rating, productName, cafe) {

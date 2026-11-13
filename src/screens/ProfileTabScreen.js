@@ -11,11 +11,10 @@ import StaleSwitchRow from '../components/StaleSwitchRow';
 import { GEAR_LIMIT } from '../constants/gear';
 import { daysBetween } from '../constants/dates';
 import { APP_STORE_ID, PRIVACY_POLICY_URL, SUPPORT_EMAIL, appStoreReviewUrl, appStoreUrl } from '../constants/links';
-import { TASTE_AXES } from '../constants/tasteAxes';
+import { stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { shareBackup, shareCupsCsv } from '../data/export';
 import { OPEN_BAG_LIMIT, countGear, countOpenBags, countOwnRecords, countStaleBags, loadDnaPage, loadProfile, onCupsChanged, onShelfChanged } from '../data/repository';
-import { bandOf } from '../data/tasteDna';
 import { requestPush, requestResetDna, requestRestore } from '../navigation';
 import { color, dashed, layout, shape, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
@@ -166,7 +165,7 @@ function PersonalCard({ profile, now }) {
 }
 
 function DnaLink({ dna, shift }) {
-  const bands = TASTE_AXES.filter((a) => dna.axes[a.key].value != null).map((a) => a.steps[bandOf(dna.axes[a.key].value)]);
+  const bands = TASTE_AXES.filter((a) => dna.axes[a.id].value != null).map((a) => `${stepWordOf(dna.axes[a.id].value)} ${a.label.toLowerCase()}`);
   const stamp = dna.state === 'none' ? null : dna.state === 'locked' ? 'Locked in' : 'Early signs';
   const summary = dnaSummary(dna);
   const meta = [`Built from ${cupsLabel(dna.cups)}`, shift ? `last ${shiftedLabel(shift.at)}` : null].filter(Boolean).join(' · ');

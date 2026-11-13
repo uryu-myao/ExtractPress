@@ -1,8 +1,7 @@
 import { useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { formatDay } from '../constants/dates';
-import { TASTE_AXES } from '../constants/tasteAxes';
-import { bandOf } from '../data/tasteDna';
+import { stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { color, motion, shape, size, space, spacing, state as pressState } from '../theme/tokens';
 import AxisReadout, { AxisPoles } from './base/AxisReadout';
 import Badge from './base/Badge';
@@ -77,9 +76,10 @@ export function DnaStamp({ state, onPress }) {
 }
 
 /**
- * The four axes as the card draws them: pole labels over an AxisReadout.
- * Shared with 8f, which adds each axis's band name under its readout
- * (`bands`; meta, muted, as 8f): the step names of tasteAxes.js, from the
+ * The registry's axes as the card draws them: the name over an AxisReadout
+ * (interim until Turn 30's commit 2, 31b's one-line row). Shared with 8f,
+ * which adds each axis's step word under its readout (`bands`; meta, muted,
+ * as 8f): STEP_WORDS (tasteAxes.js), from the
  * same value, so a name can't disagree with its bar. An axis with nothing
  * noted has no band line: its readout already says "Not noted yet".
  */
@@ -87,12 +87,12 @@ export function DnaAxes({ dna, bands = false, style }) {
   return (
     <View style={[styles.axisList, style]}>
       {TASTE_AXES.map((axis) => {
-        const value = dna.axes[axis.key].value;
-        const band = value == null ? null : axis.steps[bandOf(value)];
+        const value = dna.axes[axis.id].value;
+        const band = stepWordOf(value);
         return (
-          <View key={axis.key} style={styles.axis}>
+          <View key={axis.id} style={styles.axis}>
             <AxisPoles axis={axis} />
-            <AxisReadout axis={axis.key} value={value} accessibilityLabel={`${axis.from} to ${axis.to}, ${band ?? 'not noted'}`} />
+            <AxisReadout axis={axis.id} value={value} accessibilityLabel={`${axis.label}, ${band ?? 'not noted'}`} />
             {bands && band ? (
               <Text variant="meta" color="muted" importantForAccessibility="no" accessibilityElementsHidden>
                 {band}

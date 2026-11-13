@@ -6,7 +6,7 @@
 // writer's own code), and every cell is compared with what it should be.
 // Runs with check:schema on every commit. Run: npm run check:csv
 import { CSV_HEADER, FLAVOUR_JOIN, cupsCsv, type CsvCup } from '../src/data/csv.ts';
-import { TASTE_AXES } from '../src/constants/tasteAxes.js';
+import { STEP_WORDS, TASTE_AXES } from '../src/constants/tasteAxes.js';
 
 const problems: string[] = [];
 const fail = (msg: string) => problems.push(msg);
@@ -66,7 +66,7 @@ function parse(text: string): string[][] {
 const base: CsvCup = {
   id: 0, logged_at: 0, mode: 'made_it', rating: 4, note: null, flavours: [],
   bean_name: null, bean_roaster: null, bean_origin: null, bean_region: null, bean_process: null, bean_roast_level: null, bean_roasted_at: null,
-  brew_method: null, grinder: null, axis_acidity: null, axis_body: null, axis_roast: null, axis_sweetness: null,
+  brew_method: null, grinder: null, axes: {},
   drink_type: null, place_name: null, product_name: null,
 };
 // Local times, as the sheet writes them.
@@ -77,13 +77,13 @@ const cups: CsvCup[] = [
     ...base, id: 3, logged_at: at(2026, 10, 28, 8, 20),
     bean_name: 'エチオピア グジ', bean_roaster: '丸山珈琲', bean_origin: 'Ethiopia', bean_region: 'Guji',
     bean_process: 'washed', bean_roast_level: 'medium-dark', bean_roasted_at: at(2026, 10, 21),
-    brew_method: 'Hario V60 02', grinder: 'Comandante C40', axis_acidity: 0, axis_body: 75,
+    brew_method: 'Hario V60 02', grinder: 'Comandante C40', axes: { acidity: 1, body: 4.5 },
     flavours: ['juicy', 'ベルガモット', 'stone fruit'],
     note: '明るい酸味, でも後味が "苦い"。\n2行目, comma\r\nCRLF line',
   },
-  { ...base, id: 1, logged_at: at(2026, 10, 1, 19, 5), rating: 2, note: '- too roasty', bean_name: '=SUM(A1)', bean_roaster: '@roaster', grinder: '\tTab', flavours: ['+bitter'], axis_roast: 100, axis_sweetness: 25 },
+  { ...base, id: 1, logged_at: at(2026, 10, 1, 19, 5), rating: 2, note: '- too roasty', bean_name: '=SUM(A1)', bean_roaster: '@roaster', grinder: '\tTab', flavours: ['+bitter'], axes: { bitterness: 5, sweetness: 2 } },
   { ...base, id: 2, logged_at: at(2026, 10, 10, 12), mode: 'barista', rating: 5, drink_type: 'Flat white', place_name: 'Fuglen, Tokyo', bean_roasted_at: at(2026, 10, 12) },
-  { ...base, id: 4, logged_at: at(2026, 10, 15, 7), mode: 'packaged', rating: 3, product_name: 'BOSS "Craft" Black', axis_acidity: 50, axis_body: 50, axis_roast: 50, axis_sweetness: 50 },
+  { ...base, id: 4, logged_at: at(2026, 10, 15, 7), mode: 'packaged', rating: 3, product_name: 'BOSS "Craft" Black', axes: Object.fromEntries(TASTE_AXES.map((a) => [a.id, 3])) },
 ];
 
 const text = cupsCsv(cups);
@@ -101,10 +101,11 @@ try {
 
 if (rows.length) {
   const [head, ...body] = rows;
-  if (head.length !== 27) fail(`header has ${head.length} columns, expected 27`);
+  const expected = 19 + 2 * TASTE_AXES.length;
+  if (head.length !== expected) fail(`header has ${head.length} columns, expected ${expected} (19 + two per axis)`);
   if (JSON.stringify(head) !== JSON.stringify(CSV_HEADER)) fail('header differs from CSV_HEADER');
   for (const a of TASTE_AXES) {
-    if (!head.includes(`${a.name} (0–100)`) || !head.includes(a.name)) fail(`axis ${a.key}: no value / step column pair`);
+    if (!head.includes(`${a.label} (1–5)`) || !head.includes(a.label)) fail(`axis ${a.id}: no value / step column pair`);
   }
   body.forEach((r, i) => r.length !== head.length && fail(`row ${i + 1} has ${r.length} cells, header ${head.length}`));
   if (body.length !== cups.length) fail(`${body.length} rows for ${cups.length} cups`);
@@ -132,10 +133,10 @@ if (rows.length) {
       Rating: cup.rating == null ? '' : String(cup.rating),
     };
     for (const a of TASTE_AXES) {
-      const v = cup[`axis_${a.key}` as keyof CsvCup] as number | null;
-      // Not noted: both cells empty. Never 0: 0 is "Very bright".
-      expect[`${a.name} (0–100)`] = v == null ? '' : String(v);
-      expect[a.name] = v == null ? '' : a.steps[v / 25];
+      const v = cup.axes[a.id] ?? null;
+      // Not noted: both cells empty. Never 1: 1 is a real, faint reading.
+      expect[`${a.label} (1–5)`] = v == null ? '' : String(v);
+      expect[a.label] = v == null ? '' : STEP_WORDS[Math.floor(v + 0.5) - 1];
     }
     for (const [name, want] of Object.entries(expect)) {
       const got = r[col(name)];

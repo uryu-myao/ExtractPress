@@ -161,9 +161,10 @@ Non-negotiable, and each one is a measured fact rather than a preference.
   - Stars are a sign that already means something across cultures, and the gold is part of that sign.
   - Turning them brown for uniformity would cost recognisability.
   - This is not an exception: the star brings its own vocabulary.
-- **The four taste axes have identity colours, `color.axis.*`, outside the three roles (Design Round 21, 23a; 2026-11-06).**
-  - Acid ↔ Bitter `#7C7D0F`, Body `#614A87`, Roast `#9D3D36`, Sweetness `#AE5A84`. They join the star: they say *which axis* and nothing else, not entered or computed, not in force, not good or bad.
-  - **Used for the four axes only**: AxisReadout's fill and its 12 × 4 key, AxisSlider's key, the change tags' key. No chart, chip, category or emphasis elsewhere. **Never as text**: labels stay `text.muted`.
+- **The taste axes have identity colours, `color.axis.*`, outside the three roles (Design Round 21, 23a; 2026-11-06; five since Turn 30, 31a, 2026-11-13).**
+  - Acidity `#7C7D0F` (Citron), Bitterness `#9D3D36` (Ember), Body `#614A87` (Plum), Sweetness `#AE5A84` (Rose), Aftertaste `#03665F` (Tide). One per entry in the axis registry (`src/constants/tasteAxes.js`), keyed by its `colorToken`; `check:dna` fails if the two disagree. They join the star: they say *which axis* and nothing else, not entered or computed, not in force, not good or bad.
+  - **Roast is not an axis and has no colour.** Bitterness inherits Ember's hue and nothing else (§12, 2026-11-13).
+  - **Used for the registered axes only**: AxisReadout's fill and its 12 × 4 key, AxisSlider's key, the change tags' key. No chart, chip, category or emphasis elsewhere. **Never as text**: labels stay `text.muted`.
   - Not taken from the palette, because every free hue there already has a job.
   - On a readout the fill says which axis; **the marker says what kind of value** (computed `text.muted`, entered `border.accent`).
 - **Why three (2026-10-08)**: "selected = ink" was imprecise.
@@ -219,7 +220,7 @@ Non-negotiable, and each one is a measured fact rather than a preference.
     - A confirm sheet for a delete has **no primary**: the delete is a secondary button with the red label, on top, at 56; "Keep it" sits under it at 52.
     - Undoing input in place is not destructive and stays ink: a field's clear ×, the axis's Clear, a filter's ×, Reset in Sort.
     - Confirmation and undo stay (`gaps.md` 18); the colour adds to them.
-    - `color.text.destructive` is used for nothing else. It sits beside `color.axis.roast` but never takes its forms (bar, key), and Roast never takes its form (words).
+    - `color.text.destructive` is used for nothing else. It sits beside `color.axis.bitterness` but never takes its forms (bar, key), and Bitterness never takes its form (words).
 - **Detail — a text-only action is underlined. Colour alone never tells pressable from not pressable (2026-10-09).** The means is the one `text.inlineAction` already defines (an inline text action = underline); size, weight and case follow the context. First use: the taste axis Clear. Twelve text-only actions in the mocks rely on colour alone (2b, 5d, 6d, 7b, 8c, 8e, 8f, 8h, 8l). They are not changed yet (report 2026-10-09).
 - **Scope of the next rule (2026-10-11)**: it is the rule for parts that are options themselves (chips, tags, segmented options). In a **single-select row that carries a marker** (the radio list), the **marker** shows selection (§9 Radio marker); the row itself needs no fill.
 - **An outline with no fill never means "selected" (checked 2026-10-09).**
@@ -317,7 +318,7 @@ Grouped by role. Every hex is a value that qualified **inside that role** (≥3 
 | `color.text.accentStrong` | `#8A4602` | 4 screens; paired with `accent`, used on tinted grounds |
 | ~~`color.text.link`~~ | ~~`#05639C`~~ | **Removed 2026-10-20**: its use was text actions, which are ink (§1 Tap affordance; Design's T-6 reply). Blue stays as `color.action.bg` / `state.pressed.action` (in force) |
 | `color.text.success` | `#4A6640` | 5 screens; "set", "done" confirmations |
-| `color.text.destructive` | `#B4153F` | **a command that deletes** (Design Round 24, 26a): its label, and the bin as `color.icon.destructive`. Never a fill, frame or shadow; nothing else (§1 Tap affordance). 5.82 on ground, 6.59 on raised, 4.74 on `state.pressed.surface`; ΔE00 9.2 from `axis.roast` |
+| `color.text.destructive` | `#B4153F` | **a command that deletes** (Design Round 24, 26a): its label, and the bin as `color.icon.destructive`. Never a fill, frame or shadow; nothing else (§1 Tap affordance). 5.82 on ground, 6.59 on raised, 4.74 on `state.pressed.surface`; ΔE00 9.2 from `axis.bitterness` |
 | `color.text.onInverse` | `#F4EDEA` | text on `#273D22` grounds |
 
 `#5C5049` / `#6B5D55` are **two deliberate tiers** (ΔE00 4.84, both qualifying in the same roles) — Gate A. Never merge them. Same for `#9E5202` / `#8A4602` (ΔE00 5.35).
@@ -382,9 +383,10 @@ The four axes only, never as text (§1 Colour roles). Contrast on track / card /
 | token | value | contrast |
 |---|---|---|
 | `color.axis.acidity` | `#7C7D0F` | 3.08 / 4.28 / 3.78 |
+| `color.axis.bitterness` | `#9D3D36` | 4.69 / 6.52 / 5.75 (was `axis.roast`, same hex) |
 | `color.axis.body` | `#614A87` | 5.21 / 7.24 / 6.40 |
-| `color.axis.roast` | `#9D3D36` | 4.69 / 6.52 / 5.75 |
 | `color.axis.sweetness` | `#AE5A84` | 3.22 / 4.47 / 3.95 |
+| `color.axis.aftertaste` | `#03665F` | 4.82 / 6.70 / 5.91 |
 
 ### Action
 | token | value | notes |
@@ -1409,3 +1411,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-11-09 — §3 `label.eyebrow` letter spacing 1.60 → 1.20 (.16em → .12em), on Uryu's ask: every eyebrow and section label (the tabs' eyebrows, Profile's MY SHELF / MY DATA, …) reads tighter. Still inside the mocks' range (10/.08–.16em). Not yet told to Design.
 - 2026-11-10 — §3 `title.caps` (13 / 700, .12em, uppercase; code `titleCaps`): the title beside Back on 8f and 8g, as 21a / 21d draw it, and on Licences (no board; the 8-series settings pages all draw it so). It never scales on collapse, the row only rises. Then, the same day, Uryu: **every page that isn't a tab** (every `ScreenFrame` `compact`: 2c, 3a, 3c, 3e / 3g, 3f, 5a Log a cup, 5b, 11a, 17c, 8f, 8g, Licences) takes it, though those boards draw `display.lg` (drift D-71). The tabs (Home, Records, Profile) and 5c's "Noted." keep `display.lg`.
 - 2026-11-09 — §9 AxisReadout: an empty axis's "Not noted yet" / "Not noted" in `text.placeholder` (was `text.muted`; Uryu on device: too dark beside the track, read as noise). 3.08:1 on raised, the 3:1 floor `border.medium` failed on 2026-10-09.
+- 2026-11-13 — **Token renamed: `color.axis.roast` → `color.axis.bitterness`, same hex `#9D3D36` (Turn 30, 31a).** Ember was picked as heat rather than bean, and char is what bitterness tastes of; it stays clear of brown ("a value I entered") and of `text.destructive` (ΔE00 9.2) as before. **Bitterness is a new dimension that merely inherits the hue — it is not roast renamed.** Bitterness comes from over-extraction as much as from roast level, which is why the two had to separate: roast level is now a fact of the bag (`bags.roast_level`), with no axis, no colour and no place in Taste DNA (`data-model.md` "Roast is not a taste axis"). **Token added: `color.axis.aftertaste`, Tide `#03665F`** (OKLCH L 0.46 · C 0.08 · h 187; 4.82:1 on the track; ΔE00 31.3–47.7 to the set, inside its 20.1–57.7 band; deuteranopia's nearest is Sweetness at 13.3, above the set's weakest pair, Acidity–Bitterness 11.7). The axes are now a registry (`src/constants/tasteAxes.js`): a new axis is one entry there plus one `color.axis.*` token. AxisReadout / AxisSlider run on the 1–5 scale as an interim until Turn 29 / 30's commits 2–3 rebuild them.

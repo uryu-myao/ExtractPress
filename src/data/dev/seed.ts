@@ -81,6 +81,12 @@ export function seedCupStatements(): SeedStatement[] {
             VALUES (?, ?, ?, ?, ?, ?)`,
       params: [3, at('2026-04-06T14:05:00+09:00'), 3, 'packaged', 'Boss Craft Black', 2],
     },
+    {
+      // Cup 1's tasting axes: three of five assessed, so two have no row
+      // (not noted is the absence of a row). 1 is a real, faint reading.
+      sql: `INSERT INTO cup_axes (cup_id, axis, value) VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)`,
+      params: [1, 'acidity', 4, 1, 'bitterness', 1, 1, 'sweetness', 3.5],
+    },
   ];
 }
 

@@ -1,4 +1,6 @@
 import { StyleSheet, View } from 'react-native';
+import { AXIS_SCALE } from '../../constants/tasteAxes';
+import { axisColor } from '../../theme/axisColor';
 import { color, size, space, spacing, textStyle } from '../../theme/tokens';
 import Text from './Text';
 
@@ -45,7 +47,7 @@ import Text from './Text';
  * The pole labels above it are AxisPoles, with the axis's AxisKey before the
  * left one, so the axis stays named at 50 and when not noted.
  *
- * Props: axis (a TASTE_AXES key), value 0–100 or null, tone, previous,
+ * Props: axis (a TASTE_AXES id), value 1–5 or null, tone, previous,
  * accessibilityLabel
  */
 const MARKER = {
@@ -54,26 +56,28 @@ const MARKER = {
 };
 const GHOST = color.border.muted;
 
-const span = (v) => ({ left: `${Math.min(50, v)}%`, width: `${Math.abs(v - 50)}%` });
+// TODO(Turn 30, commit 2): interim. The unipolar readout (31b: one line,
+// title column 88, fill from the left edge) replaces this component's look;
+// until then the 1–5 value is drawn from the left edge on the old frame.
+/** A 1–5 reading as a share of the track, 1 at the left edge. */
+const pct = (v) => ((v - AXIS_SCALE.min) / (AXIS_SCALE.max - AXIS_SCALE.min)) * 100;
+const span = (v) => ({ left: 0, width: `${pct(v)}%` });
 
 /** The axis's 12 × 4 colour key (Round 21): decorative, so never read out. */
 export function AxisKey({ axis, style }) {
-  return <View style={[styles.key, { backgroundColor: color.axis[axis] }, style]} importantForAccessibility="no" accessibilityElementsHidden />;
+  return <View style={[styles.key, { backgroundColor: axisColor(axis) }, style]} importantForAccessibility="no" accessibilityElementsHidden />;
 }
 
-/** "[key] Acid ……… Bitter": the pole labels over a readout, the key gap.row before the left one. */
+/** "[key] Acidity": the axis's name over a readout (interim: the axes are unipolar, so there are no poles; 31b drops this line in commit 2). */
 export function AxisPoles({ axis }) {
   return (
     <View style={styles.poles}>
       <View style={styles.from}>
-        <AxisKey axis={axis.key} />
+        <AxisKey axis={axis.id} />
         <Text variant="labelCaps" color="muted">
-          {axis.from}
+          {axis.label}
         </Text>
       </View>
-      <Text variant="labelCaps" color="muted">
-        {axis.to}
-      </Text>
     </View>
   );
 }
@@ -85,10 +89,10 @@ export default function AxisReadout({ axis, value, tone = 'computed', previous =
     <View style={styles.box} accessible accessibilityLabel={accessibilityLabel}>
       <View style={styles.track}>
         {previous != null ? <View style={[styles.fill, span(previous), { backgroundColor: GHOST }]} /> : null}
-        {has ? <View style={[styles.fill, span(value), { backgroundColor: color.axis[axis] }]} /> : null}
+        {has ? <View style={[styles.fill, span(value), { backgroundColor: axisColor(axis) }]} /> : null}
       </View>
-      {previous != null ? <View style={[styles.marker, { left: `${previous}%`, backgroundColor: GHOST }]} /> : null}
-      {has ? <View style={[styles.marker, { left: `${value}%`, backgroundColor: MARKER[tone] }]} /> : null}
+      {previous != null ? <View style={[styles.marker, { left: `${pct(previous)}%`, backgroundColor: GHOST }]} /> : null}
+      {has ? <View style={[styles.marker, { left: `${pct(value)}%`, backgroundColor: MARKER[tone] }]} /> : null}
       {has ? null : (
         <View style={styles.emptyLabel} pointerEvents="none">
           <Text variant="meta" color="placeholder" style={styles.patch}>

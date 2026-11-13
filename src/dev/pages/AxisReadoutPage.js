@@ -14,7 +14,7 @@ function Row({ label, axis = TASTE_AXES[0], ...p }) {
   return (
     <View style={styles.row}>
       <AxisPoles axis={axis} />
-      <AxisReadout axis={axis.key} {...p} />
+      <AxisReadout axis={axis.id} {...p} />
       {label ? (
         <Text variant="meta" color="muted">
           {label}
@@ -27,34 +27,33 @@ function Row({ label, axis = TASTE_AXES[0], ...p }) {
 export default function AxisReadoutPage() {
   return (
     <HarnessPage>
-      <HarnessGroup title="the four axis colours (computed)">
-        <HarnessCase label="26 · 62 · 30 · 70">
-          <Row axis={TASTE_AXES[0]} value={26} />
-          <Row axis={TASTE_AXES[1]} value={62} />
-          <Row axis={TASTE_AXES[2]} value={30} />
-          <Row axis={TASTE_AXES[3]} value={70} />
+      <HarnessGroup title="the axis colours, one per registered axis (computed)">
+        <HarnessCase label="2 · 3.5 · 1.5 · 4 · 5 (interim frame until commit 2)">
+          {TASTE_AXES.map((axis, i) => (
+            <Row key={axis.id} axis={axis} value={[2, 3.5, 1.5, 4, 5][i % 5]} />
+          ))}
         </HarnessCase>
       </HarnessGroup>
       <HarnessGroup title="computed (1b / 4a / 4b / 8f): marker text.muted">
-        <HarnessCase label="26 · 62 · 50 · null">
-          <Row value={26} />
-          <Row value={62} />
-          <Row value={50} />
+        <HarnessCase label="1 · 3.5 · 5 · null">
+          <Row value={1} />
+          <Row value={3.5} />
+          <Row value={5} />
           <Row value={null} label="Not noted" />
         </HarnessCase>
       </HarnessGroup>
       <HarnessGroup title="entered (2c, 11a: this cup's own values): marker border.accent">
-        <HarnessCase label="26 · 62 · 50 · null">
-          <Row tone="entered" value={26} />
-          <Row tone="entered" value={62} />
-          <Row tone="entered" value={50} />
+        <HarnessCase label="1 · 3.5 · 5 · null">
+          <Row tone="entered" value={1} />
+          <Row tone="entered" value={3.5} />
+          <Row tone="entered" value={5} />
           <Row tone="entered" value={null} label="Not noted" />
         </HarnessCase>
       </HarnessGroup>
       <HarnessGroup title="5c per §9: both computed (profile before → after)">
-        <HarnessCase label="44 → 38 (away from 50) · 30 → 36 (toward 50)">
-          <Row previous={44} value={38} />
-          <Row previous={30} value={36} />
+        <HarnessCase label="3.4 → 3.1 (down) · 2 → 2.3 (up)">
+          <Row previous={3.4} value={3.1} />
+          <Row previous={2} value={2.3} />
         </HarnessCase>
       </HarnessGroup>
     </HarnessPage>

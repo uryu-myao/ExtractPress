@@ -5,6 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { seedStatements } from '../src/data/dev/seed.ts';
 import { MIGRATIONS_TABLE, migrations, type MigrationDb } from '../src/data/migrations.ts';
 import { changeOf, dnaCupFromRow, type DnaCup } from '../src/data/tasteDna.ts';
+import { axesJsonSql } from '../src/data/cupAxes.ts';
 import { schema } from '../src/data/schema.ts';
 
 const problems: string[] = [];
@@ -32,7 +33,7 @@ for (const m of migrations) {
 }
 
 type Info = { name: string; type: string; notnull: number; pk: number };
-type Fk = { from: string; table: string };
+type Fk = { from: string; table: string; on_delete: string };
 const tables = db.prepare(`SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT IN ('schema_migrations') AND name NOT LIKE 'sqlite_%'`).all() as { name: string; sql: string }[];
 
 const declared = Object.keys(schema);
@@ -57,6 +58,7 @@ for (const { name: table, sql } of tables) {
     if (Boolean(c.pk) !== Boolean(d.pk)) fail(`${table}.${c.name}: primary key mismatch`);
     const fk = fks.find((f) => f.from === c.name);
     if ((fk?.table ?? undefined) !== d.references) fail(`${table}.${c.name}: references ${fk?.table} ≠ ${d.references}`);
+    if (fk && fk.on_delete !== (d.onDelete ?? 'no action').toUpperCase()) fail(`${table}.${c.name}: ON DELETE ${fk.on_delete} ≠ schema.ts ${d.onDelete ?? 'no action'}`);
     if (d.values) {
       const m = sql.match(new RegExp(`${c.name}\\s+[^,]*?CHECK\\s*\\(\\s*${c.name}\\s+IN\\s*\\(([^)]*)\\)`));
       const got = m ? m[1].split(',').map((s) => s.trim().replace(/^'|'$/g, '')) : [];
@@ -95,8 +97,17 @@ rejects('bag notes not an array', `INSERT INTO bags (name, notes) VALUES ('x', '
 rejects('flavours not an array', `INSERT INTO cups (rating, mode, flavours) VALUES (3, 'made_it', '"jasmine"')`);
 rejects('six flavours', `INSERT INTO cups (rating, mode, flavours) VALUES (3, 'made_it', '["a","b","c","d","e","f"]')`);
 accepts('five flavours', `INSERT INTO cups (rating, mode, flavours) VALUES (3, 'made_it', '["a","b","c","d","e"]')`);
-rejects('axis above 100', `INSERT INTO cups (rating, mode, axis_body) VALUES (3, 'made_it', 101)`);
-rejects('axis below 0', `INSERT INTO cups (rating, mode, axis_roast) VALUES (3, 'made_it', -1)`);
+// cup_axes (migration 11): 1–5 in halves, one row per cup and axis, gone with its cup.
+db.exec(`INSERT INTO cups (id, rating, mode) VALUES (900, 3, 'made_it')`);
+for (const v of [1, 1.5, 3, 4.5, 5]) accepts(`axis value ${v}`, `INSERT INTO cup_axes (cup_id, axis, value) VALUES (900, 'v${v}', ${v})`);
+for (const v of ['3.7', '0.5', '5.5', '0', '-1', '2.25', "'high'", 'NULL'])
+  rejects(`axis value ${v}`, `INSERT INTO cup_axes (cup_id, axis, value) VALUES (900, 'acidity', ${v})`);
+accepts('axis value as text that is a stop (REAL affinity)', `INSERT INTO cup_axes (cup_id, axis, value) VALUES (900, 'acidity', '2.5')`);
+rejects('a second row for the same cup and axis', `INSERT INTO cup_axes (cup_id, axis, value) VALUES (900, 'acidity', 3)`);
+rejects('axis rows for a cup that is not there', `INSERT INTO cup_axes (cup_id, axis, value) VALUES (999, 'acidity', 3)`);
+accepts('any axis id (the registry decides, not a CHECK list)', `INSERT INTO cup_axes (cup_id, axis, value) VALUES (900, 'a-sixth-axis', 3)`);
+db.exec('DELETE FROM cups WHERE id = 900');
+if ((db.prepare('SELECT COUNT(*) AS n FROM cup_axes WHERE cup_id = 900').get() as { n: number }).n !== 0) fail('cup_axes: rows outlived their cup (no cascade)');
 rejects('copied bean process outside the list', `INSERT INTO cups (rating, mode, bean_process) VALUES (3, 'made_it', 'other')`);
 rejects('unknown gear category', `INSERT INTO gear (name, category) VALUES ('x', 'tamper')`);
 rejects('two default grinders', `INSERT INTO gear (name, category, is_default) VALUES ('g2', 'grinder', 1)`);
@@ -152,51 +163,87 @@ if (!row.created_at || row.logged_at !== row.created_at) fail('a minimal cup (ra
   if (fresh.logged_at !== fresh.created_at) fail('upgrade: logged_at no longer defaults to created_at');
 }
 
-// Migration 3's replay: a version-2 database with cups, then migration 3.
-// Each cup's dna_change must equal changeOf() at its own logged time, the
-// replay must give the same bytes twice (deterministic: no clock), and an
-// existing user is marked past setup.
+// Migration 3 on a version-2 database: an existing user is marked past setup.
+// (Its dna_change replay was retired; migration 11 replays, tested below.)
+{
+  const d = new DatabaseSync(':memory:');
+  d.exec('PRAGMA foreign_keys = ON');
+  d.exec(MIGRATIONS_TABLE);
+  for (const m of migrations.slice(0, 2)) {
+    d.exec('BEGIN');
+    for (const sql of m.statements) d.exec(sql);
+    d.exec('COMMIT');
+  }
+  d.exec(`INSERT INTO cups (id, rating, mode) VALUES (1, 4, 'made_it')`);
+  d.exec('BEGIN');
+  for (const sql of migrations[2].statements) d.exec(sql);
+  d.exec('COMMIT');
+  const setup = d.prepare('SELECT setup_done FROM settings').get() as { setup_done: number };
+  if (setup.setup_done !== 1) fail('migration 3: an existing user should be marked past setup');
+}
+
+// Migration 11: a version-10 database with cups on the old bipolar columns.
+// Only Body and Sweetness carry over (0–100 → 1–5, nearest whole step);
+// Acidity and Roast become not noted (no row); the columns are gone; every
+// dna_change is replayed on the new scale, deterministically, with the
+// reset rule insertCup uses.
 {
   const DAY = 86400000;
-  const v2 = async () => {
+  const t0 = 1760000000000;
+  const v10 = async () => {
     const d = new DatabaseSync(':memory:');
     d.exec('PRAGMA foreign_keys = ON');
     d.exec(MIGRATIONS_TABLE);
-    for (const m of migrations.slice(0, 2)) {
+    for (const m of migrations.slice(0, 10)) {
       d.exec('BEGIN');
       for (const sql of m.statements) d.exec(sql);
+      if (m.backfill) await m.backfill(asMigrationDb(d));
       d.exec('COMMIT');
     }
-    const t0 = 1760000000000;
-    d.exec(`INSERT INTO cups (id, rating, mode, logged_at, created_at, axis_acidity, axis_body, flavours) VALUES
-      (1, 4, 'made_it', ${t0}, ${t0}, 25, NULL, '["Peach"]'),
-      (2, NULL, 'made_it', ${t0 + DAY}, ${t0 + DAY}, 0, NULL, '[]'),
-      (3, 2, 'made_it', ${t0 + 40 * DAY}, ${t0 + 40 * DAY}, 75, 50, '["Smoke","Juicy"]'),
-      (4, 5, 'barista', ${t0 + 40 * DAY}, ${t0 + 40 * DAY}, NULL, NULL, '[]')`);
+    d.exec(`INSERT INTO cups (id, rating, mode, logged_at, created_at, axis_acidity, axis_body, axis_roast, axis_sweetness, flavours, dna_change) VALUES
+      (1, 4, 'made_it', ${t0}, ${t0}, 25, 30, 75, 100, '["Peach"]', '{"before":{},"after":{}}'),
+      (2, NULL, 'made_it', ${t0 + DAY}, ${t0 + DAY}, 0, NULL, NULL, 0, '[]', NULL),
+      (3, 2, 'made_it', ${t0 + 40 * DAY}, ${t0 + 40 * DAY}, 75, 50, 100, NULL, '["Smoke","Juicy"]', NULL),
+      (4, 5, 'barista', ${t0 + 40 * DAY}, ${t0 + 40 * DAY}, NULL, NULL, NULL, NULL, '[]', NULL),
+      (5, 5, 'made_it', ${t0 + 60 * DAY}, ${t0 + 60 * DAY}, NULL, 100, NULL, 50, '[]', NULL)`);
+    d.exec(`UPDATE settings SET reset_at = ${t0 + 50 * DAY}`);
     d.exec('BEGIN');
-    for (const sql of migrations[2].statements) d.exec(sql);
-    await migrations[2].backfill!(asMigrationDb(d));
+    for (const sql of migrations[10].statements) d.exec(sql);
+    await migrations[10].backfill!(asMigrationDb(d));
     d.exec('COMMIT');
     return d;
   };
-  const a = await v2();
-  const b = await v2();
-  const rows = a.prepare('SELECT id, rating, logged_at, axis_acidity, axis_body, axis_roast, axis_sweetness, flavours, dna_change FROM cups ORDER BY logged_at, id').all() as any[];
+  const a = await v10();
+  const b = await v10();
+  const axes = a.prepare('SELECT cup_id, axis, value FROM cup_axes ORDER BY cup_id, axis').all() as { cup_id: number; axis: string; value: number }[];
+  const want = [
+    [1, 'body', 2], [1, 'sweetness', 5], [2, 'sweetness', 1], [3, 'body', 3], [5, 'body', 5], [5, 'sweetness', 3],
+  ];
+  if (JSON.stringify(axes.map((r) => [r.cup_id, r.axis, r.value])) !== JSON.stringify(want))
+    fail(`migration 11: cup_axes ${JSON.stringify(axes)} ≠ ${JSON.stringify(want)}`);
+  const cols = (a.prepare('PRAGMA table_info(cups)').all() as { name: string }[]).map((c) => c.name);
+  if (cols.some((c) => c.startsWith('axis_'))) fail(`migration 11: cups still has ${cols.filter((c) => c.startsWith('axis_'))}`);
+  const rows = a.prepare(`SELECT c.id, c.rating, c.logged_at, c.flavours, ${axesJsonSql('c')} AS axes, c.dna_change FROM cups c ORDER BY c.logged_at, c.id`).all() as any[];
   const again = b.prepare('SELECT dna_change FROM cups ORDER BY logged_at, id').all() as { dna_change: string }[];
+  const resetAt = t0 + 50 * DAY;
   const earlier: DnaCup[] = [];
   rows.forEach((row, i) => {
     const cup = dnaCupFromRow(row);
-    const want = JSON.stringify(changeOf(earlier, cup));
-    if (row.dna_change !== want) fail(`replay: cup ${row.id} dna_change ${row.dna_change} ≠ ${want}`);
-    if (again[i].dna_change !== row.dna_change) fail(`replay: not deterministic for cup ${row.id}`);
+    const expected = JSON.stringify(changeOf(earlier, cup, cup.logged_at >= resetAt ? resetAt : null));
+    if (row.dna_change !== expected) fail(`migration 11 replay: cup ${row.id} dna_change ${row.dna_change} ≠ ${expected}`);
+    if (again[i].dna_change !== row.dna_change) fail(`migration 11 replay: not deterministic for cup ${row.id}`);
     earlier.push(cup);
   });
   const first = JSON.parse(rows[0].dna_change);
-  if (first.before.acidity.value !== null || first.after.acidity.n !== 1) fail(`replay: cup 1 should start from nothing, got ${rows[0].dna_change}`);
+  if (first.before.body.value !== null || first.after.body.value !== 2 || first.after.body.n !== 1 || 'roast' in first.after)
+    fail(`migration 11 replay: cup 1 should start from nothing on the 1–5 scale, no roast key; got ${rows[0].dna_change}`);
   const unrated = JSON.parse(rows[1].dna_change);
-  if (JSON.stringify(unrated.before) !== JSON.stringify(unrated.after)) fail('replay: an unrated cup must not move the profile');
-  const setup = a.prepare('SELECT setup_done FROM settings').get() as { setup_done: number };
-  if (setup.setup_done !== 1) fail('migration 3: an existing user should be marked past setup');
+  if (JSON.stringify(unrated.before) !== JSON.stringify(unrated.after)) fail('migration 11 replay: an unrated cup must not move the profile');
+  const afterReset = JSON.parse(rows[4].dna_change);
+  if (afterReset.before.body.value !== null || afterReset.after.body.value !== 5) fail(`migration 11 replay: a cup after the reset should count from the reset; got ${rows[4].dna_change}`);
+  // Restoring a version-10 backup runs the same migration (backupFormat.rebuild); deleting a cup takes its rows.
+  a.exec('DELETE FROM cups WHERE id = 1');
+  if ((a.prepare('SELECT COUNT(*) AS n FROM cup_axes WHERE cup_id = 1').get() as { n: number }).n !== 0) fail('migration 11: deleting a cup left its cup_axes rows');
 }
 {
   const fresh = db.prepare('SELECT setup_done, reset_at FROM settings').get() as { setup_done: number; reset_at: number | null };

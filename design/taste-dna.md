@@ -2,6 +2,18 @@
 
 First read from the screens (2026-10-11), then decided by Uryu the same day. The decisions come first; the reading follows as the record of where they came from.
 
+## Five unipolar axes (2026-11-13, Turn 29 / 30)
+
+Supersedes the four bipolar 0–100 axes wherever this file still describes them (items 6, 8, 9 and "Properties" are updated below; older text is history).
+
+- **The axes are the registry's** (`src/constants/tasteAxes.js`): Acidity, Bitterness, Body, Sweetness, Aftertaste, in that order. The engine (`tasteDna.ts`) iterates it and never lists or counts axes, so a new axis needs no engine edit.
+- **Unipolar, 1 (faint) to 5 (strong), in halves.** Stored in `cup_axes`; not noted is the absence of a row (`data-model.md` "cup_axes").
+- **No midpoint anywhere.** 1 is a real, low reading; 3 is "Medium", not "balanced"; nothing is pre-set to it. What the bipolar arithmetic assumed and was rewritten, not rescaled: the band edges around 50 (now the nearest whole number), the summary that dropped the "middle band" and ranked by distance from 50 (8f; interim until 31d's wording), the readout that filled from 50 (AxisReadout, commit 2), the slider's empty handle resting at Balanced (now at 1), and the word table's positions (item 6).
+- **Steps** (31d): Faint · Light · Medium · Bold · Strong, by the nearest whole number; a half belongs to the step above (1.5 → Light). A profile is never shown as a number.
+- **Roast is not an axis**, and the bag's roast level never enters the profile (`data-model.md` "Roast is not a taste axis"). Item 9 below stands with that.
+- **Stored snapshots** (`dna_change`) keep three decimals on 1–5. Migration 11 replayed every cup's once on the new scale.
+- **Change tags (31e)**: the change on 1–5, **rounded to 0.1, signed** ("Acidity +0.2", "Bitterness −0.1", a true minus); **under 0.05, no tag**. 0.1 is a fortieth of the scale (the old tags' 2.5 points): a real nudge shows, while "+0.04", a precision nine stops can't carry, never does. Computed in whole thousandths from the snapshots, halves away from zero, so ±0.05 both tag and float error cannot tip it (`changeDeltas`, checked by `check:dna`). A first reading is "‹Axis› starts at ‹step›", no number.
+
 ## Decided (2026-10-11)
 
 1. **Rating weight** (confidence, never direction): 5★ 3.0 · 4★ 2.0 · 3★ 1.0 · 2★ 0.5 · 1★ 0.25. Unrated cups are ignored. Low ratings still count: an axis records what was perceived, not what was liked. No half stars; 8g's "4.5" only illustrates that weighting exists.
@@ -14,7 +26,8 @@ First read from the screens (2026-10-11), then decided by Uryu the same day. The
 5. **Recompute**: the profile is computed on read (never stored). **5c's change and 8f's shifts are stored at save time** (`cups.dna_change`, migration 3) and never recomputed, so editing a cup or changing the decay does not rewrite history. `gaps.md` 21 closed. Existing cups: replayed once in the migration (`data-model.md`).
 6. **Words → axes: the ten bundled flavour words only.** **My words never shape the profile** (decided 2026-10-31, Uryu; was "not in V1"). It is a division of roles, not a limit: flavour tags are picked from a set and describe the taste; My words is a free memo to read back (Uryu's My words are free memos, close to a diary (brewing reminders, things beyond taste), with no words used over and over). There is no "Read my words" setting. User-added flavour words have no entry. A word is a weak record: an observation at a step value, strength at most 0.4 of one slider record, and it never counts toward lock-in.
    - **Criterion**: when the word comes up, the axis leans predictably, **one way**. Not "they often appear together". The strength follows how sure the association is. (Smoke → bitter fails: dark roasts can be un-bitter.)
-   - **The table (final, 2026-10-11)**; Acid ↔ Bitter: 0 = acid:
+   - **On the 1–5 scale since 2026-11-13** (`DNA_TUNING.words`): moved, not re-decided. Acidity's 0 / 25 (Very bright / Bright on Acid ↔ Bitter) became 5 / 4; Body's 25 became 2; Sweetness's 75 became 4. **Cocoa, Walnut and Smoke leaned on Roast, which is gone: no entry for now.** None was moved onto Bitterness, since the criterion below already rejects Smoke → bitter. **Open for Uryu**: whether Cocoa or Walnut leans one way on Bitterness or Body.
+   - **The table (final, 2026-10-11, on the old scale)**; Acid ↔ Bitter: 0 = acid:
 
      | Word | Effect (value, strength) |
      |---|---|
@@ -36,7 +49,7 @@ First read from the screens (2026-10-11), then decided by Uryu the same day. The
      - **How**: when an axis's words exceed the cap, every word on that axis is scaled by one factor, so their relative strengths (Grapefruit 0.4 : Jasmine 0.2) never change. With no slider record on an axis, words alone give it no value.
    - **These numbers are starting values.** If the profile disagrees with how real use feels, adjust this table first. The 90-day half-life and the rating weights are the same kind of number. All three live in one place in code (`DNA_TUNING`, `src/data/tasteDna.ts`); never scatter them.
 7. **Reset**: a stored `reset_at`; only cups after it count. Cups are never deleted; Records keeps all of them. The column comes with the migration. **Built 2026-11-09** (6b's row in My data, a confirmation sheet, no undo): `reset_at` is the moment of the reset; lock-in counts start again from zero, so the profile is empty ("none") until a cup with a note, then Early signs. Stored changes (`dna_change`) are not touched: 2c shows a pre-reset cup's change as it was, under "Fed my taste DNA", then below a dashed soft divider "Logged before the reset on Nov 10, so it isn't in my taste DNA now." While the profile is empty after a reset, Home's card and 8f say "Starting again from Nov 10. Rate a cup and note one taste." instead of the new-user line. Confirming shows 13b's notice, "Taste DNA reset." (Design Round 25, built 2026-11-10).
-8. **Band names**: the five slider steps, edges at 12.5 / 37.5 / 62.5 / 87.5 (0–12.5 Very bright, … 87.5–100 Very bitter), so input steps and display bands match.
+8. **Band names**: the five slider steps, edges at 12.5 / 37.5 / 62.5 / 87.5 (0–12.5 Very bright, … 87.5–100 Very bitter), so input steps and display bands match. *Since 2026-11-13: the step words Faint … Strong by the nearest whole number on 1–5 (above).*
 9. **The bag's roast level does not feed the Roast axis**: it is the roaster's claim, the axis is the drinker's perception.
 10. **Thresholds**: 10 = lock-in (D-47). Try next's opening count is **not decided** (2026-10-31, Uryu): the mocks' 5 has no reason left (below), so it is out of the code and copy until Try next is built (`todo.md` T-14).
 
@@ -48,7 +61,7 @@ Checked on every commit with `check:schema` (`scripts/check-dna.ts`, run by the 
    - **This depends on the shape of the decay.** Switching to a linear decay, or to a window such as "the last N days only", breaks it, and the profile then moves every day. A weight floor (clamp), or rounding or normalising the weights, breaks it the same way. When the decay is changed, the check fails, so the change cannot go unnoticed. (Verified: a 0.01 weight floor, a 730-day window, linear decay, weights rounded to 0.001 and hyperbolic decay each fail it; a one-day shift moved the values by 1e-3 to 1e-2, too little for anyone to notice by eye.)
    - **This is what makes 8f's "shifted N days ago" possible**: because the profile only moves when cups are recorded, "the day it last moved" is a well-defined date.
    - Floating point: shifting "today" by 1 / 30 / 365 days moves a value by at most ~1e-13, far below the 0.1 the snapshots keep.
-2. **Every axis value stays within 0–100.** A weighted average never leaves the range of its inputs, however large the weights or the cup count. Words sit at 0 / 25 / 50 / 75 / 100 and the 1/3 cap only scales them by a factor ≤ 1, so they cannot push a value out either. Floating point can land one ulp outside (100.00000000000003 with the cap applied); nothing displays or rounds it differently (`bandOf` gives the last step, snapshots round to 100).
+2. **Every axis value stays within 0–100** (*1–5 since 2026-11-13; the argument is unchanged*). A weighted average never leaves the range of its inputs, however large the weights or the cup count. Words sit at 0 / 25 / 50 / 75 / 100 and the 1/3 cap only scales them by a factor ≤ 1, so they cannot push a value out either. Floating point can land one ulp outside (100.00000000000003 with the cap applied); nothing displays or rounds it differently (`bandOf` gives the last step, snapshots round to 100).
 3. **Band edges**: 0 is the first step (Very bright), 100 the last (Very bitter); every value falls in exactly one band, edges belonging to the band above (12.5 → Bright).
 
 **Not a property, a behaviour to watch (2026-10-19, numbers only)**: a cup a year old weighs 1/16.6 of today's at the 90-day half-life, but enough of them still outweigh a few recent cups. 100 cups a year ago at 0 against 5 cups in the last month at 100, all 4★:

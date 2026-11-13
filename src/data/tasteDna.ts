@@ -1,14 +1,21 @@
 /**
  * Taste DNA: arithmetic on logged cups (design/taste-dna.md, decided
- * 2026-10-11). Pure functions, no I/O, so the app and migration 3's replay
- * (and scripts/check-schema.ts under node) share one implementation.
+ * 2026-10-11; five unipolar axes since 2026-11-13, Turn 29 / 30). Pure
+ * functions, no I/O, so the app, migration 11's replay and the node checks
+ * share one implementation.
+ *
+ * The axes are the registry's (src/constants/tasteAxes.js): this file never
+ * lists or counts them. Each is unipolar, 1 (faint) to 5 (strong); 1 is a
+ * real low reading. There is no midpoint and no neutral value anywhere in
+ * this arithmetic.
  *
  * Per axis, over rated cups logged on or after `resetAt` and no later than
  * `asOf`:
  *   value = Σ(w · v) / Σ(w), w = ratingWeight × 0.5^(age / halfLife)
  *   - a slider record contributes its value at weight w;
  *   - a bundled flavour word contributes its table value at w × strength;
- *   - an axis nobody noted has no value (never 50: untouched = unknown).
+ *   - an axis nobody noted has no value (untouched = unknown, never a
+ *     default and never a low reading).
  *   - words are capped per axis at wordShareCap of the axis's total weight,
  *     by scaling every word on that axis by one factor (see DNA_TUNING).
  * Lock-in counts slider records only: an axis is locked at `lockIn`; the
@@ -18,9 +25,11 @@
  * logged order, so no stored flag; deleting cups can undo a lock, since the
  * walk then never reaches it.
  */
+import { AXIS_IDS, axisById, stepOf } from '../constants/tasteAxes.js';
+import { parseAxes, type CupAxes } from './cupAxes.ts';
 
-export const AXES = ['acidity', 'body', 'roast', 'sweetness'] as const;
-export type AxisKey = (typeof AXES)[number];
+/** A registry id (TASTE_AXES). Not a closed union: the registry decides. */
+export type AxisKey = string;
 
 /**
  * TUNING — initial values, to be adjusted against real use (taste-dna.md
@@ -46,42 +55,49 @@ export const DNA_TUNING = {
    */
   wordShareCap: 1 / 3,
   /**
-   * The ten bundled words (and only those). A word is a weak record: a value
-   * on the slider's step grid (Acid ↔ Bitter: 0 = acid) at a strength of at
-   * most 0.4 of one slider record. Criterion: a predictable, one-way lean on
-   * that axis when the word comes up. Cinnamon: none.
+   * The bundled words (and only those). A word is a weak record: a reading
+   * on the axis's 1–5 scale at a strength of at most 0.4 of one slider
+   * record. Criterion: a predictable, one-way lean on that axis when the
+   * word comes up. Cinnamon: none.
+   *
+   * 2026-11-13 (five unipolar axes): the entries were moved onto the new
+   * scale, not re-decided. Acidity's old 0 / 25 (Very bright / Bright on
+   * Acid ↔ Bitter) became 5 / 4 (Strong / Bold acidity); body and sweetness
+   * kept their side (25 → 2, 75 → 4). Cocoa, Walnut and Smoke leaned on
+   * the Roast axis, which is gone, and have no entry until decided:
+   * taste-dna.md item 6 already rejects Smoke → bitter ("dark roasts can be
+   * un-bitter"), so none of the three was moved onto Bitterness.
+   * TODO: Uryu to decide whether Cocoa / Walnut lean on Bitterness, Body or
+   * nothing (taste-dna.md item 6).
    */
   words: {
-    jasmine: [{ axis: 'acidity', at: 25, strength: 0.2 }],
+    jasmine: [{ axis: 'acidity', at: 4, strength: 0.2 }],
     peach: [
-      { axis: 'acidity', at: 25, strength: 0.3 },
-      { axis: 'sweetness', at: 75, strength: 0.3 },
+      { axis: 'acidity', at: 4, strength: 0.3 },
+      { axis: 'sweetness', at: 4, strength: 0.3 },
     ],
-    grapefruit: [{ axis: 'acidity', at: 0, strength: 0.4 }],
+    grapefruit: [{ axis: 'acidity', at: 5, strength: 0.4 }],
     blackcurrant: [
-      { axis: 'acidity', at: 25, strength: 0.3 },
-      { axis: 'sweetness', at: 75, strength: 0.2 },
+      { axis: 'acidity', at: 4, strength: 0.3 },
+      { axis: 'sweetness', at: 4, strength: 0.2 },
     ],
-    'black tea': [{ axis: 'body', at: 25, strength: 0.3 }],
-    cocoa: [{ axis: 'roast', at: 75, strength: 0.3 }],
-    walnut: [{ axis: 'roast', at: 75, strength: 0.2 }],
-    caramel: [{ axis: 'sweetness', at: 75, strength: 0.4 }],
-    smoke: [{ axis: 'roast', at: 100, strength: 0.4 }],
+    'black tea': [{ axis: 'body', at: 2, strength: 0.3 }],
+    caramel: [{ axis: 'sweetness', at: 4, strength: 0.4 }],
   } as Record<string, { axis: AxisKey; at: number; strength: number }[]>,
 };
 
 const DAY_MS = 86400000;
 
-/** The cup fields the arithmetic reads. */
+/** The cup fields the arithmetic reads. axes is sparse: no key = not noted (cupAxes.ts). */
 export type DnaCup = {
   rating: number | null;
   logged_at: number;
-  axes: Record<AxisKey, number | null>;
+  axes: CupAxes;
   flavours: string[];
 };
 
 export type AxisDna = {
-  /** 0–100, or null when nothing noted this axis */
+  /** 1–5, or null when nothing noted this axis */
   value: number | null;
   /** slider records (what lock-in counts) */
   n: number;
@@ -104,10 +120,11 @@ export type Dna = {
   resetAt: number | null;
 };
 
-const wordsOf = (cup: DnaCup) => cup.flavours.flatMap((w) => DNA_TUNING.words[w.toLowerCase()] ?? []);
+/** A cup's table words, on registered axes only (an entry on a retired axis is skipped). */
+const wordsOf = (cup: DnaCup) => cup.flavours.flatMap((w) => DNA_TUNING.words[w.toLowerCase()] ?? []).filter((e) => axisById(e.axis));
 
 export function computeDna(cups: readonly DnaCup[], asOf: number, resetAt: number | null = null): Dna {
-  const sum = Object.fromEntries(AXES.map((a) => [a, { sliderWV: 0, wordWV: 0, sliderW: 0, wordW: 0, n: 0 }])) as Record<
+  const sum = Object.fromEntries(AXIS_IDS.map((a: string) => [a, { sliderWV: 0, wordWV: 0, sliderW: 0, wordW: 0, n: 0 }])) as Record<
     AxisKey,
     { sliderWV: number; wordWV: number; sliderW: number; wordW: number; n: number }
   >;
@@ -117,7 +134,7 @@ export function computeDna(cups: readonly DnaCup[], asOf: number, resetAt: numbe
     if (!rw || cup.logged_at > asOf || (resetAt != null && cup.logged_at < resetAt)) continue;
     const w = rw * Math.pow(0.5, (asOf - cup.logged_at) / (DNA_TUNING.halfLifeDays * DAY_MS));
     let used = false;
-    for (const a of AXES) {
+    for (const a of AXIS_IDS) {
       const v = cup.axes[a];
       if (v == null) continue;
       sum[a].sliderWV += w * v;
@@ -134,7 +151,7 @@ export function computeDna(cups: readonly DnaCup[], asOf: number, resetAt: numbe
   }
 
   const axes = Object.fromEntries(
-    AXES.map((a) => {
+    AXIS_IDS.map((a) => {
       const s = sum[a];
       // Cap: words ≤ cap × (sliders + words) ⇔ words ≤ sliders × cap / (1 − cap).
       // One factor for every word on the axis keeps their ratios.
@@ -147,40 +164,42 @@ export function computeDna(cups: readonly DnaCup[], asOf: number, resetAt: numbe
     })
   ) as Record<AxisKey, AxisDna>;
 
-  const noted = AXES.map((a) => axes[a].n).filter((n) => n > 0);
+  const noted = AXIS_IDS.map((a) => axes[a].n).filter((n) => n > 0);
   const fewest = noted.length ? Math.min(...noted) : null;
-  const anything = AXES.some((a) => axes[a].value != null);
+  const anything = AXIS_IDS.some((a) => axes[a].value != null);
   const state = !anything ? 'none' : everLocked(cups, asOf, resetAt) ? 'locked' : 'early';
   return { axes, state, fewest, cups: counted, resetAt };
 }
 
 /** Whether, at any point in logged order, every noted axis had `lockIn` slider records. */
 function everLocked(cups: readonly DnaCup[], asOf: number, resetAt: number | null): boolean {
-  const counts = Object.fromEntries(AXES.map((a) => [a, 0])) as Record<AxisKey, number>;
+  const counts = Object.fromEntries(AXIS_IDS.map((a) => [a, 0])) as Record<AxisKey, number>;
   const ordered = cups
     .filter((c) => c.rating && DNA_TUNING.ratingWeight[c.rating] && c.logged_at <= asOf && (resetAt == null || c.logged_at >= resetAt))
     .slice()
     .sort((a, b) => a.logged_at - b.logged_at);
   for (const cup of ordered) {
-    for (const a of AXES) if (cup.axes[a] != null) counts[a] += 1;
-    const noted = AXES.filter((a) => counts[a] > 0);
+    for (const a of AXIS_IDS) if (cup.axes[a] != null) counts[a] += 1;
+    const noted = AXIS_IDS.filter((a) => counts[a] > 0);
     if (noted.length && noted.every((a) => counts[a] >= DNA_TUNING.lockIn)) return true;
   }
   return false;
 }
 
-/** Band on the slider's five steps (edges 12.5 / 37.5 / 62.5 / 87.5): 0–4. */
-export function bandOf(value: number): number {
-  return value < 12.5 ? 0 : value < 37.5 ? 1 : value < 62.5 ? 2 : value < 87.5 ? 3 : 4;
-}
+/**
+ * Snapshot precision: three decimals on the 1–5 scale. Fine enough that a
+ * stored before / after gives a change correct to well within the tags' 0.1
+ * (31e). (The 0–100 snapshots before migration 11 kept one decimal.)
+ */
+const SNAPSHOT_SCALE = 1000;
 
-/** What a cup stores at save time (cups.dna_change): per axis value (0.1) and slider count. */
+/** What a cup stores at save time (cups.dna_change): per axis value (SNAPSHOT_SCALE) and slider count. */
 export type DnaSnapshot = Record<AxisKey, { value: number | null; n: number }>;
 export type DnaChange = { before: DnaSnapshot; after: DnaSnapshot };
 
 export const snapshotOf = (dna: Dna): DnaSnapshot =>
   Object.fromEntries(
-    AXES.map((a) => [a, { value: dna.axes[a].value == null ? null : Math.round(dna.axes[a].value * 10) / 10, n: dna.axes[a].n }])
+    AXIS_IDS.map((a: string) => [a, { value: dna.axes[a].value == null ? null : Math.round(dna.axes[a].value * SNAPSHOT_SCALE) / SNAPSHOT_SCALE, n: dna.axes[a].n }])
   ) as DnaSnapshot;
 
 /**
@@ -194,47 +213,82 @@ export function changeOf(earlier: readonly DnaCup[], cup: DnaCup, resetAt: numbe
   };
 }
 
-/** A cups row (as stored) → the fields the arithmetic reads. */
-export function dnaCupFromRow(row: {
-  rating: number | null;
-  logged_at: number;
-  axis_acidity: number | null;
-  axis_body: number | null;
-  axis_roast: number | null;
-  axis_sweetness: number | null;
-  flavours: string;
-}): DnaCup {
-  return {
-    rating: row.rating,
-    logged_at: row.logged_at,
-    axes: { acidity: row.axis_acidity, body: row.axis_body, roast: row.axis_roast, sweetness: row.axis_sweetness },
-    flavours: JSON.parse(row.flavours),
-  };
+/**
+ * A cups row → the fields the arithmetic reads. `axes` is the row's
+ * axesJsonSql() column (cupAxes.ts): the cup's cup_axes rows as one object.
+ */
+export type DnaRow = { rating: number | null; logged_at: number; flavours: string; axes: string | null };
+
+export function dnaCupFromRow(row: DnaRow): DnaCup {
+  return { rating: row.rating, logged_at: row.logged_at, axes: parseAxes(row.axes), flavours: JSON.parse(row.flavours) };
 }
 
-/** One axis that crossed into another band (taste-dna.md "Shifts"): band indexes 0–4. */
+/** One axis that crossed into another step (taste-dna.md "Shifts"): step indexes into STEP_WORDS. */
 export type AxisShift = { axis: AxisKey; from: number; to: number };
 export type DnaShift = { at: number; axes: AxisShift[] };
 
+/** A snapshot's value for an axis; null when not noted, or when the snapshot predates the axis. */
+const valueIn = (snapshot: DnaSnapshot, axis: AxisKey): number | null => snapshot[axis]?.value ?? null;
+
 /**
  * 8f's last shift: the latest cup (by logged time) whose stored change moved
- * an axis into another band (bandOf), read from cups.dna_change, never
- * recomputed (taste-dna.md item 5). An axis noted for the first time (before
- * null) has no band to leave, so it is not a shift. Rows newest first.
+ * an axis into another step (stepOf: the nearest whole number), read from
+ * cups.dna_change, never recomputed (taste-dna.md item 5). An axis noted for
+ * the first time (before null) has no step to leave, so it is not a shift.
+ * Rows newest first.
  */
 export function lastShift(rows: readonly { logged_at: number; dna_change: string }[]): DnaShift | null {
   for (const row of rows) {
     const change = JSON.parse(row.dna_change) as DnaChange;
     const axes: AxisShift[] = [];
-    for (const axis of AXES) {
-      const before = change.before[axis].value;
-      const after = change.after[axis].value;
+    for (const axis of AXIS_IDS) {
+      const before = valueIn(change.before, axis);
+      const after = valueIn(change.after, axis);
       if (before == null || after == null) continue;
-      const from = bandOf(before);
-      const to = bandOf(after);
+      const from = stepOf(before);
+      const to = stepOf(after);
       if (from !== to) axes.push({ axis, from, to });
     }
     if (axes.length) return { at: row.logged_at, axes };
   }
   return null;
+}
+
+/**
+ * One axis in a stored change, as the change tags read it (31e), in registry
+ * order:
+ *   first   noted for the first time: no number, the step it starts at
+ *   moved   the change on the 1–5 scale, ROUNDED TO 0.1 WITH ITS SIGN
+ *           (+0.2, −0.1). 0.1 is a fortieth of the scale, the old tags'
+ *           2.5 points: a real nudge shows, and "+0.04" (a precision nine
+ *           stops can't carry) never does.
+ *   still   moved, but by less than 0.05, so it rounds to 0.0: no tag. Kept
+ *           so the sentence can tell "barely moves it" from "nothing moves it".
+ * An axis that did not move at all, or is not noted after the cup, is left out.
+ * Computed in whole thousandths (the snapshots' precision), so float error
+ * cannot push a 0.05 either way; halves round away from zero, so +0.05 and
+ * −0.05 both tag.
+ */
+export type AxisDelta =
+  | { axis: AxisKey; kind: 'first'; step: number }
+  | { axis: AxisKey; kind: 'moved'; delta: number }
+  | { axis: AxisKey; kind: 'still' };
+
+export function changeDeltas(change: DnaChange | null): AxisDelta[] {
+  if (!change) return [];
+  const deltas: AxisDelta[] = [];
+  for (const axis of AXIS_IDS) {
+    const before = valueIn(change.before, axis);
+    const after = valueIn(change.after, axis);
+    if (after == null) continue;
+    if (before == null) {
+      deltas.push({ axis, kind: 'first', step: stepOf(after) });
+      continue;
+    }
+    const milli = Math.round(after * SNAPSHOT_SCALE) - Math.round(before * SNAPSHOT_SCALE);
+    if (milli === 0) continue;
+    const tenths = Math.sign(milli) * Math.round(Math.abs(milli) / (SNAPSHOT_SCALE / 10));
+    deltas.push(tenths === 0 ? { axis, kind: 'still' } : { axis, kind: 'moved', delta: tenths / 10 });
+  }
+  return deltas;
 }

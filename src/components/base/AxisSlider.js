@@ -4,6 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+import { AXIS_SCALE } from '../../constants/tasteAxes';
 import { component, motion, size, spacing, state, textStyle } from '../../theme/tokens';
 import { AxisKey } from './AxisReadout';
 import Button from './Button';
@@ -13,17 +14,19 @@ import Text from './Text';
 /**
  * Taste axis slider (design-system.md §9 Taste axis slider).
  *
- * FIVE STEPS: stored as 0–100 integer points, step i = round(i × 100 / 4) =
- * 0 / 25 / 50 / 75 / 100, so the step count can change later without migrating
- * data (old values snap to the nearest step). Each step has a name per axis
- * (`steps`, src/constants/tasteAxes.js), read by the screen reader.
+ * TODO(Turn 29, commit 3): INTERIM. The five-axis input (30a–30d: nine stops
+ * in halves, the handle parked at 1 in grey, the reading column, ✕) replaces
+ * this. Until then it keeps its five stops and writes the whole numbers of
+ * the 1–5 scale (cup_axes takes halves too; this simply never offers them).
+ * An empty axis parks the handle at 1, never at a midpoint. The step words
+ * (`steps`, STEP_WORDS) are read by the screen reader.
  *
  * Look (2026-10-08, Uryu's screenshots, size B): a 260 × 34 track with a 2px
  * frame and a dot at each of the 5 stops; a SQUARE 26 handle inset 2 inside
  * it — the Switch knob's geometry. Dots say where you can stop, the handle
  * says where you are. The handle is always opaque and simply covers the dot
  * under it. The handle carries the state:
- *   empty    value null — muted square resting at Balanced, a PLACEHOLDER,
+ *   empty    value null — muted square resting at 1, a PLACEHOLDER,
  *            never a value
  *   entered  the user's own step — accent square, ink frame
  * While the finger is down the handle scales to state.pressed.scale (it is
@@ -43,10 +46,10 @@ import Text from './Text';
  * Decorative: the screen reader hears nothing new.
  *
  * Props
- *   axis        the axis's key (TASTE_AXES), for its colour key
- *   from, to    pole labels (low pole on the left)
- *   steps       the five step names, low to high
- *   value       0–100 or null (empty)
+ *   axis        the axis's id (TASTE_AXES), for its colour key
+ *   label       the axis's name (unipolar: no poles)
+ *   steps       the step words, low to high (STEP_WORDS)
+ *   value       1–5 or null (empty)
  *   onChange    (value | null) => void — on release, on tap, on Clear
  */
 
@@ -84,12 +87,11 @@ const BAND_PAD = (size.tapTarget - RAIL_H) / 2;
 const HIT = BAND_PAD;
 const STEPS = 5;
 const LAST = STEPS - 1;
-const MIDDLE = LAST / 2;
 const PRESS_MS = motion.press.duration;
 const pressEasing = Easing.bezier(...motion.press.controlPoints);
 
-const stepToValue = (i) => Math.round((i * 100) / LAST);
-const valueToStep = (v) => Math.min(LAST, Math.max(0, Math.round((v / 100) * LAST)));
+const stepToValue = (i) => AXIS_SCALE.min + i;
+const valueToStep = (v) => Math.min(LAST, Math.max(0, Math.round(v - AXIS_SCALE.min)));
 
 const selectionHaptic = () => {
   if (Platform.OS !== 'web') Haptics.selectionAsync();
@@ -144,10 +146,10 @@ function Pole({ label, align }) {
   );
 }
 
-function AxisSlider({ axis, from, to, steps, value = null, onChange }) {
+function AxisSlider({ axis, label, steps, value = null, onChange }) {
   const isEntered = value != null;
-  const committedStep = value == null ? MIDDLE : valueToStep(value);
-  const who = `axis:${from}`;
+  const committedStep = value == null ? 0 : valueToStep(value);
+  const who = `axis:${label}`;
 
   const trackW = useSharedValue(0); // stop 0 to stop 4
   const step = useSharedValue(committedStep);
@@ -250,14 +252,14 @@ function AxisSlider({ axis, from, to, steps, value = null, onChange }) {
   const a11y = {
         accessible: true,
         accessibilityRole: 'adjustable',
-        accessibilityLabel: `${from} to ${to}`,
+        accessibilityLabel: label,
         accessibilityValue: { text: value == null ? 'Not entered yet' : steps[committedStep] },
         accessibilityActions: [{ name: 'increment' }, { name: 'decrement' }, ...(isEntered ? [{ name: 'clear', label: 'Clear' }] : [])],
         onAccessibilityAction: (e) => {
-          // The first adjustment of an empty axis starts from Balanced.
-          const base = value == null ? MIDDLE : committedStep;
+          // The first increment of an empty axis lands on 1, the first stop.
+          const base = value == null ? -1 : committedStep;
           if (e.nativeEvent.actionName === 'increment') onChange?.(stepToValue(Math.min(LAST, base + 1)));
-          if (e.nativeEvent.actionName === 'decrement') onChange?.(stepToValue(Math.max(0, base - 1)));
+          if (e.nativeEvent.actionName === 'decrement' && value != null) onChange?.(stepToValue(Math.max(0, base - 1)));
           if (e.nativeEvent.actionName === 'clear') onChange?.(null);
         },
       };
@@ -287,7 +289,7 @@ function AxisSlider({ axis, from, to, steps, value = null, onChange }) {
     <View style={styles.slot}>
       {isEntered ? (
         <Animated.View style={clearStyle}>
-          <Button variant="text" small label="Clear" accessibilityLabel={`Clear ${from} to ${to}`} onPress={() => onChange?.(null)} />
+          <Button variant="text" small label="Clear" accessibilityLabel={`Clear ${label}`} onPress={() => onChange?.(null)} />
         </Animated.View>
       ) : (
         <Text variant="meta" color="muted">
@@ -303,8 +305,7 @@ function AxisSlider({ axis, from, to, steps, value = null, onChange }) {
         <View style={styles.keyHang}>
           <AxisKey axis={axis} />
         </View>
-        <Pole label={from} />
-        <Pole label={to} align="right" />
+        <Pole label={label} />
       </View>
       <GestureDetector gesture={gesture}>
         <View

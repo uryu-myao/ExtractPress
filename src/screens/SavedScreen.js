@@ -6,10 +6,9 @@ import Text from '../components/base/Text';
 import { DnaChangeTags, changeSentence, changeTags } from '../components/DnaChange';
 import DnaInfoSheet from '../components/DnaInfoSheet';
 import { DnaStamp } from '../components/TasteDnaCard';
-import { TASTE_AXES } from '../constants/tasteAxes';
+import { stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { cupOrdinal, getCup, loadTasteDna } from '../data/repository';
-import { bandOf } from '../data/tasteDna';
 import { color, motion, shape, size, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -100,18 +99,18 @@ export default function SavedScreen({ id, onHome, onSeeRecord }) {
             <View style={styles.axes}>
               {TASTE_AXES.map((axis) => {
                 // The stored profile after this cup; data.dna if the cup has none.
-                const value = (change ? change.after[axis.key]?.value : data.dna.axes[axis.key].value) ?? null;
-                const band = value == null ? null : axis.steps[bandOf(value)];
-                // The ghost only where a tag says the axis moved: under 1 point it would thicken the marker.
-                const moved = tags.some((t) => t.key === axis.key && t.size);
+                const value = (change ? change.after[axis.id]?.value : data.dna.axes[axis.id].value) ?? null;
+                const band = stepWordOf(value);
+                // The ghost only where a tag says the axis moved: under 0.1 it would thicken the marker.
+                const moved = tags.some((t) => t.key === axis.id && t.size);
                 return (
-                  <View key={axis.key} style={styles.axis}>
+                  <View key={axis.id} style={styles.axis}>
                     <AxisPoles axis={axis} />
                     <AxisReadout
-                      axis={axis.key}
+                      axis={axis.id}
                       value={value}
-                      previous={moved ? change.before[axis.key].value : null}
-                      accessibilityLabel={`${axis.from} to ${axis.to}, ${band ?? 'not noted'}`}
+                      previous={moved ? change.before[axis.id].value : null}
+                      accessibilityLabel={`${axis.label}, ${band ?? 'not noted'}`}
                     />
                   </View>
                 );

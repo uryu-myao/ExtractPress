@@ -108,18 +108,18 @@ function MyNumbers({ dna, idle }) {
       <SectionLabel variant="plain" label="My numbers" />
       <View style={styles.card}>
         {TASTE_AXES.map((a, i) => {
-          const axis = dna.axes[a.key];
+          const axis = dna.axes[a.id];
           const count = axis.n ? notesLabel(axis.n) : 'Not noted yet';
           const more = moreLine(axis.n, dna.state);
           return (
             <View
-              key={a.key}
+              key={a.id}
               style={[styles.axis, i > 0 && styles.axisDivided]}
               accessible
-              accessibilityLabel={[a.name, count, more, axis.capped ? 'Tags are at their limit here' : null].filter(Boolean).join(', ')}>
+              accessibilityLabel={[a.label, count, more, axis.capped ? 'Tags are at their limit here' : null].filter(Boolean).join(', ')}>
               <View style={styles.axisRow}>
                 <Text variant="label" color="primary">
-                  {a.name}
+                  {a.label}
                 </Text>
                 <Text variant="countTabular" color={axis.n ? 'primary' : 'muted'} style={styles.axisCount}>
                   {count}

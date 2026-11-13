@@ -15,7 +15,8 @@
  * runs after the statements, in the same transaction, through MigrationDb.
  */
 
-import { changeOf, dnaCupFromRow, type DnaCup } from './tasteDna.ts';
+import { axesJsonSql } from './cupAxes.ts';
+import { changeOf, dnaCupFromRow, type DnaCup, type DnaRow } from './tasteDna.ts';
 
 /** What a backfill step may do, whichever driver runs it. */
 export type MigrationDb = {
@@ -32,6 +33,29 @@ export type Migration = {
 
 /** Epoch milliseconds, portable across SQLite versions. */
 const NOW_MS = `CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)`;
+
+/**
+ * Every cup's dna_change, worked out again in logged order, each at its own
+ * logged time (no clock, so the result is deterministic). The reset rule is
+ * insertCup's: a cup logged on or after settings.reset_at counts from the
+ * reset; one logged before it counts from the start (the reset had not
+ * happened when it was saved; only the latest reset time is stored).
+ * Migration 11's backfill; scripts/check-schema.ts checks it.
+ */
+export async function replayDnaChanges(db: MigrationDb): Promise<void> {
+  const [settings] = await db.all<{ reset_at: number | null }>('SELECT reset_at FROM settings');
+  const resetAt = settings?.reset_at ?? null;
+  const rows = await db.all<DnaRow & { id: number }>(
+    `SELECT c.id, c.rating, c.logged_at, c.flavours, ${axesJsonSql('c')} AS axes FROM cups c ORDER BY c.logged_at, c.id`
+  );
+  const earlier: DnaCup[] = [];
+  for (const row of rows) {
+    const cup = dnaCupFromRow(row);
+    const reset = resetAt != null && cup.logged_at >= resetAt ? resetAt : null;
+    await db.run('UPDATE cups SET dna_change = ? WHERE id = ?', [JSON.stringify(changeOf(earlier, cup, reset)), row.id]);
+    earlier.push(cup);
+  }
+}
 
 export const migrations: readonly Migration[] = [
   {
@@ -236,17 +260,15 @@ export const migrations: readonly Migration[] = [
       `ALTER TABLE settings ADD COLUMN setup_done INTEGER NOT NULL DEFAULT 0 CHECK (setup_done IN (0, 1))`,
       `UPDATE settings SET setup_done = 1 WHERE EXISTS (SELECT 1 FROM cups) OR EXISTS (SELECT 1 FROM bags)`,
     ],
-    backfill: async (db) => {
-      const rows = await db.all<Parameters<typeof dnaCupFromRow>[0] & { id: number }>(
-        'SELECT id, rating, logged_at, axis_acidity, axis_body, axis_roast, axis_sweetness, flavours FROM cups ORDER BY logged_at, id'
-      );
-      const earlier: DnaCup[] = [];
-      for (const row of rows) {
-        const cup = dnaCupFromRow(row);
-        await db.run('UPDATE cups SET dna_change = ? WHERE id = ?', [JSON.stringify(changeOf(earlier, cup)), row.id]);
-        earlier.push(cup);
-      }
-    },
+    /*
+     * The replay that stood here (each cup's dna_change from the engine of
+     * the day, over axis_* columns) was taken out on 2026-11-13: the engine
+     * it called now reads cup_axes on the 1–5 scale, and migration 11
+     * replays every cup's dna_change once more on that scale, so whatever
+     * this one wrote would be overwritten before anything read it. A
+     * database older than 3 has dna_change NULL between 3 and 11, and
+     * nothing reads it there.
+     */
   },
   {
     /*
@@ -447,6 +469,45 @@ export const migrations: readonly Migration[] = [
     version: 10,
     name: "the date sheet's last kind",
     statements: [`ALTER TABLE device ADD COLUMN bag_date_kind TEXT CHECK (bag_date_kind IN ('roasted', 'bestBefore'))`],
+  },
+  {
+    /*
+     * Five unipolar tasting axes in a join table (Turn 29 / 30; data-model.md
+     * "cup_axes", Uryu 2026-11-13):
+     *   - cup_axes(cup_id, axis, value): one row per axis assessed. NOT NOTED
+     *     IS THE ABSENCE OF A ROW: no NULL value, no sentinel. value 1–5 in
+     *     halves; the CHECK refuses 3.7 (value × 2 must be whole). No CHECK
+     *     list on axis: the registry (constants/tasteAxes.js) decides which
+     *     axes exist, so a new one needs no migration.
+     *   - The old bipolar 0–100 columns go. Only Body and Sweetness carry
+     *     over: they were already one-directional (Light → Full body, Low →
+     *     High sweetness), so 0 / 25 / 50 / 75 / 100 is 1 / 2 / 3 / 4 / 5
+     *     (rounded to the nearest whole step, as the 5-step slider stored
+     *     them). Acidity (Acid ↔ Bitter) mixed two of the new axes and Roast
+     *     (perceived) is not Bitterness, so neither is carried: those cups
+     *     read Not noted there. Decided by Uryu, 2026-11-13.
+     *   - Every cup's dna_change is replayed once on the new scale: the old
+     *     snapshots are 0–100 with a roast key, which no tag can read. Like
+     *     migration 3, this creates history in the current unit; it is not a
+     *     re-decision of what a cup did.
+     */
+    version: 11,
+    name: 'unipolar tasting axes in cup_axes',
+    statements: [
+      `CREATE TABLE cup_axes (
+        cup_id INTEGER NOT NULL REFERENCES cups(id) ON DELETE CASCADE,
+        axis TEXT NOT NULL,
+        value REAL NOT NULL CHECK (value BETWEEN 1 AND 5 AND value * 2 = CAST(value * 2 AS INTEGER)),
+        PRIMARY KEY (cup_id, axis)
+      ) WITHOUT ROWID`,
+      `INSERT INTO cup_axes (cup_id, axis, value) SELECT id, 'body', 1 + ROUND(axis_body / 25.0) FROM cups WHERE axis_body IS NOT NULL`,
+      `INSERT INTO cup_axes (cup_id, axis, value) SELECT id, 'sweetness', 1 + ROUND(axis_sweetness / 25.0) FROM cups WHERE axis_sweetness IS NOT NULL`,
+      `ALTER TABLE cups DROP COLUMN axis_acidity`,
+      `ALTER TABLE cups DROP COLUMN axis_body`,
+      `ALTER TABLE cups DROP COLUMN axis_roast`,
+      `ALTER TABLE cups DROP COLUMN axis_sweetness`,
+    ],
+    backfill: replayDnaChanges,
   },
 ];
 

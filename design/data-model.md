@@ -24,6 +24,7 @@ A versioned `schema_migrations (version, name, applied_at)` table, not a single 
 - **Web** (dev harness / browser checks only): expo-sqlite runs as WebAssembly (wa-sqlite). `metro.config.js` registers `.wasm` as an asset and sends COOP / COEP headers. Without the first, the web bundle fails to resolve `wa-sqlite.wasm`.
 - Migration 1 was amended on 2026-10-05 (`mode` NOT NULL, `roast_level` CHECK) **before it had ever run anywhere**: `openDatabase()` was not yet wired into any build. That was the last moment such a change is a one-line edit rather than a table rebuild.
 - **Never edit or reorder a shipped migration.** Append a new version, update `schema.ts` to the new shape, and run `check:schema`.
+  - **One exception, 2026-11-13**: migration 3's *backfill* (its `dna_change` replay) was taken out, its statements untouched. It called the live engine over the `axis_*` columns, which migration 11 drops; migration 11 replays every `dna_change` again, so whatever 3 wrote was always overwritten before anything read it. A database older than 3 has `dna_change` NULL between 3 and 11, and nothing reads it there. The lesson stands for the next replay: **a backfill that calls live app code is not frozen history**.
 - The DDL is not generated from `schema.ts` because migrations are history: migration 1 must stay what it was even after the shape moves on. `check:schema` is what keeps the two honest.
 
 ## Conventions
@@ -84,8 +85,33 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extr
 - **Mode-specific columns live on `cups`**, all nullable, rather than in per-mode tables. Three short column groups are cheaper than three joins on every list read, and a cup belongs to exactly one mode. The columns of the other two modes are simply NULL.
 - **V1.5 columns, not dead**: `grind_setting`, `water_temp_c` and `ratio` have no UI in V1. They exist so V1.5's parameter-tuning suggestions have history to learn from the day they ship. Removing them as unused would throw that history away. `grind_setting` is REAL because tuning needs a number; its scale is the grinder's own (clicks or dial).
 - **Indexes**: `logged_at` (the list sorts on it), plus each reference column.
+- **No axis columns** (since migration 11): the tasting axes are rows in `cup_axes`, below. The four `axis_*` columns (0–100, bipolar) are gone.
 
-### beans
+### cup_axes (migration 11, 2026-11-13)
+
+| column | type | null | notes |
+|---|---|---|---|
+| cup_id | INTEGER | pk, not null | → cups, **ON DELETE CASCADE** |
+| axis | TEXT | pk, not null | a registry id (`src/constants/tasteAxes.js`); **no CHECK list** |
+| value | REAL | not null | 1.0–5.0 in 0.5 steps; CHECK `value BETWEEN 1 AND 5 AND value * 2 = CAST(value * 2 AS INTEGER)` |
+
+- **NOT NOTED IS THE ABSENCE OF A ROW.** This is the single most important property of the table, and the reason it is a join table. An axis the drinker did not assess has no row: there is no NULL value, no sentinel, no default, and nothing is ever written at a midpoint. In memory a cup's axes are the same thing in sparse form, `{ [axis id]: value }` with no key for an axis not noted (`src/data/cupAxes.ts`). 1 is a real, low reading (a common one for acidity and bitterness), never "nothing". Clearing an axis (✕) **deletes its row**; it never writes a value.
+  - With columns, "not noted" had to be a NULL in every cup's every axis column, and each new axis was a migration plus every query that named the columns. Here a cup holds rows only for what was tasted.
+- **The registry decides which axes exist, not the schema.** `axis` has no CHECK list on purpose: a sixth axis is one registry entry and one `color.axis.*` token, with no migration and no screen edit. Every screen and every calculation iterates `TASTE_AXES`; nothing may hardcode the number of axes or their ids. An id is validated when written (`axisRows()`), and rows for an id no longer in the registry are ignored on read. Ids are never renamed once shipped.
+- **REAL is exact here**: halves are representable in binary floating point, so 3.5 stores and compares as 3.5. The CHECK refuses anything off the nine stops (3.7, 2.25, 0, 5.5, text).
+- **Dense form for Try Next**: `axisVector(axes)` gives one slot per registered axis in registry order, `null` where not noted. Try Next's similarity work will read that shape (masking the nulls); none is built yet.
+- **Read in one query**: `axesJsonSql('c')` is a correlated `json_group_object` over `cup_axes`, so a cups SELECT carries its axes as one JSON column instead of a second round trip per cup.
+- **Migration 11 carried over Body and Sweetness only** (Uryu, 2026-11-13). They were already one-directional (Light → Full body, Low → High sweetness), so 0 / 25 / 50 / 75 / 100 became 1 / 2 / 3 / 4 / 5. Acidity (Acid ↔ Bitter) mixed two of the new axes, and Roast (perceived) is not Bitterness, so neither was carried: those cups read Not noted there. Then every `dna_change` was replayed once on the new scale (its old snapshots were 0–100 with a roast key, which no tag can read).
+- **In backups and the CSV**: the backup copies `cup_axes` like any table; an older backup is migrated through 11 on restore. The CSV has two columns per registered axis ("Acidity (1–5)", "Acidity"), so its width follows the registry.
+
+### Roast is not a taste axis (decided 2026-11-13, Turn 30)
+
+- **V1's Taste DNA profile is the five tasting axes and nothing else**: acidity, bitterness, body, sweetness, aftertaste — things the drinker tasted, not facts printed on a bag. **`bags.roast_level` never enters the profile**, directly or as a default, and never appears in the DNA card (31f: "Roast isn't an axis").
+- `roast_level` exists for **Try Next matching** later, alongside origin, region and process.
+- **Bitterness is not roast renamed.** It inherits the old Roast axis's colour (Ember) and nothing else. Bitterness comes from over-extraction as much as from roast level, which is why the two had to separate.
+- **Do not quietly reverse this** by feeding roast level into an axis ("dark roast → bitter"): taste-dna.md item 6 already rejects that kind of link, and the gap between a bag's claim and what was tasted is information.
+
+### beans (renamed `bags` in migration 2; `schema.ts` is the current shape)
 
 | column | type | null | notes |
 |---|---|---|---|
@@ -94,13 +120,13 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extr
 | roaster | TEXT | null | |
 | origin | TEXT | null | Try Next input |
 | region | TEXT | null | Try Next input |
-| process | TEXT | null | `washed` \| `natural` \| `honey` \| `other` · Try Next input |
-| roast_level | TEXT | null | `light` \| `medium-light` \| `medium` \| `medium-dark` \| `dark` \| `other` · Try Next input |
+| process | TEXT | null | `washed` \| `natural` \| `honey` \| `anaerobic` · Try Next input (`other` dropped, 2026-10-09) |
+| roast_level | TEXT | null | `light` \| `medium` \| `medium-dark` \| `dark` · **four, deliberately** (2026-10-09, below) · Try Next input |
 | notes | TEXT | not null | flavour tags, JSON array of strings, default `[]` |
 | opened_at | INTEGER | null | drives the freshness meter |
 
 - **Try Next inputs**: `origin`, `region` and `process` are what Try Next reasons from. They are nullable because a bag's label does not always say, but **the UI should encourage filling them**, since a bean without them contributes little to Try Next.
-- **`roast_level` as an ordered enum, not free text**: it is a Try Next matching dimension alongside origin and process. Free text guarantees that "Medium", "medium", "中深", "City+" and "中煎り" all coexist, and none of them compare or yield a distance. Six values give an ordered scale (light → dark), so "one step darker" is computable, plus `other` for labels that do not map. The mocks define no scale, which means the *UI* is undecided, not that storage should be unconstrained; the picker maps whatever it shows onto these values.
+- **`roast_level` as an ordered enum, not free text**: it is a Try Next matching dimension alongside origin and process. Free text guarantees that "Medium", "medium", "中深", "City+" and "中煎り" all coexist, and none of them compare or yield a distance. An ordered scale (light → dark) makes "one step darker" computable. **Four values, no `other`** (decided 2026-10-09, below; this row said six plus `other` until 2026-11-13, and that stale text is what led board 31g to draw six).
 - **`notes` as a JSON array, not a join table**: deliberate. Per-user volume is in the hundreds of beans, so Try Next can scan them all and parse the arrays in memory. A tags table and a join table would add two tables and a join to every bean read, for a query pattern that never needs an index. The column is checked to be a valid JSON array. If tags ever need cross-user aggregation or indexing, that is the point to migrate to a join table.
 
 ### places
@@ -378,7 +404,7 @@ Which of these are V1 is open (report 2026-10-10).
 | Origin / region / process | — | — | present, but no form asks for them (Try Next inputs) |
 | notes (flavour tags) | — | — | present, no form |
 
-- **Roast level vs the Roast axis (2026-10-09): two different data.**
+- **Roast level vs the Roast axis (2026-10-09): two different data.** *(The Roast axis was removed on 2026-11-13: "Roast is not a taste axis", above. The point stands: the bag's claim and what was tasted are different data.)*
   - The bag's `roast_level` is **transcribed from the bag**: what the roaster calls it. 3c's form copies the label ("Shoot the bag", Roasted on, Size).
   - The cup's Roast axis (5b, five steps) is **what the user perceived**.
   - 5b starts every axis empty ("Drag only what you noticed"), so the bag never pre-fills the axis, and no scale mapping is needed.
@@ -390,6 +416,7 @@ Which of these are V1 is open (report 2026-10-10).
   - 6 steps would be false precision: roasters' granularity differs, so finer steps do not make bags more comparable.
   - A symmetric 5 would match the Roast axis's 5 and invite "set both the same", erasing the difference that is the information. An uneven 4 shows by its shape that these are two scales.
   - `other` is dropped (proposal 2026-10-09). A label that does not map is left unset; `other` gives Try Next nothing to compare.
+  - **Four is deliberate — reaffirmed 2026-11-13 (Uryu), do not "fix" it to six.** Round 29's brief and board 31g's picker said six; that came from this file's stale table, not from the schema. The reason is not only "no migration": `roast_level` exists to be matched on by Try Next, and light → dark is an ordered scale with a distance along it. `other` has no position on that scale and would need special-casing in every calculation. A bag printing something that fits none of the four is left blank: blank means "not recorded", which is honest; `other` would mean "recorded, but unusable".
 - **Process: `anaerobic` is added (decided 2026-10-09)**, giving `washed` · `natural` · `honey` · `anaerobic`, `NULL` = unset or unknown. `other` is dropped too (proposal), for the same reason.
 - **Roast date**: freshness is counted from it in 3g ("Recounted from the roast date"), and the meter's peak band fits degassing. 8i's "Bag going stale — around day 21 after opening" counts from opening. So **both dates are needed** (`gaps.md` 8).
 
@@ -452,7 +479,7 @@ The numbers live in one constant, `FRESHNESS_TUNING` (`src/data/freshness.ts`), 
 - **Both dates may be stored.** Neither replaces the other.
 - **Shown**: with a roast date, the roast clock above (Day N, state, bar) — it says more. Best-before alone: days left until it, or that it has passed, as text. **No bar**: the bags have no purchase date to measure from, and a bar months long would be an empty track. `bestBeforeOf()` (`src/data/freshness.ts`).
 - **Sealed**: best-before is the maker's guarantee for the sealed bag, so its clock runs before opening. "Clock starts when opened" is true of the roast clock only: a sealed best-before bag reads "Sealed · best before Oct 1" (Design Round 27 C1).
-- **Not copied onto cups.** `bean_roasted_at` is copied for 2c's "day 7 when brewed" and the CSV's Roast day; a best-before date says nothing about how a cup tasted. The CSV stays at 27 columns. One side effect: `gaps.md` 37.
+- **Not copied onto cups.** `bean_roasted_at` is copied for 2c's "day 7 when brewed" and the CSV's Roast day; a best-before date says nothing about how a cup tasted. The CSV did not grow for it (27 columns then; 29 since migration 11's five axes). One side effect: `gaps.md` 37.
 - **Input** (Design Round 27 B1 / B2): 3c asks for "Date on the bag", one date and its kind (Roasted on | Best before, switched in the date sheet, which remembers the last kind: `device.bag_date_kind`, migration 10). 19a always shows Roasted on and Best before; the second date is added there. A best-before date may be either side of today, never before the roast.
 - **Words** (Round 27 B2 / B3, 29b / 29c): one rule, a best-before bag says its date, never a state. The calendar glyph and text.muted; "passed" in text.secondary, never a warning. All in `src/constants/bagDates.js`. Home orders: date passed and past peak, drink now, best-before by nearest date, resting, neither, sealed.
 - **Notifications** (6c's "Bag reminders" switch covers both; 8i folded into 6c, Design Round 26 B1, renamed in Round 27 C3):

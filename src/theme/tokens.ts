@@ -33,7 +33,7 @@ export const color = {
      * leaving (Design Round 24, 26a / 26b): its label only, never a fill,
      * frame or shadow (§1 Tap affordance). 5.82:1 on ground, 6.59:1 on
      * raised, 4.74:1 on state.pressed.surface. Used for nothing else; apart
-     * from axis.roast by form (words, never a bar or key) and hue (ΔE00 9.2).
+     * from axis.bitterness by form (words, never a bar or key) and hue (ΔE00 9.2).
      */
     destructive: '#B4153F',
     onInverse: '#F4EDEA',
@@ -107,19 +107,31 @@ export const color = {
   /** Modal sheet scrim. The page behind it also drops to opacity 0.45. */
   scrim: 'rgba(39, 61, 34, 0.42)',
   /**
-   * The four taste axes' identity colours (Design Round 21, 23a). Used for
-   * the four taste axes only (AxisReadout's fill and key, AxisSlider's key,
-   * the change tags' key), never as text, never for anything else. They say
-   * which axis and nothing more: not good or bad, not entered or computed
-   * (the marker says that), not in force. Outside §1's three roles, like
-   * icon.rating. Contrast on track / card / ground: 3.08–5.21 / 4.28–7.24 /
-   * 3.78–6.40.
+   * The taste axes' identity colours (Design Round 21, 23a; Turn 30, 31a).
+   * One per axis in the registry (src/constants/tasteAxes.js), keyed by its
+   * colorToken, and used for those axes only (AxisReadout's fill, the change
+   * tags' key), never as text, never for anything else. They say which axis
+   * and nothing more: not good or bad, not entered or computed (the marker
+   * says that), not in force. Outside §1's three roles, like icon.rating.
+   * Contrast on track / card / ground: 3.08–5.21 / 4.28–7.24 / 3.78–6.40.
+   * A new axis is one registry entry plus one colour here, picked into the
+   * set's ΔE00 band (31a: 20.1–57.7); check:dna fails if the two disagree.
    */
   axis: {
     acidity: '#7C7D0F',
+    /**
+     * Ember (2026-11-13, Turn 30, 31a): was axis.roast, same hex. Ember was
+     * picked as heat rather than bean, and char is what bitterness tastes of.
+     * BITTERNESS IS A NEW DIMENSION THAT MERELY INHERITS THE HUE — it is not
+     * roast renamed. Bitterness comes from over-extraction as much as from
+     * roast level, which is why the two had to separate; roast level is now
+     * a fact of the bag (bags.roast_level) with no axis and no colour.
+     */
+    bitterness: '#9D3D36',
     body: '#614A87',
-    roast: '#9D3D36',
     sweetness: '#AE5A84',
+    /** Tide (2026-11-13, Turn 30, 31a): OKLCH L 0.46 · C 0.08 · h 187; 4.82:1 on the track. */
+    aftertaste: '#03665F',
   },
 } as const;
 

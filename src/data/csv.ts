@@ -4,7 +4,7 @@
  * bag's axes over time). Pure, no I/O: export.ts reads the cups and shares
  * the file; scripts can run this under node.
  *
- * Columns (27), oldest cup first:
+ * Columns (19 + two per registered axis: 29 with five axes), oldest cup first:
  *   Logged at       "2026-10-28 08:20", local time, no T, no zone: the form
  *                   Excel, Numbers and Sheets read as a date and time. The
  *                   machine-exact form is the JSON backup's.
@@ -15,10 +15,12 @@
  *   Roast day       days from the roast to the cup, as 2c's "day 7 when
  *                   brewed": empty with no roast date, and never negative
  *   Brewer, Grinder the cup's copies of its gear's names
- *   per axis        "Acidity (0–100)", the stored value (Taste DNA's own
- *                   scale, so its sums can be checked), then "Acidity", the
- *                   step's name (TASTE_AXES, as 2c reads it). Not noted:
- *                   both empty, never 0 (0 is "Very bright").
+ *   per axis        for each axis in the registry (TASTE_AXES), in its
+ *                   order: "Acidity (1–5)", the stored reading (1–5 in
+ *                   halves, Taste DNA's own scale, so its sums can be
+ *                   checked), then "Acidity", its step word (Faint …
+ *                   Strong). Not noted: both empty, never 1 (1 is a real,
+ *                   faint reading).
  *   Flavours        the tags in their order, joined by "; "
  *   My words        as written, line breaks kept
  *   Drink, Café     Barista's; Product: Packaged's
@@ -39,7 +41,8 @@
  */
 import { MODE_LABEL } from '../constants/cups.js';
 import { daysBetween } from '../constants/dates.js';
-import { TASTE_AXES } from '../constants/tasteAxes.js';
+import { stepWordOf, TASTE_AXES } from '../constants/tasteAxes.js';
+import type { CupAxes } from './cupAxes.ts';
 
 /** What the sheet reads of a cup (export.ts's query: the cup and its café's name). */
 export type CsvCup = {
@@ -58,10 +61,8 @@ export type CsvCup = {
   bean_roasted_at: number | null;
   brew_method: string | null;
   grinder: string | null;
-  axis_acidity: number | null;
-  axis_body: number | null;
-  axis_roast: number | null;
-  axis_sweetness: number | null;
+  /** cup_axes as { [axis id]: value }; no key = not noted. */
+  axes: CupAxes;
   drink_type: string | null;
   place_name: string | null;
   product_name: string | null;
@@ -92,9 +93,6 @@ const localDay = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad
 const localMinute = (d: Date) => `${localDay(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const capitalise = (s: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : null);
 
-/** A stored axis value's step, as 2c names it (0 / 25 / … / 100 → the five names). */
-const stepName = (steps: readonly string[], value: number | null) => (value == null ? null : steps[Math.round(value / 25)] ?? null);
-
 export const CSV_HEADER = [
   'Logged at',
   'Kind',
@@ -109,7 +107,7 @@ export const CSV_HEADER = [
   'Roast day',
   'Brewer',
   'Grinder',
-  ...TASTE_AXES.flatMap((a) => [`${a.name} (0–100)`, a.name]),
+  ...TASTE_AXES.flatMap((a) => [`${a.label} (1–5)`, a.label]),
   'Flavours',
   'My words',
   'Drink',
@@ -135,8 +133,8 @@ function row(cup: CsvCup): (Cell | { text: string })[] {
     typed(cup.brew_method),
     typed(cup.grinder),
     ...TASTE_AXES.flatMap((a) => {
-      const value = cup[`axis_${a.key}` as keyof CsvCup] as number | null;
-      return [value, stepName(a.steps, value)];
+      const value = cup.axes[a.id] ?? null;
+      return [value, stepWordOf(value)];
     }),
     typed(cup.flavours.join(FLAVOUR_JOIN)),
     typed(cup.note),

@@ -1,7 +1,11 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import type { Bag, CupMode, Gear, GearCategory, Place, Row } from './schema';
 import { staleOf } from './freshness';
-import { changeOf, computeDna, dnaCupFromRow, lastShift, type Dna, type DnaShift } from './tasteDna';
+import { axesJsonSql, axisRows, INSERT_CUP_AXIS, parseAxes, type CupAxes } from './cupAxes';
+import { changeOf, computeDna, dnaCupFromRow, lastShift, type Dna, type DnaRow, type DnaShift } from './tasteDna';
+
+/** The columns Taste DNA reads, for a SELECT over `cups c` (the axes from cup_axes as one JSON object). */
+const DNA_COLUMNS = `c.id, c.rating, c.logged_at, c.flavours, ${axesJsonSql('c')} AS axes`;
 import { pickTryNext, type Suggestion, type TryNextCup } from './tryNext';
 
 /**
@@ -99,9 +103,7 @@ export async function resetTasteDna(db: SQLiteDatabase, now = Date.now()): Promi
 /** Taste DNA now, from every counted cup (computed on read, never stored). */
 export async function loadTasteDna(db: SQLiteDatabase): Promise<Dna> {
   const settings = await db.getFirstAsync<{ reset_at: number | null }>('SELECT reset_at FROM settings');
-  const rows = await db.getAllAsync<Parameters<typeof dnaCupFromRow>[0]>(
-    'SELECT rating, logged_at, axis_acidity, axis_body, axis_roast, axis_sweetness, flavours FROM cups ORDER BY logged_at, id'
-  );
+  const rows = await db.getAllAsync<DnaRow>(`SELECT ${DNA_COLUMNS} FROM cups c ORDER BY c.logged_at, c.id`);
   return computeDna(rows.map(dnaCupFromRow), Date.now(), settings?.reset_at ?? null);
 }
 
@@ -236,14 +238,16 @@ export async function undoDismissTryNext(db: SQLiteDatabase, key: string): Promi
 
 /** One cup as 2c shows it: every stored field, its place names as copied (migration 6). */
 /** before_reset: 1 when the cup was logged before Reset my taste DNA, so it no longer counts; reset_at: when (2c's line, Design Round 25, A2). */
-export type CupRecord = Row<'cups'> & { before_reset?: number; reset_at?: number | null };
+/** axes: the cup's cup_axes rows, { [axis id]: value }; an axis not noted has no key. */
+export type CupRecord = Row<'cups'> & { axes: CupAxes; before_reset?: number; reset_at?: number | null };
 
 export async function getCup(db: SQLiteDatabase, id: number): Promise<CupRecord | null> {
-  const row = await db.getFirstAsync<CupRecord & { flavours: string }>(
-    'SELECT c.*, (s.reset_at IS NOT NULL AND c.logged_at < s.reset_at) AS before_reset, s.reset_at FROM cups c, settings s WHERE c.id = ?',
+  const row = await db.getFirstAsync<Omit<CupRecord, 'axes'> & { flavours: string; axes: string }>(
+    `SELECT c.*, ${axesJsonSql('c')} AS axes, (s.reset_at IS NOT NULL AND c.logged_at < s.reset_at) AS before_reset, s.reset_at
+       FROM cups c, settings s WHERE c.id = ?`,
     [id]
   );
-  return row ? { ...row, flavours: JSON.parse(row.flavours as unknown as string) } : null;
+  return row ? { ...row, flavours: JSON.parse(row.flavours as unknown as string), axes: parseAxes(row.axes) } : null;
 }
 
 /** Opened, not finished bags, newest opened first: the bag picker's rows (a cup is logged from an opened bag). */
@@ -630,7 +634,8 @@ export type NewCup = {
   productName: string | null;
   boughtAtPlaceId: number | null;
   /** The tasting note (5b). Absent = saved without it. */
-  axes?: { acidity: number | null; body: number | null; roast: number | null; sweetness: number | null };
+  /** The tasting axes assessed: { [axis id]: 1–5 in halves }. Null or absent = not noted (no row written). */
+  axes?: Readonly<Record<string, number | null | undefined>>;
   flavours?: string[];
   note?: string | null;
 };
@@ -656,11 +661,11 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
   await db.withExclusiveTransactionAsync(async (tx) => {
     const placeId = barista ? await placeIdFor(tx, cup.cafe) : null;
     const result = await tx.runAsync(
-      `INSERT INTO cups (rating, mode, note, flavours, axis_acidity, axis_body, axis_roast, axis_sweetness,
+      `INSERT INTO cups (rating, mode, note, flavours,
                          bag_id, bean_name, bean_roaster, bean_origin, bean_region, bean_process, bean_roast_level, bean_roasted_at,
                          brewer_id, brew_method, grinder_id, grinder,
                          place_id, place_name, drink_type, product_name, bought_at_place_id, bought_at_name)
-       SELECT ?, ?, ?, ?, ?, ?, ?, ?,
+       SELECT ?, ?, ?, ?,
               b.id, b.name, b.roaster, b.origin, b.region, b.process, b.roast_level, b.roasted_at,
               ?, ?, ?, ?,
               p.id, p.name, ?, ?, bp.id, bp.name
@@ -673,10 +678,6 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
         cup.mode,
         cup.note ?? null,
         JSON.stringify(cup.flavours ?? []),
-        cup.axes?.acidity ?? null,
-        cup.axes?.body ?? null,
-        cup.axes?.roast ?? null,
-        cup.axes?.sweetness ?? null,
         madeIt ? cup.brewerId : null,
         madeIt ? cup.brewMethod : null,
         madeIt ? cup.grinderId : null,
@@ -690,14 +691,15 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
       ]
     );
     id = result.lastInsertRowId;
+    // Only the assessed axes get a row: not noted is no row (cup_axes).
+    for (const { axis, value } of axisRows(cup.axes)) await tx.runAsync(INSERT_CUP_AXIS, [id, axis, value]);
     // Taste DNA before / after this cup, as of its own logged time, stored now
     // and never recomputed (taste-dna.md item 5). The same arithmetic as
-    // migration 3's replay: the cups logged before it, then with it.
-    const DNA_COLS = 'id, rating, logged_at, axis_acidity, axis_body, axis_roast, axis_sweetness, flavours';
-    const self = await tx.getFirstAsync<Parameters<typeof dnaCupFromRow>[0]>(`SELECT ${DNA_COLS} FROM cups WHERE id = ?`, [id]);
+    // migration 11's replay: the cups logged before it, then with it.
+    const self = await tx.getFirstAsync<DnaRow>(`SELECT ${DNA_COLUMNS} FROM cups c WHERE c.id = ?`, [id]);
     const settings = await tx.getFirstAsync<{ reset_at: number | null }>('SELECT reset_at FROM settings');
-    const earlier = await tx.getAllAsync<Parameters<typeof dnaCupFromRow>[0]>(
-      `SELECT ${DNA_COLS} FROM cups WHERE logged_at < ? OR (logged_at = ? AND id < ?) ORDER BY logged_at, id`,
+    const earlier = await tx.getAllAsync<DnaRow>(
+      `SELECT ${DNA_COLUMNS} FROM cups c WHERE c.logged_at < ? OR (c.logged_at = ? AND c.id < ?) ORDER BY c.logged_at, c.id`,
       [self!.logged_at, self!.logged_at, id]
     );
     const change = changeOf(earlier.map(dnaCupFromRow), dnaCupFromRow(self!), settings?.reset_at ?? null);
@@ -785,9 +787,7 @@ export async function updateCup(db: SQLiteDatabase, id: number, edit: CupEdit): 
  */
 export async function deleteDropsLockIn(db: SQLiteDatabase, id: number): Promise<boolean> {
   const settings = await db.getFirstAsync<{ reset_at: number | null }>('SELECT reset_at FROM settings');
-  const rows = await db.getAllAsync<Parameters<typeof dnaCupFromRow>[0] & { id: number }>(
-    'SELECT id, rating, logged_at, axis_acidity, axis_body, axis_roast, axis_sweetness, flavours FROM cups ORDER BY logged_at, id'
-  );
+  const rows = await db.getAllAsync<DnaRow & { id: number }>(`SELECT ${DNA_COLUMNS} FROM cups c ORDER BY c.logged_at, c.id`);
   const resetAt = settings?.reset_at ?? null;
   const now = computeDna(rows.map(dnaCupFromRow), Date.now(), resetAt);
   if (now.state !== 'locked') return false;

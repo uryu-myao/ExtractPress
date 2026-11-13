@@ -21,7 +21,7 @@ import { dayLine, dayTimeLine } from '../components/WhenMeta';
 import { cupTitle } from '../constants/cups';
 import { formatDay, startOfDay } from '../constants/dates';
 import { drinkItems, normalizeDrink, normalizeProduct } from '../constants/drinks';
-import { TASTE_AXES } from '../constants/tasteAxes';
+import { AXIS_SCALE, stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deleteCup, deleteDropsLockIn, getBag, listDrinkHistory, listGear, listOpenBags, listProductHistory, updateCup } from '../data/repository';
 import { color, dashed, layout, shape, space, spacing } from '../theme/tokens';
@@ -110,15 +110,15 @@ function AsLogged({ cup }) {
         <DashedRule token={dashed.dividerSoft} />
         <View style={styles.axes}>
           {TASTE_AXES.map((axis) => {
-            const value = cup[`axis_${axis.key}`];
+            const value = cup.axes[axis.id] ?? null;
             return (
-              <View key={axis.key} style={styles.axis}>
+              <View key={axis.id} style={styles.axis}>
                 <AxisPoles axis={axis} />
                 <AxisReadout
-                  axis={axis.key}
+                  axis={axis.id}
                   tone="entered"
                   value={value}
-                  accessibilityLabel={`${axis.from} to ${axis.to}, ${value == null ? 'not noted' : axis.steps[Math.round(value / 25)]}`}
+                  accessibilityLabel={`${axis.label}, ${value == null ? 'not noted' : `${value} of ${AXIS_SCALE.max}, ${stepWordOf(value)}`}`}
                 />
               </View>
             );

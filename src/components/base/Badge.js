@@ -17,7 +17,7 @@ import Text from './Text';
  *              Design Round 8; the stamp's button is DnaStamp, the Badge
  *              itself still never acts). The left padding is 2 less, to
  *              balance the glyph. Status words only, never plain labels.
- *   axis       optional taste axis key (TASTE_AXES): its 12 × 4 colour key
+ *   axis       optional taste axis id (TASTE_AXES): its 12 × 4 colour key
  *              before the label, gap 6, padding unchanged — 5c / 2c's change
  *              tags (Design Round 21, 23e). The key is decorative.
  *   accessibilityLabel  what a screen reader says instead of the label

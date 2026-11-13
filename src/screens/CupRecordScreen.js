@@ -14,7 +14,7 @@ import { whenLine } from '../components/WhenMeta';
 import { MODE_LABEL, NONE, cupTitle, tidyNote } from '../constants/cups';
 import { daysBetween, formatDay } from '../constants/dates';
 import { FLAVOUR_LIMIT } from '../constants/flavours';
-import { TASTE_AXES } from '../constants/tasteAxes';
+import { AXIS_SCALE, stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { getCup, onCupsChanged } from '../data/repository';
 import { requestPush } from '../navigation';
@@ -127,7 +127,7 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
   }, [db, id]);
 
   if (!cup) return null;
-  const noted = TASTE_AXES.filter((a) => cup[`axis_${a.key}`] != null).length;
+  const noted = TASTE_AXES.filter((a) => cup.axes[a.id] != null).length;
   const change = cup.dna_change ? JSON.parse(cup.dna_change) : null;
   const sub = subtitle(cup);
   const note = tidyNote(cup.note);
@@ -181,19 +181,19 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
               Where it sat
             </Text>
             <Text variant="body" color="muted">
-              {`${noted} of 4 axes noted. Untouched ones stay out of my taste DNA.`}
+              {`${noted} of ${TASTE_AXES.length} axes noted. Untouched ones stay out of my taste DNA.`}
             </Text>
             <View style={styles.axes}>
               {TASTE_AXES.map((axis) => {
-                const value = cup[`axis_${axis.key}`];
+                const value = cup.axes[axis.id] ?? null;
                 return (
-                  <View key={axis.key} style={styles.axis}>
+                  <View key={axis.id} style={styles.axis}>
                     <AxisPoles axis={axis} />
                     <AxisReadout
-                      axis={axis.key}
+                      axis={axis.id}
                       tone="entered"
                       value={value}
-                      accessibilityLabel={`${axis.from} to ${axis.to}, ${value == null ? 'not noted' : axis.steps[Math.round(value / 25)]}`}
+                      accessibilityLabel={`${axis.label}, ${value == null ? 'not noted' : `${value} of ${AXIS_SCALE.max}, ${stepWordOf(value)}`}`}
                     />
                   </View>
                 );

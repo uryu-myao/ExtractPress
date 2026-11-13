@@ -1,84 +1,89 @@
 import { StyleSheet, View } from 'react-native';
-import { TASTE_AXES } from '../constants/tasteAxes';
-import { bandOf } from '../data/tasteDna';
+import { axisById, STEP_WORDS } from '../constants/tasteAxes';
+import { changeDeltas } from '../data/tasteDna';
 import { space, spacing } from '../theme/tokens';
 import Badge from './base/Badge';
 import Text from './base/Text';
 
 /**
  * What one cup changed in Taste DNA, from its stored `dna_change` (never
- * recomputed): a sentence, then one tag per axis (Design Round 21, 23e /
- * 23f). Shared by 5c and 2c's "Feeds my taste DNA". The per-axis lines
- * ("Moved N points toward ‹pole›") are gone: the tags replace them.
+ * recomputed): a sentence, then one tag per axis (Turn 30, 31e). Shared by
+ * 5c and 2c's "Feeds my taste DNA". Which axes moved and by how much is
+ * tasteDna.ts changeDeltas(); this file only words it.
  *
- * Tags, in the axes' fixed order (the readouts' order), wrapping space.6
- * both ways; Badge neutral, inline, with the axis's key:
- *   moved        "‹pole label› +N": N points toward that pole, always
- *                positive (the pole carries the direction), rounded to whole
- *                points. A move that rounds to 0 gets no tag.
- *   first value  "Starts at ‹step name›", no number: a position, not a
- *                movement. A one-cup profile is that cup's value, so a step
- *                always exists.
+ * Tags, in the registry's order, wrapping space.6 both ways; Badge neutral,
+ * inline, with the axis's key:
+ *   moved        "‹Axis› +0.2" / "‹Axis› −0.1": the change on the 1–5 scale,
+ *                one decimal, signed with a true minus. The sign carries the
+ *                direction the pole used to. Under 0.05: no tag.
+ *   first value  "‹Axis› starts at ‹step word›", no number: a position, not
+ *                a movement.
  * Sentence:
- *   moved        "This cup pushed you ‹phrases›." — the two axes that moved
- *                most (never a first value), joined with "and" (Design Round
- *                12; Uryu kept the phrases below). Ties keep the axes' order.
- *   first only   "My taste DNA has its first ‹Axis› reading." (two or more:
- *                "…its first Roast and Sweetness readings.")
- *   nothing      "Your Taste DNA stays where it was — nothing on this cup
- *                moves it." No tags.
+ *   first        "My taste DNA has its first ‹Axis› reading." (two or more:
+ *                "…its first Body and Aftertaste readings."). 31e draws this
+ *                sentence over a cup that also moved an axis by 0.1, so a
+ *                first reading leads.
+ *   moved        "This cup raised ‹a› [and lowered ‹b›]." — the two largest
+ *                changes, largest first; one verb when both go the same way
+ *                ("raised acidity and sweetness"). Ties keep registry order.
+ *   barely       something moved, all under 0.05: "My taste DNA stays where
+ *                it was — this cup barely moves it." No tags.
+ *   nothing      nothing on the cup moved anything: NOTHING_MOVED. No tags.
  */
-const PHRASE = {
-  acidity: { low: 'brighter', high: 'more bitter' },
-  // Body and Roast both start "light": each takes its noun, or it reads
-  // "lighter and lighter".
-  body: { low: 'lighter-bodied', high: 'fuller-bodied' },
-  roast: { low: 'toward lighter roasts', high: 'toward darker roasts' },
-  sweetness: { low: 'less sweet', high: 'sweeter' },
-};
-
 const SUMMARY_AXES = 2;
+const MINUS = '\u2212';
 
 export const NOTHING_MOVED = 'Your Taste DNA stays where it was — nothing on this cup moves it.';
+export const BARELY_MOVED = 'My taste DNA stays where it was — this cup barely moves it.';
 
 /** "A", "A and B", "A, B and C". */
 const joinAnd = (words) => (words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`);
 
-/** [{ key, name, label, a11y, size, phrase }] in the axes' order; first values have no size. */
+const signed = (d) => `${d > 0 ? '+' : MINUS}${Math.abs(d).toFixed(1)}`;
+
+/** [{ key, name, label, a11y, size?, up? }] in registry order, plus `still` (moved under 0.05) for the sentence. */
 export function changeTags(change) {
-  if (!change) return [];
   const tags = [];
-  for (const axis of TASTE_AXES) {
-    const before = change.before[axis.key]?.value ?? null;
-    const after = change.after[axis.key]?.value ?? null;
-    if (after == null) continue;
-    if (before == null) {
-      const label = `Starts at ${axis.steps[bandOf(after)]}`;
-      tags.push({ key: axis.key, name: axis.name, label, a11y: label });
+  let still = false;
+  for (const d of changeDeltas(change)) {
+    const axis = axisById(d.axis);
+    if (d.kind === 'still') {
+      still = true;
       continue;
     }
-    const points = Math.round(Math.abs(after - before));
-    if (points < 1) continue;
-    const up = after > before;
-    const pole = up ? axis.to : axis.from;
+    if (d.kind === 'first') {
+      const label = `${axis.label} starts at ${STEP_WORDS[d.step]}`;
+      tags.push({ key: d.axis, name: axis.label, label, a11y: label, first: true });
+      continue;
+    }
+    const label = `${axis.label} ${signed(d.delta)}`;
     tags.push({
-      key: axis.key,
-      name: axis.name,
-      label: `${pole} +${points}`,
-      a11y: `${points} ${points === 1 ? 'point' : 'points'} toward ${pole}`,
-      size: points,
-      phrase: PHRASE[axis.key][up ? 'high' : 'low'],
+      key: d.axis,
+      name: axis.label,
+      label,
+      a11y: `${axis.label} ${d.delta > 0 ? 'up' : 'down'} ${Math.abs(d.delta).toFixed(1)}`,
+      size: Math.abs(d.delta),
+      up: d.delta > 0,
     });
   }
+  tags.still = still;
   return tags;
 }
 
-/** The sentence over the tags: what moved most, or the first readings, or nothing. */
+/** The sentence over the tags: first readings, what moved most, barely, or nothing. */
 export function changeSentence(tags) {
-  const moved = tags.filter((t) => t.size).sort((a, b) => b.size - a.size);
-  if (moved.length) return `This cup pushed you ${moved.slice(0, SUMMARY_AXES).map((t) => t.phrase).join(' and ')}.`;
-  if (tags.length) return `My taste DNA has its first ${joinAnd(tags.map((t) => t.name))} ${tags.length === 1 ? 'reading' : 'readings'}.`;
-  return NOTHING_MOVED;
+  const firsts = tags.filter((t) => t.first);
+  if (firsts.length) return `My taste DNA has its first ${joinAnd(firsts.map((t) => t.name))} ${firsts.length === 1 ? 'reading' : 'readings'}.`;
+  const moved = tags.filter((t) => t.size).sort((a, b) => b.size - a.size).slice(0, SUMMARY_AXES);
+  if (moved.length) {
+    const [a, b] = moved;
+    const verb = (t) => (t.up ? 'raised' : 'lowered');
+    const name = (t) => t.name.toLowerCase();
+    if (!b) return `This cup ${verb(a)} ${name(a)}.`;
+    if (a.up === b.up) return `This cup ${verb(a)} ${name(a)} and ${name(b)}.`;
+    return `This cup ${verb(a)} ${name(a)} and ${verb(b)} ${name(b)}.`;
+  }
+  return tags.still ? BARELY_MOVED : NOTHING_MOVED;
 }
 
 /** The tags alone, wrapping (5c places them itself; 2c through DnaChange). */

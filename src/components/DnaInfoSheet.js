@@ -48,7 +48,7 @@ const listNames = (names) => (names.length === 1 ? names[0] : `${names.slice(0, 
 const notes = (n) => `${n} more ${n === 1 ? 'note' : 'notes'}`;
 
 function earlyProgress(dna) {
-  const short = TASTE_AXES.filter((a) => dna.axes[a.key].n > 0 && dna.axes[a.key].n === dna.fewest).map((a) => a.name);
+  const short = TASTE_AXES.filter((a) => dna.axes[a.id].n > 0 && dna.axes[a.id].n === dna.fewest).map((a) => a.label);
   const n = DNA_TUNING.lockIn - dna.fewest;
   return short.length === 1 ? `${short[0]} needs ${notes(n)} to lock in.` : `${listNames(short)} need ${notes(n)} each to lock in.`;
 }

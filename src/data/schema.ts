@@ -21,6 +21,8 @@ type ColumnDef = {
   readonly pk?: true;
   readonly values?: readonly string[];
   readonly references?: string;
+  /** The foreign key's ON DELETE action, when not the default (NO ACTION). check:schema compares it. */
+  readonly onDelete?: 'cascade' | 'set null';
   /** Filled from another column when inserted as NULL (an AFTER INSERT trigger). */
   readonly defaultFrom?: string;
   /** TEXT holding JSON; the row type describes the decoded value. */
@@ -54,15 +56,14 @@ export const schema = {
     note: { type: 'TEXT', nullable: true },
     /** Flavour tags (5b): the words themselves, in the order chosen, at most 5. Not ids. */
     flavours: { type: 'TEXT', nullable: false, json: 'string[]' },
-    /** The four axes (5b), points 0–100 on 5 steps; NULL = not noted. Keys as constants/tasteAxes.js. */
-    axis_acidity: { type: 'INTEGER', nullable: true },
-    axis_body: { type: 'INTEGER', nullable: true },
-    axis_roast: { type: 'INTEGER', nullable: true },
-    axis_sweetness: { type: 'INTEGER', nullable: true },
+    /*
+     * NO AXIS COLUMNS (migration 11): the tasting axes are rows in cup_axes,
+     * one per axis assessed. Not noted is the absence of a row.
+     */
 
     // mode = made_it
     /** The bag it was logged from. A reference only: display and Taste DNA read the copies below. */
-    bag_id: { type: 'INTEGER', nullable: true, references: 'bags' },
+    bag_id: { type: 'INTEGER', nullable: true, references: 'bags', onDelete: 'set null' },
     /**
      * The bag's details, COPIED at logging (data-model.md). A cup is a fact:
      * deleting the bag never strips them. Editing the bag rewrites them on Save,
@@ -78,9 +79,9 @@ export const schema = {
     /** The roast date itself, never a day count ("day 7 when brewed" is computed). */
     bean_roasted_at: { type: 'INTEGER', nullable: true },
     /** Gear: a reference plus the text as shown, the same shape as the bag. */
-    brewer_id: { type: 'INTEGER', nullable: true, references: 'gear' },
+    brewer_id: { type: 'INTEGER', nullable: true, references: 'gear', onDelete: 'set null' },
     brew_method: { type: 'TEXT', nullable: true },
-    grinder_id: { type: 'INTEGER', nullable: true, references: 'gear' },
+    grinder_id: { type: 'INTEGER', nullable: true, references: 'gear', onDelete: 'set null' },
     grinder: { type: 'TEXT', nullable: true },
     /**
      * V1.5 COLUMNS — NOT DEAD. grind_setting, water_temp_c and ratio have no UI
@@ -93,7 +94,7 @@ export const schema = {
     ratio: { type: 'REAL', nullable: true },
 
     // mode = barista
-    place_id: { type: 'INTEGER', nullable: true, references: 'places' },
+    place_id: { type: 'INTEGER', nullable: true, references: 'places', onDelete: 'set null' },
     drink_type: { type: 'TEXT', nullable: true },
 
     // mode = packaged
@@ -102,7 +103,7 @@ export const schema = {
      * one name, no brand field (Design Round 7). Migration 4.
      */
     product_name: { type: 'TEXT', nullable: true },
-    bought_at_place_id: { type: 'INTEGER', nullable: true, references: 'places' },
+    bought_at_place_id: { type: 'INTEGER', nullable: true, references: 'places', onDelete: 'set null' },
     /**
      * Taste DNA before / after this cup, as of its logged time (tasteDna.ts
      * DnaChange), stored at save and never recomputed. 5c and 8f's shifts read
@@ -145,8 +146,12 @@ export const schema = {
     /** NULL = unset or unknown (no "other": it compares to nothing). */
     process: { type: 'TEXT', nullable: true, values: ['washed', 'natural', 'honey', 'anaerobic'] },
     /**
-     * Transcribed from the label: 4 steps, DELIBERATELY uneven against the 5-step
-     * Roast axis (perceived). Do not add medium-light. NULL = unset. data-model.md.
+     * Transcribed from the label: FOUR VALUES, DELIBERATELY (decided
+     * 2026-10-09, reaffirmed 2026-11-13). An ordered scale light → dark that
+     * Try Next can measure distance along. Do not add medium-light (false
+     * precision: roasters' steps differ) and do not add "other" (it has no
+     * place on the scale; a label that fits none is left NULL, "not
+     * recorded"). Never a taste axis and never in Taste DNA. data-model.md.
      */
     roast_level: { type: 'TEXT', nullable: true, values: ['light', 'medium', 'medium-dark', 'dark'] },
     /**
@@ -174,6 +179,27 @@ export const schema = {
      * state or a bar (data-model.md "Best-before"). Not copied onto cups.
      */
     best_before: { type: 'INTEGER', nullable: true },
+  },
+
+  /**
+   * A cup's tasting axes (migration 11; Turn 29, 5b): ONE ROW PER AXIS THE
+   * DRINKER ASSESSED. NOT NOTED IS THE ABSENCE OF A ROW: no NULL value, no
+   * sentinel, no default — an axis left alone simply has no row here. That
+   * is this table's most important property and the reason it is a join
+   * table (data-model.md "cup_axes"). Which axes exist is the registry's
+   * business (src/constants/tasteAxes.js), so `axis` has no CHECK list: a
+   * new axis needs no migration. Deleting the cup deletes its rows.
+   */
+  cup_axes: {
+    cup_id: { type: 'INTEGER', nullable: false, pk: true, references: 'cups', onDelete: 'cascade' },
+    /** A registry id (TASTE_AXES). */
+    axis: { type: 'TEXT', nullable: false, pk: true },
+    /**
+     * 1.0–5.0 in 0.5 steps; CHECK: between 1 and 5, and value × 2 whole (so
+     * 3.7 cannot be written). REAL is exact here: halves are representable
+     * in binary floating point.
+     */
+    value: { type: 'REAL', nullable: false },
   },
 
   /** Registered gear (3a 3b 3e, 8c). One default per category (a partial unique index). */
@@ -303,6 +329,7 @@ export type Bag = Row<'bags'>;
 export type Gear = Row<'gear'>;
 export type Settings = Row<'settings'>;
 export type Place = Row<'places'>;
+export type CupAxis = Row<'cup_axes'>;
 
 export type CupMode = NonNullable<Cup['mode']>;
 export type BagProcess = NonNullable<Bag['process']>;

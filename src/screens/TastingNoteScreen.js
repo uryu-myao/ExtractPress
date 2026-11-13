@@ -16,7 +16,7 @@ import SearchSheet from '../components/SearchSheet';
 import { useDatabase } from '../data/DatabaseProvider';
 import { listFlavourHistory } from '../data/repository';
 import { BUNDLED_FLAVOURS, FLAVOUR_LIMIT, normalizeFlavour } from '../constants/flavours';
-import { TASTE_AXES } from '../constants/tasteAxes';
+import { STEP_WORDS, TASTE_AXES } from '../constants/tasteAxes';
 import { color, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -65,24 +65,26 @@ function shownFlavours(selected, history, kept) {
 }
 
 /**
- * The four axes. Their values live in the Record sheet's draft (shared with
- * 5a, kept when going back). An axis commits on release only, so a commit
- * re-renders rarely; AxisRow is memoised so the other three stay put.
+ * The registry's axes (interim AxisSlider until Turn 29's commit 3). Their
+ * values live in the Record sheet's draft (shared with 5a, kept when going
+ * back): { [axis id]: 1–5 }, no key = not noted. An axis commits on release
+ * only, so a commit re-renders rarely; AxisRow is memoised so the others
+ * stay put.
  */
 const Axes = memo(function Axes({ axes, setAxis }) {
   return (
     <View style={styles.axes}>
       {TASTE_AXES.map((a) => (
-        <AxisRow key={a.key} axis={a} value={axes[a.key]} setAxis={setAxis} />
+        <AxisRow key={a.id} axis={a} value={axes[a.id] ?? null} setAxis={setAxis} />
       ))}
     </View>
   );
 });
 
-/** One axis; memoised so committing one leaves the other three alone. */
+/** One axis; memoised so committing one leaves the others alone. */
 const AxisRow = memo(function AxisRow({ axis, value, setAxis }) {
-  const onChange = useCallback((v) => setAxis(axis.key, v), [axis.key, setAxis]);
-  return <AxisSlider axis={axis.key} from={axis.from} to={axis.to} steps={axis.steps} value={value} onChange={onChange} />;
+  const onChange = useCallback((v) => setAxis(axis.id, v), [axis.id, setAxis]);
+  return <AxisSlider axis={axis.id} label={axis.label} steps={STEP_WORDS} value={value} onChange={onChange} />;
 });
 
 /**

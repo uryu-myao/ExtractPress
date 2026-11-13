@@ -3,6 +3,7 @@ import * as Sharing from 'expo-sharing';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { BACKUP_FORMAT, packBackup, photoIdsOf, readTables } from './backupFormat';
 import { cupsCsv, type CsvCup } from './csv';
+import { axesJsonSql, parseAxes } from './cupAxes';
 import { asSqlDb } from './migrate';
 import { originalBytes } from './photos';
 
@@ -69,15 +70,15 @@ export async function shareBackup(db: SQLiteDatabase): Promise<void> {
 
 /** Every cup with its café's name as copied at logging (migration 6), for the sheet. */
 export async function listCsvCups(db: SQLiteDatabase): Promise<CsvCup[]> {
-  const rows = await db.getAllAsync<Omit<CsvCup, 'flavours'> & { flavours: string }>(
+  const rows = await db.getAllAsync<Omit<CsvCup, 'flavours' | 'axes'> & { flavours: string; axes: string }>(
     `SELECT c.id, c.logged_at, c.mode, c.rating, c.note, c.flavours,
             c.bean_name, c.bean_roaster, c.bean_origin, c.bean_region, c.bean_process, c.bean_roast_level, c.bean_roasted_at,
-            c.brew_method, c.grinder, c.axis_acidity, c.axis_body, c.axis_roast, c.axis_sweetness,
+            c.brew_method, c.grinder, ${axesJsonSql('c')} AS axes,
             c.drink_type, c.place_name, c.product_name
        FROM cups c
       ORDER BY c.logged_at, c.id`
   );
-  return rows.map((row) => ({ ...row, flavours: JSON.parse(row.flavours) }));
+  return rows.map((row) => ({ ...row, flavours: JSON.parse(row.flavours), axes: parseAxes(row.axes) }));
 }
 
 /**
