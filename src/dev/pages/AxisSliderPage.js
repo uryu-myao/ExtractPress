@@ -1,28 +1,62 @@
 import { useState } from 'react';
-import AxisSlider from '../../components/base/AxisSlider';
-import { STEP_WORDS, TASTE_AXES } from '../../constants/tasteAxes';
+import { StyleSheet, View } from 'react-native';
+import AxisSlider, { AxisScaleKey } from '../../components/base/AxisSlider';
+import { TASTE_AXES } from '../../constants/tasteAxes';
+import { color, shape, space, spacing } from '../../theme/tokens';
 import { HarnessCase, HarnessGroup, HarnessPage } from '../harness';
 
 /**
- * AxisSlider states (interim until Turn 29's commit 3: five whole stops on
- * 1–5, one track; the square handle carries the state).
+ * AxisSlider (30a–30d) in every state, on a raised card as 5b shows it.
+ * Live: drag, tap (a tap on the waiting handle confirms 1), ✕.
  */
-const [FIRST, SECOND] = TASTE_AXES;
+function Rows({ initial }) {
+  const [values, setValues] = useState(initial);
+  return (
+    <View style={styles.card}>
+      <View style={styles.rows}>
+        {TASTE_AXES.map((a) => (
+          <AxisSlider key={a.id} axis={a.id} value={values[a.id] ?? null} onChange={(v) => setValues((p) => ({ ...p, [a.id]: v }))} />
+        ))}
+      </View>
+      <AxisScaleKey style={styles.key} />
+    </View>
+  );
+}
 
 export default function AxisSliderPage() {
-  const [empty, setEmpty] = useState(null);
-  const [entered, setEntered] = useState(2);
-
   return (
     <HarnessPage>
-      <HarnessGroup title="operable (drag, tap, Clear)">
-        <HarnessCase label="empty — muted square resting at 1 (a placeholder, never a value)">
-          <AxisSlider axis={FIRST.id} label={FIRST.label} steps={STEP_WORDS} value={empty} onChange={setEmpty} />
+      <HarnessGroup title="30a: none noted (every handle waits at 1, grey)">
+        <HarnessCase label="Not noted × 5">
+          <Rows initial={{}} />
         </HarnessCase>
-        <HarnessCase label="entered — accent square, Clear; touch scales it">
-          <AxisSlider axis={SECOND.id} label={SECOND.label} steps={STEP_WORDS} value={entered} onChange={setEntered} />
+      </HarnessGroup>
+      <HarnessGroup title="30b: a realistic mix">
+        <HarnessCase label="3.5 · 1 · not noted · 2.5 · not noted">
+          <Rows initial={{ acidity: 3.5, bitterness: 1, sweetness: 2.5 }} />
+        </HarnessCase>
+      </HarnessGroup>
+      <HarnessGroup title="30c: all five set">
+        <HarnessCase label="4 · 2 · 3 · 3.5 · 5">
+          <Rows initial={{ acidity: 4, bitterness: 2, body: 3, sweetness: 3.5, aftertaste: 5 }} />
         </HarnessCase>
       </HarnessGroup>
     </HarnessPage>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    borderWidth: shape.borderWidth.box,
+    borderColor: color.border.container,
+    backgroundColor: color.surface.raised,
+    paddingVertical: spacing.inset.container.v,
+    paddingHorizontal: spacing.inset.container.h,
+  },
+  rows: {
+    gap: spacing.gap.row,
+  },
+  key: {
+    marginTop: space[2],
+  },
+});

@@ -9,7 +9,7 @@ import Text from './Text';
  * AxisReadout (design-system.md §9 Taste axis readout; Turn 30, 31b / 31d):
  * one read-only line per axis, 17 tall.
  *
- *   title   size.axisReadout.title (88): the axis's name, textStyle
+ *   title   size.axisColumn.title (88): the axis's name, textStyle
  *           axisLabel (10 / 700 caps .06em), ink. NO COLOUR KEY: the name
  *           says which axis, the fill shows its colour.
  *   track   size.meter.track (4) on border.subtle, filling the rest of the
@@ -19,7 +19,7 @@ import Text from './Text';
  *           flush left at 1, flush right at 5, centred on the value between.
  *           LOAD-BEARING AT 1: the fill is zero wide there, and the marker
  *           flush left IS the reading.
- *   step    optional (8f, `step`): a size.axisReadout.step (56) column at
+ *   step    optional (8f, `step`): a size.axisColumn.step (56) column at
  *           the right with the step word (Faint … Strong, nearest whole
  *           number), axisLabel in text.secondary, right-aligned. No numbers:
  *           a profile is an estimate, not a reading.
@@ -108,10 +108,10 @@ const styles = StyleSheet.create({
     gap: space[8],
   },
   title: {
-    width: size.axisReadout.title,
+    width: size.axisColumn.title,
   },
   step: {
-    width: size.axisReadout.step,
+    width: size.axisColumn.step,
     textAlign: 'right',
   },
   key: {

@@ -660,11 +660,13 @@ Fixed element dimensions. **Never subject to the spacing scale** — snapping th
 | `size.checkbox` | 24 | 3 screens / 22 uses; also the radio marker's outer square (§9) |
 | `size.switch` | `{ w: 52, h: 30, knob: 22, inset: 2 }` | 8 uses / 4 screens (8g 8i 8j 8m; 3e is drift D-20). Square knob = h − 2 × border − 2 × inset. **The taste axis handle is derived from this geometry** (§9). Added 2026-10-10 |
 | `size.weekday.column` | 68 | 6 screens |
-| `size.axis.rail` | **34** (20 in the mock; 28 for L3 + H1; 34 from 2026-10-08, size B) | the slider's track height |
-| `size.axis.railWidth` | **260** | the slider's track width, centred in its card (added 2026-10-08 at 240; 260 once the pole labels went to `label.caps`) |
+| `size.axis.rail` | **28** (30d, 2026-11-14; was 34 from 2026-10-08, size B) | the 5b track height |
+| ~~`size.axis.railWidth`~~ | — | **removed 2026-11-14**: the track fills the row between the title and reading columns (166 at 402) |
 | `size.axis.inset` | **2** | handle ↔ frame, the Switch's padding (2026-10-08) |
-| `size.axis.handle` | `{ w: 26, h: 26 }` | the square handle = track − 2 × border − 2 × inset (2026-10-08; was 16 × 40); stops 56.5pt apart |
-| `size.axis.dot` | **6** | the stop dots (2026-10-08) |
+| `size.axis.handle` | `{ w: 20, h: 20 }` | the square handle = track − 2 × border − 2 × inset (30d; was 26); nine stops, 17.25pt apart at 402 |
+| `size.axis.dot` | **6** | the dots at the whole numbers (2026-10-08) |
+| `size.axis.clear` | **24** | 5b's ✕ square (30b); touch area 44 by hitSlop |
+| `size.axisColumn` | `{ title: 88, reading: 56, step: 56 }` | the column grid every axis row shares: 5b's input (30c / 30d) and the readout (31b / 31d). Title 88 is set by ja's アフターテイスト (85); a longer title wraps, the column never widens |
 | ~~`size.axis.needle`~~ | — | **removed 2026-10-11** with the old display axis |
 | `size.meter.track` | 4 | 2 screens — `beanFreshness` height |
 | `size.marker.line` | `{ w: 2, h: 14 }` | marker / caret line width |
@@ -1028,7 +1030,26 @@ Padding is `inset.control` (the source's 13 / 16 folds to it) and the gap is `sp
 
 ~~**Intro line per mode (2026-10-05)**~~ (superseded by the Required bar, 2026-10-18): the line under the header changes with the mode. I made it is 5a verbatim ("Marked fields are required — all of them start pre-filled.") and Packaged is 5e with one word changed ("Packaged cups skip brewing and café — two fields left."; the mock says "Bottled", see `drift.md` D-14). No mock has a Barista line, because 5d replaces it with the error summary. Barista's line was **written to 5e's pattern** (what the mode skips, then how many fields are left): "Cups made for you skip beans and brewing — two fields left." Every line names the cup by who made it, matching the "Who made it?" field, not by its vessel or where it came from ("Café cups" was rejected on review). The line **crossfades** with `motion.expand` (same duration and bezier as the field block), the outgoing line laid over the incoming one, inside the same height-animating wrapper. At 390pt I made it's and Packaged's lines fit one line; Barista's wraps to two since the intro became a block with padding (2026-10-11), and the block eases to the new height. (A bug cut it to one line instead: ExpandingBlock measured its content against the animated height; fixed 2026-10-11.)
 
-### Taste axis slider (base `AxisSlider`) — the one place this component is specified (current as of 2026-10-09)
+### Taste axis slider (base `AxisSlider`) — the one place this component is specified (current as of 2026-11-14)
+
+**Current (Turn 29, 30a–30d, 2026-11-14) — supersedes everything below where they differ.** One row per axis, 44 tall (`size.tapTarget`), rows `gap.row` (8) apart, on the `size.axisColumn` grid:
+
+| part | value |
+|---|---|
+| title | `size.axisColumn.title` (88), `textStyle.axisLabel`, ink; wraps, never shrinks. **No colour key** |
+| track | fills the row between the columns (`space[8]` each side; 166 at 402, 150 at 390, 194 at 430): `size.axis.rail` (28) tall, 2px `text.secondary` frame on `surface.raised`; a `size.axis.dot` (6) dot in `border.subtle` at each whole number |
+| stops | **nine**, 1–5 in halves (`AXIS_SCALE`): 17.25pt apart at 402, 15.75 at 390, 13.9 at 375 |
+| handle | 20 square, inset 2, white 2 × 6 grip. **Not assessed**: `border.subtle` fill, `border.muted` frame, **waiting at 1** (a placeholder, never a value; nothing is pre-set to a midpoint). **Assessed**: `text.accent` fill, `border.strong` frame |
+| reading | `size.axisColumn.reading` (56), right-aligned: the value **always to one decimal, "1.0" … "5.0"** (`textStyle.axisReading`, 15 / 700 tabular, ink; Uryu 2026-11-14: one width, so nothing shifts as it changes; 30b draws "1", "3.5") and `space[6]` then the ✕ (`ClearButton` `square`: 24 on `surface.sunken`, `icon.clear` in `text.secondary`, 44 target by hitSlop that reaches into the 8 gap and the card padding, never the track); not assessed: "Not noted" (`textStyle.axisUnset`, 11 / 600, `text.muted`). While dragging it shows the stop under the finger |
+| scale key | under the last track, once: "1 · Faint" at the track's left end, "Strong · 5" at its right, `label.eyebrow` muted, `space[2]` below the track (`AxisScaleKey`) |
+
+- **Gestures**: the whole 44 band left of the reading column (title and track) is the drag area; a selection haptic at every stop; release commits. **A tap on the track sets the nearest stop** with a light impact, so **a tap on the waiting handle confirms 1** without dragging away and back. A tap on the title does nothing. Vertical travel goes to the scroll view.
+- **✕ clears to not assessed**: no value, so no `cup_axes` row (data-model.md).
+- **Device check owed**: with the handle dragged to 5, the finger must not catch the ✕ on release (the ✕ is outside the gesture's band, so a release over it should not press it).
+- **5b's content height (2026-11-14, simulator, `ScreenFrame`'s ScrollView)**: content 940 against a viewport of 732 at 390 × 844 (scrolls 208), 940 against 820 at 430 × 932. For comparison, the three Record modes on record: 728 / 728 / 808 at 390. The rows are fixed height, so the content doesn't change with width.
+
+*History (bipolar, 2026-10-08 → 2026-11-13):*
+
 The input of Taste DNA, on 5b only. **Its display is a different component, AxisReadout** (next section). The two look different, so what can be operated is clear at a glance. A value the user entered must never be confused with one that came out of their records (§1 Colour roles: entered = brown, computed = neutral). Token sizes: §5 `size.axis.*`.
 
 **Look** (from Uryu's screenshots, size B, 2026-10-08):
@@ -1112,11 +1133,11 @@ The display of axis values: Home's card (1b / 4a / 4b), 5c, 2c, 11a and 8f. It i
 
 | part | value |
 |---|---|
-| title | `size.axisReadout.title` (88) column on the left: the axis's name, `textStyle.axisLabel` (10 / 700 caps .06em), ink. **No colour key** (removed on Uryu's comment; the fill shows the colour) |
+| title | `size.axisColumn.title` (88) column on the left: the axis's name, `textStyle.axisLabel` (10 / 700 caps .06em), ink. **No colour key** (removed on Uryu's comment; the fill shows the colour) |
 | track | `size.meter.track` (4) on `border.subtle`, filling the rest of the line, `space[8]` after the title |
 | fill | from the left edge to (value − 1) / 4, the axis's `color.axis.*` |
 | marker | 2 × 14 at the value, kept inside the track (flush left at 1, flush right at 5): computed `text.muted`, entered `border.accent`. **Load-bearing at 1**: the fill is zero wide and the marker flush left is the reading |
-| step (8f) | optional `step`: a `size.axisReadout.step` (56) column at the right, the step word (Faint … Strong, nearest whole number), `axisLabel` in `text.secondary`, right-aligned. No numbers |
+| step (8f) | optional `step`: a `size.axisColumn.step` (56) column at the right, the step word (Faint … Strong, nearest whole number), `axisLabel` in `text.secondary`, right-aligned. No numbers |
 | not noted | no marker, no fill; "Not noted yet" / "Not noted" centred over the track on a `surface.raised` patch (`space.8` each side), `textStyle.axisEmpty` (11 / 500) in `text.placeholder`. **3.08:1, under the text floor on purpose**: it marks an absence. Do not "fix" it |
 | ticks, gradient | none |
 
@@ -1433,3 +1454,5 @@ One line per change to this document or to the token values, with the reason.
 - 2026-11-09 — §9 AxisReadout: an empty axis's "Not noted yet" / "Not noted" in `text.placeholder` (was `text.muted`; Uryu on device: too dark beside the track, read as noise). 3.08:1 on raised, the 3:1 floor `border.medium` failed on 2026-10-09.
 - 2026-11-13 — **Token renamed: `color.axis.roast` → `color.axis.bitterness`, same hex `#9D3D36` (Turn 30, 31a).** Ember was picked as heat rather than bean, and char is what bitterness tastes of; it stays clear of brown ("a value I entered") and of `text.destructive` (ΔE00 9.2) as before. **Bitterness is a new dimension that merely inherits the hue — it is not roast renamed.** Bitterness comes from over-extraction as much as from roast level, which is why the two had to separate: roast level is now a fact of the bag (`bags.roast_level`), with no axis, no colour and no place in Taste DNA (`data-model.md` "Roast is not a taste axis"). **Token added: `color.axis.aftertaste`, Tide `#03665F`** (OKLCH L 0.46 · C 0.08 · h 187; 4.82:1 on the track; ΔE00 31.3–47.7 to the set, inside its 20.1–57.7 band; deuteranopia's nearest is Sweetness at 13.3, above the set's weakest pair, Acidity–Bitterness 11.7). The axes are now a registry (`src/constants/tasteAxes.js`): a new axis is one entry there plus one `color.axis.*` token. AxisReadout / AxisSlider run on the 1–5 scale as an interim until Turn 29 / 30's commits 2–3 rebuild them.
 - 2026-11-14 — §9 Taste axis readout rebuilt to 31b / 31d on Uryu's ask ("strictly as the design: title left, axis right, no colour key"): one line per axis, title column 88, track on `border.subtle` filling the line, fill from the left edge, marker kept inside the track, rows 12 apart, 8f's 56 step-word column as an option on the same component (`step`). `AxisPoles` is gone; the 12 × 4 key stays on the change tags (31e) only, and is gone from the 5b slider too (30a draws none). **Tokens added** (the board's measures had none): `textStyle.axisLabel` (10 / 700 caps .06em, lh 17), `textStyle.axisEmpty` (11 / 500, lh 17), `size.axisReadout` (title 88, step 56). Rows are `spacing.gap.section` (12) apart: a `gap.readout` was added and taken out the same day, since `gap.section` already means 12 inside an enclosed surface and every readout list sits in a framed card (no third name for one value).
+- 2026-11-14 — §9 Taste axis slider rebuilt to 30a–30d (Turn 29): one 44 row per axis, title 88 · track (fills) · reading 56; nine stops in halves; the not-assessed handle waits at 1 in grey (`border.subtle` / `border.muted`), assessed is `text.accent` / `border.strong`; the reading column holds the number and a 24 ✕ on `surface.sunken`, or "Not noted"; a tap on the track sets the nearest stop, so a tap on the waiting handle confirms 1; the scale key once under the last track. The board's 88 / 56 / 17.25 win over the round's brief (96, 16.25: the brief's 96 is the title column plus its 8 gap). Tokens: `size.axis` rail 34 → 28, handle 26 → 20, `railWidth` removed, `clear` 24 added; grip 8 → 6 tall; the empty handle's fill `surface.muted` → `border.subtle` (same hex, the board's name); `size.axisReadout` renamed **`size.axisColumn`** (title 88, reading 56, step 56), since the input and the readout share the grid; `textStyle.axisReading` (15 / 700 tabular), `textStyle.axisUnset` (11 / 600), `icon.clear` (12 at 3). `ClearButton` gains a `square` variant rather than a new component.
+- 2026-11-14 — 5b's reading shows one decimal always ("1.0", "3.5", "5.0"; Uryu on device). 30b draws "1" and "3.5": with tabular figures a fixed "N.N" keeps the number one width, so it and the ✕ don't jump as a drag moves between whole and half stops. Drift entry D-72.

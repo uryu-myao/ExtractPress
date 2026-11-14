@@ -1,152 +1,128 @@
 import * as Haptics from 'expo-haptics';
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { AXIS_SCALE } from '../../constants/tasteAxes';
-import { component, motion, size, spacing, state, textStyle } from '../../theme/tokens';
-import Button from './Button';
+import { AXIS_SCALE, axisById, STEP_WORDS, stepWordOf } from '../../constants/tasteAxes';
+import { component, motion, size, space, state } from '../../theme/tokens';
+import ClearButton from './ClearButton';
 import { GESTURE_LOG, logGesture } from './gestureLog';
 import Text from './Text';
 
 /**
- * Taste axis slider (design-system.md §9 Taste axis slider).
+ * Taste axis input (design-system.md §9 Taste axis slider; Turn 29, boards
+ * 30a–30d): ONE ROW per axis, title · track · reading, 44 tall.
  *
- * TODO(Turn 29, commit 3): INTERIM. The five-axis input (30a–30d: nine stops
- * in halves, the handle parked at 1 in grey, the reading column, ✕) replaces
- * this. Until then it keeps its five stops and writes the whole numbers of
- * the 1–5 scale (cup_axes takes halves too; this simply never offers them).
- * An empty axis parks the handle at 1, never at a midpoint. The step words
- * (`steps`, STEP_WORDS) are read by the screen reader.
+ *   title    size.axisColumn.title (88), the axis's name, textStyle
+ *            axisLabel, ink. No colour key (30d: the title names the axis).
+ *            A longer title wraps to two lines; the column never widens.
+ *   track    fills the row between the columns (space[8] each side): 28
+ *            tall, 2px text.secondary frame on surface.raised, a dot at each
+ *            whole number, NINE STOPS (1–5 in halves, AXIS_SCALE).
+ *   handle   a 20 square, inset 2, with a white centre grip:
+ *              not assessed  border.subtle fill, border.muted frame, WAITING
+ *                            AT 1 — a placeholder, never a value. Nothing is
+ *                            pre-set to a midpoint.
+ *              assessed      text.accent fill, border.strong frame
+ *   reading  size.axisColumn.reading (56), right-aligned: the value
+ *            ALWAYS TO ONE DECIMAL, "1.0" … "5.0" (Uryu, 2026-11-14; 30b
+ *            draws "1" and "3.5"), so with tabular figures the number keeps
+ *            one width and the ✕ never shifts as the value changes
+ *            (axisReading) and the ✕ (ClearButton square), or "Not
+ *            noted" (axisUnset, text.muted). The reading appearing is the
+ *            "set" signal; by eye 3 and 3.5 are one stop apart, so it is
+ *            always shown. While dragging it shows the stop under the finger.
  *
- * Look (2026-10-08, Uryu's screenshots, size B): a 260 × 34 track with a 2px
- * frame and a dot at each of the 5 stops; a SQUARE 26 handle inset 2 inside
- * it — the Switch knob's geometry. Dots say where you can stop, the handle
- * says where you are. The handle is always opaque and simply covers the dot
- * under it. The handle carries the state:
- *   empty    value null — muted square resting at 1, a PLACEHOLDER,
- *            never a value
- *   entered  the user's own step — accent square, ink frame
- * While the finger is down the handle scales to state.pressed.scale (it is
- * under 44pt, §1) for the whole touch; there is no lit colour any more. Steps
- * give a selection haptic. Nothing commits while the finger is down: release
- * commits (onChange); a gesture taken away restores the committed step.
- * Clear (entered only) is the one way back to empty. It sits right-aligned
- * under the track with "Not noted", and hides while dragging.
+ * Gestures (Reanimated + gesture-handler, on the UI thread):
+ *   - The whole 44-tall band left of the reading column (title and track)
+ *     is the drag area: the finger never has to land on the 20 handle.
+ *   - Every stop gives a selection haptic: stops are 17.25 apart at 402 and
+ *     13.9 at 375, so the finger feels steps the eye can't resolve.
+ *   - A tap on the track sets the nearest stop, with a light impact. So a
+ *     tap on the waiting handle CONFIRMS 1 without dragging away and back:
+ *     1 is a common reading for acidity and bitterness. A tap on the title
+ *     does nothing.
+ *   - Nothing commits while the finger is down; release commits (onChange).
+ *     A gesture taken away (the scroll view wins) restores the committed stop.
+ *   - Vertical travel hands the touch to the scroll view (vertical wins ties).
+ *   - ✕ clears back to not assessed: onChange(null), so no cup_axes row is
+ *     written (cupAxes.ts). Its touch area is 44 through hitSlop, reaching
+ *     into the row's padding and the 8 gap, never over the track.
  *
- * Runs on the UI thread (Reanimated + gesture-handler, §1 Animation systems).
+ * Screen reader: one adjustable element per row; increment / decrement by a
+ * half, the first increment of a waiting axis sets 1; a Clear action.
  *
- * No colour key (2026-11-14, Uryu; 30a draws none): the name says which
- * axis. Handle, track and dots stay §9's, so brown keeps meaning "entered".
- *
- * Props
- *   axis        the axis's id (TASTE_AXES)
- *   label       the axis's name (unipolar: no poles)
- *   steps       the step words, low to high (STEP_WORDS)
- *   value       1–5 or null (empty)
- *   onChange    (value | null) => void — on release, on tap, on Clear
+ * Props: axis (a TASTE_AXES id), value (1–5 in halves, or null), onChange
  */
 
 // ── Device-tuning constants (design-system.md §9: check on device) ──────────
 /** Horizontal travel (pt) before the touch becomes an axis drag. */
 const ACTIVE_OFFSET_X = 10;
-/** Vertical travel (pt) that hands the touch to the scroll view instead. Vertical wins ties. */
+/** Vertical travel (pt) that hands the touch to the scroll view instead. */
 const FAIL_OFFSET_Y = 10;
-/** A tap may wander this far (pt) and still count as tap-to-set. */
+/** A tap may wander this far (pt) and still count as a tap. */
 const TAP_MAX_DISTANCE = 8;
 // ────────────────────────────────────────────────────────────────────────────
 
 const STATE = component.axis.state;
 const RAIL_H = component.axis.rail.height;
-/** A fixed-width track centred in its card; the pole labels sit at its ends. */
-const RAIL_W = component.axis.rail.width;
-const GRIP = component.axis.grip;
+const INSET = component.axis.rail.inset;
 const DOT = component.axis.rail.dot;
+const GRIP = component.axis.grip;
 const BORDER = STATE.entered.rail.width;
 const HANDLE = STATE.entered.needle.w;
-/**
- * Stops sit inside the frame by the inset plus half the handle, so the handle
- * never touches the frame at 0 / 100 (the Switch knob's 2pt). STOP0 is stop
- * 0's distance from the track's outer edge (17); the gestures use it.
- */
-const TRACK_INSET = component.axis.rail.inset + HANDLE / 2;
-const STOP0 = BORDER + TRACK_INSET;
-const BAND_PAD = (size.tapTarget - RAIL_H) / 2;
-/**
- * The touch band is a REAL view, BAND_PAD larger than the track on every side
- * (negative margins cancel its padding, so layout does not move). A
- * gesture-handler hitSlop does not work for this on iOS: a touch outside a
- * view's bounds is hit-tested to the view underneath (device logs, 2026-10-08).
- */
-const HIT = BAND_PAD;
-const STEPS = 5;
-const LAST = STEPS - 1;
+const INNER_H = RAIL_H - 2 * BORDER;
+/** From the track's outer edge to the handle's left edge at stop 0, and the same at the right end. */
+const END = BORDER + INSET;
+
+const { min: MIN, max: MAX, step: STEP } = AXIS_SCALE;
+const LAST = Math.round((MAX - MIN) / STEP);
+const stepToValue = (i) => MIN + i * STEP;
+const valueToStep = (v) => Math.min(LAST, Math.max(0, Math.round((v - MIN) / STEP)));
+/** The stops that get a dot: the whole numbers. */
+const DOT_STOPS = Array.from({ length: MAX - MIN + 1 }, (_, i) => valueToStep(MIN + i));
+
 const PRESS_MS = motion.press.duration;
 const pressEasing = Easing.bezier(...motion.press.controlPoints);
 
-const stepToValue = (i) => AXIS_SCALE.min + i;
-const valueToStep = (v) => Math.min(LAST, Math.max(0, Math.round(v - AXIS_SCALE.min)));
+/** The ✕'s 44 target: up and down to the row's 44, left into the 8 gap only, right into the card's padding. */
+const CLEAR_SLOP = (() => {
+  const v = (size.tapTarget - size.axis.clear) / 2;
+  return { top: v, bottom: v, left: space[8], right: size.tapTarget - size.axis.clear - space[8] };
+})();
 
 const selectionHaptic = () => {
   if (Platform.OS !== 'web') Haptics.selectionAsync();
 };
+const tapHaptic = () => {
+  if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+};
 
-function Rail({ part }) {
-  const innerH = RAIL_H - 2 * part.width;
-  return (
-    <View
-      style={[
-        StyleSheet.absoluteFill,
-        { borderWidth: part.width, borderStyle: part.style, borderColor: part.color, backgroundColor: part.background },
-      ]}>
-      {/* A dot at every stop; the handle covers the one it sits on. */}
-      <View style={[styles.track, { left: TRACK_INSET, right: TRACK_INSET }]} pointerEvents="none">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <View key={i} style={[styles.dot, { left: `${(i / LAST) * 100}%`, top: (innerH - DOT) / 2, backgroundColor: part.dot }]} />
-        ))}
-      </View>
-    </View>
-  );
-}
-
-function Needle({ part, railWidth, style }) {
+function Handle({ part, style }) {
   return (
     <Animated.View
       pointerEvents="none"
       style={[
-        styles.needle,
-        {
-          width: part.w,
-          height: part.h,
-          marginLeft: -part.w / 2,
-          top: (RAIL_H - 2 * railWidth - part.h) / 2,
-          backgroundColor: part.background,
-          borderWidth: part.borderWidth,
-          borderColor: part.borderColor,
-        },
+        styles.handle,
+        { backgroundColor: part.background, borderWidth: part.borderWidth, borderColor: part.borderColor },
         style,
       ]}>
-      {/* The grip: a short centre line, the handle's stroke wide. */}
-      {part.grip ? <View style={[styles.grip, { backgroundColor: part.grip }]} /> : null}
+      <View style={[styles.grip, { backgroundColor: part.grip }]} />
     </Animated.View>
   );
 }
 
-function Pole({ label, align }) {
-  return (
-    <Text variant="labelCaps" color="muted" style={align === 'right' ? styles.textRight : null}>
-      {label}
-    </Text>
-  );
-}
-
-function AxisSlider({ axis, label, steps, value = null, onChange }) {
+function AxisSlider({ axis, value = null, onChange }) {
+  const entry = axisById(axis);
+  const label = entry?.label ?? axis;
   const isEntered = value != null;
-  const committedStep = value == null ? 0 : valueToStep(value);
-  const who = `axis:${label}`;
+  const committedStep = isEntered ? valueToStep(value) : 0;
+  /** The stop under the finger while dragging (null otherwise), for the reading. */
+  const [live, setLive] = useState(null);
 
-  const trackW = useSharedValue(0); // stop 0 to stop 4
+  const trackX = useSharedValue(0);
+  const trackW = useSharedValue(0);
   const step = useSharedValue(committedStep);
   const dragging = useSharedValue(0);
   const enteredOn = useSharedValue(isEntered ? 1 : 0);
@@ -157,208 +133,211 @@ function AxisSlider({ axis, label, steps, value = null, onChange }) {
     enteredOn.value = isEntered ? 1 : 0;
   }, [committedStep, enteredOn, isEntered, step]);
 
-  const commit = (s) => onChange?.(stepToValue(s));
-  const log = (st, extra) => logGesture(who, st, extra);
-
-  const pressIn = () => {
-    'worklet';
-    press.value = withTiming(state.pressed.scale, { duration: PRESS_MS, easing: pressEasing });
+  const commit = (s) => {
+    setLive(null);
+    onChange?.(stepToValue(s));
   };
-  const pressOut = () => {
-    'worklet';
-    press.value = withTiming(1, { duration: PRESS_MS, easing: pressEasing });
-  };
+  const log = (st, extra) => logGesture(`axis:${axis}`, st, extra);
 
-  /** Move to the step under x (pt from the track's outer left edge). Haptic per step change. */
-  const setFromX = (x, logEnds) => {
+  /** The stop under x (pt from the band's left edge). */
+  const stopAt = (x) => {
     'worklet';
-    if (trackW.value <= 0) return;
-    const next = Math.min(LAST, Math.max(0, Math.round(((x - STOP0) / trackW.value) * LAST)));
+    const travel = trackW.value - 2 * END - HANDLE;
+    if (travel <= 0) return step.value;
+    const along = x - trackX.value - END - HANDLE / 2;
+    return Math.min(LAST, Math.max(0, Math.round((along / travel) * LAST)));
+  };
+  /** Move to the stop under x; a selection haptic per stop. */
+  const moveTo = (x) => {
+    'worklet';
+    const next = stopAt(x);
     if (next !== step.value) {
       step.value = next;
       scheduleOnRN(selectionHaptic);
-      if (logEnds && (next === 0 || next === LAST)) scheduleOnRN(log, 'pan AT_END', `step=${next}`);
+      scheduleOnRN(setLive, next);
     }
   };
 
   const pan = Gesture.Pan()
     .activeOffsetX([-ACTIVE_OFFSET_X, ACTIVE_OFFSET_X])
     .failOffsetY([-FAIL_OFFSET_Y, FAIL_OFFSET_Y])
-
-    .onBegin((e) => {
-      pressIn();
-      if (GESTURE_LOG) scheduleOnRN(log, 'pan BEGAN', `x=${(e.x - HIT).toFixed(1)}`);
+    .onBegin(() => {
+      press.value = withTiming(state.pressed.scale, { duration: PRESS_MS, easing: pressEasing });
     })
     .onStart((e) => {
       dragging.value = 1;
-      setFromX(e.x - HIT, false);
-      if (GESTURE_LOG) scheduleOnRN(log, 'pan ACTIVE', `x=${(e.x - HIT).toFixed(1)} step=${step.value}`);
+      enteredOn.value = 1;
+      scheduleOnRN(setLive, step.value);
+      moveTo(e.x);
+      if (GESTURE_LOG) scheduleOnRN(log, 'pan ACTIVE', `x=${e.x.toFixed(1)} step=${step.value}`);
     })
     .onUpdate((e) => {
-      setFromX(e.x - HIT, GESTURE_LOG);
+      moveTo(e.x);
     })
     .onEnd((e, success) => {
       if (success) {
-        enteredOn.value = 1; // stay entered across the JS round trip
         scheduleOnRN(commit, step.value);
       } else {
-        step.value = committedStep; // taken away: back to exactly before
+        step.value = committedStep;
+        enteredOn.value = isEntered ? 1 : 0;
+        scheduleOnRN(setLive, null);
       }
-      if (GESTURE_LOG) scheduleOnRN(log, success ? 'pan END' : 'pan CANCELLED', `x=${(e.x - HIT).toFixed(1)} step=${step.value}`);
+      if (GESTURE_LOG) scheduleOnRN(log, success ? 'pan END' : 'pan CANCELLED', `step=${step.value}`);
     })
-    .onFinalize((e, success) => {
+    .onFinalize(() => {
       dragging.value = 0;
-      pressOut();
-      if (GESTURE_LOG && !success) scheduleOnRN(log, 'pan FAILED (finalize, never ended successfully)', `x=${(e.x - HIT).toFixed(1)}`);
+      press.value = withTiming(1, { duration: PRESS_MS, easing: pressEasing });
     });
 
   const tap = Gesture.Tap()
     .maxDistance(TAP_MAX_DISTANCE)
-
-    .onBegin(() => {
-      if (GESTURE_LOG) scheduleOnRN(log, 'tap BEGAN');
-    })
     .onEnd((e, success) => {
       if (!success) return;
-      setFromX(e.x - HIT, false);
+      // On the track only: a tap on the title is not a reading.
+      if (e.x < trackX.value || e.x > trackX.value + trackW.value) return;
+      step.value = stopAt(e.x);
       enteredOn.value = 1;
+      scheduleOnRN(tapHaptic);
       scheduleOnRN(commit, step.value);
       if (GESTURE_LOG) scheduleOnRN(log, 'tap END', `step=${step.value}`);
-    })
-    .onFinalize((e, success) => {
-      if (GESTURE_LOG && !success) scheduleOnRN(log, 'tap FAILED');
     });
 
   const gesture = Gesture.Exclusive(pan, tap);
 
   const move = useAnimatedStyle(() => ({
     transform: [
-      { translateX: withTiming((step.value / LAST) * trackW.value, { duration: PRESS_MS, easing: pressEasing }) },
+      { translateX: withTiming((step.value / LAST) * Math.max(0, trackW.value - 2 * END - HANDLE), { duration: PRESS_MS, easing: pressEasing }) },
       { scale: press.value },
     ],
   }));
   const enteredStyle = useAnimatedStyle(() => ({ opacity: enteredOn.value }));
-  /** Clear hides while dragging. */
-  const clearStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(dragging.value ? 0 : 1, { duration: PRESS_MS, easing: pressEasing }),
-  }));
 
-  // ── Screen reader: one step per swipe, the value read as the step's name ──
+  const shown = live != null ? stepToValue(live) : value;
   const a11y = {
-        accessible: true,
-        accessibilityRole: 'adjustable',
-        accessibilityLabel: label,
-        accessibilityValue: { text: value == null ? 'Not entered yet' : steps[committedStep] },
-        accessibilityActions: [{ name: 'increment' }, { name: 'decrement' }, ...(isEntered ? [{ name: 'clear', label: 'Clear' }] : [])],
-        onAccessibilityAction: (e) => {
-          // The first increment of an empty axis lands on 1, the first stop.
-          const base = value == null ? -1 : committedStep;
-          if (e.nativeEvent.actionName === 'increment') onChange?.(stepToValue(Math.min(LAST, base + 1)));
-          if (e.nativeEvent.actionName === 'decrement' && value != null) onChange?.(stepToValue(Math.max(0, base - 1)));
-          if (e.nativeEvent.actionName === 'clear') onChange?.(null);
-        },
-      };
-
-  const railPart = STATE.empty.rail;
-  const rail = (
-    <View style={styles.rail}>
-      <Rail part={railPart} />
-      <View
-        // The handle's layer sits INSIDE the 2px frame, like the dots' layer (a
-        // child of the framed view). It used to start at the frame's outer edge,
-        // which put the handle 2pt high and up to 1pt off the dots (2026-10-09).
-        style={[styles.track, styles.trackOperable]}
-        pointerEvents="none"
-        onLayout={(e) => {
-          trackW.value = e.nativeEvent.layout.width;
-        }}>
-        <Needle part={STATE.empty.needle} railWidth={railPart.width} style={move} />
-        <Animated.View style={[StyleSheet.absoluteFill, enteredStyle]} pointerEvents="none">
-          <Needle part={STATE.entered.needle} railWidth={railPart.width} style={move} />
-        </Animated.View>
-      </View>
-    </View>
-  );
-
-  const slot = (
-    <View style={styles.slot}>
-      {isEntered ? (
-        <Animated.View style={clearStyle}>
-          <Button variant="text" small label="Clear" accessibilityLabel={`Clear ${label}`} onPress={() => onChange?.(null)} />
-        </Animated.View>
-      ) : (
-        <Text variant="meta" color="muted">
-          Not noted
-        </Text>
-      )}
-    </View>
-  );
+    accessible: true,
+    accessibilityRole: 'adjustable',
+    accessibilityLabel: label,
+    accessibilityValue: { text: value == null ? 'Not noted' : `${value}, ${stepWordOf(value)}` },
+    accessibilityActions: [{ name: 'increment' }, { name: 'decrement' }, ...(isEntered ? [{ name: 'clear', label: 'Clear' }] : [])],
+    onAccessibilityAction: (e) => {
+      const name = e.nativeEvent.actionName;
+      if (name === 'increment') onChange?.(stepToValue(isEntered ? Math.min(LAST, committedStep + 1) : 0));
+      if (name === 'decrement' && isEntered) onChange?.(stepToValue(Math.max(0, committedStep - 1)));
+      if (name === 'clear') onChange?.(null);
+    },
+  };
 
   return (
-    <View style={[styles.axis, styles.axisSized]} {...a11y}>
-      <View style={styles.poles}>
-        <Pole label={label} />
-      </View>
+    <View style={styles.row} {...a11y}>
       <GestureDetector gesture={gesture}>
-        <View
-          style={styles.hitArea}
-          onLayout={
-            GESTURE_LOG
-              ? (e) => {
-                  e.target?.measureInWindow?.((x, y, w, h) =>
-                    logGesture(who, 'hit area', `window x ${x.toFixed(1)}–${(x + w).toFixed(1)}, y ${y.toFixed(1)}–${(y + h).toFixed(1)}`)
-                  );
-                }
-              : undefined
-          }>
-          {rail}
+        <View style={styles.band}>
+          <Text variant="axisLabel" color="primary" style={styles.title}>
+            {label}
+          </Text>
+          <View
+            style={styles.track}
+            onLayout={(e) => {
+              trackX.value = e.nativeEvent.layout.x;
+              trackW.value = e.nativeEvent.layout.width;
+            }}>
+            <View style={styles.dots} pointerEvents="none">
+              {DOT_STOPS.map((i) => (
+                <View key={i} style={[styles.dot, { left: `${(i / LAST) * 100}%` }]} />
+              ))}
+            </View>
+            <Handle part={STATE.empty.needle} style={move} />
+            <Animated.View style={[StyleSheet.absoluteFill, enteredStyle]} pointerEvents="none">
+              <Handle part={STATE.entered.needle} style={move} />
+            </Animated.View>
+          </View>
         </View>
       </GestureDetector>
-      {slot}
+      <View style={styles.reading}>
+        {shown != null ? (
+          <>
+            <Text variant="axisReading" color="primary">
+              {shown.toFixed(1)}
+            </Text>
+            {live == null ? <ClearButton variant="square" hitSlop={CLEAR_SLOP} accessibilityLabel={`Clear ${label}`} onPress={() => onChange?.(null)} /> : <View style={styles.clearSpace} />}
+          </>
+        ) : (
+          <Text variant="axisUnset" color="muted" numberOfLines={1}>
+            Not noted
+          </Text>
+        )}
+      </View>
     </View>
   );
 }
 
 export default memo(AxisSlider);
 
+/**
+ * The scale key under the last track, once for all the axes (30a): "1 ·
+ * Faint" at the track's left end, "Strong · 5" at its right, label.eyebrow
+ * in text.muted, on the rows' column grid so it sits exactly under the
+ * tracks. Words about how much, not how good.
+ */
+export function AxisScaleKey({ style }) {
+  return (
+    <View style={[styles.keyRow, style]} importantForAccessibility="no-hide-descendants">
+      <View style={styles.title} />
+      <View style={styles.keyWords}>
+        <Text variant="labelEyebrow" color="muted">{`${MIN} · ${STEP_WORDS[0]}`}</Text>
+        <Text variant="labelEyebrow" color="muted">{`${STEP_WORDS[STEP_WORDS.length - 1]} · ${MAX}`}</Text>
+      </View>
+      <View style={styles.readingSpace} />
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-  axis: {},
-  axisSized: {
-    width: RAIL_W,
-    alignSelf: 'center',
-  },
-  poles: {
+  row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.gap.row,
+    alignItems: 'center',
+    minHeight: size.tapTarget,
+    gap: space[8],
   },
-  // Out of flow, left of the 260 width: its right edge gap.row before the left pole label.
-  textRight: {
-    textAlign: 'right',
+  /** The drag area: title and track, the row's full 44 height. */
+  band: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    gap: space[8],
   },
-  rail: {
-    height: RAIL_H,
-  },
-  /** The real touch band: HIT bigger than the track on every side, layout unchanged. */
-  hitArea: {
-    margin: -HIT,
-    padding: HIT,
+  title: {
+    width: size.axisColumn.title,
   },
   track: {
+    flex: 1,
+    height: RAIL_H,
+    borderWidth: BORDER,
+    borderColor: STATE.empty.rail.color,
+    backgroundColor: STATE.empty.rail.background,
+  },
+  dots: {
     position: 'absolute',
+    left: INSET + HANDLE / 2,
+    right: INSET + HANDLE / 2,
     top: 0,
     bottom: 0,
   },
-  trackOperable: {
-    left: STOP0,
-    right: STOP0,
-    top: BORDER,
-    bottom: BORDER,
-  },
-  needle: {
+  dot: {
     position: 'absolute',
-    left: 0,
+    top: (INNER_H - DOT) / 2,
+    marginLeft: -DOT / 2,
+    width: DOT,
+    height: DOT,
+    borderRadius: DOT / 2,
+    backgroundColor: STATE.empty.rail.dot,
+  },
+  handle: {
+    position: 'absolute',
+    left: INSET,
+    top: (INNER_H - HANDLE) / 2,
+    width: HANDLE,
+    height: HANDLE,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -366,22 +345,27 @@ const styles = StyleSheet.create({
     width: GRIP.w,
     height: GRIP.h,
   },
-  dot: {
-    position: 'absolute',
-    marginLeft: -DOT / 2,
-    width: DOT,
-    height: DOT,
-    borderRadius: DOT / 2,
+  reading: {
+    width: size.axisColumn.reading,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: space[6],
   },
-  /**
-   * Fixed height (one meta line): Not noted / Clear / caption swap without a
-   * jump. Right-aligned under the track (2026-10-08), gap.tight below it
-   * (2026-10-09; was gap.row): the status belongs to its track.
-   */
-  slot: {
-    marginTop: spacing.gap.tight,
-    height: textStyle.meta.lineHeight,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
+  clearSpace: {
+    width: size.axis.clear,
+    height: size.axis.clear,
+  },
+  keyRow: {
+    flexDirection: 'row',
+    gap: space[8],
+  },
+  keyWords: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  readingSpace: {
+    width: size.axisColumn.reading,
   },
 });

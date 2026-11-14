@@ -247,6 +247,10 @@ export const textStyle = {
    * marks an absence, not information. Do not "fix" the contrast. 2026-11-14.
    */
   axisEmpty:     { fontFamily: 'Archivo', fontSize: 11, fontWeight: '500', lineHeight: 17 },
+  /** 5b's reading column (30b / 30c): the value entered, "3.5". 15 / 700, tabular so 3.5 and 4 line up. 2026-11-14. */
+  axisReading:   { fontFamily: 'Archivo', fontSize: 15, fontWeight: '700', lineHeight: 15, fontVariant: ['tabular-nums'] },
+  /** 5b's reading column when the axis is not assessed: "Not noted", 11 / 600 in text.muted (30a). lineHeight UNDECLARED. 2026-11-14. */
+  axisUnset:     { fontFamily: 'Archivo', fontSize: 11, fontWeight: '600' },
   /** lineHeight UNDECLARED · 0.12em x 10 (was 0.16em; tightened on Uryu's ask, 2026-11-09) */
   labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
   /** lineHeight UNDECLARED · 0.06em x 16 */
@@ -405,24 +409,27 @@ export const size = {
   switch: { w: 52, h: 30, knob: 22, inset: 2 },
   weekday: { column: 68 },
   /**
-   * Taste axis slider (2026-10-08, from Uryu's screenshots, size B): a 260 × 34
-   * track and a SQUARE 26 handle, the Switch knob's geometry (components.md
-   * "Switch and the axis handle"): border 2 + inset 2 on each side, so
-   * handle = rail − 8. Stops are (260 − 2·2 − 2·2 − 26) / 4 = 56.5pt apart and
-   * stop 0 sits 17 in from the track's outer edge. dot: the 5 stop marks.
-   * key: the axis's colour key before its left pole label (Design Round 21,
-   * 23a), on every readout, slider and change tag; h is meter.track.
+   * Taste axis input (Turn 29, 30d; was 260 × 34 with a 26 handle, 2026-10-08):
+   * a 28-tall track that FILLS the row between the title and reading
+   * columns (166 at 402), and a SQUARE 20 handle, the Switch knob's geometry
+   * (border 2 + inset 2 on each side, so handle = rail − 8). Nine stops on
+   * the 1–5 scale in halves: (166 − 2·2 − 2·2 − 20) / 8 = 17.25pt apart at
+   * 402, 13.9 at 375. dot: the marks at the whole numbers. clear: 30b's ✕,
+   * a 24 square (its touch area is 44: size.tapTarget). key: the change
+   * tags' colour key only (31e); h is meter.track.
    */
-  axis: { rail: 34, railWidth: 260, inset: 2, handle: { w: 26, h: 26 }, dot: 6, key: { w: 12, h: 4 } },
+  axis: { rail: 28, inset: 2, handle: { w: 20, h: 20 }, dot: 6, clear: 24, key: { w: 12, h: 4 } },
   meter: { track: 4 },
   marker: { line: { w: 2, h: 14 } },
   /**
-   * The taste axis readout row (Turn 30, 31b / 31d): the axis name in a
-   * fixed title column on the left, the track filling the rest of the line,
-   * and on 8f a step-word column on the right. Row height is meta's line
-   * height (17), so filled and Not noted rows match.
+   * The column grid every taste axis row shares, input (5b, 30c / 30d) and
+   * readout (31b / 31d): the axis name in a fixed title column on the left
+   * (88, set by ja's アフターテイスト at 85; a longer title wraps, the column
+   * never widens), the track filling the rest, and a right column: 5b's
+   * reading (the number and ✕, or "Not noted") or 8f's step word. Fixed, so
+   * every track starts and ends on the same x in every state and language.
    */
-  axisReadout: { title: 88, step: 56 },
+  axisColumn: { title: 88, reading: 56, step: 56 },
   dot: { bullet: 6 },
   sheet: {
     handle: { w: 56, h: 5 },
@@ -445,6 +452,8 @@ export const icon = {
   lg: { size: 22, strokeWidth: 1.8 },
   /** decorative large glyph — stroke widens back */
   xl: { size: 38, strokeWidth: 2.0 },
+  /** 5b's ✕ on a 24 square (30b): 12 at 3, so the cross holds its weight that small */
+  clear: { size: 12, strokeWidth: 3 },
   /** the ⓘ inside a status stamp (15a, Design Round 8): 14 at 2.4, lighter than xs */
   stamp: { size: 14, strokeWidth: 2.4 },
   /** fill icons are a separate system: no stroke, fixed color, rating stars only */
@@ -565,11 +574,12 @@ const axisRail = {
 
 const axisNeedle = {
   /**
-   * Nothing entered: a muted square resting at Balanced. Its position — 50 —
-   * is a PLACEHOLDER, NOT A VALUE: never save it, never read it as "the default
-   * is 50". An empty axis has no value (null).
+   * Not assessed (30a / 30d): the same square in grey, waiting at 1. Its
+   * position is a PLACEHOLDER, NOT A VALUE: never save it. Grey on purpose,
+   * not "disabled": it is pressable (a tap confirms 1, a drag sets). An
+   * axis not assessed has no value and no cup_axes row.
    */
-  empty: { ...size.axis.handle, background: color.surface.muted, borderColor: color.border.muted, borderWidth: shape.borderWidth.box, grip: color.icon.onAction },
+  empty: { ...size.axis.handle, background: color.border.subtle, borderColor: color.border.muted, borderWidth: shape.borderWidth.box, grip: color.icon.onAction },
   /** The user's own value: accent fill, 2px ink, white grip. */
   entered: { ...size.axis.handle, background: color.icon.accent, borderColor: color.border.strong, borderWidth: shape.borderWidth.box, grip: color.icon.onAction },
   // lit (#C9821A while dragging) was removed 2026-10-08; see design-system.md §9.
@@ -577,10 +587,10 @@ const axisNeedle = {
 
 /**
  * The short vertical grip at the handle's centre: the handle's stroke wide,
- * 8 tall — about a third of the 26 handle (2026-10-08; 14 read too long in
- * the square handle). White in both states, as in Uryu's screenshots.
+ * 6 tall on the 20 handle (30d; was 8 on the 26). White in both states, so
+ * the grey and brown handles read as one handle.
  */
-const axisGrip = { w: shape.borderWidth.box, h: space[8] } as const;
+const axisGrip = { w: shape.borderWidth.box, h: space[6] } as const;
 
 /**
  * Log a cup's Required bar (5e, Design Round 9, 2026-10-18): one slot per
@@ -640,7 +650,7 @@ export const component = {
       empty:   { rail: axisRail.track, needle: axisNeedle.empty },
       entered: { rail: axisRail.track, needle: axisNeedle.entered },
     },
-    rail: { height: size.axis.rail, width: size.axis.railWidth, inset: size.axis.inset, dot: size.axis.dot },
+    rail: { height: size.axis.rail, inset: size.axis.inset, dot: size.axis.dot },
     grip: axisGrip,
   },
   /**

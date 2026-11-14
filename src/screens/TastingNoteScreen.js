@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AxisSlider from '../components/base/AxisSlider';
+import AxisSlider, { AxisScaleKey } from '../components/base/AxisSlider';
 import Button from '../components/base/Button';
 import Glyph from '../components/base/Glyph';
 import IconButton from '../components/base/IconButton';
@@ -16,15 +16,15 @@ import SearchSheet from '../components/SearchSheet';
 import { useDatabase } from '../data/DatabaseProvider';
 import { listFlavourHistory } from '../data/repository';
 import { BUNDLED_FLAVOURS, FLAVOUR_LIMIT, normalizeFlavour } from '../constants/flavours';
-import { STEP_WORDS, TASTE_AXES } from '../constants/tasteAxes';
+import { TASTE_AXES } from '../constants/tasteAxes';
 import { color, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
  * Tasting note (5b) — step 2 of 2 in the Record sheet, opened by "Add tasting
  * note" (AddCoffeeOverlay). Back returns to step 1.
- *   - the axes are live AxisSliders (drag, tap, Clear) — held in screen state,
- *     not saved yet
+ *   - the axes are AxisSlider rows (drag, tap, ✕; 30a–30d), held in the
+ *     Record sheet's draft and written to cup_axes on save
  *   - "My words" is a frame + placeholder, no keyboard
  *   - the chips and both save buttons press (with feedback) but do nothing
  * Content is 5b's mock copy verbatim; no database.
@@ -65,26 +65,29 @@ function shownFlavours(selected, history, kept) {
 }
 
 /**
- * The registry's axes (interim AxisSlider until Turn 29's commit 3). Their
- * values live in the Record sheet's draft (shared with 5a, kept when going
- * back): { [axis id]: 1–5 }, no key = not noted. An axis commits on release
- * only, so a commit re-renders rarely; AxisRow is memoised so the others
- * stay put.
+ * The registry's axes, one AxisSlider row each (Turn 29, 30a–30d), then the
+ * scale key once under the last track. Values live in the Record sheet's
+ * draft (shared with 5a, kept when going back): { [axis id]: 1–5 in halves },
+ * no key or null = not noted, which writes no cup_axes row. Every axis
+ * starts not noted; nothing is pre-set. A row commits on release only, and
+ * AxisRow is memoised so committing one leaves the others alone.
  */
 const Axes = memo(function Axes({ axes, setAxis }) {
   return (
     <View style={styles.axes}>
-      {TASTE_AXES.map((a) => (
-        <AxisRow key={a.id} axis={a} value={axes[a.id] ?? null} setAxis={setAxis} />
-      ))}
+      <View style={styles.axisRows}>
+        {TASTE_AXES.map((a) => (
+          <AxisRow key={a.id} axis={a.id} value={axes[a.id] ?? null} setAxis={setAxis} />
+        ))}
+      </View>
+      <AxisScaleKey style={styles.scaleKey} />
     </View>
   );
 });
 
-/** One axis; memoised so committing one leaves the others alone. */
 const AxisRow = memo(function AxisRow({ axis, value, setAxis }) {
-  const onChange = useCallback((v) => setAxis(axis.id, v), [axis.id, setAxis]);
-  return <AxisSlider axis={axis.id} label={axis.label} steps={STEP_WORDS} value={value} onChange={onChange} />;
+  const onChange = useCallback((v) => setAxis(axis, v), [axis, setAxis]);
+  return <AxisSlider axis={axis} value={value} onChange={onChange} />;
 });
 
 /**
@@ -356,9 +359,15 @@ const styles = StyleSheet.create({
   cardIntro: {
     marginTop: space[6],
   },
+  /** 30b: 14 under the card's line, rows space.8 apart (each 44 tall), the scale key 2 under the last track. */
   axes: {
-    marginTop: space[20],
-    gap: spacing.gap.axis,
+    marginTop: space[14],
+  },
+  axisRows: {
+    gap: spacing.gap.row,
+  },
+  scaleKey: {
+    marginTop: space[2],
   },
   section: {
     marginTop: space[20],
