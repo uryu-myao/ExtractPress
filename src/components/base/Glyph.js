@@ -10,6 +10,11 @@ const SHAPES = {
   chevronRight: [<Path key="p" d="M9 6l6 6-6 6" />],
   chevronLeft: [<Path key="p" d="M15 6l-6 6 6 6" />],
   close: [<Path key="p" d="M6 6l12 12M18 6L6 18" />],
+  // The roast level slider's legend (32a): under the track's two ends, light
+  // → dark, from the repo's flame pair (assets/icons/icon-favour-light.svg /
+  // -dark.svg); the dark one carries an inner flame. Roles, not a scale.
+  flameLight: [<Path key="p" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />],
+  flameDark: [<Path key="p" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />, <Path key="c" d="M12 13c-.8 1-1.2 1.8-1.2 2.8a1.2 1.2 0 0 0 2.4 0c0-1-.4-1.8-1.2-2.8z" />],
   // 2a's filter button (opens 2b), verbatim; drawn at icon.md (18 / 2.2) as in 2a.
   filter: [<Path key="p" d="M4 6h16M7 12h10M10 18h4" />],
   plus: [<Path key="a" d="M12 6v12" />, <Path key="b" d="M6 12h12" />],

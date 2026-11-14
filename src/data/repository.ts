@@ -61,7 +61,8 @@ export async function countOpenBags(db: SQLiteDatabase): Promise<number> {
 /** What 3c's Bag form hands over (minimal set: name required, the rest optional). */
 /** photo: a kept photo's id (data/photos.ts), or null. process: null is "don't know". */
 /** bestBefore: the best-before date (migration 9), a local midnight, or null. 3c takes one date; either may be set. */
-export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; bestBefore?: number | null; process?: Bag['process']; open: boolean; photo?: string | null };
+/** roastLevel: the label's roast level (four values), or null: not recorded. */
+export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; bestBefore?: number | null; process?: Bag['process']; roastLevel?: Bag['roast_level']; open: boolean; photo?: string | null };
 
 /**
  * Add a bag: opened now (3c "Open this bag"), or not yet (3c "Add without
@@ -71,12 +72,13 @@ export type NewBag = { name: string; roaster: string | null; roastedAt: number |
  */
 export async function insertBag(db: SQLiteDatabase, bag: NewBag): Promise<Bag> {
   if ((await countOpenBags(db)) >= OPEN_BAG_LIMIT) throw new Error(`All ${OPEN_BAG_LIMIT} slots are taken. Finish a bag to free one up.`);
-  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, best_before, process, opened_at, photo_uri) VALUES (?, ?, ?, ?, ?, ?, ?)', [
+  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, best_before, process, roast_level, opened_at, photo_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
     bag.name,
     bag.roaster,
     bag.roastedAt,
     bag.bestBefore ?? null,
     bag.process ?? null,
+    bag.roastLevel ?? null,
     bag.open ? Date.now() : null,
     bag.photo ?? null,
   ]);
@@ -334,7 +336,7 @@ export async function reopenBag(db: SQLiteDatabase, id: number): Promise<void> {
 }
 
 /** What 3g (minimal, plus Process) edits. */
-export type BagEdit = { name: string; roaster: string | null; roastedAt: number | null; bestBefore: number | null; process: Bag['process']; openedAt: number | null };
+export type BagEdit = { name: string; roaster: string | null; roastedAt: number | null; bestBefore: number | null; process: Bag['process']; roastLevel: Bag['roast_level']; openedAt: number | null };
 
 /**
  * Save 3g. The cups logged from the bag carry copies of its details
@@ -356,20 +358,23 @@ export async function updateBag(db: SQLiteDatabase, id: number, edit: BagEdit): 
     // Best-before may be in the future or the past; only never before the roast.
     if (edit.roastedAt != null && edit.bestBefore != null && edit.bestBefore < edit.roastedAt) throw new Error("A best-before date can't be before the roast date.");
     // best_before is the bag's only: not copied onto cups (data-model.md "Best-before").
-    await tx.runAsync('UPDATE bags SET name = ?, roaster = ?, roasted_at = ?, best_before = ?, process = ?, opened_at = ? WHERE id = ?', [
+    await tx.runAsync('UPDATE bags SET name = ?, roaster = ?, roasted_at = ?, best_before = ?, process = ?, roast_level = ?, opened_at = ? WHERE id = ?', [
       edit.name,
       edit.roaster,
       edit.roastedAt,
       edit.bestBefore,
       edit.process,
+      edit.roastLevel,
       edit.openedAt,
       id,
     ]);
-    await tx.runAsync('UPDATE cups SET bean_name = ?, bean_roaster = ?, bean_roasted_at = ?, bean_process = ? WHERE bag_id = ?', [
+    // The copy rule: roast level is one of the details a cup copies from its bag.
+    await tx.runAsync('UPDATE cups SET bean_name = ?, bean_roaster = ?, bean_roasted_at = ?, bean_process = ?, bean_roast_level = ? WHERE bag_id = ?', [
       edit.name,
       edit.roaster,
       edit.roastedAt,
       edit.process,
+      edit.roastLevel,
       id,
     ]);
   });

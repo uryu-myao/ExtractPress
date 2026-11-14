@@ -1,14 +1,12 @@
-import * as Haptics from 'expo-haptics';
-import { memo, useEffect, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import { memo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 import { AXIS_SCALE, axisById, STEP_WORDS, stepWordOf } from '../../constants/tasteAxes';
-import { component, motion, size, space, state } from '../../theme/tokens';
+import { component, size, space } from '../../theme/tokens';
 import ClearButton from './ClearButton';
-import { GESTURE_LOG, logGesture } from './gestureLog';
 import Text from './Text';
+import useStopSlider from './useStopSlider';
 
 /**
  * Taste axis input (design-system.md §9 Taste axis slider; Turn 29, boards
@@ -34,7 +32,7 @@ import Text from './Text';
  *            "set" signal; by eye 3 and 3.5 are one stop apart, so it is
  *            always shown. While dragging it shows the stop under the finger.
  *
- * Gestures (Reanimated + gesture-handler, on the UI thread):
+ * Gestures (useStopSlider, shared with RoastSlider; on the UI thread):
  *   - The whole 44-tall band left of the reading column (title and track)
  *     is the drag area: the finger never has to land on the 20 handle.
  *   - Every stop gives a selection haptic: stops are 17.25 apart at 402 and
@@ -56,15 +54,6 @@ import Text from './Text';
  * Props: axis (a TASTE_AXES id), value (1–5 in halves, or null), onChange
  */
 
-// ── Device-tuning constants (design-system.md §9: check on device) ──────────
-/** Horizontal travel (pt) before the touch becomes an axis drag. */
-const ACTIVE_OFFSET_X = 10;
-/** Vertical travel (pt) that hands the touch to the scroll view instead. */
-const FAIL_OFFSET_Y = 10;
-/** A tap may wander this far (pt) and still count as a tap. */
-const TAP_MAX_DISTANCE = 8;
-// ────────────────────────────────────────────────────────────────────────────
-
 const STATE = component.axis.state;
 const RAIL_H = component.axis.rail.height;
 const INSET = component.axis.rail.inset;
@@ -73,8 +62,6 @@ const GRIP = component.axis.grip;
 const BORDER = STATE.entered.rail.width;
 const HANDLE = STATE.entered.needle.w;
 const INNER_H = RAIL_H - 2 * BORDER;
-/** From the track's outer edge to the handle's left edge at stop 0, and the same at the right end. */
-const END = BORDER + INSET;
 
 const { min: MIN, max: MAX, step: STEP } = AXIS_SCALE;
 const LAST = Math.round((MAX - MIN) / STEP);
@@ -83,8 +70,6 @@ const valueToStep = (v) => Math.min(LAST, Math.max(0, Math.round((v - MIN) / STE
 /** The stops that get a dot: the whole numbers. */
 const DOT_STOPS = Array.from({ length: MAX - MIN + 1 }, (_, i) => valueToStep(MIN + i));
 
-const PRESS_MS = motion.press.duration;
-const pressEasing = Easing.bezier(...motion.press.controlPoints);
 
 /** The ✕'s 44 target: up and down to the row's 44, left into the 8 gap only, right into the card's padding. */
 const CLEAR_SLOP = (() => {
@@ -92,12 +77,6 @@ const CLEAR_SLOP = (() => {
   return { top: v, bottom: v, left: space[8], right: size.tapTarget - size.axis.clear - space[8] };
 })();
 
-const selectionHaptic = () => {
-  if (Platform.OS !== 'web') Haptics.selectionAsync();
-};
-const tapHaptic = () => {
-  if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-};
 
 function Handle({ part, style }) {
   return (
@@ -118,99 +97,12 @@ function AxisSlider({ axis, value = null, onChange }) {
   const label = entry?.label ?? axis;
   const isEntered = value != null;
   const committedStep = isEntered ? valueToStep(value) : 0;
-  /** The stop under the finger while dragging (null otherwise), for the reading. */
-  const [live, setLive] = useState(null);
-
-  const trackX = useSharedValue(0);
-  const trackW = useSharedValue(0);
-  const step = useSharedValue(committedStep);
-  const dragging = useSharedValue(0);
-  const enteredOn = useSharedValue(isEntered ? 1 : 0);
-  const press = useSharedValue(1);
-
-  useEffect(() => {
-    step.value = committedStep;
-    enteredOn.value = isEntered ? 1 : 0;
-  }, [committedStep, enteredOn, isEntered, step]);
-
-  const commit = (s) => {
-    setLive(null);
-    onChange?.(stepToValue(s));
-  };
-  const log = (st, extra) => logGesture(`axis:${axis}`, st, extra);
-
-  /** The stop under x (pt from the band's left edge). */
-  const stopAt = (x) => {
-    'worklet';
-    const travel = trackW.value - 2 * END - HANDLE;
-    if (travel <= 0) return step.value;
-    const along = x - trackX.value - END - HANDLE / 2;
-    return Math.min(LAST, Math.max(0, Math.round((along / travel) * LAST)));
-  };
-  /** Move to the stop under x; a selection haptic per stop. */
-  const moveTo = (x) => {
-    'worklet';
-    const next = stopAt(x);
-    if (next !== step.value) {
-      step.value = next;
-      scheduleOnRN(selectionHaptic);
-      scheduleOnRN(setLive, next);
-    }
-  };
-
-  const pan = Gesture.Pan()
-    .activeOffsetX([-ACTIVE_OFFSET_X, ACTIVE_OFFSET_X])
-    .failOffsetY([-FAIL_OFFSET_Y, FAIL_OFFSET_Y])
-    .onBegin(() => {
-      press.value = withTiming(state.pressed.scale, { duration: PRESS_MS, easing: pressEasing });
-    })
-    .onStart((e) => {
-      dragging.value = 1;
-      enteredOn.value = 1;
-      scheduleOnRN(setLive, step.value);
-      moveTo(e.x);
-      if (GESTURE_LOG) scheduleOnRN(log, 'pan ACTIVE', `x=${e.x.toFixed(1)} step=${step.value}`);
-    })
-    .onUpdate((e) => {
-      moveTo(e.x);
-    })
-    .onEnd((e, success) => {
-      if (success) {
-        scheduleOnRN(commit, step.value);
-      } else {
-        step.value = committedStep;
-        enteredOn.value = isEntered ? 1 : 0;
-        scheduleOnRN(setLive, null);
-      }
-      if (GESTURE_LOG) scheduleOnRN(log, success ? 'pan END' : 'pan CANCELLED', `step=${step.value}`);
-    })
-    .onFinalize(() => {
-      dragging.value = 0;
-      press.value = withTiming(1, { duration: PRESS_MS, easing: pressEasing });
-    });
-
-  const tap = Gesture.Tap()
-    .maxDistance(TAP_MAX_DISTANCE)
-    .onEnd((e, success) => {
-      if (!success) return;
-      // On the track only: a tap on the title is not a reading.
-      if (e.x < trackX.value || e.x > trackX.value + trackW.value) return;
-      step.value = stopAt(e.x);
-      enteredOn.value = 1;
-      scheduleOnRN(tapHaptic);
-      scheduleOnRN(commit, step.value);
-      if (GESTURE_LOG) scheduleOnRN(log, 'tap END', `step=${step.value}`);
-    });
-
-  const gesture = Gesture.Exclusive(pan, tap);
-
-  const move = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: withTiming((step.value / LAST) * Math.max(0, trackW.value - 2 * END - HANDLE), { duration: PRESS_MS, easing: pressEasing }) },
-      { scale: press.value },
-    ],
-  }));
-  const enteredStyle = useAnimatedStyle(() => ({ opacity: enteredOn.value }));
+  const { gesture, onTrackLayout, live, move, shown: enteredStyle } = useStopSlider({
+    last: LAST,
+    committed: isEntered ? committedStep : null,
+    onCommit: (st) => onChange?.(stepToValue(st)),
+    logName: `axis:${axis}`,
+  });
 
   const shown = live != null ? stepToValue(live) : value;
   const a11y = {
@@ -236,10 +128,7 @@ function AxisSlider({ axis, value = null, onChange }) {
           </Text>
           <View
             style={styles.track}
-            onLayout={(e) => {
-              trackX.value = e.nativeEvent.layout.x;
-              trackW.value = e.nativeEvent.layout.width;
-            }}>
+            onLayout={onTrackLayout}>
             <View style={styles.dots} pointerEvents="none">
               {DOT_STOPS.map((i) => (
                 <View key={i} style={[styles.dot, { left: `${(i / LAST) * 100}%` }]} />

@@ -57,7 +57,9 @@ import Text from './Text';
  *   trailingIcon   optional Glyph name drawn after the label
  *   disabled
  *   size      'full' (default, 56) | 'row' (44, size.button.row: an action
- *             inside a card's strip, 3d "Finish bag"; label.caps). §9 Buttons.
+ *             inside a card's strip, 3d "Finish bag"; label.caps) | 'bar'
+ *             (44, sized to its label, buttonCapsBar, shadow.floating when
+ *             primary: the Save bar's "Save changes", 32a). §9 Buttons.
  *   raised    row size, primary: the control hard shadow (shadow.control, 3)
  *             — 3d's "Open this bag" (2026-10-17). Row size has none by
  *             default.
@@ -130,7 +132,8 @@ function FilledButton({
   onPress,
   testOnly_pressed,
 }) {
-  const row = buttonSize === 'row';
+  const bar = buttonSize === 'bar';
+  const row = buttonSize === 'row' || bar;
   const warns = disabled && warnWhenDisabled;
   const primary = variant === 'primary' && !disabled;
   if (__DEV__ && destructive && variant === 'primary') {
@@ -141,7 +144,8 @@ function FilledButton({
   const iconColor = disabled ? color.icon.muted : primary ? color.icon.onAction : warning ? color.icon.destructive : color.icon.default;
 
   // Row size has no hard shadow unless raised (1b's See all, 2026-10-12).
-  const hardShadow = primary ? (row ? (raised ? shadow.control : null) : shadow.primary) : null;
+  // The Save bar's button keeps a shadow (32a: 4, shadow.floating).
+  const hardShadow = primary ? (bar ? shadow.floating : row ? (raised ? shadow.control : null) : shadow.primary) : null;
   return (
     <HardShadow shadow={hardShadow}>
       <Pressable
@@ -159,7 +163,7 @@ function FilledButton({
           pressed && !disabled && (primary ? styles.primaryPressed : styles.secondaryPressed),
         ]}>
         <View style={styles.content}>
-          <Text variant={row ? 'labelCaps' : 'buttonCaps'} color={labelColor} style={styles.label}>
+          <Text variant={bar ? 'buttonCapsBar' : row ? 'labelCaps' : 'buttonCaps'} color={labelColor} style={styles.label}>
             {label}
           </Text>
           {trailingIcon ? <Glyph name={trailingIcon} token={icon.sm} color={iconColor} /> : null}

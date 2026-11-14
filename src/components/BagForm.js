@@ -8,19 +8,23 @@ import ClearButton from './base/ClearButton';
 import Glyph from './base/Glyph';
 import SegmentedControl from './base/SegmentedControl';
 import Text from './base/Text';
+import RoastLevel from './RoastLevel';
 
 /**
  * Bag form (design/components.md "Adding a bag…"): the fields of one bag.
  * Two field sets, one component:
  *   minimal  Bean name (required), Roaster, the date on the bag (3c, Round
  *            27) or Roasted on / Best before (19a) — 8o's set; 3c (minimal)
- *   full     + Roast level, Size, Photo, Origin / Region / Process — 3c / 3g;
+ *   full     + Size, Photo, Origin / Region / Process — 3c / 3g;
  *            built so far: Photo (3c) and Process (both, 2026-11-08)
+ * Roast level (Turn 31, 32c / 32d): on 3c, RoastLevel under Roaster
+ * (`roast`), set in place; it replaces 3c / 3g's four chips (D-73). On 19a
+ * it is AboutCoffee's first row instead, so 19a passes no `roast`.
  *
  * Process (planner, 2026-11-08): Washed / Natural / Honey / Anaerobic, a
  * clearable option set (unset is "don't know"; no Unknown chip), under
- * Roaster as in 3g. 3g puts it under Roast level, which isn't built, so it
- * sits where that block would. 3c's mock folds it into an "Origin · Process"
+ * Roaster as in 3g. TODO: when AboutCoffee takes Process as a row (31g's
+ * "Later: all four filled"), this option set leaves the form. 3c's mock folds it into an "Origin · Process"
  * line; without Origin that line would open onto one row, so both show the
  * row itself.
  * TODO: 3c's fold, and the chip size (3g's mock draws 9 / 14 padding, the
@@ -61,6 +65,7 @@ import Text from './base/Text';
  *   bestBefore  19a: { value, hint, onPick, picking } — a Best before row
  *               under Roasted on, always shown, "Add" while empty (29b); the
  *               bag's other date is added here
+ *   roast       3c: { value, onChange } — Roast level under Roaster (32c)
  *   children    3g: drawn last inside the card (the freshness block)
  *   autoFocusName  3c: the keyboard comes up on Bean name; 3g: off (it opens to correct, not to type)
  *   photo       3c: { uri, onPress } — the photo slot over the fields
@@ -81,6 +86,7 @@ export default function BagForm({
   opened,
   bagDate,
   bestBefore,
+  roast,
   children,
   autoFocusName = true,
   photo,
@@ -90,6 +96,7 @@ export default function BagForm({
       {photo ? <PhotoField uri={photo.uri} onPress={photo.onPress} /> : null}
       <Field label="Bean name" value={value.name} placeholder="e.g. Ethiopia Guji" onChangeText={(name) => onChange({ ...value, name })} autoFocus={autoFocusName} error={nameMissing} />
       <Field label="Roaster" value={value.roaster} placeholder="Optional" onChangeText={(roaster) => onChange({ ...value, roaster })} />
+      {roast ? <RoastLevel value={roast.value} onChange={roast.onChange} /> : null}
       <View style={styles.field}>
         <Text variant="labelEyebrow" color="muted">
           Process

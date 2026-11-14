@@ -216,18 +216,20 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
   const method = [brewer?.name, grinder?.name].filter(Boolean).join(' · ');
   const roastDay = madeIt && bag?.roasted_at != null ? bag.roasted_at : null;
   const noteValue = note.trim() ? note : null;
-  const dirty =
-    (bag?.id ?? null) !== cup.bag_id ||
-    (bag?.name ?? null) !== cup.bean_name ||
-    (brewer?.id ?? null) !== cup.brewer_id ||
-    (brewer?.name ?? null) !== cup.brew_method ||
-    (grinder?.id ?? null) !== cup.grinder_id ||
-    (grinder?.name ?? null) !== cup.grinder ||
-    loggedAt !== cup.logged_at ||
-    productName !== cup.product_name ||
-    cafeChanged ||
-    drinkType !== cup.drink_type ||
-    noteValue !== (cup.note ?? null);
+  // One per field that differs from the cup as stored: the Save bar counts
+  // them (32a). The bag, brewer and grinder are one field each (their id and
+  // the name copied with it change together).
+  const changes = [
+    (bag?.id ?? null) !== cup.bag_id || (bag?.name ?? null) !== cup.bean_name,
+    (brewer?.id ?? null) !== cup.brewer_id || (brewer?.name ?? null) !== cup.brew_method,
+    (grinder?.id ?? null) !== cup.grinder_id || (grinder?.name ?? null) !== cup.grinder,
+    loggedAt !== cup.logged_at,
+    productName !== cup.product_name,
+    cafeChanged,
+    drinkType !== cup.drink_type,
+    noteValue !== (cup.note ?? null),
+  ].filter(Boolean).length;
+  const dirty = changes > 0;
 
   // Back and the edge swipe ask first while there are changes (19).
   useEffect(() => {
@@ -380,9 +382,7 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
         </ScreenFrame>
       </View>
 
-      <SaveBar visible={dirty}>
-        <Button label="Save changes" onPress={save} />
-      </SaveBar>
+      <SaveBar changes={changes} onSave={save} />
 
       <PickerSheet
         visible={sheet === 'bag'}

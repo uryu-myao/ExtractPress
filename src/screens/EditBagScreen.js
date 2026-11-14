@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Keyboard, Pressable, StyleSheet, View } from 'react-native';
+import AboutCoffee from '../components/AboutCoffee';
 import BagForm from '../components/BagForm';
 import BeanFreshness from '../components/BeanFreshness';
 import { bagDatesLine } from '../constants/bagDates';
@@ -34,8 +35,14 @@ import ScreenFrame from './ScreenFrame';
  * count is gone from it: the cup list carries it.
  * Body, top to bottom (19a: status, cups, details, end actions):
  *   facts      under the title, each after its label (labelEyebrow muted,
- *              then the value in body): "ROASTER Blue Bottle  SIZE 250 g"
- *              (Uryu, 2026-10-28; 19a draws a bare "Blue Bottle · 250 g")
+ *              then the value in body): "SIZE 250 g" (Uryu, 2026-10-28;
+ *              19a draws a bare "Blue Bottle · 250 g"). No roaster since
+ *              2026-11-14 (Uryu): Details below has it, editable.
+ *   photo      in the status block, in 3c's photo slot frame (2px ink), so
+ *              it reads as editable (Uryu, 2026-11-14)
+ *   about      "About the coffee" (31g, 32a): Roast level set in place
+ *              (RoastLevel); origin, region and process will join it as list
+ *              rows. A change or a clear is an edit for the Save bar.
  *   status     the photo, then beanFreshness
  *              stacked (19a: the day and state over the bar) from the roast
  *              date being edited, and "Roasted Mar 30 ·
@@ -79,7 +86,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   const db = useDatabase();
   // The bag as stored: the title, the sub line and what counts as an edit.
   const [stored, setStored] = useState(bag);
-  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at, bestBefore: bag.best_before ?? null, process: bag.process ?? null });
+  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at, bestBefore: bag.best_before ?? null, process: bag.process ?? null, roastLevel: bag.roast_level ?? null });
   const [openedAt, setOpenedAt] = useState(bag.opened_at);
   const cups = useFilteredCups(bagFilter(bag));
   const [nameMissing, setNameMissing] = useState(false);
@@ -96,13 +103,17 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
 
   const name = form.name.trim();
   const roaster = form.roaster.trim() || null;
-  const dirty =
-    name !== stored.name ||
-    roaster !== (stored.roaster ?? null) ||
-    form.roastedAt !== stored.roasted_at ||
-    form.bestBefore !== (stored.best_before ?? null) ||
-    form.process !== (stored.process ?? null) ||
-    openedAt !== stored.opened_at;
+  // One per field that differs from what is stored: the Save bar counts them (32a).
+  const changes = [
+    name !== stored.name,
+    roaster !== (stored.roaster ?? null),
+    form.roastedAt !== stored.roasted_at,
+    form.bestBefore !== (stored.best_before ?? null),
+    form.process !== (stored.process ?? null),
+    form.roastLevel !== (stored.roast_level ?? null),
+    openedAt !== stored.opened_at,
+  ].filter(Boolean).length;
+  const dirty = changes > 0;
   useEffect(() => {
     guardLeave?.(dirty && !busy, () => {
       Keyboard.dismiss();
@@ -150,9 +161,9 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     }
     setBusy(true);
     try {
-      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, bestBefore: form.bestBefore, process: form.process, openedAt });
+      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, bestBefore: form.bestBefore, process: form.process, roastLevel: form.roastLevel, openedAt });
       Keyboard.dismiss();
-      setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, best_before: form.bestBefore, process: form.process, opened_at: openedAt }));
+      setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, best_before: form.bestBefore, process: form.process, roast_level: form.roastLevel, opened_at: openedAt }));
       setForm((f) => ({ ...f, name, roaster: roaster ?? '' }));
       // The Save bar slides away; this says it worked (Uryu, 2026-11-12: Save gave no feedback). 13b's notice, verb ours.
       requestNotice({ name, verb: 'saved' });
@@ -191,8 +202,10 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   };
 
   // Under the title, each fact after its own label (Uryu, 2026-10-28: a bare
-  // "Blue Bottle · 250 g" hung there unexplained).
-  const facts = [stored.roaster ? { label: 'Roaster', value: stored.roaster } : null, stored.size_g ? { label: 'Size', value: `${stored.size_g} g` } : null].filter(Boolean);
+  // "Blue Bottle · 250 g" hung there unexplained). Not the roaster (Uryu,
+  // 2026-11-14): it repeats the editable Roaster in Details below. Size stays:
+  // it has no input on this page.
+  const facts = [stored.size_g ? { label: 'Size', value: `${stored.size_g} g` } : null].filter(Boolean);
   // The line under the status (Design Round 27, 29b): "Roasted Mar 30 · opened
   // Apr 6 · best before Sep 30"; best-before only: "Best before Oct 1, 2027 ·
   // opened Apr 6" (· "12 days ago" once passed).
@@ -226,8 +239,8 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
                 accessibilityRole="button"
                 accessibilityLabel={stored.photo_uri ? 'Bag photo, change or remove' : 'Add a photo of the bag'}>
                 {({ pressed }) => (
-                  <View>
-                    <PhotoPlaceholder size={size.thumbnail.list} photo={stored.photo_uri} />
+                  <View style={styles.photoFrame}>
+                    <PhotoPlaceholder size={size.thumbnail.list - 2 * shape.borderWidth.box} photo={stored.photo_uri} />
                     {pressed ? <View style={styles.photoPressed} /> : null}
                   </View>
                 )}
@@ -254,6 +267,9 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
                 )}
               </View>
             </View>
+
+            {/* 31g / 32a: facts printed on the bag, under the status. A change or a clear joins the Save bar's edits, as the details do. */}
+            <AboutCoffee value={{ roastLevel: form.roastLevel }} onChange={(field, next) => setForm((f) => ({ ...f, [field]: next }))} />
 
             {cups ? (
               <ItemCups
@@ -337,14 +353,11 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
         </ScreenFrame>
       </View>
 
-      <SaveBar visible={dirty}>
-        <Button label="Save changes" onPress={save} />
-        {cupCount > 0 ? (
-          <Text variant="bodySmTabular" color="secondary" style={styles.centred}>
-            {`Applies to the ${cupCount === 1 ? 'cup' : `${countFormat.format(cupCount)} cups`} already logged from this bag.`}
-          </Text>
-        ) : null}
-      </SaveBar>
+      <SaveBar
+        changes={changes}
+        onSave={save}
+        note={cupCount > 0 ? `Applies to the ${cupCount === 1 ? 'cup' : `${countFormat.format(cupCount)} cups`} already logged from this bag.` : null}
+      />
 
       <PhotoSheet
         visible={photoSheet}
@@ -445,6 +458,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space[14],
   },
+  // The photo is editable, so it wears 3c's photo slot frame (2px ink; Uryu,
+  // 2026-11-14: frameless, it didn't read as something to tap). The outer
+  // size stays thumbnail.list; the photo sits inside the frame.
+  photoFrame: {
+    borderWidth: shape.borderWidth.box,
+    borderColor: color.border.strong,
+  },
   // The photo has a surface, so pressed darkens it (§1), never opacity.
   photoPressed: {
     ...StyleSheet.absoluteFillObject,
@@ -483,9 +503,6 @@ const styles = StyleSheet.create({
   },
   pressed: {
     backgroundColor: state.pressed.surface,
-  },
-  centred: {
-    textAlign: 'center',
   },
   sheetActions: {
     marginTop: space[8],

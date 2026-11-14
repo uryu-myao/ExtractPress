@@ -72,7 +72,9 @@ export default function EditGearScreen({ gear, onBack, onRemoved, guardLeave }) 
 
   const name = form.name.trim();
   const maker = form.maker.trim() || null;
-  const dirty = name !== stored.name || maker !== (stored.maker ?? null) || form.isDefault !== Boolean(stored.is_default);
+  // One per field that differs from what is stored: the Save bar counts them (32a).
+  const changes = [name !== stored.name, maker !== (stored.maker ?? null), form.isDefault !== Boolean(stored.is_default)].filter(Boolean).length;
+  const dirty = changes > 0;
   useEffect(() => {
     guardLeave?.(dirty && !busy, () => {
       Keyboard.dismiss();
@@ -199,14 +201,7 @@ export default function EditGearScreen({ gear, onBack, onRemoved, guardLeave }) 
         </ScreenFrame>
       </View>
 
-      <SaveBar visible={dirty}>
-        <Button label="Save changes" onPress={save} />
-        {cups > 0 ? (
-          <Text variant="bodySmTabular" color="secondary" style={styles.centred}>
-            {`Applies to the ${cupsWord} already logged with it.`}
-          </Text>
-        ) : null}
-      </SaveBar>
+      <SaveBar changes={changes} onSave={save} note={cups > 0 ? `Applies to the ${cupsWord} already logged with it.` : null} />
 
       <DiscardSheet
         visible={sheet === 'discard'}
@@ -293,9 +288,6 @@ const styles = StyleSheet.create({
   },
   pressed: {
     backgroundColor: state.pressed.surface,
-  },
-  centred: {
-    textAlign: 'center',
   },
   sheetActions: {
     marginTop: space[8],

@@ -49,7 +49,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
   const db = useDatabase();
   // In the Record sheet the new bag becomes the cup's bag; from 3d it just joins the shelf.
   const chooseBag = useRecordDraftIfAny()?.chooseBag;
-  const [form, setForm] = useState({ name: prefill?.name ?? '', roaster: prefill?.roaster ?? '', process: null });
+  const [form, setForm] = useState({ name: prefill?.name ?? '', roaster: prefill?.roaster ?? '', process: null, roastLevel: null });
   // The date printed on the bag and its kind (Design Round 27 B1, 29a): one
   // date here; the bag's other one is added on its page (19a). The kind
   // starts where it was last left (device.bag_date_kind).
@@ -99,6 +99,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
         roastedAt: bagDate.kind === 'roasted' ? bagDate.value : null,
         bestBefore: bagDate.kind === 'bestBefore' ? bagDate.value : null,
         process: form.process,
+        roastLevel: form.roastLevel,
         open: opened,
         photo: kept,
       });
@@ -160,6 +161,8 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
               setPicking(true);
             },
           }}
+          // 32c: Roast level under Roaster, set in place; untouched it is not recorded. Written on add.
+          roast={{ value: form.roastLevel, onChange: (roastLevel) => setForm((f) => ({ ...f, roastLevel })) }}
           photo={{
             uri: photo?.uri ?? null,
             onPress: () => {

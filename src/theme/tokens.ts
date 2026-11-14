@@ -253,6 +253,13 @@ export const textStyle = {
   axisUnset:     { fontFamily: 'Archivo', fontSize: 11, fontWeight: '600' },
   /** lineHeight UNDECLARED · 0.12em x 10 (was 0.16em; tightened on Uryu's ask, 2026-11-09) */
   labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
+  /**
+   * The Save bar's button (32a, 2026-11-14): 14 / 700 caps .06em, between
+   * labelCaps (12) and buttonCaps (16). lineHeight UNDECLARED.
+   */
+  buttonCapsBar: { fontFamily: 'Archivo', fontSize: 14, fontWeight: '700', letterSpacing: 0.84, textTransform: 'uppercase' },
+  /** The Save bar's count, "1 change" (32a): 13 / 600, tabular so the bar holds still as it counts. 2026-11-14. */
+  saveCount:     { fontFamily: 'Archivo', fontSize: 13, fontWeight: '600', lineHeight: 18, fontVariant: ['tabular-nums'] },
   /** lineHeight UNDECLARED · 0.06em x 16 */
   buttonCaps:    { fontFamily: 'Archivo', fontSize: 16, fontWeight: '700', letterSpacing: 0.96, textTransform: 'uppercase' },
   /**
@@ -430,6 +437,12 @@ export const size = {
    * every track starts and ends on the same x in every state and language.
    */
   axisColumn: { title: 88, reading: 56, step: 56 },
+  /**
+   * The option slider (32a–32d): the word column, sized for its longest word
+   * (MEDIUM-DARK 79, ミディアムダーク 83). The ✕ beside it is size.axis.clear,
+   * its column kept when empty so the track never jumps.
+   */
+  option: { word: 84 },
   dot: { bullet: 6 },
   sheet: {
     handle: { w: 56, h: 5 },
@@ -452,6 +465,8 @@ export const icon = {
   lg: { size: 22, strokeWidth: 1.8 },
   /** decorative large glyph — stroke widens back */
   xl: { size: 38, strokeWidth: 2.0 },
+  /** The option slider's legend under the track ends (32a: the flame pair), 14 at 2, text.muted */
+  legend: { size: 14, strokeWidth: 2 },
   /** 5b's ✕ on a 24 square (30b): 12 at 3, so the cross holds its weight that small */
   clear: { size: 12, strokeWidth: 3 },
   /** the ⓘ inside a status stamp (15a, Design Round 8): 14 at 2.4, lighter than xs */
@@ -652,6 +667,24 @@ export const component = {
     },
     rail: { height: size.axis.rail, inset: size.axis.inset, dot: size.axis.dot },
     grip: axisGrip,
+  },
+  /**
+   * A slider over named options (Turn 31, 32a–32d: a bag's roast level).
+   * The tasting slider's geometry (track 28, handle 20, inset 2, 44 band) and
+   * its feel, with every visual signal changed so it never reads as a sixth
+   * taste axis:
+   *   frame   border.muted, the quiet frame (tasting: text.secondary)
+   *   ticks   2 × 10 in divider.hairlineStrong, one per option (tasting:
+   *           dots at the whole numbers)
+   *   handle  INK, no frame, a surface.raised grip: §1's "chosen from
+   *           options" (tasting: brown, "a value I entered")
+   *   word    size.option.word (84) at the right, a word not a number
+   * No axis colour anywhere.
+   */
+  option: {
+    rail: { width: shape.borderWidth.box, color: color.border.muted, background: color.surface.raised, tick: color.divider.hairlineStrong },
+    tick: { w: shape.borderWidth.box, h: space[8] + space[2] },
+    needle: { ...size.axis.handle, background: color.border.strong, grip: color.surface.raised },
   },
   /**
    * Bottom bar (design-system.md §9; Design Round 23, 2026-11-08): the tab

@@ -19,6 +19,20 @@ export const MODE_BADGE = {
  * A bag's process (3c / 3g, components.md "Bag form"; restored 2026-11-08).
  * No "Unknown": unset is the unknown answer (the set is clearable).
  */
+/**
+ * A bag's roast level, light → dark (bags.roast_level): FOUR VALUES,
+ * DELIBERATELY (data-model.md, 2026-10-09, reaffirmed 2026-11-14). An ordered
+ * scale Try Next can measure distance along; no medium-light (false
+ * precision), no "other" (no place on the scale: a label that fits none is
+ * left blank, "not recorded"). A fact printed on the bag, never a taste axis.
+ */
+export const ROAST_LEVELS = [
+  { value: 'light', label: 'Light' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'medium-dark', label: 'Medium-dark' },
+  { value: 'dark', label: 'Dark' },
+];
+
 export const PROCESS_OPTIONS = [
   { value: 'washed', label: 'Washed' },
   { value: 'natural', label: 'Natural' },
