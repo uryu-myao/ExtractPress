@@ -21,3 +21,7 @@ Both are recorded in `design-system.md` §11 (OQ-14):
 - CJK bold — extend the font-face mapping to (family, weight, lang).
 - `labelEyebrow` letter-spacing (1.6) is tuned for Latin capitals and reads too loose on CJK.
 - zh chips sit taller than ja: PingFang SC's line box is about 1.4em against Hiragino Sans's 1.0em. Hiragino also lacks some simplified glyphs (e.g. 师), so a zh label can mix fonts. Layout centring is fixed; the metric gap is left to the mapping.
+
+## Word-start matching assumes spaces (2026-11-14)
+
+The Origin and Region sheets match a query at the start of any word (`src/constants/match.js`: "Rica" → Costa Rica), splitting words at spaces, hyphens, slashes and apostrophes. **ja and zh have no spaces**: when the country and region names are localised (V1.1 / V1.3, keyed by `origins.json`'s ISO code), those locales need substring matching instead (コスタリカ found by リカ). Not built.

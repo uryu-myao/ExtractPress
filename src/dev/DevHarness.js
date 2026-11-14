@@ -5,6 +5,7 @@ import Text from '../components/base/Text';
 import { color, layout, shape, spacing } from '../theme/tokens';
 import AxisReadoutPage from './pages/AxisReadoutPage';
 import AxisSliderPage from './pages/AxisSliderPage';
+import ChoiceSheetPage from './pages/ChoiceSheetPage';
 import ButtonPage from './pages/ButtonPage';
 import AddButtonPage from './pages/AddButtonPage';
 import FieldRowPage from './pages/FieldRowPage';
@@ -31,6 +32,7 @@ const PAGES = [
   { key: 'button', title: 'Button', Page: ButtonPage },
   { key: 'iconButton', title: 'IconButton', Page: IconButtonPage },
   { key: 'addButton', title: 'AddButton', Page: AddButtonPage },
+  { key: 'choiceSheet', title: 'ChoiceSheet', Page: ChoiceSheetPage },
   { key: 'axisSlider', title: 'AxisSlider · dashes', Page: AxisSliderPage },
   { key: 'axisReadout', title: 'AxisReadout', Page: AxisReadoutPage },
   { key: 'recordRow', title: 'Badge · RecordRow', Page: RecordRowPage },

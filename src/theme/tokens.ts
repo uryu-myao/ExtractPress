@@ -247,6 +247,17 @@ export const textStyle = {
    * marks an absence, not information. Do not "fix" the contrast. 2026-11-14.
    */
   axisEmpty:     { fontFamily: 'Archivo', fontSize: 11, fontWeight: '500', lineHeight: 17 },
+  /**
+   * A sheet's explaining line (32e "No country called …", 32f "Not here?" and
+   * "Regions are listed by origin …"): 13 / 500, text.secondary. 2026-11-14.
+   */
+  sheetNote:     { fontFamily: 'Archivo', fontSize: 13, fontWeight: '500', lineHeight: 19 },
+  /**
+   * A text action in a sheet, sentence case (32e / 32f: Clear, "Use “…” as
+   * written", Choose origin first): 13 / 600, ink, underlined by TextLink
+   * (§1: a text-only action is underlined). lineHeight UNDECLARED. 2026-11-14.
+   */
+  textLink:      { fontFamily: 'Archivo', fontSize: 13, fontWeight: '600' },
   /** 5b's reading column (30b / 30c): the value entered, "3.5". 15 / 700, tabular so 3.5 and 4 line up. 2026-11-14. */
   axisReading:   { fontFamily: 'Archivo', fontSize: 15, fontWeight: '700', lineHeight: 15, fontVariant: ['tabular-nums'] },
   /** 5b's reading column when the axis is not assessed: "Not noted", 11 / 600 in text.muted (30a). lineHeight UNDECLARED. 2026-11-14. */
@@ -385,6 +396,12 @@ export const size = {
    * photoField: a form's photo slot, 3c's (and 3e / 3g's) 76 square, 2026-11-01.
    */
   thumbnail: { list: 66, summary: 40, compact: 44, photoField: 76 },
+  /**
+   * A choice sheet's row (32e / 32f), at least this tall: a name alone sits
+   * centred in it; with a meta line it grows. Padding is spacing.inset.listRow
+   * (32e draws 10, off the scale; every list row is 12).
+   */
+  choiceRow: 48,
   /**
    * Home's shelf rows, the status column on the right (Round 14, 17a / 17b):
    * the mini freshness bar's width, and the column's least width. The column

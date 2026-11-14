@@ -1062,6 +1062,20 @@ Every page that edits in place: 19a (the bag), 3e (the gear), 11a (the cup). Abs
 - 32a draws no note. It stays because the save rewrites past cups' copies, which the user should know before pressing (D-76).
 - 32a's button padding is 18, off the spacing scale; it takes `inset.control.h` (16).
 
+### Choice sheet (`ChoiceSheet`, `TextLink`; Turn 31, 32e / 32f, 2026-11-14)
+One value for a bag's fact — Origin, Region, Process — from lists, by search, or as written. **One component, driven by data**: the three are configurations (brief 4b). `ChoiceSheetBody` is the content alone (the dev harness draws its states inline).
+
+| part | value |
+|---|---|
+| header | title `display.sm` ink; under it an optional scope in `meta` muted ("In Ethiopia", "No origin yet"); **Clear** at the right (`TextLink`), which empties the value and closes |
+| search | optional: `SearchField`, focused only when tapped. Typing turns the lists into one **Results** list: names matching at the start of any word (`matchWordStart`: "Ke" → Kenya, "Rica" → Costa Rica, "Costa R", case- and accent-insensitive), the typed part ink, the rest `text.muted`; an alias match ("ivory") shows the name whole |
+| note | optional: a `textStyle.sheetNote` line (13 / 500, `text.secondary`) and a `TextLink` (Region with no origin: Choose origin first) |
+| lists | one or two, each under a `label.eyebrow`, in one 2px `border.container` frame on raised; rows at least `size.choiceRow` (48), `inset.listRow`, a 1.5 hairline above every row after the first; name in `label`, an optional meta line (`bodySm` muted: "3 bags", "Colombia"); **the current value carries an ink check** (`icon.md`) |
+| free text | `noMatch` (Origin): with no result, "No country called “…”." and **Use “…” as written**; `always` (Region): "Not here?" and the same, under any results; none (Process) |
+
+- **A check, not RadioList's square** (an exception to Design Round 10, 17's rule for single-select rows): these are long, searched lists of names where the check marks the one in force, as 32e and the brief draw them. RadioList stays the rule for short option lists.
+- One tap picks and closes. `TextLink`: a sentence-case text action, `textStyle.textLink` (13 / 600) ink, underlined, a 44 touch area, pressed by scale — `Button text`'s non-caps sibling.
+
 ### Taste axis slider (base `AxisSlider`) — the one place this component is specified (current as of 2026-11-14)
 
 **Current (Turn 29, 30a–30d, 2026-11-14) — supersedes everything below where they differ.** One row per axis, 44 tall (`size.tapTarget`), rows `gap.row` (8) apart, on the `size.axisColumn` grid:
@@ -1492,3 +1506,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-11-14 — §9 Save bar redrawn to 32a and applied to every Save bar (19a, 3e, 11a; Uryu): one row, the count of changes left ("1 change"), "Save changes" right as a button sized to its label; was 19b's full-width Save with a centred line under it. `SaveBar` now draws its own row (props `changes`, `onSave`, `note`); each page counts the fields that differ. Tokens: `textStyle.saveCount` (13 / 600 tabular), `textStyle.buttonCapsBar` (14 / 700 caps .06em), `Button` size `bar` (44, `shadow.floating`); the panel's top padding 20 → 14. D-76.
 - 2026-11-14 — The roast level row on Uryu's device check: the word column left-aligned (the gap to the track is the same for every word; the ✕ keeps its place), and the title in `label.eyebrow` muted, as the bag form's Bean name / Roaster. `textStyle.detailLabel` removed (no other use). D-77.
 - 2026-11-14 — The roast level row's foot: the legend line's spacers kept the ✕'s 24 height (the line was 10 taller than its flames) and the row now pads 12 under the legend as over the title (32a: 8). Measured at 390: 14.4 over the title's capitals, 13 under the flames (was about 14 / 18).
+- 2026-11-14 — §9 Choice sheet (4b, 32e / 32f): one data-driven sheet for Origin, Region and Process (title + Clear, optional scope, optional search with word-start matching, one or two lists with an ink check on the current value, free text when no match or always). New `TextLink` (base). Tokens: `textStyle.sheetNote` (13 / 500), `textStyle.textLink` (13 / 600), `size.choiceRow` (48; 32e's 10 padding folds to the list rows' 12).

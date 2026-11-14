@@ -1,6 +1,7 @@
 // Bundled origins and regions (src/constants/origins.json, regions.json):
 // the flat data Origin and Region's sheets and Try Next read. Run: npm run check:origins
 import { readFileSync } from 'node:fs';
+import { matchWordStart } from '../src/constants/match.js';
 
 type Origin = { name: string; iso2: string; aliases: string[] };
 type Region = { name: string; country: string; verify?: boolean };
@@ -51,6 +52,27 @@ regions.forEach((r, i) => {
   perCountry.set(r.country, seen);
 });
 for (const [country, set] of perCountry) if (set.size > 15) fail(`${country}: ${set.size} regions, the cap is 15`);
+
+// Word-start matching (the Origin / Region sheets, brief 4b).
+{
+  const cases: [string, string, [number, number] | null][] = [
+    ['Kenya', 'Ke', [0, 2]],
+    ['Costa Rica', 'Rica', [6, 4]],
+    ['Costa Rica', 'costa r', [0, 7]],
+    ['Costa Rica', 'osta', null],
+    ["Côte d'Ivoire", 'cote', [0, 4]],
+    ["Côte d'Ivoire", 'Iv', [7, 2]],
+    ['Zamora-Chinchipe', 'Chin', [7, 4]],
+    ['Huehuetenango', 'hu', [0, 2]],
+    ['Ethiopia', '', null],
+    ['Ethiopia', '  et ', [0, 2]],
+  ];
+  for (const [name, q, want] of cases) {
+    const got = matchWordStart(name, q);
+    const g = got ? [got.start, got.length] : null;
+    if (JSON.stringify(g) !== JSON.stringify(want)) fail(`match: "${q}" in "${name}" → ${JSON.stringify(g)}, expected ${JSON.stringify(want)}`);
+  }
+}
 
 if (problems.length) {
   console.error(`check:origins FAILED (${problems.length})\n  - ${problems.join('\n  - ')}`);
