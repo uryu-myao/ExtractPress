@@ -107,6 +107,24 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extr
 - **Migration 11 carried over Body and Sweetness only** (Uryu, 2026-11-13). They were already one-directional (Light → Full body, Low → High sweetness), so 0 / 25 / 50 / 75 / 100 became 1 / 2 / 3 / 4 / 5. Acidity (Acid ↔ Bitter) mixed two of the new axes, and Roast (perceived) is not Bitterness, so neither was carried: those cups read Not noted there. Then every `dna_change` was replayed once on the new scale (its old snapshots were 0–100 with a roast key, which no tag can read).
 - **In backups and the CSV**: the backup copies `cup_axes` like any table; an older backup is migrated through 11 on restore. The CSV has two columns per registered axis ("Acidity (1–5)", "Acidity"), so its width follows the registry.
 
+### Process: categorical, five values (migration 12, decided 2026-11-14)
+
+- **`washed` · `natural` · `honey` · `anaerobic` · `other`**, NULL = not recorded. Both `bags.process` and its copy `cups.bean_process` (the copy rule: a cup copies its bag's process at logging, and editing the bag rewrites the copies).
+- **`other` stays**: Process is the one bag field with **no free-text escape** (32e's sheet has no search and no "use as written"), so carbonic maceration, giling basah and co-ferments need somewhere to go. Anaerobic is common enough for its own value. Board 32e drew four values without `other`; that was wrong one way, as the 2026-10-09 schema (no `other`) was wrong the other.
+- **Why `other` is right here and wrong for roast — do not "make them consistent"**: process is **categorical**; values are compared for equality, and `other` compares as itself. `roast_level` is an **ordered scale** (light → dark) that Try Next measures distance along, and `other` has no position on it, so it would need special-casing in every calculation. Different kinds of data, different rules.
+- **Migration 12 rebuilt `bags` and `cups`** (SQLite can't change a CHECK) with foreign keys off for the rebuild (`foreignKeysOff`, below). Uryu's phone held one bag (`process` = natural) and one cup from it (`bean_process` = natural, 5 `cup_axes` rows) when it was written (read from a copy of the phone's database, 2026-11-14); `check:schema` replays that shape and checks every row, `cups.bag_id` and every `cup_axes` row survive.
+- **Table rebuilds and foreign keys** (`Migration.foreignKeysOff`, migrations.ts): with foreign keys on, `DROP TABLE` does an implicit `DELETE` that fires the children's `ON DELETE` actions — rebuilding `bags` would null every `cups.bag_id`, rebuilding `cups` would delete every `cup_axes` row. SQLite's 12-step procedure turns them off, which is a no-op inside a transaction, so migrate.ts sets the PRAGMA before BEGIN (on its own connection: the exclusive transaction would run on another), runs `PRAGMA foreign_key_check` before COMMIT, and turns them back on. Any future rebuild of a referenced table needs the flag; `check:schema` fails without it.
+
+### Origins and regions: bundled tables (2026-11-14)
+
+`src/constants/origins.json` and `regions.json`, read through `src/constants/origins.js`. Static, no backend, no network; reviewable flat data, checked by `npm run check:origins` on every commit.
+- **origins**: the coffee-growing countries (65). Each: the English **name (the key)**, ISO 3166-1 alpha-2, aliases.
+  - **`bags.origin` stores the name, not the code.** A pick from the list is a byte-identical canonical string every time, which is what makes Try Next's origin matching work. **Do not add `bags.origin_code`.**
+  - The code is carried for later: the join key for localised country names (V1.1 / V1.3) and Try Next's taxonomy. Unused in V1.
+  - Aliases cover renames and other spellings (Swaziland → Eswatini, Cape Verde → Cabo Verde, Ivory Coast → Côte d'Ivoire, Burma → Myanmar), so a row stored under an old name still resolves (`originOf`). Data, not logic. Türkiye is not in the list: not a coffee origin.
+- **regions**: flat `{ name, country }`, `country` an origins name. **Trade names as a bag prints them** (Yirgacheffe, Guji, Sidamo, Harrar, Huila), not administrative divisions. **At most 15 per country**, and not every country has any: a country without regions still works (the sheet shows "From my bags" and free text). Flat, not nested, because Region's search runs across every country at once (32f). Entries marked `"verify": true` were written from memory without confidence: for Uryu to scan.
+- **Try Next's taxonomy** (origin × process × flavour): these two files are its first two dimensions. Extend them; never a second copy.
+
 ### Roast is not a taste axis (decided 2026-11-13, Turn 30)
 
 - **V1's Taste DNA profile is the five tasting axes and nothing else**: acidity, bitterness, body, sweetness, aftertaste — things the drinker tasted, not facts printed on a bag. **`bags.roast_level` never enters the profile**, directly or as a default, and never appears in the DNA card (31f: "Roast isn't an axis").
@@ -123,7 +141,7 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extr
 | roaster | TEXT | null | |
 | origin | TEXT | null | Try Next input |
 | region | TEXT | null | Try Next input |
-| process | TEXT | null | `washed` \| `natural` \| `honey` \| `anaerobic` · Try Next input (`other` dropped, 2026-10-09) |
+| process | TEXT | null | `washed` \| `natural` \| `honey` \| `anaerobic` \| `other` · Try Next input · **categorical** (migration 12; `other` dropped 2026-10-09, back 2026-11-14: below) |
 | roast_level | TEXT | null | `light` \| `medium` \| `medium-dark` \| `dark` · **four, deliberately** (2026-10-09, below) · Try Next input |
 | notes | TEXT | not null | flavour tags, JSON array of strings, default `[]` |
 | opened_at | INTEGER | null | drives the freshness meter |

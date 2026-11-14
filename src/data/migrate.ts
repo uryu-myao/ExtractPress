@@ -48,7 +48,7 @@ export async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
 
   for (const migration of migrations) {
     if (migration.version <= current) continue;
-    await inTransaction(db, async (tx) => {
+    const apply = async (tx: Executor) => {
       for (const sql of migration.statements) await tx.execAsync(sql);
       if (migration.backfill) {
         await migration.backfill({
@@ -58,12 +58,31 @@ export async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
           },
         });
       }
+      if (migration.foreignKeysOff) {
+        const dangling = await tx.getAllAsync('PRAGMA foreign_key_check');
+        if (dangling.length) throw new Error(`Migration ${migration.version} left ${dangling.length} broken reference(s).`);
+      }
       await tx.runAsync('INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)', [
         migration.version,
         migration.name,
         Date.now(),
       ]);
-    });
+    };
+    if (migration.foreignKeysOff) {
+      // A table rebuild (migrations.ts foreignKeysOff). The PRAGMA is per
+      // connection and a no-op inside a transaction, and the exclusive
+      // transaction runs on a connection of its own, so this one runs in a
+      // plain transaction on this connection, set before BEGIN. Nothing else
+      // touches the database yet: migrations run before the app renders.
+      await db.execAsync('PRAGMA foreign_keys = OFF');
+      try {
+        await db.withTransactionAsync(() => apply(db));
+      } finally {
+        await db.execAsync('PRAGMA foreign_keys = ON');
+      }
+    } else {
+      await inTransaction(db, apply);
+    }
   }
 
   return db;

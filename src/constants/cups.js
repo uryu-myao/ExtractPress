@@ -38,6 +38,9 @@ export const PROCESS_OPTIONS = [
   { value: 'natural', label: 'Natural' },
   { value: 'honey', label: 'Honey' },
   { value: 'anaerobic', label: 'Anaerobic' },
+  // Process is categorical, with no free text: other is where the rest go
+  // (carbonic maceration, giling basah, co-ferments). Migration 12.
+  { value: 'other', label: 'Other' },
 ];
 
 const capitalise = (word) => word.charAt(0).toUpperCase() + word.slice(1);

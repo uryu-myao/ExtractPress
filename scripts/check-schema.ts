@@ -19,18 +19,31 @@ const asMigrationDb = (d: DatabaseSync): MigrationDb => ({
   },
 });
 
+/**
+ * One migration as migrate.ts runs it: in a transaction, foreign keys off
+ * around it when the migration says so (a table rebuild), and a
+ * foreign_key_check before COMMIT. record: write its schema_migrations row.
+ */
+async function apply(d: DatabaseSync, m: (typeof migrations)[number], { backfill = true, record = true } = {}) {
+  if (m.foreignKeysOff) d.exec('PRAGMA foreign_keys = OFF');
+  d.exec('BEGIN');
+  for (const sql of m.statements) d.exec(sql);
+  if (backfill && m.backfill) await m.backfill(asMigrationDb(d));
+  if (m.foreignKeysOff) {
+    const dangling = d.prepare('PRAGMA foreign_key_check').all();
+    if (dangling.length) fail(`migration ${m.version}: ${dangling.length} broken reference(s) after the rebuild`);
+  }
+  if (record) d.prepare('INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)').run(m.version, m.name, Date.now());
+  d.exec('COMMIT');
+  if (m.foreignKeysOff) d.exec('PRAGMA foreign_keys = ON');
+}
+
 const db = new DatabaseSync(':memory:');
 db.exec('PRAGMA foreign_keys = ON');
 db.exec(MIGRATIONS_TABLE);
 const versions = migrations.map((m) => m.version);
 if (versions.some((v, i) => v !== i + 1)) fail(`migration versions must be 1..n in order, got ${versions}`);
-for (const m of migrations) {
-  db.exec('BEGIN');
-  for (const sql of m.statements) db.exec(sql);
-  if (m.backfill) await m.backfill(asMigrationDb(db));
-  db.prepare('INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)').run(m.version, m.name, Date.now());
-  db.exec('COMMIT');
-}
+for (const m of migrations) await apply(db, m);
 
 type Info = { name: string; type: string; notnull: number; pk: number };
 type Fk = { from: string; table: string; on_delete: string };
@@ -92,7 +105,8 @@ rejects('roast level medium-light (4 steps, deliberately)', `INSERT INTO bags (n
 rejects('roast level other (dropped)', `INSERT INTO bags (name, roast_level) VALUES ('x', 'other')`);
 rejects('unknown mode', `INSERT INTO cups (rating, mode) VALUES (3, 'gifted')`);
 accepts('process anaerobic', `INSERT INTO bags (name, process) VALUES ('x', 'anaerobic')`);
-rejects('process other (dropped)', `INSERT INTO bags (name, process) VALUES ('x', 'other')`);
+accepts('process other (migration 12: categorical, the one field with no free text)', `INSERT INTO bags (name, process) VALUES ('x', 'other')`);
+rejects('free-text process', `INSERT INTO bags (name, process) VALUES ('x', 'carbonic maceration')`);
 rejects('bag notes not an array', `INSERT INTO bags (name, notes) VALUES ('x', '"floral"')`);
 rejects('flavours not an array', `INSERT INTO cups (rating, mode, flavours) VALUES (3, 'made_it', '"jasmine"')`);
 rejects('six flavours', `INSERT INTO cups (rating, mode, flavours) VALUES (3, 'made_it', '["a","b","c","d","e","f"]')`);
@@ -108,7 +122,8 @@ rejects('axis rows for a cup that is not there', `INSERT INTO cup_axes (cup_id, 
 accepts('any axis id (the registry decides, not a CHECK list)', `INSERT INTO cup_axes (cup_id, axis, value) VALUES (900, 'a-sixth-axis', 3)`);
 db.exec('DELETE FROM cups WHERE id = 900');
 if ((db.prepare('SELECT COUNT(*) AS n FROM cup_axes WHERE cup_id = 900').get() as { n: number }).n !== 0) fail('cup_axes: rows outlived their cup (no cascade)');
-rejects('copied bean process outside the list', `INSERT INTO cups (rating, mode, bean_process) VALUES (3, 'made_it', 'other')`);
+rejects('copied bean process outside the list', `INSERT INTO cups (rating, mode, bean_process) VALUES (3, 'made_it', 'carbonic')`);
+accepts('copied bean process other', `INSERT INTO cups (rating, mode, bean_process) VALUES (3, 'made_it', 'other')`);
 rejects('unknown gear category', `INSERT INTO gear (name, category) VALUES ('x', 'tamper')`);
 rejects('two default grinders', `INSERT INTO gear (name, category, is_default) VALUES ('g2', 'grinder', 1)`);
 accepts('a second, non-default grinder', `INSERT INTO gear (name, category, is_default) VALUES ('g3', 'grinder', 0)`);
@@ -134,12 +149,7 @@ if (!row.created_at || row.logged_at !== row.created_at) fail('a minimal cup (ra
   const old = new DatabaseSync(':memory:');
   old.exec('PRAGMA foreign_keys = ON');
   old.exec(MIGRATIONS_TABLE);
-  const run = async (m: (typeof migrations)[number]) => {
-    old.exec('BEGIN');
-    for (const sql of m.statements) old.exec(sql);
-    if (m.backfill) await m.backfill(asMigrationDb(old));
-    old.exec('COMMIT');
-  };
+  const run = (m: (typeof migrations)[number]) => apply(old, m, { record: false });
   await run(migrations[0]);
   old.exec(`INSERT INTO beans (id, name, roaster, origin, process, roast_level) VALUES (7, 'Kenya AA', 'Glitch', 'Kenya', 'other', 'medium-light')`);
   old.exec(`INSERT INTO beans (id, name, process, roast_level) VALUES (8, 'Brazil Cerrado', 'natural', 'dark')`);
@@ -272,6 +282,43 @@ if (!row.created_at || row.logged_at !== row.created_at) fail('a minimal cup (ra
   if (left.n !== 0) fail('migration 4: products should be dropped');
   const trig4 = d.prepare(`SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name = 'cups_logged_at_default'`).get() as { n: number };
   if (trig4.n !== 1) fail('migration 4: logged_at trigger missing after the rebuild');
+}
+
+// Migration 12: a version-11 database shaped like Uryu's phone (a bag with a
+// process, a cup from it, its cup_axes rows). The rebuilds keep every row,
+// cups.bag_id and every cup_axes row (foreign keys off); "other" is then
+// accepted on both tables; the indexes, the trigger and the foreign keys work.
+{
+  const d = new DatabaseSync(':memory:');
+  d.exec('PRAGMA foreign_keys = ON');
+  d.exec(MIGRATIONS_TABLE);
+  for (const m of migrations.slice(0, 11)) await apply(d, m);
+  d.exec(`INSERT INTO bags (id, name, process, roast_level) VALUES (1, 'Kenya AA', 'natural', 'medium')`);
+  d.exec(`INSERT INTO cups (id, rating, mode, bag_id, bean_name, bean_process) VALUES (1, 4, 'made_it', 1, 'Kenya AA', 'natural')`);
+  d.exec(`INSERT INTO cup_axes (cup_id, axis, value) VALUES (1, 'acidity', 4), (1, 'bitterness', 1), (1, 'body', 3.5), (1, 'sweetness', 2), (1, 'aftertaste', 5)`);
+  const before = JSON.stringify([d.prepare('SELECT * FROM bags').all(), d.prepare('SELECT * FROM cups').all(), d.prepare('SELECT * FROM cup_axes ORDER BY axis').all()]);
+  await apply(d, migrations[11]);
+  const after = JSON.stringify([d.prepare('SELECT * FROM bags').all(), d.prepare('SELECT * FROM cups').all(), d.prepare('SELECT * FROM cup_axes ORDER BY axis').all()]);
+  if (before !== after) fail(`migration 12: rows changed in the rebuild\n    before ${before}\n    after  ${after}`);
+  try {
+    d.exec(`UPDATE bags SET process = 'other' WHERE id = 1; UPDATE cups SET bean_process = 'other' WHERE id = 1`);
+  } catch (e) {
+    fail(`migration 12: 'other' refused (${(e as Error).message})`);
+  }
+  const idx = (d.prepare(`SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'cups' AND sql IS NOT NULL ORDER BY name`).all() as { name: string }[]).map((r) => r.name).join();
+  if (idx !== 'cups_bag_id,cups_bought_at_place_id,cups_brewer_id,cups_grinder_id,cups_logged_at,cups_place_id') fail(`migration 12: cups indexes ${idx}`);
+  d.exec(`INSERT INTO cups (id, rating, mode, created_at) VALUES (2, 3, 'barista', 123)`);
+  const fresh = d.prepare('SELECT logged_at FROM cups WHERE id = 2').get() as { logged_at: number };
+  if (fresh.logged_at !== 123) fail('migration 12: the logged_at trigger is gone');
+  d.exec('DELETE FROM cups WHERE id = 1');
+  if ((d.prepare('SELECT COUNT(*) AS n FROM cup_axes').get() as { n: number }).n !== 0) fail('migration 12: cup_axes no longer cascades from cups');
+  d.exec('DELETE FROM bags WHERE id = 1');
+  try {
+    d.exec(`INSERT INTO cups (rating, mode, bag_id) VALUES (3, 'made_it', 999)`);
+    fail('migration 12: foreign keys not enforced after the rebuild');
+  } catch {
+    /* expected */
+  }
 }
 
 if (problems.length) {

@@ -74,7 +74,7 @@ export const schema = {
     bean_roaster: { type: 'TEXT', nullable: true },
     bean_origin: { type: 'TEXT', nullable: true },
     bean_region: { type: 'TEXT', nullable: true },
-    bean_process: { type: 'TEXT', nullable: true, values: ['washed', 'natural', 'honey', 'anaerobic'] },
+    bean_process: { type: 'TEXT', nullable: true, values: ['washed', 'natural', 'honey', 'anaerobic', 'other'] },
     bean_roast_level: { type: 'TEXT', nullable: true, values: ['light', 'medium', 'medium-dark', 'dark'] },
     /** The roast date itself, never a day count ("day 7 when brewed" is computed). */
     bean_roasted_at: { type: 'INTEGER', nullable: true },
@@ -143,8 +143,14 @@ export const schema = {
     /** origin, region and process feed Try Next. Nullable, but the UI should encourage them. */
     origin: { type: 'TEXT', nullable: true },
     region: { type: 'TEXT', nullable: true },
-    /** NULL = unset or unknown (no "other": it compares to nothing). */
-    process: { type: 'TEXT', nullable: true, values: ['washed', 'natural', 'honey', 'anaerobic'] },
+    /**
+     * CATEGORICAL, five values (migration 12, 2026-11-14): "other" stays,
+     * because process has no free-text escape (carbonic maceration, giling
+     * basah, co-ferments). Unlike roast_level (an ORDERED scale, where
+     * "other" has no position): do not "make them consistent". NULL = not
+     * recorded. data-model.md "Process: categorical".
+     */
+    process: { type: 'TEXT', nullable: true, values: ['washed', 'natural', 'honey', 'anaerobic', 'other'] },
     /**
      * Transcribed from the label: FOUR VALUES, DELIBERATELY (decided
      * 2026-10-09, reaffirmed 2026-11-13). An ordered scale light → dark that

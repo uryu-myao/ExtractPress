@@ -29,6 +29,16 @@ export type Migration = {
   readonly name: string;
   readonly statements: readonly string[];
   readonly backfill?: (db: MigrationDb) => Promise<void>;
+  /**
+   * Run with foreign keys OFF: a table rebuild (SQLite's 12-step ALTER) of a
+   * table others reference. With them on, DROP TABLE does an implicit DELETE
+   * that fires the children's ON DELETE actions: rebuilding bags would null
+   * every cups.bag_id, rebuilding cups would delete every cup_axes row. The
+   * PRAGMA is a no-op inside a transaction, so the runner sets it before
+   * BEGIN, runs PRAGMA foreign_key_check before COMMIT (a dangling reference
+   * fails the migration), and turns them back on after.
+   */
+  readonly foreignKeysOff?: true;
 };
 
 /** Epoch milliseconds, portable across SQLite versions. */
@@ -508,6 +518,95 @@ export const migrations: readonly Migration[] = [
       `ALTER TABLE cups DROP COLUMN axis_sweetness`,
     ],
     backfill: replayDnaChanges,
+  },
+  {
+    /*
+     * Process gains "other" (Turn 31 brief, 2026-11-14; data-model.md
+     * "Process: categorical"): washed · natural · honey · anaerobic · other.
+     * Process is the one bag field with no free-text escape (32e's sheet has
+     * no search and no "use as written"), so carbonic maceration, giling
+     * basah and co-ferments need somewhere to go. Unlike roast_level, where
+     * "other" was rejected because an ordered scale needs a position for
+     * every value, process is categorical: "other" compares as itself.
+     *
+     * SQLite can't change a CHECK, so bags and cups (whose bean_process copies
+     * the bag's) are rebuilt as they stand, the list the only change, their
+     * indexes and the logged_at trigger recreated. Foreign keys are off for
+     * the rebuild (foreignKeysOff): cups.bag_id and every cup_axes row
+     * survive. Rows are copied as they are; existing values all remain valid.
+     */
+    version: 12,
+    name: "process takes 'other'",
+    foreignKeysOff: true,
+    statements: [
+      `CREATE TABLE bags_new (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        roaster TEXT,
+        origin TEXT,
+        region TEXT,
+        process TEXT CHECK (process IN ('washed', 'natural', 'honey', 'anaerobic', 'other')),
+        roast_level TEXT CHECK (roast_level IN ('light', 'medium', 'medium-dark', 'dark')),
+        notes TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(notes) AND json_type(notes) = 'array'),
+        roasted_at INTEGER,
+        opened_at INTEGER,
+        finished_at INTEGER,
+        size_g INTEGER CHECK (size_g > 0),
+        photo_uri TEXT,
+        best_before INTEGER
+      )`,
+      `INSERT INTO bags_new (id, name, roaster, origin, region, process, roast_level, notes, roasted_at, opened_at, finished_at, size_g, photo_uri, best_before)
+        SELECT id, name, roaster, origin, region, process, roast_level, notes, roasted_at, opened_at, finished_at, size_g, photo_uri, best_before FROM bags`,
+      `DROP TABLE bags`,
+      `ALTER TABLE bags_new RENAME TO bags`,
+      `CREATE TABLE cups_new (
+        id INTEGER PRIMARY KEY,
+        created_at INTEGER NOT NULL DEFAULT (${NOW_MS}),
+        logged_at INTEGER,
+        rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+        mode TEXT NOT NULL CHECK (mode IN ('made_it', 'barista', 'packaged')),
+        photo_uri TEXT,
+        note TEXT,
+        flavours TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(flavours) AND json_type(flavours) = 'array' AND json_array_length(flavours) <= 5),
+        bag_id INTEGER REFERENCES bags(id) ON DELETE SET NULL,
+        bean_name TEXT,
+        bean_roaster TEXT,
+        bean_origin TEXT,
+        bean_region TEXT,
+        bean_process TEXT CHECK (bean_process IN ('washed', 'natural', 'honey', 'anaerobic', 'other')),
+        bean_roast_level TEXT CHECK (bean_roast_level IN ('light', 'medium', 'medium-dark', 'dark')),
+        bean_roasted_at INTEGER,
+        brewer_id INTEGER REFERENCES gear(id) ON DELETE SET NULL,
+        brew_method TEXT,
+        grinder_id INTEGER REFERENCES gear(id) ON DELETE SET NULL,
+        grinder TEXT,
+        grind_setting REAL,
+        water_temp_c REAL,
+        ratio REAL,
+        place_id INTEGER REFERENCES places(id) ON DELETE SET NULL,
+        drink_type TEXT,
+        product_name TEXT,
+        bought_at_place_id INTEGER REFERENCES places(id) ON DELETE SET NULL,
+        dna_change TEXT CHECK (dna_change IS NULL OR json_valid(dna_change)),
+        place_name TEXT,
+        bought_at_name TEXT
+      )`,
+      `INSERT INTO cups_new (id, created_at, logged_at, rating, mode, photo_uri, note, flavours, bag_id, bean_name, bean_roaster, bean_origin, bean_region, bean_process, bean_roast_level, bean_roasted_at, brewer_id, brew_method, grinder_id, grinder, grind_setting, water_temp_c, ratio, place_id, drink_type, product_name, bought_at_place_id, dna_change, place_name, bought_at_name)
+        SELECT id, created_at, logged_at, rating, mode, photo_uri, note, flavours, bag_id, bean_name, bean_roaster, bean_origin, bean_region, bean_process, bean_roast_level, bean_roasted_at, brewer_id, brew_method, grinder_id, grinder, grind_setting, water_temp_c, ratio, place_id, drink_type, product_name, bought_at_place_id, dna_change, place_name, bought_at_name FROM cups`,
+      `DROP TABLE cups`,
+      `ALTER TABLE cups_new RENAME TO cups`,
+      `CREATE INDEX cups_logged_at ON cups (logged_at)`,
+      `CREATE INDEX cups_bag_id ON cups (bag_id)`,
+      `CREATE INDEX cups_brewer_id ON cups (brewer_id)`,
+      `CREATE INDEX cups_grinder_id ON cups (grinder_id)`,
+      `CREATE INDEX cups_place_id ON cups (place_id)`,
+      `CREATE INDEX cups_bought_at_place_id ON cups (bought_at_place_id)`,
+      `CREATE TRIGGER cups_logged_at_default AFTER INSERT ON cups
+        WHEN NEW.logged_at IS NULL
+        BEGIN
+          UPDATE cups SET logged_at = NEW.created_at WHERE id = NEW.id;
+        END`,
+    ],
   },
 ];
 
