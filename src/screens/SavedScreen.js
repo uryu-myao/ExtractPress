@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
-import AxisReadout, { AxisPoles } from '../components/base/AxisReadout';
+import AxisReadout from '../components/base/AxisReadout';
 import Button from '../components/base/Button';
 import Text from '../components/base/Text';
 import { DnaChangeTags, changeSentence, changeTags } from '../components/DnaChange';
@@ -104,15 +104,13 @@ export default function SavedScreen({ id, onHome, onSeeRecord }) {
                 // The ghost only where a tag says the axis moved: under 0.1 it would thicken the marker.
                 const moved = tags.some((t) => t.key === axis.id && t.size);
                 return (
-                  <View key={axis.id} style={styles.axis}>
-                    <AxisPoles axis={axis} />
-                    <AxisReadout
-                      axis={axis.id}
-                      value={value}
-                      previous={moved ? change.before[axis.id].value : null}
-                      accessibilityLabel={`${axis.label}, ${band ?? 'not noted'}`}
-                    />
-                  </View>
+                  <AxisReadout
+                    key={axis.id}
+                    axis={axis.id}
+                    value={value}
+                    previous={moved ? change.before[axis.id].value : null}
+                    accessibilityLabel={`${axis.label}, ${band ?? 'not noted'}`}
+                  />
                 );
               })}
             </View>
@@ -157,9 +155,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.border.muted,
   },
   axes: {
-    gap: spacing.gap.axis,
-  },
-  axis: {
-    gap: spacing.gap.row,
+    gap: spacing.gap.section,
   },
 });

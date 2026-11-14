@@ -37,8 +37,14 @@ const PAGES = [
   { key: 'photoStyle', title: 'Photo style (lab)', Page: PhotoStylePage },
 ];
 
+/**
+ * The page to open on, by key: EXPO_PUBLIC_DEV_HARNESS_PAGE=axisReadout
+ * (for simulator screenshots, which can't tap). Unknown or unset: the first.
+ */
+const FIRST_PAGE = PAGES.some((p) => p.key === process.env.EXPO_PUBLIC_DEV_HARNESS_PAGE) ? process.env.EXPO_PUBLIC_DEV_HARNESS_PAGE : PAGES[0].key;
+
 export default function DevHarness() {
-  const [active, setActive] = useState(PAGES[0].key);
+  const [active, setActive] = useState(FIRST_PAGE);
   const { Page } = PAGES.find((p) => p.key === active);
 
   return (

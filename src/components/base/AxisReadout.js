@@ -1,127 +1,144 @@
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { AXIS_SCALE } from '../../constants/tasteAxes';
+import { AXIS_SCALE, axisById, stepWordOf } from '../../constants/tasteAxes';
 import { axisColor } from '../../theme/axisColor';
-import { color, size, space, spacing, textStyle } from '../../theme/tokens';
+import { color, size, space, textStyle } from '../../theme/tokens';
 import Text from './Text';
 
 /**
- * AxisReadout (design-system.md §9 Taste axis readout): a value on a bipolar
- * axis, read-only — the beanFreshness bar family. 4pt, so it never looks
- * operable like the 5b slider.
+ * AxisReadout (design-system.md §9 Taste axis readout; Turn 30, 31b / 31d):
+ * one read-only line per axis, 17 tall.
  *
- *   track   size.meter.track (4), surface.muted
- *   fill    from 50 to the value, in the axis's color.axis.* (Design Round
- *           21, 23a): it says which axis, and, over 3:1 on the track, it
- *           carries direction and distance
- *   marker  size.marker.line (2 × 14) at the value
- *   no ticks, no gradient; at exactly 50 only the marker shows ("balanced")
+ *   title   size.axisReadout.title (88): the axis's name, textStyle
+ *           axisLabel (10 / 700 caps .06em), ink. NO COLOUR KEY: the name
+ *           says which axis, the fill shows its colour.
+ *   track   size.meter.track (4) on border.subtle, filling the rest of the
+ *           line (gap space[8] from the title)
+ *   fill    from the left edge to (value − 1) / 4, in the axis's colour
+ *   marker  size.marker.line (2 × 14) at the value, kept inside the track:
+ *           flush left at 1, flush right at 5, centred on the value between.
+ *           LOAD-BEARING AT 1: the fill is zero wide there, and the marker
+ *           flush left IS the reading.
+ *   step    optional (8f, `step`): a size.axisReadout.step (56) column at
+ *           the right with the step word (Faint … Strong, nearest whole
+ *           number), axisLabel in text.secondary, right-aligned. No numbers:
+ *           a profile is an estimate, not a reading.
  *
- * Fill = which axis, marker = what kind of value. tone sets the marker only
- * (§1 Colour roles, Round 21):
- *   computed  a value worked out from records (1b / 4a / 4b / 8f, 5c):
- *             marker text.muted
- *   entered   a value the user entered for one cup (2c "Where it sat", 11a):
- *             marker border.accent (the selected flavour chip's frame,
- *             6.95:1 on a card). Same shape: still read-only. §9's brown
- *             fill is retired.
- * The marker stays: at 50 there is no fill, and the role lives on it.
+ * Marker colour carries the role (§1, §23a; tone):
+ *   computed  a value worked out from records (Home, 5c, 8f): text.muted
+ *   entered   one cup's own value (2c, 11a): border.accent
  *
- * previous (5c): the earlier value, drawn under the current one in
- * border.muted — its fill from 50 and a 2 × 14 border.muted marker (§9).
- * Moving away from 50 the extra current fill is the movement; moving toward
- * 50 the exposed lighter fill is.
+ * Not noted (value null): no marker anywhere, no fill; "Not noted yet"
+ * (computed: a later cup can still note it) or "Not noted" (entered: that
+ * cup's axes can't change) centred over the track on a surface.raised
+ * patch padded space.8 each side, textStyle axisEmpty in text.placeholder.
+ * That is 3.08:1, under the text floor ON PURPOSE: it marks an absence, not
+ * information. Do not "fix" the contrast. Value 1 and Not noted can't be
+ * read as each other: one is a tick at the left end of an empty track, the
+ * other is words and no tick, in colour and in greyscale alike.
  *
- * value null (nothing noted on this axis; Design 10b, decided 2026-10-12):
- * the bare track with "Not noted yet" centred on it, on a surface.raised
- * patch padded space.8 each side, in text.placeholder (2026-11-09, Uryu on
- * device: text.muted read as noise against the pale track; placeholder is
- * the DS's empty-value grey, 3.08:1 on raised, the 3:1 floor). The words follow the tone (2026-10-14,
- * Uryu): "Not noted yet" on a profile (computed: a later cup can still note
- * it); "Not noted" on one cup's own values (entered: 2c, 11a — that cup's
- * axes can't change, so "yet" promises something that won't come). — readable, and the gap in the bar reads as
- * "no value", never as "balanced". Every readout sits in a 17pt slot (meta's
- * line height) with the track centred, so filled and empty rows are the same
- * height and a card of readouts never changes height. Shown on raised cards
- * (Taste DNA card, 2c), which the patch matches.
+ * previous (5c): the earlier value under the current one, in border.muted —
+ * its fill from the left edge and its own marker (§9).
  *
- * The pole labels above it are AxisPoles, with the axis's AxisKey before the
- * left one, so the axis stays named at 50 and when not noted.
+ * Shown on raised cards (Home's card, 2c, 5c, 11a, 8f), which the patch
+ * matches. Rows stack spacing.gap.section (12) apart; the caller sets that.
  *
- * Props: axis (a TASTE_AXES id), value 1–5 or null, tone, previous,
- * accessibilityLabel
+ * Props: axis (a TASTE_AXES id), value 1–5 or null, tone, previous, step,
+ * accessibilityLabel (default: "‹Axis›, ‹step word›" or "not noted").
  */
 const MARKER = {
   computed: color.text.muted,
   entered: color.border.accent,
 };
 const GHOST = color.border.muted;
+const MARKER_W = size.marker.line.w;
 
-// TODO(Turn 30, commit 2): interim. The unipolar readout (31b: one line,
-// title column 88, fill from the left edge) replaces this component's look;
-// until then the 1–5 value is drawn from the left edge on the old frame.
 /** A 1–5 reading as a share of the track, 1 at the left edge. */
-const pct = (v) => ((v - AXIS_SCALE.min) / (AXIS_SCALE.max - AXIS_SCALE.min)) * 100;
-const span = (v) => ({ left: 0, width: `${pct(v)}%` });
+const share = (v) => (v - AXIS_SCALE.min) / (AXIS_SCALE.max - AXIS_SCALE.min);
 
-/** The axis's 12 × 4 colour key (Round 21): decorative, so never read out. */
+/** The marker's left edge for a share of a track `w` wide: centred on it, never past either end. */
+const markerLeft = (w, s) => Math.min(Math.max(w * s - MARKER_W / 2, 0), Math.max(w - MARKER_W, 0));
+
+/** The axis's 12 × 4 colour key (Round 21): the change tags only since 31b. Decorative, so never read out. */
 export function AxisKey({ axis, style }) {
   return <View style={[styles.key, { backgroundColor: axisColor(axis) }, style]} importantForAccessibility="no" accessibilityElementsHidden />;
 }
 
-/** "[key] Acidity": the axis's name over a readout (interim: the axes are unipolar, so there are no poles; 31b drops this line in commit 2). */
-export function AxisPoles({ axis }) {
-  return (
-    <View style={styles.poles}>
-      <View style={styles.from}>
-        <AxisKey axis={axis.id} />
-        <Text variant="labelCaps" color="muted">
-          {axis.label}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-export default function AxisReadout({ axis, value, tone = 'computed', previous = null, accessibilityLabel }) {
+export default function AxisReadout({ axis, value, tone = 'computed', previous = null, step = false, accessibilityLabel }) {
+  const [width, setWidth] = useState(0);
+  const entry = axisById(axis);
   const has = value != null;
+  const word = stepWordOf(value);
   const emptyWords = tone === 'entered' ? 'Not noted' : 'Not noted yet';
+  const label = accessibilityLabel ?? `${entry?.label}, ${word ? word.toLowerCase() : 'not noted'}`;
+
   return (
-    <View style={styles.box} accessible accessibilityLabel={accessibilityLabel}>
-      <View style={styles.track}>
-        {previous != null ? <View style={[styles.fill, span(previous), { backgroundColor: GHOST }]} /> : null}
-        {has ? <View style={[styles.fill, span(value), { backgroundColor: axisColor(axis) }]} /> : null}
-      </View>
-      {previous != null ? <View style={[styles.marker, { left: `${pct(previous)}%`, backgroundColor: GHOST }]} /> : null}
-      {has ? <View style={[styles.marker, { left: `${pct(value)}%`, backgroundColor: MARKER[tone] }]} /> : null}
-      {has ? null : (
-        <View style={styles.emptyLabel} pointerEvents="none">
-          <Text variant="meta" color="placeholder" style={styles.patch}>
-            {emptyWords}
-          </Text>
+    <View style={styles.row} accessible accessibilityLabel={label}>
+      <Text variant="axisLabel" color="primary" numberOfLines={1} style={styles.title}>
+        {entry?.label}
+      </Text>
+      <View style={styles.bar} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+        <View style={styles.track}>
+          {previous != null ? <View style={[styles.fill, { width: `${share(previous) * 100}%`, backgroundColor: GHOST }]} /> : null}
+          {has ? <View style={[styles.fill, { width: `${share(value) * 100}%`, backgroundColor: axisColor(axis) }]} /> : null}
         </View>
-      )}
+        {previous != null && width ? <View style={[styles.marker, { left: markerLeft(width, share(previous)), backgroundColor: GHOST }]} /> : null}
+        {has && width ? <View style={[styles.marker, { left: markerLeft(width, share(value)), backgroundColor: MARKER[tone] }]} /> : null}
+        {has ? null : (
+          <View style={styles.emptyLabel} pointerEvents="none">
+            <Text variant="axisEmpty" color="placeholder" style={styles.patch}>
+              {emptyWords}
+            </Text>
+          </View>
+        )}
+      </View>
+      {step ? (
+        <Text variant="axisLabel" color="secondary" numberOfLines={1} style={styles.step}>
+          {word ?? ''}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  poles: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  from: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.gap.row,
+    gap: space[8],
+  },
+  title: {
+    width: size.axisReadout.title,
+  },
+  step: {
+    width: size.axisReadout.step,
+    textAlign: 'right',
   },
   key: {
     width: size.axis.key.w,
     height: size.axis.key.h,
   },
-  box: {
-    // meta's line height: the slot an empty row's label needs, kept by every row.
+  bar: {
+    flex: 1,
+    // the row's slot: meta's line height, so an empty row is as tall as a filled one
     height: textStyle.meta.lineHeight,
     justifyContent: 'center',
+  },
+  track: {
+    height: size.meter.track,
+    backgroundColor: color.border.subtle,
+  },
+  fill: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+  },
+  marker: {
+    position: 'absolute',
+    top: (textStyle.meta.lineHeight - size.marker.line.h) / 2,
+    width: size.marker.line.w,
+    height: size.marker.line.h,
   },
   emptyLabel: {
     // RN 0.86 has no absoluteFillObject (see AddCoffeeOverlay).
@@ -136,21 +153,5 @@ const styles = StyleSheet.create({
   patch: {
     backgroundColor: color.surface.raised,
     paddingHorizontal: space[8],
-  },
-  track: {
-    height: size.meter.track,
-    backgroundColor: color.surface.muted,
-  },
-  fill: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-  },
-  marker: {
-    position: 'absolute',
-    top: (textStyle.meta.lineHeight - size.marker.line.h) / 2,
-    width: size.marker.line.w,
-    height: size.marker.line.h,
-    marginLeft: -size.marker.line.w / 2,
   },
 });

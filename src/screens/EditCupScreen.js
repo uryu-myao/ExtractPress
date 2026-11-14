@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AxisReadout, { AxisPoles } from '../components/base/AxisReadout';
+import AxisReadout from '../components/base/AxisReadout';
 import Badge from '../components/base/Badge';
 import BottomSheet from '../components/base/BottomSheet';
 import Button from '../components/base/Button';
@@ -112,15 +112,13 @@ function AsLogged({ cup }) {
           {TASTE_AXES.map((axis) => {
             const value = cup.axes[axis.id] ?? null;
             return (
-              <View key={axis.id} style={styles.axis}>
-                <AxisPoles axis={axis} />
-                <AxisReadout
-                  axis={axis.id}
-                  tone="entered"
-                  value={value}
-                  accessibilityLabel={`${axis.label}, ${value == null ? 'not noted' : `${value} of ${AXIS_SCALE.max}, ${stepWordOf(value)}`}`}
-                />
-              </View>
+              <AxisReadout
+                key={axis.id}
+                axis={axis.id}
+                tone="entered"
+                value={value}
+                accessibilityLabel={`${axis.label}, ${value == null ? 'not noted' : `${value} of ${AXIS_SCALE.max}, ${stepWordOf(value)}`}`}
+              />
             );
           })}
         </View>
@@ -539,10 +537,7 @@ const styles = StyleSheet.create({
     gap: space[12],
   },
   axes: {
-    gap: spacing.gap.axis,
-  },
-  axis: {
-    gap: spacing.gap.row,
+    gap: spacing.gap.section,
   },
   flavours: {
     flexDirection: 'row',

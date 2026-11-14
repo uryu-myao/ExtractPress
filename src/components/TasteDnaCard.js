@@ -3,7 +3,7 @@ import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { formatDay } from '../constants/dates';
 import { stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { color, motion, shape, size, space, spacing, state as pressState } from '../theme/tokens';
-import AxisReadout, { AxisPoles } from './base/AxisReadout';
+import AxisReadout from './base/AxisReadout';
 import Badge from './base/Badge';
 import Chevron from './base/Chevron';
 import Text from './base/Text';
@@ -13,9 +13,8 @@ import Text from './base/Text';
  * itself is not pressable: Design Round 11, C's framed block that is not
  * pressable, since its stamp is a button). From the mock: "My taste DNA" (display.sm,
  * accent) with the state's stamp beside it, the header row centred, then the
- * four axes — pole labels (AxisPoles, the axis's key first) over an
- * AxisReadout in the axis's colour (§9; Design Round 21, 23b), in the fixed
- * axis order, here and on 8f.
+ * registry's axes, one AxisReadout line each (title left, bar right, no key;
+ * Turn 30, 31b / 31c), in the fixed axis order, here and on 8f.
  *
  * State, one for the whole profile (taste-dna.md item 4, option B):
  *   early   "Early signs" — Badge accent (the mock's #F1E3D6 / #8A4602; its
@@ -76,12 +75,11 @@ export function DnaStamp({ state, onPress }) {
 }
 
 /**
- * The registry's axes as the card draws them: the name over an AxisReadout
- * (interim until Turn 30's commit 2, 31b's one-line row). Shared with 8f,
- * which adds each axis's step word under its readout (`bands`; meta, muted,
- * as 8f): STEP_WORDS (tasteAxes.js), from the
- * same value, so a name can't disagree with its bar. An axis with nothing
- * noted has no band line: its readout already says "Not noted yet".
+ * The registry's axes as the card draws them: one AxisReadout line each
+ * (31b), spacing.gap.section apart. Shared with 8f, which adds the step-word
+ * column at the right (`bands`, 31d): STEP_WORDS (tasteAxes.js), from the
+ * same value, so a word can't disagree with its bar. An axis with nothing
+ * noted has an empty word column: its readout already says "Not noted yet".
  */
 export function DnaAxes({ dna, bands = false, style }) {
   return (
@@ -89,17 +87,7 @@ export function DnaAxes({ dna, bands = false, style }) {
       {TASTE_AXES.map((axis) => {
         const value = dna.axes[axis.id].value;
         const band = stepWordOf(value);
-        return (
-          <View key={axis.id} style={styles.axis}>
-            <AxisPoles axis={axis} />
-            <AxisReadout axis={axis.id} value={value} accessibilityLabel={`${axis.label}, ${band ?? 'not noted'}`} />
-            {bands && band ? (
-              <Text variant="meta" color="muted" importantForAccessibility="no" accessibilityElementsHidden>
-                {band}
-              </Text>
-            ) : null}
-          </View>
-        );
+        return <AxisReadout key={axis.id} axis={axis.id} value={value} step={bands} accessibilityLabel={`${axis.label}, ${band ?? 'not noted'}`} />;
       })}
     </View>
   );
@@ -192,9 +180,6 @@ const styles = StyleSheet.create({
     backgroundColor: pressState.pressed.row,
   },
   axisList: {
-    gap: spacing.gap.axis,
-  },
-  axis: {
-    gap: spacing.gap.row,
+    gap: spacing.gap.section,
   },
 });

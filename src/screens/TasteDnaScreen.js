@@ -33,7 +33,7 @@ import ScreenFrame from './ScreenFrame';
  *            after a reset, "Starting again from Nov 10. …" (dnaNoneLine,
  *            Design Round 25, A1).
  *   axes     the Taste DNA card's axes in a 2px frame on raised, each with its
- *            band name under it (DnaAxes bands).
+ *            step word in a 56 column at the right (DnaAxes bands, 31d).
  *   Flavours I pick most  (Design Round 11, B) the top 4 flavour tags with
  *            their counts, "Peach 12", from the cups the profile counts.
  *            Heading label.caps (Design's word); tags as 8f's word tags (1.5

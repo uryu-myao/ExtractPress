@@ -1,59 +1,65 @@
 import { StyleSheet, View } from 'react-native';
-import AxisReadout, { AxisPoles } from '../../components/base/AxisReadout';
-import Text from '../../components/base/Text';
+import AxisReadout from '../../components/base/AxisReadout';
 import { TASTE_AXES } from '../../constants/tasteAxes';
-import { spacing } from '../../theme/tokens';
+import { color, shape, spacing } from '../../theme/tokens';
 import { HarnessCase, HarnessGroup, HarnessPage } from '../harness';
 
 /**
- * AxisReadout tones and 5c's ghost, side by side (decision aid, 2026-10-11).
- * Since Design Round 21 the fill is the axis's colour and the tone sets the
- * marker only.
+ * AxisReadout (31b / 31d) in every state, on a raised card as it is shown.
+ * Check value 1 against Not noted first: a tick flush left on an empty track
+ * against words with no tick, in colour and in greyscale.
  */
-function Row({ label, axis = TASTE_AXES[0], ...p }) {
-  return (
-    <View style={styles.row}>
-      <AxisPoles axis={axis} />
-      <AxisReadout axis={axis.id} {...p} />
-      {label ? (
-        <Text variant="meta" color="muted">
-          {label}
-        </Text>
-      ) : null}
-    </View>
-  );
+const [A, B, C, D, E] = TASTE_AXES;
+
+function Card({ children }) {
+  return <View style={styles.card}>{children}</View>;
 }
 
 export default function AxisReadoutPage() {
   return (
     <HarnessPage>
-      <HarnessGroup title="the axis colours, one per registered axis (computed)">
-        <HarnessCase label="2 · 3.5 · 1.5 · 4 · 5 (interim frame until commit 2)">
-          {TASTE_AXES.map((axis, i) => (
-            <Row key={axis.id} axis={axis} value={[2, 3.5, 1.5, 4, 5][i % 5]} />
-          ))}
+      <HarnessGroup title="value 1 beside Not noted (computed)">
+        <HarnessCase label="1 — the marker flush left is the reading · Not noted yet — no marker">
+          <Card>
+            <AxisReadout axis={B.id} value={1} />
+            <AxisReadout axis={E.id} value={null} />
+          </Card>
         </HarnessCase>
       </HarnessGroup>
-      <HarnessGroup title="computed (1b / 4a / 4b / 8f): marker text.muted">
-        <HarnessCase label="1 · 3.5 · 5 · null">
-          <Row value={1} />
-          <Row value={3.5} />
-          <Row value={5} />
-          <Row value={null} label="Not noted" />
+      <HarnessGroup title="computed (Home, 5c, 8f): marker text.muted">
+        <HarnessCase label="every axis: 1 · 2.5 · 3.5 · 5 · not noted">
+          <Card>
+            {TASTE_AXES.map((axis, i) => (
+              <AxisReadout key={axis.id} axis={axis.id} value={[1, 2.5, 3.5, 5, null][i % 5]} />
+            ))}
+          </Card>
         </HarnessCase>
       </HarnessGroup>
-      <HarnessGroup title="entered (2c, 11a: this cup's own values): marker border.accent">
-        <HarnessCase label="1 · 3.5 · 5 · null">
-          <Row tone="entered" value={1} />
-          <Row tone="entered" value={3.5} />
-          <Row tone="entered" value={5} />
-          <Row tone="entered" value={null} label="Not noted" />
+      <HarnessGroup title="entered (2c, 11a): marker border.accent">
+        <HarnessCase label="3.5 · 5 · 1 · Not noted">
+          <Card>
+            <AxisReadout axis={A.id} tone="entered" value={3.5} />
+            <AxisReadout axis={C.id} tone="entered" value={5} />
+            <AxisReadout axis={B.id} tone="entered" value={1} />
+            <AxisReadout axis={D.id} tone="entered" value={null} />
+          </Card>
         </HarnessCase>
       </HarnessGroup>
-      <HarnessGroup title="5c per §9: both computed (profile before → after)">
+      <HarnessGroup title="8f: the 56 step-word column">
+        <HarnessCase label="3.8 Bold · 2.3 Light · 2.9 Medium · 1.2 Faint · not noted">
+          <Card>
+            {TASTE_AXES.map((axis, i) => (
+              <AxisReadout key={axis.id} axis={axis.id} step value={[3.8, 2.3, 2.9, 1.2, null][i % 5]} />
+            ))}
+          </Card>
+        </HarnessCase>
+      </HarnessGroup>
+      <HarnessGroup title="5c: before (border.muted) under after">
         <HarnessCase label="3.4 → 3.1 (down) · 2 → 2.3 (up)">
-          <Row previous={3.4} value={3.1} />
-          <Row previous={2} value={2.3} />
+          <Card>
+            <AxisReadout axis={A.id} previous={3.4} value={3.1} />
+            <AxisReadout axis={D.id} previous={2} value={2.3} />
+          </Card>
         </HarnessCase>
       </HarnessGroup>
     </HarnessPage>
@@ -61,8 +67,12 @@ export default function AxisReadoutPage() {
 }
 
 const styles = StyleSheet.create({
-  row: {
-    gap: spacing.gap.row,
-    marginBottom: spacing.gap.section,
+  card: {
+    borderWidth: shape.borderWidth.box,
+    borderColor: color.border.container,
+    backgroundColor: color.surface.raised,
+    paddingVertical: spacing.inset.container.v,
+    paddingHorizontal: spacing.inset.container.h,
+    gap: spacing.gap.section,
   },
 });

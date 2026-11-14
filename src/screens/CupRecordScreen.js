@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
-import AxisReadout, { AxisPoles } from '../components/base/AxisReadout';
+import AxisReadout from '../components/base/AxisReadout';
 import Badge from '../components/base/Badge';
 import FieldRow from '../components/base/FieldRow';
 import Chevron from '../components/base/Chevron';
@@ -187,15 +187,13 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
               {TASTE_AXES.map((axis) => {
                 const value = cup.axes[axis.id] ?? null;
                 return (
-                  <View key={axis.id} style={styles.axis}>
-                    <AxisPoles axis={axis} />
-                    <AxisReadout
-                      axis={axis.id}
-                      tone="entered"
-                      value={value}
-                      accessibilityLabel={`${axis.label}, ${value == null ? 'not noted' : `${value} of ${AXIS_SCALE.max}, ${stepWordOf(value)}`}`}
-                    />
-                  </View>
+                  <AxisReadout
+                    key={axis.id}
+                    axis={axis.id}
+                    tone="entered"
+                    value={value}
+                    accessibilityLabel={`${axis.label}, ${value == null ? 'not noted' : `${value} of ${AXIS_SCALE.max}, ${stepWordOf(value)}`}`}
+                  />
                 );
               })}
             </View>
@@ -307,10 +305,7 @@ const styles = StyleSheet.create({
   },
   axes: {
     marginTop: spacing.gap.section,
-    gap: spacing.gap.axis,
-  },
-  axis: {
-    gap: spacing.gap.row,
+    gap: spacing.gap.section,
   },
   flavours: {
     flexDirection: 'row',

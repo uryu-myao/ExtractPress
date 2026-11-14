@@ -234,6 +234,19 @@ export const textStyle = {
   labelCaps:     { fontFamily: 'Archivo', fontSize: 12, fontWeight: '700', letterSpacing: 0.96, textTransform: 'uppercase' },
   /** A pushed page's title in caps beside Back: 8f, 8g (21a, 21d) and Licences. 13 / 700 · 0.12em x 13. 2026-11-10. */
   titleCaps:     { fontFamily: 'Archivo', fontSize: 13, fontWeight: '700', letterSpacing: 1.56, textTransform: 'uppercase' },
+  /**
+   * A taste axis's name in its title column (31b, 31d: "5b's axisLabel"),
+   * and 8f's step word beside the bar. 10 / 700 caps · 0.06em x 10. Ink for
+   * the name, text.secondary for the step word. lineHeight 17: meta's, the
+   * readout row's height. 2026-11-14.
+   */
+  axisLabel:     { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', lineHeight: 17, letterSpacing: 0.6, textTransform: 'uppercase' },
+  /**
+   * "Not noted yet" over an empty readout track (31b): 11 / 500 on a raised
+   * patch, in text.placeholder. 3.08:1, under the text floor ON PURPOSE: it
+   * marks an absence, not information. Do not "fix" the contrast. 2026-11-14.
+   */
+  axisEmpty:     { fontFamily: 'Archivo', fontSize: 11, fontWeight: '500', lineHeight: 17 },
   /** lineHeight UNDECLARED · 0.12em x 10 (was 0.16em; tightened on Uryu's ask, 2026-11-09) */
   labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
   /** lineHeight UNDECLARED · 0.06em x 16 */
@@ -311,7 +324,11 @@ export const spacing = {
     tight:   space[4],
     /** between items */
     row:     space[8],
-    /** between sections, between cards, and inside an enclosed surface */
+    /**
+     * between sections, between cards, and inside an enclosed surface —
+     * including the taste axis readout rows (31b, 12 apart), which always
+     * sit inside a framed card (2026-11-14: no third name for 12).
+     */
     section: space[12],
     /** taste-axis groups only — an internal rhythm of the axis component */
     axis:    space[20],
@@ -399,6 +416,13 @@ export const size = {
   axis: { rail: 34, railWidth: 260, inset: 2, handle: { w: 26, h: 26 }, dot: 6, key: { w: 12, h: 4 } },
   meter: { track: 4 },
   marker: { line: { w: 2, h: 14 } },
+  /**
+   * The taste axis readout row (Turn 30, 31b / 31d): the axis name in a
+   * fixed title column on the left, the track filling the rest of the line,
+   * and on 8f a step-word column on the right. Row height is meta's line
+   * height (17), so filled and Not noted rows match.
+   */
+  axisReadout: { title: 88, step: 56 },
   dot: { bullet: 6 },
   sheet: {
     handle: { w: 56, h: 5 },

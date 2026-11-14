@@ -1105,8 +1105,28 @@ The input of Taste DNA, on 5b only. **Its display is a different component, Axis
 - Clear centred under the handle;
 - the "Strongly / Leaning" step names.
 
-### Taste axis readout (AxisReadout — spec 2026-10-07, built 2026-10-11)
-The display of computed values: 1b / 4a / 4b (the profile), 5c (the change after a save), and 8f's four bars (D-22, 2026-10-08). It is **not operable** and belongs to the read-only bar family of `beanFreshness`. No new visual language.
+### Taste axis readout (AxisReadout — spec 2026-10-07, built 2026-10-11; unipolar one-line row since 2026-11-14, Turn 30, 31b)
+The display of axis values: Home's card (1b / 4a / 4b), 5c, 2c, 11a and 8f. It is **not operable** and belongs to the read-only bar family of `beanFreshness`.
+
+**Current (31b / 31d, 2026-11-14) — supersedes everything below where they differ.** One line per axis, 17 tall (`meta`'s line height), rows `spacing.gap.section` (12) apart (every readout list sits inside a framed card):
+
+| part | value |
+|---|---|
+| title | `size.axisReadout.title` (88) column on the left: the axis's name, `textStyle.axisLabel` (10 / 700 caps .06em), ink. **No colour key** (removed on Uryu's comment; the fill shows the colour) |
+| track | `size.meter.track` (4) on `border.subtle`, filling the rest of the line, `space[8]` after the title |
+| fill | from the left edge to (value − 1) / 4, the axis's `color.axis.*` |
+| marker | 2 × 14 at the value, kept inside the track (flush left at 1, flush right at 5): computed `text.muted`, entered `border.accent`. **Load-bearing at 1**: the fill is zero wide and the marker flush left is the reading |
+| step (8f) | optional `step`: a `size.axisReadout.step` (56) column at the right, the step word (Faint … Strong, nearest whole number), `axisLabel` in `text.secondary`, right-aligned. No numbers |
+| not noted | no marker, no fill; "Not noted yet" / "Not noted" centred over the track on a `surface.raised` patch (`space.8` each side), `textStyle.axisEmpty` (11 / 500) in `text.placeholder`. **3.08:1, under the text floor on purpose**: it marks an absence. Do not "fix" it |
+| ticks, gradient | none |
+
+- **Value 1 and Not noted can't be read as each other**: a tick at the left end of an empty track, against words and no tick, in colour and in greyscale (dev harness: Axis readout).
+- 5c's ghost: the earlier value's fill and a 2 × 14 marker in `border.muted`, under the current one.
+- The 12 × 4 key (`AxisKey`) survives on the change tags only (31e).
+- **Home's card height (2026-11-14)**: 287 pt established, five rows, measured on the simulator at 430 pt wide from a screenshot (frame top to frame bottom, including the "Open my taste DNA" row). Not compared with a before figure: the pre-round build was never measured the same way, so 31c's 292 → 217 estimate is unchecked. It answers the one question that mattered: five one-line rows did not make the card taller than four two-line ones.
+- **Open item**: about 58 pt from the last readout row to the middle of "Open my taste DNA". 58 is not on the spacing scale, so it is most likely left over from the card's own styles (`open`'s margin and min height); 31c's established state doesn't draw that row, so there is nothing to check it against. Revisit with the card's full height after commit 3; do not tune it blind.
+
+*History (bipolar, 2026-10-07 → 2026-11-13):*
 
 | part | value | from beanFreshness |
 |---|---|---|
@@ -1412,3 +1432,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-11-10 — §3 `title.caps` (13 / 700, .12em, uppercase; code `titleCaps`): the title beside Back on 8f and 8g, as 21a / 21d draw it, and on Licences (no board; the 8-series settings pages all draw it so). It never scales on collapse, the row only rises. Then, the same day, Uryu: **every page that isn't a tab** (every `ScreenFrame` `compact`: 2c, 3a, 3c, 3e / 3g, 3f, 5a Log a cup, 5b, 11a, 17c, 8f, 8g, Licences) takes it, though those boards draw `display.lg` (drift D-71). The tabs (Home, Records, Profile) and 5c's "Noted." keep `display.lg`.
 - 2026-11-09 — §9 AxisReadout: an empty axis's "Not noted yet" / "Not noted" in `text.placeholder` (was `text.muted`; Uryu on device: too dark beside the track, read as noise). 3.08:1 on raised, the 3:1 floor `border.medium` failed on 2026-10-09.
 - 2026-11-13 — **Token renamed: `color.axis.roast` → `color.axis.bitterness`, same hex `#9D3D36` (Turn 30, 31a).** Ember was picked as heat rather than bean, and char is what bitterness tastes of; it stays clear of brown ("a value I entered") and of `text.destructive` (ΔE00 9.2) as before. **Bitterness is a new dimension that merely inherits the hue — it is not roast renamed.** Bitterness comes from over-extraction as much as from roast level, which is why the two had to separate: roast level is now a fact of the bag (`bags.roast_level`), with no axis, no colour and no place in Taste DNA (`data-model.md` "Roast is not a taste axis"). **Token added: `color.axis.aftertaste`, Tide `#03665F`** (OKLCH L 0.46 · C 0.08 · h 187; 4.82:1 on the track; ΔE00 31.3–47.7 to the set, inside its 20.1–57.7 band; deuteranopia's nearest is Sweetness at 13.3, above the set's weakest pair, Acidity–Bitterness 11.7). The axes are now a registry (`src/constants/tasteAxes.js`): a new axis is one entry there plus one `color.axis.*` token. AxisReadout / AxisSlider run on the 1–5 scale as an interim until Turn 29 / 30's commits 2–3 rebuild them.
+- 2026-11-14 — §9 Taste axis readout rebuilt to 31b / 31d on Uryu's ask ("strictly as the design: title left, axis right, no colour key"): one line per axis, title column 88, track on `border.subtle` filling the line, fill from the left edge, marker kept inside the track, rows 12 apart, 8f's 56 step-word column as an option on the same component (`step`). `AxisPoles` is gone; the 12 × 4 key stays on the change tags (31e) only, and is gone from the 5b slider too (30a draws none). **Tokens added** (the board's measures had none): `textStyle.axisLabel` (10 / 700 caps .06em, lh 17), `textStyle.axisEmpty` (11 / 500, lh 17), `size.axisReadout` (title 88, step 56). Rows are `spacing.gap.section` (12) apart: a `gap.readout` was added and taken out the same day, since `gap.section` already means 12 inside an enclosed surface and every readout list sits in a framed card (no third name for one value).
