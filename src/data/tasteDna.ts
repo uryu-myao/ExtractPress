@@ -60,15 +60,18 @@ export const DNA_TUNING = {
    * record. Criterion: a predictable, one-way lean on that axis when the
    * word comes up. Cinnamon: none.
    *
+   * ONLY WORDS WITH ONE UNAMBIGUOUS AXIS MEANING (decided 2026-11-14). Every
+   * other word still displays on its cup and still feeds Try Next's tag lead,
+   * which matches the words themselves, never this map. Cocoa, Walnut and
+   * Smoke are roast-character words: with roast off the cup they have no
+   * unambiguous axis, and a cupping correlation (cocoa / walnut with fuller
+   * body) is not something the drinker said. They stay out on purpose; do
+   * not map them to Bitterness or Body. taste-dna.md item 6.
+   *
    * 2026-11-13 (five unipolar axes): the entries were moved onto the new
    * scale, not re-decided. Acidity's old 0 / 25 (Very bright / Bright on
    * Acid ↔ Bitter) became 5 / 4 (Strong / Bold acidity); body and sweetness
-   * kept their side (25 → 2, 75 → 4). Cocoa, Walnut and Smoke leaned on
-   * the Roast axis, which is gone, and have no entry until decided:
-   * taste-dna.md item 6 already rejects Smoke → bitter ("dark roasts can be
-   * un-bitter"), so none of the three was moved onto Bitterness.
-   * TODO: Uryu to decide whether Cocoa / Walnut lean on Bitterness, Body or
-   * nothing (taste-dna.md item 6).
+   * kept their side (25 → 2, 75 → 4).
    */
   words: {
     jasmine: [{ axis: 'acidity', at: 4, strength: 0.2 }],
