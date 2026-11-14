@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Keyboard, Pressable, StyleSheet, View } from 'react-native';
-import AboutCoffee from '../components/AboutCoffee';
+import { useAboutCoffee } from '../components/AboutCoffee';
 import BagForm from '../components/BagForm';
 import BeanFreshness from '../components/BeanFreshness';
 import { bagDatesLine } from '../constants/bagDates';
@@ -40,9 +40,10 @@ import ScreenFrame from './ScreenFrame';
  *              2026-11-14 (Uryu): Details below has it, editable.
  *   photo      in the status block, in 3c's photo slot frame (2px ink), so
  *              it reads as editable (Uryu, 2026-11-14)
- *   about      "About the coffee" (31g, 32a): Roast level set in place
- *              (RoastLevel); origin, region and process will join it as list
- *              rows. A change or a clear is an edit for the Save bar.
+ *   about      "About the coffee" (31g, 32a–32f): Roast level set in place,
+ *              then Origin, Region and Process as rows with their sheets
+ *              (useAboutCoffee). A change or a clear is an edit for the Save
+ *              bar; a region that sets its origin is two.
  *   status     the photo, then beanFreshness
  *              stacked (19a: the day and state over the bar) from the roast
  *              date being edited, and "Roasted Mar 30 ·
@@ -86,7 +87,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   const db = useDatabase();
   // The bag as stored: the title, the sub line and what counts as an edit.
   const [stored, setStored] = useState(bag);
-  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at, bestBefore: bag.best_before ?? null, process: bag.process ?? null, roastLevel: bag.roast_level ?? null });
+  const [form, setForm] = useState({ name: bag.name, roaster: bag.roaster ?? '', roastedAt: bag.roasted_at, bestBefore: bag.best_before ?? null, process: bag.process ?? null, roastLevel: bag.roast_level ?? null, origin: bag.origin ?? null, region: bag.region ?? null });
   const [openedAt, setOpenedAt] = useState(bag.opened_at);
   const cups = useFilteredCups(bagFilter(bag));
   const [nameMissing, setNameMissing] = useState(false);
@@ -111,6 +112,8 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     form.bestBefore !== (stored.best_before ?? null),
     form.process !== (stored.process ?? null),
     form.roastLevel !== (stored.roast_level ?? null),
+    form.origin !== (stored.origin ?? null),
+    form.region !== (stored.region ?? null),
     openedAt !== stored.opened_at,
   ].filter(Boolean).length;
   const dirty = changes > 0;
@@ -161,9 +164,9 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     }
     setBusy(true);
     try {
-      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, bestBefore: form.bestBefore, process: form.process, roastLevel: form.roastLevel, openedAt });
+      await updateBag(db, bag.id, { name, roaster, roastedAt: form.roastedAt, bestBefore: form.bestBefore, process: form.process, roastLevel: form.roastLevel, origin: form.origin, region: form.region, openedAt });
       Keyboard.dismiss();
-      setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, best_before: form.bestBefore, process: form.process, roast_level: form.roastLevel, opened_at: openedAt }));
+      setStored((s) => ({ ...s, name, roaster, roasted_at: form.roastedAt, best_before: form.bestBefore, process: form.process, roast_level: form.roastLevel, origin: form.origin, region: form.region, opened_at: openedAt }));
       setForm((f) => ({ ...f, name, roaster: roaster ?? '' }));
       // The Save bar slides away; this says it worked (Uryu, 2026-11-12: Save gave no feedback). 13b's notice, verb ours.
       requestNotice({ name, verb: 'saved' });
@@ -209,6 +212,11 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   // The line under the status (Design Round 27, 29b): "Roasted Mar 30 · opened
   // Apr 6 · best before Sep 30"; best-before only: "Best before Oct 1, 2027 ·
   // opened Apr 6" (· "12 days ago" once passed).
+  // 31g / 32a–32f: Roast level, Origin, Region, Process. Every change joins the Save bar.
+  const about = useAboutCoffee({
+    value: { roastLevel: form.roastLevel, origin: form.origin, region: form.region, process: form.process },
+    onChange: (patch) => setForm((f) => ({ ...f, ...patch })),
+  });
   const dates = bagDatesLine({ roasted_at: form.roastedAt, best_before: form.bestBefore, opened_at: openedAt });
   return (
     <View style={styles.screen}>
@@ -269,7 +277,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
             </View>
 
             {/* 31g / 32a: facts printed on the bag, under the status. A change or a clear joins the Save bar's edits, as the details do. */}
-            <AboutCoffee value={{ roastLevel: form.roastLevel }} onChange={(field, next) => setForm((f) => ({ ...f, [field]: next }))} />
+            {about.block}
 
             {cups ? (
               <ItemCups
@@ -359,6 +367,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
         note={cupCount > 0 ? `Applies to the ${cupCount === 1 ? 'cup' : `${countFormat.format(cupCount)} cups`} already logged from this bag.` : null}
       />
 
+      {about.sheets}
       <PhotoSheet
         visible={photoSheet}
         onClose={() => setPhotoSheet(false)}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Keyboard, StyleSheet, View } from 'react-native';
+import { useAboutCoffee } from '../components/AboutCoffee';
 import BagForm from '../components/BagForm';
 import DateSheet from '../components/DateSheet';
 import PhotoSheet from '../components/PhotoSheet';
@@ -11,7 +12,7 @@ import { useDatabase } from '../data/DatabaseProvider';
 import { deletePhoto, dropPhoto, keepPhoto } from '../data/photos';
 import { startOfDay } from '../constants/dates';
 import { OPEN_BAG_LIMIT, countCups, countOpenBags, getBagDateKind, insertBag, setBagDateKind } from '../data/repository';
-import { spacing } from '../theme/tokens';
+import { space, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
@@ -49,7 +50,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
   const db = useDatabase();
   // In the Record sheet the new bag becomes the cup's bag; from 3d it just joins the shelf.
   const chooseBag = useRecordDraftIfAny()?.chooseBag;
-  const [form, setForm] = useState({ name: prefill?.name ?? '', roaster: prefill?.roaster ?? '', process: null, roastLevel: null });
+  const [form, setForm] = useState({ name: prefill?.name ?? '', roaster: prefill?.roaster ?? '', process: null, roastLevel: null, origin: null, region: null });
   // The date printed on the bag and its kind (Design Round 27 B1, 29a): one
   // date here; the bag's other one is added on its page (19a). The kind
   // starts where it was last left (device.bag_date_kind).
@@ -60,6 +61,12 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
   const [nameMissing, setNameMissing] = useState(false);
   const [open, setOpen] = useState(null);
   const [firstCup, setFirstCup] = useState(false);
+  // Origin, Region and Process (32e / 32f), under the form; Roast level is in the form (32c).
+  const about = useAboutCoffee({
+    value: { origin: form.origin, region: form.region, process: form.process },
+    onChange: (patch) => setForm((f) => ({ ...f, ...patch })),
+    roast: false,
+  });
   // A prepared photo (data/photos.ts), not kept until the bag is added.
   const [photo, setPhoto] = useState(null);
   const [photoSheet, setPhotoSheet] = useState(false);
@@ -100,6 +107,8 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
         bestBefore: bagDate.kind === 'bestBefore' ? bagDate.value : null,
         process: form.process,
         roastLevel: form.roastLevel,
+        origin: form.origin,
+        region: form.region,
         open: opened,
         photo: kept,
       });
@@ -171,7 +180,9 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
             },
           }}
         />
+        <View style={styles.about}>{about.block}</View>
       </ScreenFrame>
+      {about.sheets}
       <PhotoSheet
         visible={photoSheet}
         onClose={() => setPhotoSheet(false)}
@@ -224,5 +235,9 @@ const styles = StyleSheet.create({
   },
   firstCup: {
     marginBottom: spacing.gap.section,
+  },
+  // 19a's rhythm between blocks (space.20).
+  about: {
+    marginTop: space[20],
   },
 });

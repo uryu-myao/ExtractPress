@@ -248,6 +248,14 @@ export const textStyle = {
    */
   axisEmpty:     { fontFamily: 'Archivo', fontSize: 11, fontWeight: '500', lineHeight: 17 },
   /**
+   * A detail row's label (31g / 32a "About the coffee": Origin, Region,
+   * Process; 29b draws 19a's date rows in this family): 14 / 600,
+   * text.secondary. The value beside it is `label` (15 / 700, ink). 2026-11-14.
+   */
+  detailLabel:   { fontFamily: 'Archivo', fontSize: 14, fontWeight: '600', lineHeight: 21 },
+  /** A detail row with nothing recorded: "Add", 15 / 500 in text.muted (31g). 2026-11-14. */
+  detailEmpty:   { fontFamily: 'Archivo', fontSize: 15, fontWeight: '500' },
+  /**
    * A sheet's explaining line (32e "No country called …", 32f "Not here?" and
    * "Regions are listed by origin …"): 13 / 500, text.secondary. 2026-11-14.
    */

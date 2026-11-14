@@ -165,7 +165,12 @@ export function ChoiceSheetBody({ title, scope, onClear, search, sections = [], 
         </View>
         {onClear ? <TextLink label="Clear" accessibilityLabel={`Clear ${title}`} onPress={onClear} /> : null}
       </View>
-      {search ? <SearchField value={query} onChangeText={setQuery} placeholder={search.placeholder} /> : null}
+      {search ? (
+        // SearchField grows to fill its row (it sits beside Back in SearchSheet): a row of its own keeps its height.
+        <View style={styles.searchRow}>
+          <SearchField value={query} onChangeText={setQuery} placeholder={search.placeholder} />
+        </View>
+      ) : null}
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" bounces={false}>
         {note ? (
           <View>
@@ -233,6 +238,9 @@ const styles = StyleSheet.create({
   titleColumn: {
     flexShrink: 1,
     gap: space[2],
+  },
+  searchRow: {
+    flexDirection: 'row',
   },
   scroll: {
     flexShrink: 1,

@@ -124,6 +124,9 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extr
   - Aliases cover renames and other spellings (Swaziland → Eswatini, Cape Verde → Cabo Verde, Ivory Coast → Côte d'Ivoire, Burma → Myanmar), so a row stored under an old name still resolves (`originOf`). Data, not logic. Türkiye is not in the list: not a coffee origin.
 - **regions**: flat `{ name, country }`, `country` an origins name. **Trade names as a bag prints them** (Yirgacheffe, Guji, Sidamo, Harrar, Huila), not administrative divisions. **At most 15 per country**, and not every country has any: a country without regions still works (the sheet shows "From my bags" and free text). Flat, not nested, because Region's search runs across every country at once (32f). Entries marked `"verify": true` were written from memory without confidence: for Uryu to scan.
 - **Try Next's taxonomy** (origin × process × flavour): these two files are its first two dimensions. Extend them; never a second copy.
+- **Origin and region CAN DISAGREE after an edit** (decided 2026-11-14, brief 4c). Picking a listed region with no origin set also sets origin (both rows change, both count in 19a's Save bar). But changing Origin later **keeps** the region, with no warning and no clearing: a hand-written region can be right under any country, and Clear on the Region sheet empties it. So a bag can say Kenya / Guji. **Try Next trusts `origin` and treats `region` as a free label**; never infer one from the other.
+- **Written values**: Origin takes free text when nothing matches; Region always does (farms and washing stations are in no table). Stored as written (trimmed); "From my bags" groups on trimmed, case-folded text and shows the spelling most bags use.
+- **Copies on cups**: `bean_origin` / `bean_region` are copied at logging and rewritten when the bag is saved, as the other details.
 
 ### Roast is not a taste axis (decided 2026-11-13, Turn 30)
 

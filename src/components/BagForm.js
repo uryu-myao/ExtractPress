@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { PROCESS_OPTIONS } from '../constants/cups';
 import { formatDay } from '../constants/dates';
 import { resolveTextStyle } from '../theme/fonts';
 import { color, icon, shape, size, space, spacing, state, textStyle } from '../theme/tokens';
 import ClearButton from './base/ClearButton';
 import Glyph from './base/Glyph';
-import SegmentedControl from './base/SegmentedControl';
 import Text from './base/Text';
 import RoastLevel from './RoastLevel';
 
@@ -15,20 +13,13 @@ import RoastLevel from './RoastLevel';
  * Two field sets, one component:
  *   minimal  Bean name (required), Roaster, the date on the bag (3c, Round
  *            27) or Roasted on / Best before (19a) — 8o's set; 3c (minimal)
- *   full     + Size, Photo, Origin / Region / Process — 3c / 3g;
- *            built so far: Photo (3c) and Process (both, 2026-11-08)
+ *   full     + Size, Photo — 3c / 3g; built so far: Photo (3c)
+ * Origin, Region and Process are NOT here (Turn 31, 32e / 32f): rows in
+ * "About the coffee" (useAboutCoffee), which the screens place by the form.
+ * The Process chips (2026-11-08) went with them.
  * Roast level (Turn 31, 32c / 32d): on 3c, RoastLevel under Roaster
  * (`roast`), set in place; it replaces 3c / 3g's four chips (D-73). On 19a
  * it is AboutCoffee's first row instead, so 19a passes no `roast`.
- *
- * Process (planner, 2026-11-08): Washed / Natural / Honey / Anaerobic, a
- * clearable option set (unset is "don't know"; no Unknown chip), under
- * Roaster as in 3g. TODO: when AboutCoffee takes Process as a row (31g's
- * "Later: all four filled"), this option set leaves the form. 3c's mock folds it into an "Origin · Process"
- * line; without Origin that line would open onto one row, so both show the
- * row itself.
- * TODO: 3c's fold, and the chip size (3g's mock draws 9 / 14 padding, the
- * maker chips' 14 / 16 here), for Design.
  *
  * Fields follow 3c / 3g: an eyebrow label over a 46pt line with a 2px
  * underline — ink while focused, border.muted otherwise.
@@ -47,8 +38,7 @@ import RoastLevel from './RoastLevel';
  * the whole screen.
  *
  * Props
- *   value       { name, roaster, roastedAt (ms of a local midnight, or null),
- *               process ('washed' … or null) }
+ *   value       { name, roaster, roastedAt (ms of a local midnight, or null) }
  *   onChange    (next) => void
  *   onPickDate  open the date sheet for Roasted on
  *   datePicking the sheet is open (the field shows focus)
@@ -97,12 +87,6 @@ export default function BagForm({
       <Field label="Bean name" value={value.name} placeholder="e.g. Ethiopia Guji" onChangeText={(name) => onChange({ ...value, name })} autoFocus={autoFocusName} error={nameMissing} />
       <Field label="Roaster" value={value.roaster} placeholder="Optional" onChangeText={(roaster) => onChange({ ...value, roaster })} />
       {roast ? <RoastLevel value={roast.value} onChange={roast.onChange} /> : null}
-      <View style={styles.field}>
-        <Text variant="labelEyebrow" color="muted">
-          Process
-        </Text>
-        <SegmentedControl options={PROCESS_OPTIONS} value={value.process ?? null} onChange={(process) => onChange({ ...value, process })} clearable />
-      </View>
       {bagDate ? (
         <DayField
           label="Date on the bag"
