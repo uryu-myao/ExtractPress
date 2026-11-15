@@ -32,7 +32,7 @@ import { color, dashed, icon, layout, shape, size, space, spacing, state } from 
  * Finish bag: no confirmation, no undo at this stage (gaps.md 17: 3f's
  * Reopen is not built; for own use a slip costs one slot, and the cups stay).
  *
- * "Finished bags" (3d's foot, 2026-10-14) → 3f: a 1.5 border.soft rule, the
+ * "Finished bags" (3d's foot, 2026-10-14) → 3f: a 1.5 divider rule, the
  * name in display.xs, "N archived — still counted in my taste DNA" and a
  * chevron. Shown once a bag is finished (no entry to an empty 3f).
  * A card's upper half (D-29) opens 3g, with the row chevron at its right;
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     gap: space[12],
     paddingVertical: space[16],
     borderTopWidth: shape.borderWidth.divider,
-    borderTopColor: color.border.soft,
+    borderTopColor: color.divider.hairline,
   },
   finishedText: {
     flex: 1,

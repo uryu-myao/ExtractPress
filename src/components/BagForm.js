@@ -18,8 +18,10 @@ import Text from './base/Text';
  * them, rows that open their sheets; they replace 3c / 3g's roast chips and
  * Process chips (D-73, D-78).
  *
- * Fields follow 3c / 3g: an eyebrow label over a 46pt line with a 2px
- * underline — ink while focused, border.muted otherwise.
+ * Fields follow 3c / 3g: an eyebrow label over a 36pt line
+ * (size.underlineField) with the divider as underline (hairline, 1.5) — ink
+ * while focused (Uryu, 2026-11-15: lighter, thinner, closer to the text;
+ * was 46pt, 2px border.muted).
  * Text: the mocks set a focused / entered value at 16 / 700 (`title`) and an
  * idle field at 16 / 500, which has no text style (drift D-44), so every
  * value uses `title`. Entered text is text.primary, placeholders
@@ -248,9 +250,10 @@ const styles = StyleSheet.create({
   input: {
     ...resolveTextStyle(textStyle.title),
     color: color.text.primary,
-    height: size.field.height,
-    borderBottomWidth: shape.borderWidth.box,
-    borderBottomColor: color.border.muted,
+    height: size.underlineField.height,
+    // The divider (tokens.ts color.divider): hairline, 1.5; ink while focused.
+    borderBottomWidth: shape.borderWidth.divider,
+    borderBottomColor: color.divider.hairline,
     paddingVertical: 0,
   },
   dayField: {

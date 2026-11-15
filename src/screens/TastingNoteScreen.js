@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     gap: space[12],
     paddingBottom: space[14],
     borderBottomWidth: shape.borderWidth.divider,
-    borderBottomColor: color.divider.hairlineStrong,
+    borderBottomColor: color.divider.hairline,
   },
   summaryText: {
     flex: 1,

@@ -31,7 +31,7 @@ import Text from './base/Text';
  * below): thumbnail, name (label, one line: §3.1's shelf exception, Design
  * Round 15, B3) over one line (bodySm, muted), and a status
  * column at the right. Only the first row has a rule over it
- * (divider.hairlineStrong), which the open tab's underline lands on.
+ * (divider.hairline, the divider), which the open tab's underline lands on.
  * Pressable (Uryu, 2026-10-28; Round 15 B3 had them open nothing): a bean
  * row opens its bag page (3g, 19a), a gear row its page (3e, 19c). The row
  * darkens while pressed (state.pressed.row); no chevron (Design Round 16,
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   },
   rowFirst: {
     borderTopWidth: shape.borderWidth.divider,
-    borderTopColor: color.divider.hairlineStrong,
+    borderTopColor: color.divider.hairline,
   },
   rowPressed: {
     backgroundColor: state.pressed.row,

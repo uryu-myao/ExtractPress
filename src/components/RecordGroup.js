@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   // moved here), at the content's width, so a pinned heading keeps it.
   headLine: {
     borderBottomWidth: shape.borderWidth.divider,
-    borderBottomColor: color.divider.hairlineStrong,
+    borderBottomColor: color.divider.hairline,
   },
   groupLabel: {
     flexShrink: 1,

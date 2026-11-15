@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   // 18c: the hairline between hits and terms.
   rule: {
     height: shape.borderWidth.divider,
-    backgroundColor: color.divider.hairlineStrong,
+    backgroundColor: color.divider.hairline,
     marginVertical: spacing.gap.row,
   },
   results: {
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: shape.borderWidth.divider,
-    backgroundColor: color.divider.hairlineStrong,
+    backgroundColor: color.divider.hairline,
   },
   tabs: {
     flexDirection: 'row',

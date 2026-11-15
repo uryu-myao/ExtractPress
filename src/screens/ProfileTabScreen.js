@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
   statDivided: {
     borderLeftWidth: shape.borderWidth.divider,
-    borderLeftColor: color.border.subtle,
+    borderLeftColor: color.divider.hairline,
   },
   dna: {
     paddingVertical: spacing.inset.container.v,

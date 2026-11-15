@@ -99,7 +99,15 @@ export const color = {
     required: '#9E5202',
     optional: '#C8BCB4',
   },
-  /** divider.hairline is an alias of border.subtle — one hairline tier exists. */
+  /**
+   * THE DIVIDER (Uryu, 2026-11-15): every line that divides — list rows'
+   * hairlines, the form fields' underlines, Profile's stat rules, the dashed
+   * card split (dashed.dividerSoft), 8g's rules — is divider.hairline at
+   * shape.borderWidth.divider (1.5). Two tiers lighter than the frames'
+   * border.container (#C8BCB4 → #D8C9BF → #E4D6CC) and thinner (1.5 < 2), so a
+   * divider never reads as a frame. hairlineStrong is not for dividers.
+   * divider.hairline is an alias of border.subtle.
+   */
   divider: {
     hairline: '#E4D6CC',
     hairlineStrong: '#D8C9BF',
@@ -399,6 +407,13 @@ export const size = {
   control: { row: 52 },
   field: { height: 46 },
   /**
+   * An underlined form field's line box (BagForm's Field / DayField; Uryu,
+   * 2026-11-15: the underline closer to the text): the text centred in 36
+   * sits about 8 over the line (was 46, about 13). Framed fields keep
+   * field.height.
+   */
+  underlineField: { height: 36 },
+  /**
    * list: the list row (2a). summary: the one-cup summary row (5b).
    * compact: Home's shelf rows (Round 14, 17a / 17b; settles D-51 for Home).
    * photoField: a form's photo slot, 3c's (and 3e / 3g's) 76 square, 2026-11-01.
@@ -545,7 +560,7 @@ export const dashed = {
    */
   emptyFrame:    { width: 2, style: 'dashed', color: color.border.muted },
   /** the line that splits one card or block into two parts that belong together */
-  dividerSoft:   { width: 1.5, style: 'dashed', color: color.border.soft },
+  dividerSoft:   { width: 1.5, style: 'dashed', color: color.divider.hairline },
   /**
    * a bag card whose bag is not opened yet (3d, 2026-10-17): the card's own
    * 2px ink frame, dashed — not started.

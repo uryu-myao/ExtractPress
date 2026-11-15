@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
   first: {
     borderTopWidth: shape.borderWidth.divider,
-    borderTopColor: color.divider.hairlineStrong,
+    borderTopColor: color.divider.hairline,
   },
   content: {
     flex: 1,

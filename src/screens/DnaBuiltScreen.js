@@ -237,19 +237,20 @@ const styles = StyleSheet.create({
   more: {
     textAlign: 'right',
   },
-  // 21a: the cups line covers every row, so a 2px rule sets it apart (quiet
-  // as the frame it sits in, Design Round 22: width says what it is).
+  // 21a: the cups line covers every row, a rule sets it apart: the divider
+  // (Uryu, 2026-11-15: every divider one colour and width; was 2px
+  // border.container, Design Round 22).
   cups: {
     paddingVertical: spacing.inset.listRow.v,
     paddingHorizontal: spacing.inset.listRow.h,
-    borderTopWidth: shape.borderWidth.box,
-    borderTopColor: color.border.container,
+    borderTopWidth: shape.borderWidth.divider,
+    borderTopColor: color.divider.hairline,
   },
-  // 8g: a 2px rule over the list, no frame around it; quiet, a list block's
-  // edge (Design Round 22).
+  // 8g: a rule over the list, no frame around it: the divider (Uryu,
+  // 2026-11-15; was 2px border.container, Design Round 22).
   rules: {
-    borderTopWidth: shape.borderWidth.box,
-    borderTopColor: color.border.container,
+    borderTopWidth: shape.borderWidth.divider,
+    borderTopColor: color.divider.hairline,
   },
   rule: {
     flexDirection: 'row',
