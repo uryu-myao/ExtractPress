@@ -347,8 +347,11 @@ Grouped by role. Every hex is a value that qualified **inside that role** (≥3 
 `color.border.muted` / `soft` / `subtle` all qualify independently (Gate A, ΔE00 3.07–3.63). They are three real tiers.
 
 ### Dividers
-Only one hairline tier exists in the whole product.
-- `divider.hairline` — **alias of `color.border.subtle`** (`#E4D6CC`). `#D8C9BF` is used for the same purpose in 2a and is available as `color.border.soft`.
+**One divider, everywhere (Uryu, 2026-11-15): `color.divider.hairline` (`#E4D6CC`) at `shape.borderWidth.divider` (1).**
+- **What is a divider**: every line that divides — list and sheet rows' hairlines, the bag / gear form fields' underlines, Profile's stat rules, Search's rule and tab line, the shelf's first-row rule, 3f's, 8g's and 21a's rules, and the dashed card split (`dashed.dividerSoft`, 1, dashed).
+- **Lighter and thinner than a frame**: two tiers lighter than the frames' `border.container` (`#C8BCB4` → `#D8C9BF` → `#E4D6CC`) and half its width (1 against 2), so a divider never reads as a frame. 1.5 was tried first and read too close to 2.
+- **Not dividers** (unchanged): panel edges (sheet, Save bar, footer: `border.container`, 2), ink indicators (the open tab's and Home's today underline, a focused field's underline), and weak frames (`shape.borderWidth.weak`, 1.5: chips, the delete row, a swatch, the Required bar).
+- `divider.hairline` is an alias of `color.border.subtle`. `#D8C9BF` (`border.soft`, `divider.hairlineStrong`) is **not** a divider colour any more.
 - There is **no second, stronger hairline tier**. This is consistent with border width being binary and border style being binary — a deliberate restraint. If a stronger separation is ever needed, use the `border` role (a `2px` box outline), do not add a hairline tier.
 
 ### Badges / chips
@@ -1014,7 +1017,7 @@ The List row pattern above as a component (source 2a): a `size.thumbnail.list` p
 
 ### Bought at row (inline composition in Record coffee, 5e — not a base component) — **[not at this stage]** (2026-10-11: Packaged records the product name only; the row is display-only until it returns)
 The optional "Bought at" row in Record coffee's Packaged mode is composed inline in the screen from `Glyph` + `Text`. It is not built from `FieldRow`, because its anatomy differs:
-- a **weak frame**: `shape.borderWidth.divider` (1.5) in `color.border.muted` on `color.surface.raised`, not the 2px ink card;
+- a **weak frame**: `shape.borderWidth.weak` (1.5; was `divider`, split 2026-11-15) in `color.border.muted` on `color.surface.raised`, not the 2px ink card;
 - an **inline glyph**: `bag`, `icon.md`, `color.icon.muted`, with no swatch;
 - the **name** in `label`, truncated with the `name` preset, filling the row;
 - ~~a right-aligned value ("¥180")~~ — dropped 2026-10-05: the data model has no price, deliberately (`drift.md` D-15);
@@ -1492,3 +1495,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-11-15 — Roast level is a row and 31g's sheet again, not 32a's slider, and "About the coffee" is folded into Details: Roast level, Origin, Region and Process are rows under Roaster on 19a and 3c (Uryu). `ChoiceSheet` gains a `legend` slot (the flame pair); `DetailRow` gains `flush`; `useAboutCoffee` becomes `useBagFacts` (rows + sheets). Removed with the slider: `OptionSlider`, `RoastLevel`, `component.option`, `size.option`, `icon.legend` (`useStopSlider` stays, the tasting slider's). D-73, D-74, D-77, D-78.
 - 2026-11-15 — Roast level's sheet loses 31g's "Lighter … Darker" row and its flames (Uryu): the four levels in order say it. With it go `ChoiceSheet`'s `legend` slot and `Glyph`'s `flameLight` / `flameDark` (no other use). D-74.
 - 2026-11-15 — **One divider** (Uryu): every line that divides — list and sheet rows' hairlines, the bag / gear form fields' underlines, Profile's stat rules, Search's rule and tab line, the shelf's first-row rule, 3f's rule, 8g's and 21a's rules (were 2px `border.container`), and the dashed card split (`dashed.dividerSoft`, was `border.soft`) — is `color.divider.hairline` (#E4D6CC) at `shape.borderWidth.divider` (1.5): two tiers lighter than the frames' `border.container` (#C8BCB4 → #D8C9BF → #E4D6CC) and thinner (1.5 < 2), so a divider never reads as a frame. Not dividers, unchanged: panel edges (sheet, Save bar, footer: `border.container`, 2), the open tab's and Home's today underline (ink indicators), a focused field's underline (ink: focus). Underlined fields' line box 46 → 36 (`size.underlineField`): the underline about 8 under the text (was about 13).
+- 2026-11-15 — **Dividers 1.5 → 1** (Uryu: 1.5 read too close to the frames' 2). `shape.borderWidth.divider` is now 1 and dividers only; the weak frames that shared it (chips, the delete row, a swatch, the Required bar, Search's chips) take a new `shape.borderWidth.weak` (1.5), unchanged. `dashed.dividerSoft` 1.5 → 1. §Dividers rewritten as the one rule.

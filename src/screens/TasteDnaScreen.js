@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     gap: space[6],
     paddingVertical: space[8],
     paddingHorizontal: space[12],
-    borderWidth: shape.borderWidth.divider,
+    borderWidth: shape.borderWidth.weak,
     borderColor: color.border.muted,
     backgroundColor: color.surface.raised,
   },

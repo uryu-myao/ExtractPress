@@ -103,8 +103,8 @@ export const color = {
    * THE DIVIDER (Uryu, 2026-11-15): every line that divides — list rows'
    * hairlines, the form fields' underlines, Profile's stat rules, the dashed
    * card split (dashed.dividerSoft), 8g's rules — is divider.hairline at
-   * shape.borderWidth.divider (1.5). Two tiers lighter than the frames'
-   * border.container (#C8BCB4 → #D8C9BF → #E4D6CC) and thinner (1.5 < 2), so a
+   * shape.borderWidth.divider (1). Two tiers lighter than the frames'
+   * border.container (#C8BCB4 → #D8C9BF → #E4D6CC) and thinner (1, against 2), so a
    * divider never reads as a frame. hairlineStrong is not for dividers.
    * divider.hairline is an alias of border.subtle.
    */
@@ -534,8 +534,14 @@ export const shape = {
   borderWidth: {
     /** the outline of a box */
     box: 2,
-    /** an internal divider or weak frame */
-    divider: 1.5,
+    /**
+     * every line that divides (color.divider.hairline): 1 (Uryu,
+     * 2026-11-15: 1.5 read too close to the frames' 2; was 1.5, shared
+     * with the weak frames)
+     */
+    divider: 1,
+    /** a weak frame, all round (chips, the delete row, a swatch): 1.5 */
+    weak: 1.5,
   },
 } as const;
 
@@ -560,7 +566,7 @@ export const dashed = {
    */
   emptyFrame:    { width: 2, style: 'dashed', color: color.border.muted },
   /** the line that splits one card or block into two parts that belong together */
-  dividerSoft:   { width: 1.5, style: 'dashed', color: color.divider.hairline },
+  dividerSoft:   { width: 1, style: 'dashed', color: color.divider.hairline },
   /**
    * a bag card whose bag is not opened yet (3d, 2026-10-17): the card's own
    * 2px ink frame, dashed — not started.
@@ -649,7 +655,7 @@ const axisGrip = { w: shape.borderWidth.box, h: space[6] } as const;
  */
 const requiredBar = {
   background: color.surface.muted,
-  border: { width: shape.borderWidth.divider, color: color.border.muted },
+  border: { width: shape.borderWidth.weak, color: color.border.muted },
   slot: {
     height: 24,
     filled: { background: '#CFDCC8', ink: color.text.success },

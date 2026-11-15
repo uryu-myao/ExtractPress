@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
     // The mock's 14 (space.14), not inset.control's 16: at 16 the five chips
     // wrap to 3 rows at 390pt, at 14 they keep the mock's 2 (2026-10-08).
     paddingHorizontal: space[14],
-    borderWidth: shape.borderWidth.divider,
+    borderWidth: shape.borderWidth.weak,
     borderColor: color.border.muted,
   },
   chipOn: {

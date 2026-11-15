@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.inset.control.v,
     paddingHorizontal: spacing.inset.control.h,
-    borderWidth: shape.borderWidth.divider,
+    borderWidth: shape.borderWidth.weak,
     borderColor: color.border.muted,
     backgroundColor: color.badge.bg.raised,
   },

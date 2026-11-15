@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     gap: spacing.gap.row,
   },
   card: {
-    borderWidth: shape.borderWidth.divider,
+    borderWidth: shape.borderWidth.weak,
     borderColor: color.border.muted,
     backgroundColor: color.surface.raised,
     paddingVertical: spacing.inset.container.v,

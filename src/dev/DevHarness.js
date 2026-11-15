@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   navItem: {
     paddingVertical: spacing.badge.standalone.v,
     paddingHorizontal: spacing.badge.standalone.h,
-    borderWidth: shape.borderWidth.divider,
+    borderWidth: shape.borderWidth.weak,
     borderColor: color.border.muted,
     backgroundColor: color.badge.bg.raised,
   },

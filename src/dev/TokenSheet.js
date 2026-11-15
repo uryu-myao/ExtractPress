@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   swatch: {
     width: size.field.height,
     height: size.field.height,
-    borderWidth: shape.borderWidth.divider,
+    borderWidth: shape.borderWidth.weak,
     borderColor: color.border.soft,
   },
   colorText: {

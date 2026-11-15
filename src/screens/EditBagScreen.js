@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   },
   // 3g: the delete row, the weak 1.5 frame (it's not the screen's main act).
   delete: {
-    borderWidth: shape.borderWidth.divider,
+    borderWidth: shape.borderWidth.weak,
     borderColor: color.border.muted,
     paddingVertical: spacing.inset.container.v,
     paddingHorizontal: spacing.inset.container.h,

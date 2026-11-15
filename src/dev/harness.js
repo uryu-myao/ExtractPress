@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     gap: spacing.gap.tight,
   },
   frame: {
-    borderWidth: shape.borderWidth.divider,
+    borderWidth: shape.borderWidth.weak,
     borderColor: color.border.muted,
     borderStyle: 'dashed',
   },

@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   // 3e: the remove row, the weak 1.5 frame (as 3g's delete).
   remove: {
-    borderWidth: shape.borderWidth.divider,
+    borderWidth: shape.borderWidth.weak,
     borderColor: color.border.muted,
     paddingVertical: spacing.inset.container.v,
     paddingHorizontal: spacing.inset.container.h,
