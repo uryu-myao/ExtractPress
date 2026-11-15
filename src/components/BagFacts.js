@@ -1,29 +1,32 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { PROCESS_OPTIONS } from '../constants/cups';
+import { PROCESS_OPTIONS, ROAST_LEVELS } from '../constants/cups';
 import { ORIGINS, originOf, REGIONS, regionsOf } from '../constants/origins';
 import { useDatabase } from '../data/DatabaseProvider';
 import { listBagFacts } from '../data/repository';
-import { color, shape, spacing } from '../theme/tokens';
+import { color, icon, spacing } from '../theme/tokens';
 import ChoiceSheet from './ChoiceSheet';
 import DetailRow from './base/DetailRow';
+import Glyph from './base/Glyph';
 import Text from './base/Text';
-import RoastLevel from './RoastLevel';
 
 /**
- * "About the coffee" (Turn 30 / 31; 31g, 32a–32f): facts printed on the bag,
- * in one 2px frame on raised under a label.eyebrow. On 19a under the status
- * (Roast level first, set in place, then Origin, Region and Process); on 3c
- * under the form, without Roast level (3c sets it in the form, under Roaster,
- * 32c).
+ * A bag's facts as printed on it — Roast level, Origin, Region, Process —
+ * as rows in the bag form's Details, under Roaster (Uryu, 2026-11-15: one
+ * Details, no separate "About the coffee" block). On 19a and 3c alike: each
+ * a DetailRow (flush, a hairline between) opening a ChoiceSheet.
  *
- * IT MUST NOT READ AS A SIXTH AXIS (data-model.md "Roast is not a taste
- * axis"): bag details, never in the Taste DNA card.
+ * NONE OF THEM IS A TASTE AXIS (data-model.md "Roast is not a taste axis"):
+ * a word in a list row, never in the Taste DNA card.
  *
- *   Origin   DetailRow → ChoiceSheet: From my bags (the origins on my bags,
- *            with counts, most first) and All origins (origins.json, A–Z);
- *            search; free text when nothing matches
- *   Region   DetailRow → ChoiceSheet, scoped by Origin:
+ *   Roast level  31g's sheet: the four levels light → dark, the flame pair
+ *            as its legend (the light flame at "Lighter", the dark at
+ *            "Darker"), no search, no free text; Clear empties it. (32a's
+ *            slider was dropped the same week, on Uryu's call.)
+ *   Origin   From my bags (the origins on my bags, with counts, most first)
+ *            and All origins (origins.json, A–Z); search; free text when
+ *            nothing matches
+ *   Region   scoped by Origin:
  *              origin set  "In ‹origin›": From my bags (regions I've used
  *                          with that origin) and Regions of ‹origin›
  *                          (regions.json, A–Z); free text always
@@ -37,21 +40,22 @@ import RoastLevel from './RoastLevel';
  *            written region can be right under any country; Clear empties
  *            it. So origin and region can disagree after an edit
  *            (data-model.md: Try Next trusts origin, region is a label).
- *   Process  DetailRow → ChoiceSheet: the five values, no search, no free text
+ *   Process  the five values, no search, no free text
  *
  * "From my bags" groups on trimmed, case-folded text ("Guji" and "guji" are
  * one row) and shows the spelling most bags use.
  *
- * useAboutCoffee({ value, onChange, roast }) → { block, sheets }: `block`
- * for the body, `sheets` for the screen's root (a sheet covers the screen).
+ * useBagFacts({ value, onChange }) → { rows, sheets }: `rows` for the form
+ * (BagForm's `facts`, under Roaster), `sheets` for the screen's root (a
+ * sheet covers the screen).
  *   value     { roastLevel, origin, region, process }
  *   onChange  (patch) => void: the fields that change, e.g. { region,
  *             origin } (the screen decides when it is saved: 19a's Save bar,
  *             3c's add)
- *   roast     false on 3c (its form has the row)
  */
 const fold = (s) => s.trim().toLocaleLowerCase('en');
 const PROCESS_LABEL = Object.fromEntries(PROCESS_OPTIONS.map((p) => [p.value, p.label]));
+const ROAST_LABEL = Object.fromEntries(ROAST_LEVELS.map((r) => [r.value, r.label]));
 const byName = (a, b) => a.label.localeCompare(b.label, 'en');
 const ALL_ORIGINS = ORIGINS.map((o) => ({ key: o.name, label: o.name, aliases: o.aliases }));
 /** A region picked with no origin set carries its country in its key. */
@@ -77,7 +81,7 @@ function mine(values) {
     .sort((a, b) => b.n - a.n || byName(a, b));
 }
 
-export function useAboutCoffee({ value, onChange, roast = true }) {
+export function useBagFacts({ value, onChange }) {
   const db = useDatabase();
   const [open, setOpen] = useState(null);
   // Choose origin first: the Origin sheet, then back to Region.
@@ -149,6 +153,30 @@ export function useAboutCoffee({ value, onChange, roast = true }) {
         onClear: () => onChange({ region: null }),
       };
 
+  const roastSheet = {
+    title: 'Roast level',
+    legend: (
+      <View style={styles.legend} importantForAccessibility="no-hide-descendants">
+        <View style={styles.legendEnd}>
+          <Glyph name="flameLight" token={icon.lg} color={color.text.primary} />
+          <Text variant="labelEyebrow" color="muted">
+            Lighter
+          </Text>
+        </View>
+        <View style={styles.legendEnd}>
+          <Text variant="labelEyebrow" color="muted">
+            Darker
+          </Text>
+          <Glyph name="flameDark" token={icon.lg} color={color.text.primary} />
+        </View>
+      </View>
+    ),
+    sections: [{ items: ROAST_LEVELS.map((r) => ({ key: r.value, label: r.label })) }],
+    selected: value.roastLevel ?? null,
+    onPick: (next) => onChange({ roastLevel: next }),
+    onClear: () => onChange({ roastLevel: null }),
+  };
+
   const processSheet = {
     title: 'Process',
     sections: [{ items: PROCESS_OPTIONS.map((p) => ({ key: p.value, label: p.label })) }],
@@ -157,56 +185,42 @@ export function useAboutCoffee({ value, onChange, roast = true }) {
     onClear: () => onChange({ process: null }),
   };
 
-  const rows = [
+  const factRows = [
+    { field: 'roastLevel', label: 'Roast level', shown: value.roastLevel ? ROAST_LABEL[value.roastLevel] : null },
     { field: 'origin', label: 'Origin', shown: origin },
     { field: 'region', label: 'Region', shown: value.region ?? null },
     { field: 'process', label: 'Process', shown: value.process ? PROCESS_LABEL[value.process] : null },
   ];
 
-  const block = (
-    <View style={styles.block}>
-      <Text variant="labelEyebrow" color="muted">
-        About the coffee
-      </Text>
-      <View style={styles.frame}>
-        {roast ? (
-          <View style={styles.sliderRow}>
-            <RoastLevel value={value.roastLevel ?? null} onChange={(next) => onChange({ roastLevel: next })} />
-          </View>
-        ) : null}
-        {rows.map((r, i) => (
-          <DetailRow key={r.field} label={r.label} value={r.shown} divided={roast || i > 0} onPress={() => show(r.field)} />
-        ))}
-      </View>
+  const rows = (
+    <View>
+      {factRows.map((r, i) => (
+        <DetailRow key={r.field} label={r.label} value={r.shown} divided={i > 0} flush onPress={() => show(r.field)} />
+      ))}
     </View>
   );
 
   const sheets = (
     <>
+      <ChoiceSheet visible={open === 'roastLevel'} onClose={close} {...roastSheet} />
       <ChoiceSheet visible={open === 'origin'} onClose={close} {...originSheet} />
       <ChoiceSheet visible={open === 'region'} onClose={close} {...regionSheet} />
       <ChoiceSheet visible={open === 'process'} onClose={close} {...processSheet} />
     </>
   );
 
-  return { block, sheets };
+  return { rows, sheets };
 }
 
 const styles = StyleSheet.create({
-  block: {
+  legend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  legendEnd: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.gap.row,
-  },
-  frame: {
-    borderWidth: shape.borderWidth.box,
-    borderColor: color.border.container,
-    backgroundColor: color.surface.raised,
-  },
-  /**
-   * Roast level's row: 12 / 16 all round (32a draws 8 under the legend; Uryu
-   * on device, 2026-11-14: it read heavier at the foot).
-   */
-  sliderRow: {
-    paddingVertical: spacing.inset.listRow.v,
-    paddingHorizontal: spacing.inset.listRow.h,
   },
 });

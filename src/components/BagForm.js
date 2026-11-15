@@ -6,7 +6,6 @@ import { color, icon, shape, size, space, spacing, state, textStyle } from '../t
 import ClearButton from './base/ClearButton';
 import Glyph from './base/Glyph';
 import Text from './base/Text';
-import RoastLevel from './RoastLevel';
 
 /**
  * Bag form (design/components.md "Adding a bag…"): the fields of one bag.
@@ -14,12 +13,10 @@ import RoastLevel from './RoastLevel';
  *   minimal  Bean name (required), Roaster, the date on the bag (3c, Round
  *            27) or Roasted on / Best before (19a) — 8o's set; 3c (minimal)
  *   full     + Size, Photo — 3c / 3g; built so far: Photo (3c)
- * Origin, Region and Process are NOT here (Turn 31, 32e / 32f): rows in
- * "About the coffee" (useAboutCoffee), which the screens place by the form.
- * The Process chips (2026-11-08) went with them.
- * Roast level (Turn 31, 32c / 32d): on 3c, RoastLevel under Roaster
- * (`roast`), set in place; it replaces 3c / 3g's four chips (D-73). On 19a
- * it is AboutCoffee's first row instead, so 19a passes no `roast`.
+ * The bag's facts (Roast level, Origin, Region, Process) come in as `facts`
+ * and sit under Roaster: one Details (Uryu, 2026-11-15). useBagFacts builds
+ * them, rows that open their sheets; they replace 3c / 3g's roast chips and
+ * Process chips (D-73, D-78).
  *
  * Fields follow 3c / 3g: an eyebrow label over a 46pt line with a 2px
  * underline — ink while focused, border.muted otherwise.
@@ -55,7 +52,7 @@ import RoastLevel from './RoastLevel';
  *   bestBefore  19a: { value, hint, onPick, picking } — a Best before row
  *               under Roasted on, always shown, "Add" while empty (29b); the
  *               bag's other date is added here
- *   roast       3c: { value, onChange } — Roast level under Roaster (32c)
+ *   facts       the bag's facts rows (useBagFacts), drawn under Roaster
  *   children    3g: drawn last inside the card (the freshness block)
  *   autoFocusName  3c: the keyboard comes up on Bean name; 3g: off (it opens to correct, not to type)
  *   photo       3c: { uri, onPress } — the photo slot over the fields
@@ -76,7 +73,7 @@ export default function BagForm({
   opened,
   bagDate,
   bestBefore,
-  roast,
+  facts,
   children,
   autoFocusName = true,
   photo,
@@ -86,7 +83,7 @@ export default function BagForm({
       {photo ? <PhotoField uri={photo.uri} onPress={photo.onPress} /> : null}
       <Field label="Bean name" value={value.name} placeholder="e.g. Ethiopia Guji" onChangeText={(name) => onChange({ ...value, name })} autoFocus={autoFocusName} error={nameMissing} />
       <Field label="Roaster" value={value.roaster} placeholder="Optional" onChangeText={(roaster) => onChange({ ...value, roaster })} />
-      {roast ? <RoastLevel value={roast.value} onChange={roast.onChange} /> : null}
+      {facts ?? null}
       {bagDate ? (
         <DayField
           label="Date on the bag"

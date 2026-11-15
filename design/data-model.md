@@ -420,7 +420,7 @@ Which of these are V1 is open (report 2026-10-10).
 |---|---|---|---|
 | Bean name | yes | yes | `name` |
 | Roaster | yes | yes | `roaster` |
-| Roast level | Light / Medium / Dark | same | `roast_level`, 4 values (2026-10-09); **UI since 2026-11-14**: the roast level slider (32a–32d), on 3c under Roaster and as 19a's "About the coffee" first row; blank = not recorded, ✕ clears (drift D-73) |
+| Roast level | Light / Medium / Dark | same | `roast_level`, 4 values (2026-10-09); **UI since 2026-11-15**: a Roast level row in Details under Roaster (3c and 19a), opening 31g's sheet of four; blank = not recorded, Clear empties it (drift D-73) |
 | Roasted on | yes | yes | **missing** |
 | Opened on | set by "Open this bag" | yes | `opened_at` |
 | Size | yes | yes | **missing** |

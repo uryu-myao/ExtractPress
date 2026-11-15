@@ -462,12 +462,6 @@ export const size = {
    * every track starts and ends on the same x in every state and language.
    */
   axisColumn: { title: 88, reading: 56, step: 56 },
-  /**
-   * The option slider (32a–32d): the word column, sized for its longest word
-   * (MEDIUM-DARK 79, ミディアムダーク 83). The ✕ beside it is size.axis.clear,
-   * its column kept when empty so the track never jumps.
-   */
-  option: { word: 84 },
   dot: { bullet: 6 },
   sheet: {
     handle: { w: 56, h: 5 },
@@ -490,8 +484,6 @@ export const icon = {
   lg: { size: 22, strokeWidth: 1.8 },
   /** decorative large glyph — stroke widens back */
   xl: { size: 38, strokeWidth: 2.0 },
-  /** The option slider's legend under the track ends (32a: the flame pair), 14 at 2, text.muted */
-  legend: { size: 14, strokeWidth: 2 },
   /** 5b's ✕ on a 24 square (30b): 12 at 3, so the cross holds its weight that small */
   clear: { size: 12, strokeWidth: 3 },
   /** the ⓘ inside a status stamp (15a, Design Round 8): 14 at 2.4, lighter than xs */
@@ -693,24 +685,7 @@ export const component = {
     rail: { height: size.axis.rail, inset: size.axis.inset, dot: size.axis.dot },
     grip: axisGrip,
   },
-  /**
-   * A slider over named options (Turn 31, 32a–32d: a bag's roast level).
-   * The tasting slider's geometry (track 28, handle 20, inset 2, 44 band) and
-   * its feel, with every visual signal changed so it never reads as a sixth
-   * taste axis:
-   *   frame   border.muted, the quiet frame (tasting: text.secondary)
-   *   ticks   2 × 10 in divider.hairlineStrong, one per option (tasting:
-   *           dots at the whole numbers)
-   *   handle  INK, no frame, a surface.raised grip: §1's "chosen from
-   *           options" (tasting: brown, "a value I entered")
-   *   word    size.option.word (84) at the right, a word not a number
-   * No axis colour anywhere.
-   */
-  option: {
-    rail: { width: shape.borderWidth.box, color: color.border.muted, background: color.surface.raised, tick: color.divider.hairlineStrong },
-    tick: { w: shape.borderWidth.box, h: space[8] + space[2] },
-    needle: { ...size.axis.handle, background: color.border.strong, grip: color.surface.raised },
-  },
+
   /**
    * Bottom bar (design-system.md §9; Design Round 23, 2026-11-08): the tab
    * body's slots and the +'s glyph. The pieces' height is size.tabBar.height.

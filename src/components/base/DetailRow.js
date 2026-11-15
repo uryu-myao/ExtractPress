@@ -16,9 +16,12 @@ import Text from './Text';
  *   divided  the 1.5 divider.hairline above every row after the first
  *   padding  spacing.inset.listRow (12 / 16); pressed: state.pressed.row
  *
- * Props: label, value (null: "Add"), onPress, divided
+ *   flush    no side padding: rows inside a card that pads them already (the
+ *            bag form's Details, under Roaster; Uryu, 2026-11-15)
+ *
+ * Props: label, value (null: "Add"), onPress, divided, flush
  */
-export default function DetailRow({ label, value, onPress, divided = false }) {
+export default function DetailRow({ label, value, onPress, divided = false, flush = false }) {
   const empty = value == null || value === '';
   return (
     <Pressable
@@ -26,7 +29,7 @@ export default function DetailRow({ label, value, onPress, divided = false }) {
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${empty ? 'not recorded' : value}`}
       accessibilityHint={empty ? 'Add' : 'Change'}
-      style={({ pressed }) => [styles.row, divided && styles.divided, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.row, flush && styles.flush, divided && styles.divided, pressed && styles.pressed]}>
       <Text variant="detailLabel" color="secondary" numberOfLines={1} style={styles.label}>
         {label}
       </Text>
@@ -48,6 +51,9 @@ const styles = StyleSheet.create({
     gap: space[12],
     paddingVertical: spacing.inset.listRow.v,
     paddingHorizontal: spacing.inset.listRow.h,
+  },
+  flush: {
+    paddingHorizontal: 0,
   },
   divided: {
     borderTopWidth: shape.borderWidth.divider,

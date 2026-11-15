@@ -1030,38 +1030,18 @@ Padding is `inset.control` (the source's 13 / 16 folds to it) and the gap is `sp
 
 ~~**Intro line per mode (2026-10-05)**~~ (superseded by the Required bar, 2026-10-18): the line under the header changes with the mode. I made it is 5a verbatim ("Marked fields are required — all of them start pre-filled.") and Packaged is 5e with one word changed ("Packaged cups skip brewing and café — two fields left."; the mock says "Bottled", see `drift.md` D-14). No mock has a Barista line, because 5d replaces it with the error summary. Barista's line was **written to 5e's pattern** (what the mode skips, then how many fields are left): "Cups made for you skip beans and brewing — two fields left." Every line names the cup by who made it, matching the "Who made it?" field, not by its vessel or where it came from ("Café cups" was rejected on review). The line **crossfades** with `motion.expand` (same duration and bezier as the field block), the outgoing line laid over the incoming one, inside the same height-animating wrapper. At 390pt I made it's and Packaged's lines fit one line; Barista's wraps to two since the intro became a block with padding (2026-10-11), and the block eases to the new height. (A bug cut it to one line instead: ExpandingBlock measured its content against the animated height; fixed 2026-10-11.)
 
-### Option slider and "About the coffee" (base `OptionSlider`, `RoastLevel`, `AboutCoffee`; Turn 31, 32a–32d, 2026-11-14)
-A bag's roast level, set in place (it replaced 31g's list row and sheet the same day). "About the coffee" is one 2px `border.container` frame on raised under a `label.eyebrow` muted label (`gap.row` between), on 19a under the status; Roast level is its first row, padded 12 / 16 all round (32a: 8 under the legend; Uryu on device, 2026-11-14, it read heavier at the foot: the eyebrow's line box leaves about 2 over its capitals, the flames almost none under them). On 3c the same row sits in the form card under Roaster (32c). One control for roast everywhere (D-73).
+### A bag's facts in Details (`useBagFacts`, `DetailRow`; 31g, 32e / 32f; Uryu, 2026-11-15)
+Roast level, Origin, Region and Process are rows in the bag form's Details card, **under Roaster**, on 19a and 3c alike: one Details, no separate "About the coffee" block, and no slider (32a's roast slider and the block were dropped on Uryu's call, 2026-11-15).
 
 | part | value |
 |---|---|
-| title | "Roast level", `label.eyebrow` muted, on its own line, the same as the bag form's field labels (Bean name, Roaster; Uryu 2026-11-14; 32a: 14 / 600). One line would leave the track 113 at 402, 86 at 375 |
-| track | fills the line: `size.axis.rail` (28), 2px **`border.muted`** frame on raised; one 2 × 10 **tick** per option in `divider.hairlineStrong`. 200 at 402 (stops 57 apart), 187 at 390, 173 at 375 (48). Touch band 44 |
-| handle | 20 square, **ink**, no frame, `surface.raised` grip: §1's "chosen from options" |
-| word | `size.option.word` (84), **left-aligned** `space[8]` after the track, so the gap is the same for every word (Uryu 2026-11-14; 32a right-aligns it); `textStyle.axisLabel` ink: LIGHT … DARK, following the handle while dragging (MEDIUM-DARK 79, ミディアムダーク 83). The ✕ stays at the line's end |
-| ✕ | `ClearButton` square, `space[6]` after the word; its column kept when empty so the track never jumps |
-| legend | under the track's two ends: `flameLight` left, `flameDark` right, `icon.legend` (14 at 2), `text.muted`, no words |
-| not recorded | **no handle at all**; "Not recorded" on a raised patch over the track (`textStyle.axisEmpty`, `text.placeholder`, as "Not noted yet"); the word column empty |
+| row | `DetailRow` `flush` (the card pads it): label `textStyle.detailLabel` (14 / 600, `text.secondary`), the value in `label` ink, "Add" in `textStyle.detailEmpty` (15 / 500, `text.muted`) when empty, the shared chevron; a 1.5 hairline between rows; the whole row opens its sheet |
+| Roast level | 31g's sheet as a `ChoiceSheet`: the four levels light → dark (D-74), the flame pair as its legend (`flameLight` at "Lighter", `flameDark` at "Darker", `icon.lg` ink, `label.eyebrow` muted), no search, no free text, Clear empties it |
+| Origin, Region, Process | as §9 Choice sheet: Origin searchable with free text on no match; Region scoped by Origin, free text always, a listed region picked with no origin sets origin too; Process the five values |
 
-- **Not a sixth taste axis** (`component.option`): ink handle not brown, four ticks not dots, the quiet frame, a word not a number, no axis colour, among bag details, never in Taste DNA.
-- **Feel**: `useStopSlider`, shared with the tasting slider: drag anywhere on the track, a tap sets the nearest stop, a selection haptic at every stop; ✕ clears to not recorded.
-- **Saving**: on 19a a change or a clear joins the Save bar's edits; on 3c it is written on add. Saving rewrites the cups' `bean_roast_level` copies (the copy rule).
-- **Origin, Region, Process** (4c, 32e / 32f): `DetailRow`s under Roast level, a hairline above each — label `textStyle.detailLabel` (14 / 600, `text.secondary`), the value in `label` ink, "Add" in `textStyle.detailEmpty` (15 / 500, `text.muted`) when empty, the shared chevron — each opening a `ChoiceSheet` hosted at the screen's root (`useAboutCoffee` → block + sheets). On 3c the three rows are an "About the coffee" block under the form (Roast level stays in the form, 32c). Region is scoped by Origin; a listed region picked with no origin sets origin too.
-- The block holds two label styles: Roast level's title is `label.eyebrow` (Uryu, as the form's labels) and the rows' labels are 14 / 600 (32a's list rows). To settle with Design.
-
-### Save bar (`SaveBar`; Design Round 15, 19b; redrawn Turn 31, 32a, 2026-11-14)
-Every page that edits in place: 19a (the bag), 3e (the gear), 11a (the cup). Absent until the first edit, pinned at the foot outside the scroll; it rises over `motion.expand` (height first, fade from halfway) and leaves the same way when every edit is reverted. The page above shrinks with it, so nothing is covered.
-
-| part | value |
-|---|---|
-| panel | raised, a box-wide 2px `border.container` rule on top, `space[14]` over its content, `layout.gutter` at the sides, the home indicator's inset under it (at least `layout.screen.bottom`) |
-| row | one line, `justify: space-between` |
-| count | left: "1 change" / "3 changes", `textStyle.saveCount` (13 / 600, tabular), `text.secondary`. **One per field that differs from what is stored**, counted by the page (11a: bag, brewer, grinder, time, product, café, drink, My words; 19a: name, roaster, roasted on, best before, process, roast level, opened on; 3e: name, maker, default). It shows the last count while leaving, never "0 changes" |
-| button | right: `Button` primary, size `bar`: 44 tall, sized to its label (`textStyle.buttonCapsBar`, 14 / 700 caps .06em), `shadow.floating` |
-| note | optional, under the row: `bodySmTabular`, `text.secondary` — 19a / 3e's "Applies to the N cups already logged …" |
-
-- 32a draws no note. It stays because the save rewrites past cups' copies, which the user should know before pressing (D-76).
-- 32a's button padding is 18, off the spacing scale; it takes `inset.control.h` (16).
+- **Not a sixth taste axis**: a word in a list row, never in the Taste DNA card.
+- **Saving**: on 19a every change or clear joins the Save bar (a region that sets its origin is two); on 3c the facts are written on add. Saving rewrites the cups' copies (`bean_roast_level`, `bean_origin`, `bean_region`, `bean_process`).
+- The sheets are hosted at the screen's root (`useBagFacts` → `{ rows, sheets }`); `BagForm` draws the rows as `facts` under Roaster.
 
 ### Choice sheet (`ChoiceSheet`, `TextLink`; Turn 31, 32e / 32f, 2026-11-14)
 One value for a bag's fact — Origin, Region, Process — from lists, by search, or as written. **One component, driven by data**: the three are configurations (brief 4b). `ChoiceSheetBody` is the content alone (the dev harness draws its states inline).
@@ -1509,3 +1489,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-11-14 — The roast level row's foot: the legend line's spacers kept the ✕'s 24 height (the line was 10 taller than its flames) and the row now pads 12 under the legend as over the title (32a: 8). Measured at 390: 14.4 over the title's capitals, 13 under the flames (was about 14 / 18).
 - 2026-11-14 — §9 Choice sheet (4b, 32e / 32f): one data-driven sheet for Origin, Region and Process (title + Clear, optional scope, optional search with word-start matching, one or two lists with an ink check on the current value, free text when no match or always). New `TextLink` (base). Tokens: `textStyle.sheetNote` (13 / 500), `textStyle.textLink` (13 / 600), `size.choiceRow` (48; 32e's 10 padding folds to the list rows' 12).
 - 2026-11-14 — 4c: Origin, Region and Process in "About the coffee" (19a under Roast level; 3c as a block under the form) with their choice sheets; Process leaves 3c / 3g's form (its chips, 2026-11-08). `DetailRow` (base) back, with `textStyle.detailLabel` / `detailEmpty`. ChoiceSheet: the search field gets a row of its own (SearchField grows to fill its row; in a column it stretched or collapsed with the list). Measured: the roast track is 173 at 375 (stops 48.3), 187 at 390 (53), 227 at 430 (66.3).
+- 2026-11-15 — Roast level is a row and 31g's sheet again, not 32a's slider, and "About the coffee" is folded into Details: Roast level, Origin, Region and Process are rows under Roaster on 19a and 3c (Uryu). `ChoiceSheet` gains a `legend` slot (the flame pair); `DetailRow` gains `flush`; `useAboutCoffee` becomes `useBagFacts` (rows + sheets). Removed with the slider: `OptionSlider`, `RoastLevel`, `component.option`, `size.option`, `icon.legend` (`useStopSlider` stays, the tasting slider's). D-73, D-74, D-77, D-78.

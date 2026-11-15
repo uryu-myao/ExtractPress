@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Keyboard, StyleSheet, View } from 'react-native';
-import { useAboutCoffee } from '../components/AboutCoffee';
+import { useBagFacts } from '../components/BagFacts';
 import BagForm from '../components/BagForm';
 import DateSheet from '../components/DateSheet';
 import PhotoSheet from '../components/PhotoSheet';
@@ -12,7 +12,7 @@ import { useDatabase } from '../data/DatabaseProvider';
 import { deletePhoto, dropPhoto, keepPhoto } from '../data/photos';
 import { startOfDay } from '../constants/dates';
 import { OPEN_BAG_LIMIT, countCups, countOpenBags, getBagDateKind, insertBag, setBagDateKind } from '../data/repository';
-import { space, spacing } from '../theme/tokens';
+import { spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
@@ -61,11 +61,10 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
   const [nameMissing, setNameMissing] = useState(false);
   const [open, setOpen] = useState(null);
   const [firstCup, setFirstCup] = useState(false);
-  // Origin, Region and Process (32e / 32f), under the form; Roast level is in the form (32c).
-  const about = useAboutCoffee({
-    value: { origin: form.origin, region: form.region, process: form.process },
+  // Roast level, Origin, Region, Process: rows in the form under Roaster, written on add.
+  const about = useBagFacts({
+    value: { roastLevel: form.roastLevel, origin: form.origin, region: form.region, process: form.process },
     onChange: (patch) => setForm((f) => ({ ...f, ...patch })),
-    roast: false,
   });
   // A prepared photo (data/photos.ts), not kept until the bag is added.
   const [photo, setPhoto] = useState(null);
@@ -170,8 +169,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
               setPicking(true);
             },
           }}
-          // 32c: Roast level under Roaster, set in place; untouched it is not recorded. Written on add.
-          roast={{ value: form.roastLevel, onChange: (roastLevel) => setForm((f) => ({ ...f, roastLevel })) }}
+          facts={about.rows}
           photo={{
             uri: photo?.uri ?? null,
             onPress: () => {
@@ -180,7 +178,6 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
             },
           }}
         />
-        <View style={styles.about}>{about.block}</View>
       </ScreenFrame>
       {about.sheets}
       <PhotoSheet
@@ -235,9 +232,5 @@ const styles = StyleSheet.create({
   },
   firstCup: {
     marginBottom: spacing.gap.section,
-  },
-  // 19a's rhythm between blocks (space.20).
-  about: {
-    marginTop: space[20],
   },
 });

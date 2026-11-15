@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Keyboard, Pressable, StyleSheet, View } from 'react-native';
-import { useAboutCoffee } from '../components/AboutCoffee';
+import { useBagFacts } from '../components/BagFacts';
 import BagForm from '../components/BagForm';
 import BeanFreshness from '../components/BeanFreshness';
 import { bagDatesLine } from '../constants/bagDates';
@@ -40,10 +40,11 @@ import ScreenFrame from './ScreenFrame';
  *              2026-11-14 (Uryu): Details below has it, editable.
  *   photo      in the status block, in 3c's photo slot frame (2px ink), so
  *              it reads as editable (Uryu, 2026-11-14)
- *   about      "About the coffee" (31g, 32a–32f): Roast level set in place,
- *              then Origin, Region and Process as rows with their sheets
- *              (useAboutCoffee). A change or a clear is an edit for the Save
- *              bar; a region that sets its origin is two.
+ *   facts      Roast level, Origin, Region, Process: rows in Details under
+ *              Roaster with their sheets (useBagFacts; Uryu, 2026-11-15:
+ *              one Details, no "About the coffee" block). A change or a
+ *              clear is an edit for the Save bar; a region that sets its
+ *              origin is two.
  *   status     the photo, then beanFreshness
  *              stacked (19a: the day and state over the bar) from the roast
  *              date being edited, and "Roasted Mar 30 ·
@@ -212,8 +213,8 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   // The line under the status (Design Round 27, 29b): "Roasted Mar 30 · opened
   // Apr 6 · best before Sep 30"; best-before only: "Best before Oct 1, 2027 ·
   // opened Apr 6" (· "12 days ago" once passed).
-  // 31g / 32a–32f: Roast level, Origin, Region, Process. Every change joins the Save bar.
-  const about = useAboutCoffee({
+  // Roast level, Origin, Region, Process (31g, 32e / 32f): rows in Details under Roaster. Every change joins the Save bar.
+  const about = useBagFacts({
     value: { roastLevel: form.roastLevel, origin: form.origin, region: form.region, process: form.process },
     onChange: (patch) => setForm((f) => ({ ...f, ...patch })),
   });
@@ -276,9 +277,6 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
               </View>
             </View>
 
-            {/* 31g / 32a: facts printed on the bag, under the status. A change or a clear joins the Save bar's edits, as the details do. */}
-            {about.block}
-
             {cups ? (
               <ItemCups
                 cups={cups}
@@ -302,6 +300,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
                 }}
                 nameMissing={nameMissing}
                 autoFocusName={false}
+                facts={about.rows}
                 // Design Round 27 (29b): an empty date reads "Add".
                 roastedPlaceholder="Add"
                 roastedHint={roastedHint}

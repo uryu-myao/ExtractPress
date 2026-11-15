@@ -718,7 +718,7 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
 /**
  * Every bag's origin and region, finished bags too: what the Origin and
  * Region sheets list under "From my bags" (32e / 32f), grouped and counted
- * by the caller (AboutCoffee).
+ * by the caller (useBagFacts).
  */
 export async function listBagFacts(db: SQLiteDatabase): Promise<{ origin: string | null; region: string | null }[]> {
   return db.getAllAsync('SELECT origin, region FROM bags WHERE origin IS NOT NULL OR region IS NOT NULL');
