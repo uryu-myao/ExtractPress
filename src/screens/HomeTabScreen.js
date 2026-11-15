@@ -190,13 +190,15 @@ const styles = StyleSheet.create({
     // (Design Round 23: the band plus space.20).
     paddingBottom: space[20],
   },
-  // space.2 under it (Round 14, was 14), so "Recently sipped" and the
-  // shelf's tabs sit the same distance from their rows.
+  // The heading about 14 over the first row's divider, as the shelf tabs'
+  // labels over their line (Uryu, 2026-11-15: the two headings the same
+  // distance from their lines; was space.2, about 6). Centred, so "See all"
+  // (its chevron a little taller than the caps) shares the heading's line.
   recentHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.gap.section,
-    paddingBottom: space[2],
+    paddingBottom: space[12],
   },
 });
