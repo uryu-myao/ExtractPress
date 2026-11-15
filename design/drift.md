@@ -94,6 +94,7 @@ Source: `ExtractPress-design.dc.html` · 30 screens · 2026-09-20.
 | D-77 | Superseded (2026-11-15) | 32a–32d | the roast level slider row | — | the slider is gone (D-73) | Its title / word / padding adjustments went with it |
 | D-78 | Active (code, 2026-11-15) | 31g, 32a, 32c; 3c, 3g | the bag's facts | 31g / 32a: an "About the coffee" block under the status on 19a; 3c: Origin · Process folded in one line, 3g Process as chips | **Roast level, Origin, Region, Process as rows in Details, under Roaster, on 19a and 3c**; no "About the coffee" block; the Process chips gone | Uryu, 2026-11-15: one Details for everything about the bag. Region's no-origin placeholder "Search every region" is ours (32f draws it typed) |
 | D-79 | Active (code, Uryu on device, 2026-11-15; a trial) | 1b (Home) | "Recently sipped" | display.sm (serif, 30) | **label.caps, ink**: the shelf's open tab's style (MY GEAR) | Home's two list blocks head alike; the serif title outweighed the tabs below it. To tell Design |
+| D-80 | Active (code, Uryu on device, 2026-11-15) | 1b (Home), 17a / 17b | the lines under "Recently sipped" and under the shelf's tabs | a hairline under each heading, over the first row | **no lines**: room alone (about 32–39 over a heading, about 20 under it); the open tab's ink underline stays | Home's blocks read by spacing; the lines added a layer the headings didn't need. Records, Search and Gear & beans keep theirs. To tell Design |
 
 ## Not drift — recorded so they are not "fixed" by mistake
 

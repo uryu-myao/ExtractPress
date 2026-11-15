@@ -46,7 +46,8 @@ import ScreenFrame from './ScreenFrame';
  *     the hidden line with Undo until Home is left; the next suggestion, or
  *     none, shows when Home is shown again.
  *   - "Recently sipped" (label.caps, ink: the shelf's open tab's style, Uryu
- *     2026-11-15; was display.sm) with "See all ›" (to Records; the ›
+ *     2026-11-15; was display.sm) — no divider under it, room alone sets the
+ *     block apart — with "See all ›" (to Records; the ›
  *     since Design Round 15, B4, as the shelf's action) and the three
  *     latest cups as list rows (title, mode badge, rating, date) → their 2c
  *   - My gear / My beans (Round 14, 17a / 17b: three rows a side, swiped
@@ -142,17 +143,16 @@ export default function HomeTabScreen() {
             <TasteDnaCard dna={data.dna} onStampPress={() => requestDnaInfo(data.dna)} onOpen={() => push('dna')} />
             {tryNext ? <TryNextCard suggestion={tryNext} hidden={dismissed != null} onDismiss={() => dismiss(tryNext)} onUndo={undo} /> : null}
             {data.recent.length ? (
-              <View>
+              <View style={styles.recent}>
                 <View style={styles.recentHead}>
                   <Text variant="labelCaps" color="primary">
                     Recently sipped
                   </Text>
                   <Button variant="text" label="See all" trailingIcon="chevronRight" onPress={() => requestShell({ tab: 'records' })} />
                 </View>
-                {data.recent.map((cup, i) => (
+                {data.recent.map((cup) => (
                   <RecordRow
                     key={cup.id}
-                    first={i === 0}
                     title={cupTitle(cup).title}
                     badges={[MODE_BADGE[cup.mode]]}
                     rating={cup.rating}
@@ -190,15 +190,26 @@ const styles = StyleSheet.create({
     // (Design Round 23: the band plus space.20).
     paddingBottom: space[20],
   },
-  // The heading about 14 over the first row's divider, as the shelf tabs'
-  // labels over their line (Uryu, 2026-11-15: the two headings the same
-  // distance from their lines; was space.2, about 6). Centred, so "See all"
-  // (its chevron a little taller than the caps) shares the heading's line.
+  // Home's titled blocks (Recently sipped, the shelf) are set apart by room
+  // alone, no dividers (Uryu, 2026-11-15): about 32–35 above a heading,
+  // about 20 between a heading and its rows, so each heading reads as its
+  // block's. Recently sipped: space.8 more above it than the body's 20; and
+  // it hands back its last row's 12 of padding, since the shelf's tabs
+  // already bring their own room (their 44 touch band, about 15 over the
+  // caps). Measured at 430: 32 over Recently sipped, about 35 over My gear.
+  recent: {
+    marginTop: space[8],
+    marginBottom: -spacing.inset.listRow.v,
+  },
+  // space.4 under the heading, then the first row's own 12: about 18 from
+  // the caps to the first thumbnail, as the shelf's tabs to their first row.
+  // Centred, so "See all" (its chevron a little taller than the caps)
+  // shares the heading's line.
   recentHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.gap.section,
-    paddingBottom: space[12],
+    paddingBottom: space[4],
   },
 });

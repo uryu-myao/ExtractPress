@@ -30,8 +30,8 @@ import Text from './base/Text';
  * Three rows a side, all alike (68: the 44 thumbnail and space.12 above and
  * below): thumbnail, name (label, one line: §3.1's shelf exception, Design
  * Round 15, B3) over one line (bodySm, muted), and a status
- * column at the right. Only the first row has a rule over it
- * (divider.hairline, the divider), which the open tab's underline lands on.
+ * column at the right. No rule over the first row (Uryu, 2026-11-15): room
+ * alone sets the rows under the tabs; the open tab's underline stays.
  * Pressable (Uryu, 2026-10-28; Round 15 B3 had them open nothing): a bean
  * row opens its bag page (3g, 19a), a gear row its page (3e, 19c). The row
  * darkens while pressed (state.pressed.row); no chevron (Design Round 16,
@@ -195,12 +195,12 @@ function Row({ first, name, badge, meta, status, photo, onPress }) {
 }
 
 /**
- * An empty side's add button, under the same rule and in the same room as a
- * first row (on device, 2026-10-30): without them the button's frame sat
- * right under the tabs and the open tab's underline ran into it.
+ * An empty side's add button, in the same room as a first row (on device,
+ * 2026-10-30): without it the button's frame sat right under the tabs and
+ * the open tab's underline ran into it.
  */
 function EmptySide({ children }) {
-  return <View style={[styles.rowFirst, styles.empty]}>{children}</View>;
+  return <View style={[styles.empty, styles.rowFirst]}>{children}</View>;
 }
 
 /**
@@ -262,9 +262,11 @@ const styles = StyleSheet.create({
     gap: space[12],
     paddingVertical: spacing.inset.listRow.v,
   },
+  // No rule over the first row (Uryu, 2026-11-15: Home's blocks set apart by
+  // room alone): a shorter top padding instead, so the rows sit about 18
+  // under the tabs' caps, past the open tab's underline (as Recently sipped).
   rowFirst: {
-    borderTopWidth: shape.borderWidth.divider,
-    borderTopColor: color.divider.hairline,
+    paddingTop: space[6],
   },
   rowPressed: {
     backgroundColor: state.pressed.row,
