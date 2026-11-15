@@ -124,9 +124,9 @@ function MadeItFields({ defaults, onAddBag, onAddGear, onPick }) {
           <FieldRow swatch label="Bag" value="Add a bag" placeholder onPress={onAddBag} />
         )}
         {method ? (
-          <FieldRow divided label="Method" value={method} meta={brewer?.is_default ? 'Your default brewer' : undefined} onPress={() => onPick('gear')} />
+          <FieldRow label="Method" value={method} meta={brewer?.is_default ? 'Your default brewer' : undefined} onPress={() => onPick('gear')} />
         ) : (
-          <FieldRow divided label="Method" value="Add gear" placeholder onPress={onAddGear} />
+          <FieldRow label="Method" value="Add gear" placeholder onPress={onAddGear} />
         )}
       </View>
     </Section>
@@ -167,9 +167,9 @@ function BaristaFields({ cafe, drink, onPickCafe, onPickDrink, missing }) {
           />
         )}
         {drink.name ? (
-          <FieldRow divided label="Drink" value={drink.name} meta={drink.prefilled ? 'What you ordered here last time' : undefined} onPress={onPickDrink} />
+          <FieldRow label="Drink" value={drink.name} meta={drink.prefilled ? 'What you ordered here last time' : undefined} onPress={onPickDrink} />
         ) : (
-          <FieldRow divided label="Drink" value="Add a drink" placeholder onPress={onPickDrink} />
+          <FieldRow label="Drink" value="Add a drink" placeholder onPress={onPickDrink} />
         )}
       </View>
     </Section>

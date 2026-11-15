@@ -303,9 +303,9 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
                     <FieldRow swatch label="Bag" value="No bag noted" placeholder onPress={() => setSheet('bag')} />
                   )}
                   {method ? (
-                    <FieldRow divided label="Method" value={method} onPress={() => setSheet('gear')} />
+                    <FieldRow label="Method" value={method} onPress={() => setSheet('gear')} />
                   ) : (
-                    <FieldRow divided label="Method" value="No gear noted" placeholder onPress={() => setSheet('gear')} />
+                    <FieldRow label="Method" value="No gear noted" placeholder onPress={() => setSheet('gear')} />
                   )}
                 </View>
               </Section>
@@ -340,7 +340,6 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
                       is stored yet (todo.md T-15); no distance or visit count. */}
                   <FieldRow icon="pin" label="Café" value={cafe?.name ?? 'No café noted'} placeholder={!cafe} onPress={() => setSheet('cafe')} />
                   <FieldRow
-                    divided
                     label="Drink"
                     value={drinkType ?? 'No drink noted'}
                     placeholder={!drinkType}

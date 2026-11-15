@@ -12,7 +12,8 @@ import DetailRow from './base/DetailRow';
  * A bag's facts as printed on it — Roast level, Origin, Region, Process —
  * as rows in the bag form's Details, under Roaster (Uryu, 2026-11-15: one
  * Details, no separate "About the coffee" block). On 19a and 3c alike: each
- * a DetailRow (flush, a hairline between) opening a ChoiceSheet.
+ * a DetailRow (flush, no divider between: selection rows, as Profile's)
+ * opening a ChoiceSheet. Origin's row shows its flag before the name.
  *
  * NONE OF THEM IS A TASTE AXIS (data-model.md "Roast is not a taste axis"):
  * a word in a list row, never in the Taste DNA card.
@@ -170,15 +171,15 @@ export function useBagFacts({ value, onChange }) {
 
   const factRows = [
     { field: 'roastLevel', label: 'Roast level', shown: value.roastLevel ? ROAST_LABEL[value.roastLevel] : null },
-    { field: 'origin', label: 'Origin', shown: origin },
+    { field: 'origin', label: 'Origin', shown: origin, flag: originFlag(origin) },
     { field: 'region', label: 'Region', shown: value.region ?? null },
     { field: 'process', label: 'Process', shown: value.process ? PROCESS_LABEL[value.process] : null },
   ];
 
   const rows = (
     <View>
-      {factRows.map((r, i) => (
-        <DetailRow key={r.field} label={r.label} value={r.shown} divided={i > 0} flush onPress={() => show(r.field)} />
+      {factRows.map((r) => (
+        <DetailRow key={r.field} label={r.label} value={r.shown} flag={r.flag} flush onPress={() => show(r.field)} />
       ))}
     </View>
   );

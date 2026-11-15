@@ -13,15 +13,18 @@ import Text from './Text';
  *            weight as "Mar 30"
  *   empty    "Add" in textStyle.detailEmpty (15 / 500), text.muted: nothing
  *            recorded
- *   divided  the 1.5 divider.hairline above every row after the first
+ *   divided  a divider above the row. Selection rows go WITHOUT (Uryu,
+ *            2026-11-15: as Profile's rows, padding alone sets them apart)
+ *   flag     optional emoji before the value (Origin: the country's flag,
+ *            flags.js), textStyle.flag
  *   padding  spacing.inset.listRow (12 / 16); pressed: state.pressed.row
  *
  *   flush    no side padding: rows inside a card that pads them already (the
  *            bag form's Details, under Roaster; Uryu, 2026-11-15)
  *
- * Props: label, value (null: "Add"), onPress, divided, flush
+ * Props: label, value (null: "Add"), onPress, divided, flush, flag
  */
-export default function DetailRow({ label, value, onPress, divided = false, flush = false }) {
+export default function DetailRow({ label, value, onPress, divided = false, flush = false, flag }) {
   const empty = value == null || value === '';
   return (
     <Pressable
@@ -34,6 +37,11 @@ export default function DetailRow({ label, value, onPress, divided = false, flus
         {label}
       </Text>
       <View style={styles.end}>
+        {flag && !empty ? (
+          <Text variant="flag" color="primary" importantForAccessibility="no-hide-descendants">
+            {flag}
+          </Text>
+        ) : null}
         <Text variant={empty ? 'detailEmpty' : 'label'} color={empty ? 'muted' : 'primary'} numberOfLines={1} style={styles.value}>
           {empty ? 'Add' : value}
         </Text>

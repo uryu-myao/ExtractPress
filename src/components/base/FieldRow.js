@@ -9,8 +9,9 @@ import Text from './Text';
  * A tappable field inside a bordered group: [swatch] label / value / meta [chevron].
  * Source: 5a (Beans, Method, Café, Drink, Brand, Package rows), 5d (error row).
  *
- * Rows stack inside a 2px-outlined card; every row after the first sets
- * `divided` to draw the one hairline tier between them.
+ * Rows stack inside a 2px-outlined card. Pressable rows go WITHOUT dividers
+ * (Uryu, 2026-11-15: selection rows as Profile's, padding alone sets them
+ * apart); `divided` draws the divider only for read-only rows (2c).
  *
  * Props
  *   label     eyebrow (fixed copy)
@@ -19,7 +20,7 @@ import Text from './Text';
  *   swatch    show the 46px thumbnail frame
  *   photo     a photo's id for the swatch (data/photos.ts); the placeholder without one
  *   icon      Glyph name drawn inside the swatch (implies `swatch`)
- *   divided   hairline above the row
+ *   divided   the divider above the row (read-only rows only)
  *   error     5d missing-field state: dashed swatch with a plus, error-toned text
  *   placeholder  the value is an invitation, not a value ("Add a bag" when the
  *             shelf is empty): `text.placeholder`, as every placeholder
