@@ -164,13 +164,15 @@ const styles = StyleSheet.create({
   axes: {
     marginTop: spacing.gap.section,
   },
+  // Down to the frame, the card's gap.row above it and no margin of its own:
+  // the label sits in the middle of a size.tapTarget (44) row, about 14 over
+  // the frame (the card's top padding) and 22 under the last axis. Uryu,
+  // 2026-11-15: was gap.section over a 58 row, about 41 / 21, which left
+  // the card's foot empty.
   open: {
-    marginTop: spacing.gap.section,
-    minHeight: size.tapTarget + spacing.inset.container.v,
+    minHeight: size.tapTarget,
     marginHorizontal: -spacing.inset.container.h,
     paddingHorizontal: spacing.inset.container.h,
-    // Down to the frame, with no padding of its own: the label sits in the
-    // middle of the fill, as much room over it as under it.
     marginBottom: -spacing.inset.container.v,
     flexDirection: 'row',
     alignItems: 'center',
