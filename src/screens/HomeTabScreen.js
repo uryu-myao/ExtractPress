@@ -45,7 +45,8 @@ import ScreenFrame from './ScreenFrame';
  *     one (TryNextCard; the rules in data/tryNext.ts). "Not for me" leaves
  *     the hidden line with Undo until Home is left; the next suggestion, or
  *     none, shows when Home is shown again.
- *   - "Recently sipped" (display.sm) with "See all ›" (to Records; the ›
+ *   - "Recently sipped" (label.caps, ink: the shelf's open tab's style, Uryu
+ *     2026-11-15; was display.sm) with "See all ›" (to Records; the ›
  *     since Design Round 15, B4, as the shelf's action) and the three
  *     latest cups as list rows (title, mode badge, rating, date) → their 2c
  *   - My gear / My beans (Round 14, 17a / 17b: three rows a side, swiped
@@ -143,12 +144,10 @@ export default function HomeTabScreen() {
             {data.recent.length ? (
               <View>
                 <View style={styles.recentHead}>
-                  <Text variant="displaySm" color="primary">
+                  <Text variant="labelCaps" color="primary">
                     Recently sipped
                   </Text>
-                  <View style={styles.seeAll}>
-                    <Button variant="text" label="See all" trailingIcon="chevronRight" onPress={() => requestShell({ tab: 'records' })} />
-                  </View>
+                  <Button variant="text" label="See all" trailingIcon="chevronRight" onPress={() => requestShell({ tab: 'records' })} />
                 </View>
                 {data.recent.map((cup, i) => (
                   <RecordRow
@@ -199,13 +198,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.gap.section,
     paddingBottom: space[2],
-  },
-  // Optical (on device, 2026-10-18): centred on the title's box, the caps
-  // read high beside a mostly lowercase serif. Its cap centre sits 0.5 under
-  // the title's cap centre but 2.7 over its x-height centre (Instrument Serif
-  // 30, iOS natural box: 18.9 / 22.1 from the top); space.2 lowers it between
-  // the two, near the x-height.
-  seeAll: {
-    transform: [{ translateY: space[2] }],
   },
 });
