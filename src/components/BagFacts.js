@@ -1,14 +1,11 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { PROCESS_OPTIONS, ROAST_LEVELS } from '../constants/cups';
 import { ORIGINS, originOf, REGIONS, regionsOf } from '../constants/origins';
 import { useDatabase } from '../data/DatabaseProvider';
 import { listBagFacts } from '../data/repository';
-import { color, icon, spacing } from '../theme/tokens';
 import ChoiceSheet from './ChoiceSheet';
 import DetailRow from './base/DetailRow';
-import Glyph from './base/Glyph';
-import Text from './base/Text';
 
 /**
  * A bag's facts as printed on it — Roast level, Origin, Region, Process —
@@ -19,10 +16,9 @@ import Text from './base/Text';
  * NONE OF THEM IS A TASTE AXIS (data-model.md "Roast is not a taste axis"):
  * a word in a list row, never in the Taste DNA card.
  *
- *   Roast level  31g's sheet: the four levels light → dark, the flame pair
- *            as its legend (the light flame at "Lighter", the dark at
- *            "Darker"), no search, no free text; Clear empties it. (32a's
- *            slider was dropped the same week, on Uryu's call.)
+ *   Roast level  31g's sheet: the four levels light → dark, no legend (Uryu,
+ *            2026-11-15: the list's order says it), no search, no free text;
+ *            Clear empties it. (32a's slider was dropped the same week.)
  *   Origin   From my bags (the origins on my bags, with counts, most first)
  *            and All origins (origins.json, A–Z); search; free text when
  *            nothing matches
@@ -155,22 +151,6 @@ export function useBagFacts({ value, onChange }) {
 
   const roastSheet = {
     title: 'Roast level',
-    legend: (
-      <View style={styles.legend} importantForAccessibility="no-hide-descendants">
-        <View style={styles.legendEnd}>
-          <Glyph name="flameLight" token={icon.lg} color={color.text.primary} />
-          <Text variant="labelEyebrow" color="muted">
-            Lighter
-          </Text>
-        </View>
-        <View style={styles.legendEnd}>
-          <Text variant="labelEyebrow" color="muted">
-            Darker
-          </Text>
-          <Glyph name="flameDark" token={icon.lg} color={color.text.primary} />
-        </View>
-      </View>
-    ),
     sections: [{ items: ROAST_LEVELS.map((r) => ({ key: r.value, label: r.label })) }],
     selected: value.roastLevel ?? null,
     onPick: (next) => onChange({ roastLevel: next }),
@@ -211,16 +191,3 @@ export function useBagFacts({ value, onChange }) {
 
   return { rows, sheets };
 }
-
-const styles = StyleSheet.create({
-  legend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  legendEnd: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.gap.row,
-  },
-});

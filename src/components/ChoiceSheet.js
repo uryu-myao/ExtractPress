@@ -23,8 +23,6 @@ import TextLink from './base/TextLink';
  *            "Results" list: the pool's items whose name matches at the
  *            start of any word (matchWordStart), the typed part in ink, the
  *            rest text.muted; an alias match shows the name whole.
- *   legend   optional, under the header: what the list's order means
- *            (Roast level, 31g: the flame pair at Lighter … Darker)
  *   note     optional, under the field: a line and an action (Region with no
  *            origin: "Regions are listed by origin …" · Choose origin first)
  *   lists    one or two sections, each under a label.eyebrow, in one 2px
@@ -47,7 +45,7 @@ import TextLink from './base/TextLink';
  * when it searches).
  *
  * Props (body)
- *   title, scope, onClear, legend
+ *   title, scope, onClear
  *   search     { placeholder } | undefined
  *   sections   [{ label?, items: [{ key, label, meta?, aliases? }] }], shown
  *              before any typing (an empty section is left out); key is the
@@ -123,7 +121,7 @@ function List({ label, items, selected, onPick, hits }) {
   );
 }
 
-export function ChoiceSheetBody({ title, scope, onClear, legend, search, sections = [], pool, selected = null, onPick, free, note, initialQuery = '' }) {
+export function ChoiceSheetBody({ title, scope, onClear, search, sections = [], pool, selected = null, onPick, free, note, initialQuery = '' }) {
   const [query, setQuery] = useState(initialQuery);
   const q = tidy(query);
 
@@ -167,7 +165,6 @@ export function ChoiceSheetBody({ title, scope, onClear, legend, search, section
         </View>
         {onClear ? <TextLink label="Clear" accessibilityLabel={`Clear ${title}`} onPress={onClear} /> : null}
       </View>
-      {legend ?? null}
       {search ? (
         // SearchField grows to fill its row (it sits beside Back in SearchSheet): a row of its own keeps its height.
         <View style={styles.searchRow}>
