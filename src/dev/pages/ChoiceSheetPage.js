@@ -1,7 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 import { ChoiceSheetBody } from '../../components/ChoiceSheet';
 import { PROCESS_OPTIONS } from '../../constants/cups';
-import { ORIGINS, REGIONS, regionsOf } from '../../constants/origins';
+import { flagOf } from '../../constants/flags';
+import { ORIGINS, originFlag, REGIONS, regionsOf } from '../../constants/origins';
 import { color, shape, space, spacing } from '../../theme/tokens';
 import { HarnessCase, HarnessGroup, HarnessPage } from '../harness';
 
@@ -10,13 +11,14 @@ import { HarnessCase, HarnessGroup, HarnessPage } from '../harness';
  * inline on a raised panel (the sheet's own surface). Sample "From my bags".
  */
 const mine = (rows) => rows.map(([name, n]) => ({ key: name, label: name, meta: `${n} ${n === 1 ? 'bag' : 'bags'}` }));
-const ALL_ORIGINS = ORIGINS.map((o) => ({ key: o.name, label: o.name, aliases: o.aliases }));
+const ALL_ORIGINS = ORIGINS.map((o) => ({ key: o.name, label: o.name, aliases: o.aliases, flag: flagOf(o.iso2) }));
 const ORIGIN = {
   title: 'Origin',
+  flags: true,
   onClear: () => {},
   search: { placeholder: 'Search countries' },
   sections: [
-    { label: 'From my bags', items: mine([['Ethiopia', 3], ['Kenya', 2], ['Colombia', 1]]) },
+    { label: 'From my bags', items: [...mine([['Ethiopia', 3], ['Kenya', 2], ['Colombia', 1]]), ...mine([['Mystery lot', 1]])].map((i) => ({ ...i, flag: originFlag(i.label) })) },
     { label: 'All origins', items: ALL_ORIGINS },
   ],
   selected: 'Ethiopia',

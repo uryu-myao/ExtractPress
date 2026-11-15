@@ -27,6 +27,7 @@
  * process × flavour): extend these files, never a second copy.
  * Checked on every commit: npm run check:origins.
  */
+import { flagOf } from './flags';
 import ORIGINS_DATA from './origins.json';
 import REGIONS_DATA from './regions.json';
 
@@ -42,6 +43,9 @@ for (const o of ORIGINS) {
 
 /** The origins entry for a stored or typed name, through its aliases; undefined for a name not in the list. */
 export const originOf = (name) => (name ? BY_FOLDED.get(fold(name)) : undefined);
+
+/** The flag for a stored or typed origin name (through its aliases), or null for a name not in the list. */
+export const originFlag = (name) => flagOf(originOf(name)?.iso2);
 
 /** A country's bundled regions, in the file's order ([] for a country with none). */
 export const regionsOf = (country) => REGIONS.filter((r) => r.country === country);

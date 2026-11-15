@@ -274,6 +274,11 @@ export const textStyle = {
    * (§1: a text-only action is underlined). lineHeight UNDECLARED. 2026-11-14.
    */
   textLink:      { fontFamily: 'Archivo', fontSize: 13, fontWeight: '600' },
+  /**
+   * A country's flag emoji in the Origin sheet's rows (2026-11-15): 20 on a
+   * 24 line. Archivo has no emoji; the system's emoji font draws it.
+   */
+  flag:          { fontFamily: 'Archivo', fontSize: 20, fontWeight: '500', lineHeight: 24 },
   /** 5b's reading column (30b / 30c): the value entered, "3.5". 15 / 700, tabular so 3.5 and 4 line up. 2026-11-14. */
   axisReading:   { fontFamily: 'Archivo', fontSize: 15, fontWeight: '700', lineHeight: 15, fontVariant: ['tabular-nums'] },
   /** 5b's reading column when the axis is not assessed: "Not noted", 11 / 600 in text.muted (30a). lineHeight UNDECLARED. 2026-11-14. */
@@ -425,6 +430,11 @@ export const size = {
    * (32e draws 10, off the scale; every list row is 12).
    */
   choiceRow: 48,
+  /**
+   * The flag's slot at the front of an Origin sheet row: kept on every row,
+   * empty for a written origin with no code, so names never shift.
+   */
+  flagSlot: 24,
   /**
    * Home's shelf rows, the status column on the right (Round 14, 17a / 17b):
    * the mini freshness bar's width, and the column's least width. The column

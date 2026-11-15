@@ -2,6 +2,7 @@
 // the flat data Origin and Region's sheets and Try Next read. Run: npm run check:origins
 import { readFileSync } from 'node:fs';
 import { matchWordStart } from '../src/constants/match.js';
+import { flagOf } from '../src/constants/flags.js';
 
 type Origin = { name: string; iso2: string; aliases: string[] };
 type Region = { name: string; country: string; verify?: boolean };
@@ -52,6 +53,14 @@ regions.forEach((r, i) => {
   perCountry.set(r.country, seen);
 });
 for (const [country, set] of perCountry) if (set.size > 15) fail(`${country}: ${set.size} regions, the cap is 15`);
+
+// Flags: two regional indicators from the code; every origin has one.
+{
+  if (flagOf('ET') !== '\u{1F1EA}\u{1F1F9}') fail(`flag: ET → ${JSON.stringify(flagOf('ET'))}`);
+  if (flagOf('br') !== '\u{1F1E7}\u{1F1F7}') fail('flag: lower case not upper-cased');
+  for (const bad of ['', 'E', 'ETH', '12', null]) if (flagOf(bad as string) !== null) fail(`flag: ${JSON.stringify(bad)} should give null`);
+  for (const o of origins) if (Array.from(flagOf(o.iso2) ?? '').length !== 2) fail(`flag: ${o.name} (${o.iso2}) has none`);
+}
 
 // Word-start matching (the Origin / Region sheets, brief 4b).
 {

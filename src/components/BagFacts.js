@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { PROCESS_OPTIONS, ROAST_LEVELS } from '../constants/cups';
-import { ORIGINS, originOf, REGIONS, regionsOf } from '../constants/origins';
+import { flagOf } from '../constants/flags';
+import { ORIGINS, originFlag, originOf, REGIONS, regionsOf } from '../constants/origins';
 import { useDatabase } from '../data/DatabaseProvider';
 import { listBagFacts } from '../data/repository';
 import ChoiceSheet from './ChoiceSheet';
@@ -53,7 +54,7 @@ const fold = (s) => s.trim().toLocaleLowerCase('en');
 const PROCESS_LABEL = Object.fromEntries(PROCESS_OPTIONS.map((p) => [p.value, p.label]));
 const ROAST_LABEL = Object.fromEntries(ROAST_LEVELS.map((r) => [r.value, r.label]));
 const byName = (a, b) => a.label.localeCompare(b.label, 'en');
-const ALL_ORIGINS = ORIGINS.map((o) => ({ key: o.name, label: o.name, aliases: o.aliases }));
+const ALL_ORIGINS = ORIGINS.map((o) => ({ key: o.name, label: o.name, aliases: o.aliases, flag: flagOf(o.iso2) }));
 /** A region picked with no origin set carries its country in its key. */
 const SEP = '\u0000';
 const ALL_REGIONS = REGIONS.map((r) => ({ key: `${r.country}${SEP}${r.name}`, label: r.name, meta: r.country })).sort(byName);
@@ -98,9 +99,11 @@ export function useBagFacts({ value, onChange }) {
 
   const originSheet = {
     title: 'Origin',
+    // Flags in the sheet's lists only (the row on 19a shows the name alone).
+    flags: true,
     search: { placeholder: 'Search countries' },
     sections: [
-      { label: 'From my bags', items: mine(facts.map((f) => f.origin)) },
+      { label: 'From my bags', items: mine(facts.map((f) => f.origin)).map((i) => ({ ...i, flag: originFlag(i.label) })) },
       { label: 'All origins', items: ALL_ORIGINS },
     ],
     selected: origin,

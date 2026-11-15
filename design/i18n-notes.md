@@ -25,3 +25,7 @@ Both are recorded in `design-system.md` §11 (OQ-14):
 ## Word-start matching assumes spaces (2026-11-14)
 
 The Origin and Region sheets match a query at the start of any word (`src/constants/match.js`: "Rica" → Costa Rica), splitting words at spaces, hyphens, slashes and apostrophes. **ja and zh have no spaces**: when the country and region names are localised (V1.1 / V1.3, keyed by `origins.json`'s ISO code), those locales need substring matching instead (コスタリカ found by リカ). Not built.
+
+## Flag emoji on Android (2026-11-15)
+
+The Origin sheet shows each country's flag as a Unicode emoji built from its ISO code (`src/constants/flags.js`: two regional indicator symbols; no images, no network). iOS draws every pair as a flag. **Android's support is inconsistent: some versions draw the two letters ("ET") instead of the flag.** V1 is iOS only, so this is a note, not a problem. Revisit when Android lands (a check of the device's emoji support, or no flag there).

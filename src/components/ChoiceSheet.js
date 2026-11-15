@@ -33,6 +33,9 @@ import TextLink from './base/TextLink';
  *            ink check. A check, not RadioList's square: 32e and the brief
  *            draw it, and these are long, searched lists of names where the
  *            check marks the one in force (a §9 exception, design-system.md).
+ *   flags    Origin only: a size.flagSlot column at the front of every row
+ *            with the item's `flag` (an emoji, flags.js; no network), empty
+ *            for a written origin with no code, so names never shift
  *   free     'noMatch' (Origin): with no result, a line and "Use “‹text›”
  *            as written". 'always' (Region): under any results, "Not here?"
  *            and the same action, since farms and washing stations are in
@@ -45,9 +48,9 @@ import TextLink from './base/TextLink';
  * when it searches).
  *
  * Props (body)
- *   title, scope, onClear
+ *   title, scope, onClear, flags
  *   search     { placeholder } | undefined
- *   sections   [{ label?, items: [{ key, label, meta?, aliases? }] }], shown
+ *   sections   [{ label?, items: [{ key, label, meta?, aliases?, flag? }] }], shown
  *              before any typing (an empty section is left out); key is the
  *              value stored. Process has one, unlabelled.
  *   pool       items searched while typing; default: the sections' items,
@@ -83,7 +86,7 @@ function Name({ label, hit }) {
   );
 }
 
-function Row({ item, hit, on, divided, onPick }) {
+function Row({ item, hit, on, divided, onPick, flags }) {
   return (
     <Pressable
       onPress={() => onPick(item.key)}
@@ -91,6 +94,13 @@ function Row({ item, hit, on, divided, onPick }) {
       accessibilityState={{ selected: on }}
       accessibilityLabel={[item.label, item.meta].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.row, divided && styles.divided, pressed && styles.pressed]}>
+      {flags ? (
+        <View style={styles.flagSlot} importantForAccessibility="no-hide-descendants">
+          <Text variant="flag" color="primary">
+            {item.flag ?? ''}
+          </Text>
+        </View>
+      ) : null}
       <View style={styles.rowText}>
         <Name label={item.label} hit={hit} />
         {item.meta ? (
@@ -104,7 +114,7 @@ function Row({ item, hit, on, divided, onPick }) {
   );
 }
 
-function List({ label, items, selected, onPick, hits }) {
+function List({ label, items, selected, onPick, hits, flags }) {
   return (
     <View style={styles.section}>
       {label ? (
@@ -114,14 +124,14 @@ function List({ label, items, selected, onPick, hits }) {
       ) : null}
       <View style={styles.frame}>
         {items.map((item, i) => (
-          <Row key={item.key} item={item} hit={hits?.get(item.key)} on={item.key === selected} divided={i > 0} onPick={onPick} />
+          <Row key={item.key} item={item} hit={hits?.get(item.key)} on={item.key === selected} divided={i > 0} onPick={onPick} flags={flags} />
         ))}
       </View>
     </View>
   );
 }
 
-export function ChoiceSheetBody({ title, scope, onClear, search, sections = [], pool, selected = null, onPick, free, note, initialQuery = '' }) {
+export function ChoiceSheetBody({ title, scope, onClear, flags = false, search, sections = [], pool, selected = null, onPick, free, note, initialQuery = '' }) {
   const [query, setQuery] = useState(initialQuery);
   const q = tidy(query);
 
@@ -181,10 +191,10 @@ export function ChoiceSheetBody({ title, scope, onClear, search, sections = [], 
           </View>
         ) : null}
         {!q ? (
-          sections.filter((s) => s.items.length).map((s, i) => <List key={s.label ?? i} label={s.label} items={s.items} selected={selected} onPick={onPick} />)
+          sections.filter((s) => s.items.length).map((s, i) => <List key={s.label ?? i} label={s.label} items={s.items} selected={selected} onPick={onPick} flags={flags} />)
         ) : (
           <>
-            {results.length ? <List label="Results" items={results} selected={selected} onPick={onPick} hits={hits} /> : null}
+            {results.length ? <List label="Results" items={results} selected={selected} onPick={onPick} hits={hits} flags={flags} /> : null}
             {free && !exact && (free.mode === 'always' || !results.length) ? (
               <View>
                 <Text variant="sheetNote" color="secondary">
@@ -270,6 +280,10 @@ const styles = StyleSheet.create({
   },
   pressed: {
     backgroundColor: state.pressed.row,
+  },
+  flagSlot: {
+    width: size.flagSlot,
+    alignItems: 'center',
   },
   rowText: {
     flex: 1,
