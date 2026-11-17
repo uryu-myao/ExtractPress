@@ -130,14 +130,14 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extr
 
 ### Gear catalogue: a bundled table (2026-11-17)
 
-`src/constants/gear.json`, read through `src/constants/gear.js` (`GEAR_CATALOGUE`, `catalogueOf`). The same family as origins and regions: static, no backend, no network; reviewable flat data, checked by `npm run check:gear` on every commit.
+`src/constants/gear.json`, read through `src/constants/gear.js` (`GEAR_CATALOGUE`, `GEAR_CATEGORIES`). The same family as origins and regions: static, no backend, no network; reviewable flat data, checked by `npm run check:gear` on every commit.
 - **Four categories in 3a's tab order — brewer · grinder · kettle · scale — five entries each.** Each: `category`, `name`, `maker`, `meta`, and `verify: true` where it was proposed rather than copied.
 - **`meta` is two facts, `A · B`**, chosen so the line helps someone recognise their own gear: brewer *material · type* ("Ceramic · Cone dripper"), grinder *burr · size* ("Conical steel · 39 mm"), kettle *control · spout* ("Variable temp · Gooseneck"), scale *resolution · feature* ("0.1 g · Built-in timer").
 - **The brewer five are 3a's, verbatim** (Hario V60 02, AeroPress, Kalita Wave 185, Chemex 6-cup, Origami Dripper S). The other fifteen are not drawn: proposed, every one marked `verify`, for Uryu to scan. The list leans to what this app's users plausibly own — Japan and the Chinese-speaking market — as 3a's brewers already do, not to English-language rankings.
 - **No generic entries** ("any kettle", "basic scale"). For Try Next, "no kettle recorded" and "a basic kettle recorded" lead to the same conclusion — don't offer temperature advice — so the absence already says it.
 - **A pick is COPIED onto the gear row, never referenced by id**: `name`, `maker` and `meta` are written into the user's `gear` row. 3e renames gear, so the name can't be a foreign key, and copying is how a cup already holds its bag's name, roaster and roast date. **So a later correction to the catalogue does not rewrite gear a user already saved** — which is what we want: the user's row is theirs.
 - **"Not listed — add your own"** writes the same row shape with no catalogue origin (no `meta`, and `maker` only if they give one).
-- **`gear.meta` does not exist yet**: the column comes with the 3a build (Commit B), as migration 13, nullable TEXT. Until then a pick can copy only `name` and `maker`.
+- **`gear.meta`** (migration 13, nullable TEXT) holds the copied line. NULL for written-in gear and for every row added before migration 13 (8c's generic picks). Nothing shows it yet outside 3a.
 
 ### The 8-slot gear cap is the future Pro line (decided 2026-11-17)
 
@@ -145,7 +145,12 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extr
 - **It exists to become the free / Pro boundary at V1.5.** It is not a layout artifact and must not be quietly raised or removed. (Turn 3's board gave the original reason — "durable kit you re-select on every log, so the list must fit one thumb-reach screen" — which still holds; the pricing role is the one that makes the number load-bearing.)
 - **V1 shows no upsell and no Pro mention**: the full state looks exactly as it does today.
 - **But the moment a user hits the cap is a premium-moment event, from day one.** Someone who wants a ninth piece of gear is showing willingness to pay; V1.5's pricing needs that count from the first release, not from whenever collection starts.
-- **Open (2026-11-17)**: V1 has no instrumentation of any kind, and the App Store privacy label is planned as "Data Not Collected" (`release-checklist.md`, `todo.md` T-18: "No analytics, no advertising, no tracking"). Where this event is kept — on the device only, or sent — is undecided, and the answer changes the privacy label and policy.
+- **Kept on the phone only (decided 2026-11-17): `gear_cap_pushes (id, at, category)`, migration 13.** One row per push: when, and on which tab. The count is the rows, the first time is the oldest `at`, the category says which cap binds — a cap that binds on brewers says something different from one that binds on scales.
+- **THE TRIGGER IS A TAP PAST THE CAP, NOT REACHING IT.** At 8 / 8, a tap on a locked row or on the locked "Not listed — add your own" in 3a. Reaching 8 only means the user selected enough; tapping a ninth means they want more than they are allowed, and only that is willingness to pay. **Do not "simplify" this to "hit 8".** At most one row per category per visit to 3a, so a few frustrated taps count as one wish (`AddGearScreen`).
+- **What it is for**: not reporting to the developer. At V1.5 the Pro screen can tell *this* user "you've wanted a ninth piece of gear 4 times" — a concrete, personal reason, computed on the phone. Aggregate judgement comes from App Store Connect (active devices, 30-day active, day 1 / 7 / 28 retention; the tip's own conversion), which needs no SDK. Neither needs an upload channel.
+- **Why from V1, not V1.5**: the count can't be backfilled, and the users who hit the cap most are the long-tenured ones V1.5 most needs to convince. Starting at V1.5 would measure only new users.
+- **No analytics SDK** (decided 2026-11-17): it would trade "No account, no server" (the welcome screen's line) for numbers Apple already reports, and add a privacy label and policy change to the December submission. A local row is not "collection" in Apple's sense (`release-checklist.md`, `todo.md` T-18), so the label stays "Data Not Collected".
+- **In backups** (not a `LOCAL_TABLES` table): it is this user's history, and the long-tenured users are the ones who move phones.
 
 ### Roast is not a taste axis (decided 2026-11-13, Turn 30)
 

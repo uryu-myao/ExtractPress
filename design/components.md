@@ -293,13 +293,14 @@ The bundled list is the starting point for 5b's flavour tags (never a whitelist;
 - **8o** (first setup 3/3) hosts the same Bag form, minimal set, later.
 - When the full 3c is built, **this screen becomes it**: same entry points, and the form switches to the full set. No second "add a bag" screen. 8o keeps the minimal set.
 
-**Gear, the same way**:
+**Gear, the same way** (superseded 2026-11-17: the full 3a is built; see below):
 - **3a (minimal)** is the screen "Add gear", reached from 5a's "Add gear" row.
 - **Gear pick list** is the component: 8c's generic list (Pour-over dripper, Hand grinder, French press, Espresso machine), each mapping to a name and a category.
   - One tap, no typing, so it fits the 15-second goal.
   - The first gear of a category becomes its default, so Method fills at once.
   - 8c's "I mostly drink out" is a setting, not gear; it stays in first setup.
 - The full 3a (catalogue by category, search, specific models, "Not listed — add your own", cap 8) replaces it later, the same way.
+- **Built 2026-11-17**: the full 3a replaced it on the same screen and entry points. Tabs (`SegmentedControl` compact), a search scoped to the tab (`SearchField`, the Origin sheet's `matchWordStart`, `MatchedName` shared from `ChoiceSheet`), five catalogue rows a tab (`constants/gear.json`) with their meta line in `CheckboxList`, "Not listed — add your own" (`AddButton`) opening a one-field name sheet (`BottomSheet keyboard`). Undrawn states, confirmed with Uryu: at 0 slots unchecked rows and the add button lock and a tap on them is counted (`gear_cap_pushes`); the written-in gear appears checked and saves with Save; no match reads "No brewers match “x”." with the button as "Add “x” as a brewer". 8c's generic list (`GEAR_TYPES`) is no longer 3a's; it waits for first setup (V1.5).
 
 ## Bottom sheet, search sheet, pickers (built 2026-10-10)
 

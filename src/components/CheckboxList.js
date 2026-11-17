@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { color, icon, shape, size, space, spacing, state } from '../theme/tokens';
+import { MatchedName } from './ChoiceSheet';
 import Glyph from './base/Glyph';
 import Text from './base/Text';
 
@@ -10,7 +11,9 @@ import Text from './base/Text';
  * Gear pick list (8c's generic gear) and the flavour search sheet.
  *
  * Row (8c): a 24 checkbox, the name (title) and an optional hint (meta,
- * text.muted). Checked = ink box with a ground tick and the name in ink (a
+ * text.muted) beside it. 3a's rows put a meta line UNDER the name instead
+ * ("Ceramic · Cone dripper", meta, text.muted); a searched row draws the
+ * typed part in ink and the rest muted, as the Origin sheet (MatchedName). Checked = ink box with a ground tick and the name in ink (a
  * chosen option is ink, §1; 8c's blue was drift D-19). Unchecked = 2px ink
  * box on raised, name text.secondary. At the cap, unchecked rows lock (§1
  * Disabled options: name text.muted, box border.muted); the count says why. 8c's row tint
@@ -25,20 +28,25 @@ import Text from './base/Text';
  * TODO: no mock draws the add row; to be shown to Design.
  *
  * Props
- *   items     [{ name, label?, hint? }] — name is the key; label is shown (defaults to name)
+ *   items     [{ name, label?, hint?, meta?, hit? }] — name is the key; label is
+ *             shown (defaults to name); meta, the line under it; hit, a
+ *             matchWordStart span while searching
  *   selected  names checked
  *   locked    true at the cap: unchecked rows can't be checked
  *   lockedHint what a screen reader adds on a locked row (§1 Selection
  *             limit). Defaults to §1's "deselect one" line; pass another
  *             when nothing can be deselected (3a with a full shelf)
  *   onToggle  (name) => void
+ *   onLockedPress  optional (name) => void: a locked row (or the add row)
+ *             stays pressable, with no pressed look, and calls this instead —
+ *             3a counts a tap past the gear cap (schema.ts gear_cap_pushes)
  *   add       optional { label, onPress }: the add row
  *   framed    false when the container draws the frame (the search sheet's
  *             list scrolls inside a fixed frame)
  */
 const LIMIT_HINT = 'Limit reached — deselect one to choose another.';
 
-export default function CheckboxList({ items, selected, locked = false, lockedHint = LIMIT_HINT, onToggle, add, framed = true }) {
+export default function CheckboxList({ items, selected, locked = false, lockedHint = LIMIT_HINT, onToggle, onLockedPress, add, framed = true }) {
   if (items.length === 0 && !add) return null;
   return (
     <View style={framed && styles.frame}>
@@ -48,19 +56,26 @@ export default function CheckboxList({ items, selected, locked = false, lockedHi
         return (
           <Pressable
             key={item.name}
-            onPress={() => onToggle(item.name)}
-            disabled={off}
+            onPress={() => (off ? onLockedPress?.(item.name) : onToggle(item.name))}
+            disabled={off && !onLockedPress}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: on, disabled: off }}
-            accessibilityLabel={item.hint ? `${item.label ?? item.name}, ${item.hint}` : item.label ?? item.name}
+            accessibilityLabel={[item.label ?? item.name, item.meta, item.hint].filter(Boolean).join(', ')}
             accessibilityHint={off ? lockedHint : undefined}
-            style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.row, pressed && !off && styles.pressed]}>
             <View style={[styles.box, on && styles.boxOn, off && styles.boxOff]}>
               {on ? <Glyph name="check" token={icon.xs} color={color.text.onInverse} /> : null}
             </View>
-            <Text variant="title" color={on ? 'primary' : off ? 'muted' : 'secondary'} style={styles.name} truncate="name">
-              {item.label ?? item.name}
-            </Text>
+            {item.meta ? (
+              <View style={styles.stack}>
+                <MatchedName variant="title" label={item.label ?? item.name} hit={off ? null : item.hit} color={on ? 'primary' : off ? 'muted' : 'secondary'} />
+                <Text variant="meta" color="muted" truncate="meta">
+                  {item.meta}
+                </Text>
+              </View>
+            ) : (
+              <MatchedName variant="title" label={item.label ?? item.name} hit={off ? null : item.hit} color={on ? 'primary' : off ? 'muted' : 'secondary'} style={styles.name} />
+            )}
             {item.hint ? (
               <Text variant="meta" color="muted" truncate="meta">
                 {item.hint}
@@ -71,8 +86,8 @@ export default function CheckboxList({ items, selected, locked = false, lockedHi
       })}
       {add ? (
         <Pressable
-          onPress={add.onPress}
-          disabled={locked}
+          onPress={locked ? () => onLockedPress?.(null) : add.onPress}
+          disabled={locked && !onLockedPress}
           accessibilityRole="button"
           accessibilityState={{ disabled: locked }}
           accessibilityLabel={add.label}
@@ -135,5 +150,11 @@ const styles = StyleSheet.create({
   name: {
     flex: 1,
     minWidth: 0,
+  },
+  // 3a: the name over its meta line. 3a draws 3 apart; space[2] is the nearest step.
+  stack: {
+    flex: 1,
+    minWidth: 0,
+    gap: space[2],
   },
 });

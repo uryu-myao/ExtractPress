@@ -184,5 +184,6 @@ Design: "the café line shows the short address only, with no distance or visit 
   - Photos are stored only on the phone.
   - Café search uses Apple's MapKit: the search words, and the location when it is used (to show nearby cafés first), are sent to Apple to answer the search. Location is not stored.
   - No analytics, no advertising, no tracking.
+  - **Local counters are not "collection" (2026-11-17)**: Apple's definition covers data transmitted off the device. A SQLite row on the user's own phone that never leaves it triggers no disclosure, so `gear_cap_pushes` (3a's count of taps past the 8-slot gear cap, `data-model.md` "The 8-slot gear cap") changes neither the label nor the policy. Nobody needs to revisit the label for it before submission. It would change only if the count were ever sent somewhere. The policy's "never sent anywhere" stays true.
 - **The support page**: a contact address on one line is enough. It can be the same site.
 - **Done when**: both pages open from a phone, both constants are filled, the Privacy policy row opens its page on device, and both URLs are on the App Store Connect record.

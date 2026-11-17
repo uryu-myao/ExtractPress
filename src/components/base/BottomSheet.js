@@ -31,7 +31,10 @@ import { color, layout, motion, opticalMargin, shape, size, space, spacing } fro
  * it, not the dimmed page (2026-10-18, on device).
  *
  * Otherwise the sheet wraps its content, up to the same top line (content that
- * is taller scrolls inside it).
+ * is taller scrolls inside it). With `keyboard` (3a's "Add your own" name
+ * sheet, 2026-11-17: one field, too little for a full sheet) the wrapping
+ * sheet rises with the keyboard the same way, its padding growing by the
+ * keyboard's height, so the field and its button stay above it.
  *
  * The handle is drawn as in 2b. Tapping the dimmed page closes the sheet.
  * With swipeToClose (15b's info sheet, Design Round 8; every sheet in the app
@@ -45,6 +48,7 @@ import { color, layout, motion, opticalMargin, shape, size, space, spacing } fro
  *   visible   controlled; the sheet animates out before it unmounts
  *   onClose   scrim tap
  *   full      the full-height, keyboard-following form
+ *   keyboard  a wrapping sheet that rises with the keyboard (ignored when full)
  *   maxHeight optional share of the window height the wrapping sheet stops
  *             at (15b: size.sheet.info.maxHeight); never above the top line
  *   swipeToClose  a swipe down calls onClose
@@ -54,7 +58,7 @@ const expandEasing = Easing.bezier(...motion.expand.controlPoints);
 const settleEasing = ReEasing.bezier(...motion.expand.controlPoints); // a worklet, for the swipe's settle
 const PAGE_DIM = 1 - 0.45; // §9: the page behind drops to opacity 0.45
 
-export default function BottomSheet({ visible, onClose, full = false, maxHeight, swipeToClose = false, children }) {
+export default function BottomSheet({ visible, onClose, full = false, keyboard: withKeyboard = false, maxHeight, swipeToClose = false, children }) {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = useState(visible);
@@ -85,17 +89,18 @@ export default function BottomSheet({ visible, onClose, full = false, maxHeight,
     });
   }, [visible, progress]);
 
+  const topLine = height - insets.top - space[12];
+  const wrapMax = maxHeight == null ? topLine : Math.min(topLine, height * maxHeight);
   const keyboard = useAnimatedKeyboard();
-  const followKeyboard = useAnimatedStyle(() =>
-    full
-      ? {
-          bottom: 0,
-          paddingBottom:
-            keyboard.height.value +
-            interpolate(keyboard.height.value, [0, layout.screen.bottom], [layout.screen.bottom, spacing.gap.section], 'clamp'),
-        }
-      : {}
-  );
+  const followKeyboard = useAnimatedStyle(() => {
+    if (!full && !withKeyboard) return {};
+    const paddingBottom =
+      keyboard.height.value + interpolate(keyboard.height.value, [0, layout.screen.bottom], [layout.screen.bottom, spacing.gap.section], 'clamp');
+    // A rising wrapping sheet's padding behind the keyboard is not room on
+    // screen: its cap grows by the keyboard's height, so the content is never
+    // squeezed out at the top.
+    return full ? { bottom: 0, paddingBottom } : { paddingBottom, maxHeight: wrapMax + keyboard.height.value };
+  });
 
   const dragStyle = useAnimatedStyle(() => ({ transform: [{ translateY: drag.value }] }));
   const swipe = Gesture.Pan()
@@ -107,7 +112,7 @@ export default function BottomSheet({ visible, onClose, full = false, maxHeight,
     })
     .onEnd((e) => {
       // The visible sheet: a full sheet's height includes the part behind the keyboard.
-      const shown = sheetHeight.value - (full ? keyboard.height.value : 0);
+      const shown = sheetHeight.value - (full || withKeyboard ? keyboard.height.value : 0);
       if (e.translationY > shown * BACK_DISTANCE || e.velocityY > BACK_VELOCITY) {
         // The slide takes it out from where the finger left it.
         scheduleOnRN(onClose);
@@ -118,8 +123,6 @@ export default function BottomSheet({ visible, onClose, full = false, maxHeight,
 
   if (!mounted) return null;
   const slide = { transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [height, 0] }) }] };
-  const topLine = height - insets.top - space[12];
-  const wrapMax = maxHeight == null ? topLine : Math.min(topLine, height * maxHeight);
 
   return (
     <View style={StyleSheet.absoluteFill}>

@@ -226,6 +226,29 @@ export const schema = {
      */
     photo_uri: { type: 'TEXT', nullable: true },
     added_at: { type: 'INTEGER', nullable: false },
+    /**
+     * 3a's two-fact line ("Ceramic · Cone dripper"), copied from the bundled
+     * catalogue (constants/gear.json) with name and maker at the pick; never
+     * a catalogue id (migration 13). NULL: written by hand, or added before.
+     */
+    meta: { type: 'TEXT', nullable: true },
+  },
+
+  /**
+   * Each time the 8-slot gear cap was pushed against (migration 13): at the
+   * cap, a tap on a locked row or on Add your own in 3a. THE TRIGGER IS A
+   * TAP PAST THE CAP, NOT REACHING IT — reaching 8 only means enough was
+   * selected; tapping a ninth is wanting more than allowed, which is the
+   * willingness to pay V1.5's Pro screen will name ("you've wanted a ninth
+   * piece of gear 4 times"). Do not simplify it to "hit 8". At most one row
+   * per category per visit to 3a. On the phone only: never sent anywhere
+   * (data-model.md "The 8-slot gear cap").
+   */
+  gear_cap_pushes: {
+    id: { type: 'INTEGER', nullable: false, pk: true },
+    at: { type: 'INTEGER', nullable: false },
+    /** The tab the attempt was made on. */
+    category: { type: 'TEXT', nullable: false, values: ['brewer', 'grinder', 'kettle', 'scale'] },
   },
 
   places: {

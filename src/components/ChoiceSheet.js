@@ -63,10 +63,15 @@ import TextLink from './base/TextLink';
  */
 const tidy = (q) => q.trim().replace(/\s+/g, ' ');
 
-function Name({ label, hit }) {
+/**
+ * A name with the typed part in ink and the rest text.muted (matchWordStart's
+ * span); without a hit, the whole name in `color`. Shared with 3a's gear
+ * search (CheckboxList).
+ */
+export function MatchedName({ label, hit, variant = 'label', color: nameColor = 'primary', style }) {
   if (!hit) {
     return (
-      <Text variant="label" color="primary" truncate="name">
+      <Text variant={variant} color={nameColor} style={style} truncate="name">
         {label}
       </Text>
     );
@@ -76,9 +81,9 @@ function Name({ label, hit }) {
   const typed = chars.slice(hit.start, hit.start + hit.length).join('');
   const after = chars.slice(hit.start + hit.length).join('');
   return (
-    <Text variant="label" color="muted" truncate="name">
+    <Text variant={variant} color="muted" style={style} truncate="name">
       {before}
-      <Text variant="label" color="primary">
+      <Text variant={variant} color="primary">
         {typed}
       </Text>
       {after}
@@ -102,7 +107,7 @@ function Row({ item, hit, on, divided, onPick, flags }) {
         </View>
       ) : null}
       <View style={styles.rowText}>
-        <Name label={item.label} hit={hit} />
+        <MatchedName label={item.label} hit={hit} />
         {item.meta ? (
           <Text variant="bodySm" color="muted" truncate="meta">
             {item.meta}

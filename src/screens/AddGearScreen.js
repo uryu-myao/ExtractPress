@@ -1,36 +1,90 @@
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
-import Button from '../components/base/Button';
-import IconButton from '../components/base/IconButton';
-import Text from '../components/base/Text';
+import { Field } from '../components/BagForm';
 import CheckboxList from '../components/CheckboxList';
 import { useRecordDraftIfAny } from '../components/RecordDraft';
-import { GEAR_LIMIT, GEAR_TYPES } from '../constants/gear';
+import AddButton from '../components/base/AddButton';
+import BottomSheet from '../components/base/BottomSheet';
+import Button from '../components/base/Button';
+import IconButton from '../components/base/IconButton';
+import SearchField from '../components/base/SearchField';
+import SegmentedControl from '../components/base/SegmentedControl';
+import Text from '../components/base/Text';
+import { GEAR_CATALOGUE, GEAR_CATEGORIES, GEAR_CATEGORY, GEAR_LIMIT } from '../constants/gear';
+import { foldText, matchWordStart } from '../constants/match';
 import { useDatabase } from '../data/DatabaseProvider';
-import { countGear, insertGear } from '../data/repository';
-import { spacing } from '../theme/tokens';
+import { countGear, insertGear, recordGearCapPush } from '../data/repository';
+import { icon, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
- * 3a (minimal) — "Add gear", pushed from 5a's "Add gear" row inside the
- * Record sheet (design/components.md: the screen is 3a; its content is the
- * Gear pick list, 8c's generic gear). One tap per piece, no typing. When the
- * full 3a (catalogue, search, models, cap 8) is built this screen becomes it.
+ * 3a — "Add gear" (2026-11-17; was 3a minimal, 8c's generic list), pushed
+ * from Beans & gear's "Add gear", Home's shelf and 5a's Method.
  *
- * Save adds the checked gear; the first of a category becomes its default, so
- * 5a's Method fills at once. Count and copy follow 3a: "N / 8 Selected" counts
- * the shelf after saving (gear already owned + checked), "N slots left" under
- * the button, "Save N items".
- * TODO: 3a's mock does not say whether "Selected" counts gear already owned;
- * read here as the whole shelf, since the cap is the shelf's.
+ * Header: compact, ‹ and the title as every pushed page (D-71; the header
+ * stays as built, Uryu 2026-11-17), with 3a's stat "N / 8 Selected": the
+ * shelf after saving (gear already owned + checked), since the cap is the
+ * shelf's.
+ * Body, top to bottom:
+ *   tabs     Brewer · Grinder · Kettle · Scale (SegmentedControl, compact so
+ *            four hold one line at 375). One category's list at a time.
+ *   search   "Search brewers": the Origin sheet's word-start matcher
+ *            (matchWordStart) over the active tab's names, the typed part in
+ *            ink. The text stays when the tab changes ("Hario" across tabs).
+ *   list     the tab's five catalogue rows (constants/gear.json) with their
+ *            meta line, then any the user wrote in, multi-select checkboxes
+ *            (CheckboxList). Checks persist across tabs.
+ *   add      "Not listed — add your own" (AddButton) → the name sheet. With
+ *            a search that matches nothing: "No brewers match “x”." and the
+ *            button reads "Add “x” as a brewer" — the same button, no extra
+ *            emphasis (confirmed 2026-11-17).
+ * Footer: "Save N items" and "N slots left" (as built; 3a's 8-segment meter
+ * is not built).
+ *
+ * The name sheet (not drawn; confirmed 2026-11-17): "Add a brewer", one
+ * Name field (the search text carried in), category from the tab. The new
+ * gear appears CHECKED in the tab's list and is saved with Save, not on its
+ * own: one save point, so Back still cancels everything. A name matching a
+ * row already in the tab (ignoring case and accents) checks that row
+ * instead of adding a second.
+ *
+ * At the cap (0 slots left): unchecked rows and the add button lock;
+ * checked rows can still be unchecked; the slots line says what to do. A tap
+ * on a locked row or the locked button gives the warning haptic and is
+ * counted (recordGearCapPush): a tap PAST the cap is wanting more than
+ * allowed, which reaching 8 is not (schema.ts gear_cap_pushes). Counted at
+ * most once per category per visit, so a few frustrated taps are one wish.
+ * The light impact the moment the cap is reached stays (§1 Selection limit).
+ *
+ * Save writes the checked gear in the order it was checked; a catalogue pick
+ * copies name, maker and meta (insertGear). The first of a category becomes
+ * its default, so 5a's Method fills at once.
  */
+const PLURAL = { brewer: 'brewers', grinder: 'grinders', kettle: 'kettles', scale: 'scales' };
+const TABS = GEAR_CATEGORIES.map((value) => ({ value, label: GEAR_CATEGORY[value] }));
+const keyOf = (category, name) => `${category}/${name}`;
+const tidy = (s) => s.trim().replace(/\s+/g, ' ');
+
+const CATALOGUE_ROWS = GEAR_CATALOGUE.map((g) => ({ ...g, key: keyOf(g.category, g.name) }));
+
+const warn = () => {
+  if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+};
+
 export default function AddGearScreen({ onBack }) {
   const db = useDatabase();
   // In the Record sheet the new defaults fill Method; from Home they just join the shelf.
   const chooseGear = useRecordDraftIfAny()?.chooseGear;
   const [owned, setOwned] = useState(null);
+  const [tab, setTab] = useState(GEAR_CATEGORIES[0]);
+  const [query, setQuery] = useState('');
+  // Keys, in the order checked (the first of a category becomes its default).
   const [selected, setSelected] = useState([]);
+  // Gear written in on the name sheet this visit: { key, category, name }.
+  const [written, setWritten] = useState([]);
+  const [naming, setNaming] = useState(null);
+  const pushed = useRef(new Set());
 
   useEffect(() => {
     let alive = true;
@@ -42,16 +96,49 @@ export default function AddGearScreen({ onBack }) {
 
   const total = (owned ?? 0) + selected.length;
   const left = GEAR_LIMIT - total;
-  const toggle = (name) => {
-    const adding = !selected.includes(name);
+  const full = owned == null || left <= 0;
+  const q = tidy(query);
+
+  const rows = useMemo(() => [...CATALOGUE_ROWS, ...written].filter((g) => g.category === tab), [tab, written]);
+  const shown = useMemo(() => {
+    const list = rows.map((g) => ({ name: g.key, label: g.name, meta: g.meta, hit: q ? matchWordStart(g.name, q) : null }));
+    return q ? list.filter((r) => r.hit) : list;
+  }, [rows, q]);
+
+  const toggle = (key) => {
+    const adding = !selected.includes(key);
     // §1 Selection limit: a light impact the moment the cap is reached, once.
     if (adding && total + 1 === GEAR_LIMIT && Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelected((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
+    setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+  };
+
+  // A tap past the cap, on this tab: once per category per visit.
+  const pushCap = () => {
+    warn();
+    if (owned == null || pushed.current.has(tab)) return;
+    pushed.current.add(tab);
+    recordGearCapPush(db, tab).catch((error) => console.warn('[gear] cap push not recorded', error));
+  };
+
+  const addWritten = (raw) => {
+    const name = tidy(raw);
+    if (!name) return;
+    const same = rows.find((g) => foldText(g.name) === foldText(name));
+    const key = same ? same.key : keyOf(tab, name);
+    if (!same) setWritten((prev) => [...prev, { key, category: tab, name }]);
+    setSelected((prev) => (prev.includes(key) ? prev : [...prev, key]));
+    if (total + 1 === GEAR_LIMIT && !selected.includes(key) && Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setQuery('');
+    setNaming(null);
   };
 
   const save = async () => {
     try {
-      const items = GEAR_TYPES.filter((g) => selected.includes(g.name)).map(({ name, category }) => ({ name, category }));
+      const all = [...CATALOGUE_ROWS, ...written];
+      const items = selected.map((key) => {
+        const g = all.find((r) => r.key === key);
+        return { name: g.name, category: g.category, maker: g.maker ?? null, meta: g.meta ?? null };
+      });
       const defaults = await insertGear(db, items, GEAR_LIMIT);
       chooseGear?.(defaults);
       onBack();
@@ -62,39 +149,102 @@ export default function AddGearScreen({ onBack }) {
   };
 
   const n = selected.length;
+  const noMatch = Boolean(q) && shown.length === 0;
+  // At the cap the line says what frees a slot: unchecking here, or, with
+  // nothing checked, removing gear in My gear (Design 2026-10-20).
+  const slotsLine = owned == null ? null : slotsText(left, n);
+
   return (
-    <ScreenFrame
-      scroll
-      compact
-      title="Add gear"
-      leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
-      stat={owned != null ? { value: `${total} / ${GEAR_LIMIT}`, label: 'Selected' } : undefined}
-      footer={
-        <View style={styles.footer}>
-          {/* "Save 0 items" says why it is off, so a press warns (§1). */}
-          <Button label={n === 1 ? 'Save 1 item' : `Save ${n} items`} onPress={save} disabled={n === 0 || owned == null} warnWhenDisabled={n === 0} />
-          {owned != null ? (
-            <Text variant="bodySm" color="secondary" style={styles.slots}>
-              {left === 1 ? '1 slot left' : `${left} slots left`}
+    // The name sheet sits beside the frame, not in its scrolling content (as 3e's).
+    <View style={styles.screen}>
+      <ScreenFrame
+        scroll
+        compact
+        title="Add gear"
+        leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
+        stat={owned != null ? { value: `${total} / ${GEAR_LIMIT}`, label: 'Selected' } : undefined}
+        footer={
+          <View style={styles.footer}>
+            {/* "Save 0 items" says why it is off, so a press warns (§1). */}
+            <Button label={n === 1 ? 'Save 1 item' : `Save ${n} items`} onPress={save} disabled={n === 0 || owned == null} warnWhenDisabled={n === 0} />
+            {slotsLine ? (
+              <Text variant="bodySm" color="secondary" style={styles.slots}>
+                {slotsLine}
+              </Text>
+            ) : null}
+          </View>
+        }>
+        <View style={styles.body}>
+          <SegmentedControl compact options={TABS} value={tab} onChange={setTab} />
+          <SearchField value={query} onChangeText={setQuery} placeholder={`Search ${PLURAL[tab]}`} accessibilityLabel={`Search ${PLURAL[tab]}`} />
+          {noMatch ? (
+            <Text variant="body" color="secondary">
+              {`No ${PLURAL[tab]} match “${q}”.`}
             </Text>
-          ) : null}
+          ) : (
+            <CheckboxList
+              items={shown}
+              selected={selected}
+              locked={full}
+              lockedHint={n === 0 ? 'No slots left. Remove gear from My gear to free one.' : undefined}
+              onToggle={toggle}
+              onLockedPress={pushCap}
+            />
+          )}
+          <AddButton
+            icon="plus"
+            iconToken={icon.sm}
+            label={noMatch ? `Add “${q}” as a ${GEAR_CATEGORY[tab].toLowerCase()}` : 'Not listed — add your own'}
+            disabled={full}
+            onDisabledPress={pushCap}
+            onPress={() => setNaming({ category: tab, name: q })}
+          />
         </View>
-      }>
-      <CheckboxList
-        items={GEAR_TYPES}
-        selected={selected}
-        locked={owned == null || left <= 0}
-        // A shelf already full: nothing here to deselect, so say how to free a
-        // slot (Design 2026-10-20).
-        // Removed in 3e, reached from My gear (3b, 2026-10-22).
-        lockedHint={n === 0 ? 'No slots left. Remove gear from My gear to free one.' : undefined}
-        onToggle={toggle}
-      />
-    </ScreenFrame>
+      </ScreenFrame>
+      <NameSheet naming={naming} onClose={() => setNaming(null)} onAdd={addWritten} />
+    </View>
+  );
+}
+
+function slotsText(left, checked) {
+  if (left === 1) return '1 slot left';
+  if (left > 0) return `${left} slots left`;
+  return checked > 0 ? 'No slots left. Uncheck one to choose another.' : 'No slots left. Remove gear from My gear to free one.';
+}
+
+/**
+ * "Not listed — add your own" (not drawn; confirmed 2026-11-17): a name, the
+ * category from the tab. Maker, photo and the rest are 3e's, later.
+ * TODO(design): the sheet's copy ("Add a brewer", "Add") is ours.
+ */
+function NameSheet({ naming, onClose, onAdd }) {
+  const [name, setName] = useState('');
+  // The last opening's, so the sheet keeps its title while it slides out.
+  const [shown, setShown] = useState(null);
+  useEffect(() => {
+    if (!naming) return;
+    setName(naming.name);
+    setShown(naming);
+  }, [naming]);
+  const kind = shown ? GEAR_CATEGORY[shown.category].toLowerCase() : '';
+  return (
+    <BottomSheet visible={Boolean(naming)} onClose={onClose} keyboard swipeToClose>
+      <Text variant="displaySm" color="primary">
+        {`Add a ${kind}`}
+      </Text>
+      <Field key={naming ? 'open' : 'closing'} label="Name" value={name} onChangeText={setName} autoFocus={Boolean(naming)} />
+      <Button label="Add" onPress={() => onAdd(name)} disabled={!tidy(name)} />
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  body: {
+    gap: spacing.gap.section,
+  },
   footer: {
     gap: spacing.gap.row,
   },

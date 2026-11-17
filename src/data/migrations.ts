@@ -608,6 +608,37 @@ export const migrations: readonly Migration[] = [
         END`,
     ],
   },
+  {
+    /*
+     * The full 3a (2026-11-17; data-model.md "Gear catalogue", "The 8-slot
+     * gear cap"):
+     *   gear.meta        the catalogue's two-fact line ("Ceramic · Cone
+     *                    dripper"), COPIED at the pick with name and maker,
+     *                    never a catalogue id: 3e renames gear, and a later
+     *                    correction to gear.json must not rewrite saved gear.
+     *                    NULL for gear written by hand and for every row
+     *                    before this migration.
+     *   gear_cap_pushes  one row each time a user, at the 8-slot cap, tapped
+     *                    for more gear (a locked row, or Add your own): the
+     *                    attempt's time and the tab's category. NOT "reached
+     *                    8" — selecting enough is not wanting more; only a
+     *                    tap past the cap is. V1.5's Pro screen tells this
+     *                    user "you've wanted a ninth piece of gear N times",
+     *                    on the phone. Never sent anywhere. In backups: it
+     *                    is this user's history, and the long-tenured users
+     *                    who hit the cap most are the ones who change phones.
+     */
+    version: 13,
+    name: 'gear catalogue line and cap pushes',
+    statements: [
+      `ALTER TABLE gear ADD COLUMN meta TEXT`,
+      `CREATE TABLE gear_cap_pushes (
+        id INTEGER PRIMARY KEY,
+        at INTEGER NOT NULL,
+        category TEXT NOT NULL CHECK (category IN ('brewer', 'grinder', 'kettle', 'scale'))
+      )`,
+    ],
+  },
 ];
 
 /** The bookkeeping table. Created before any migration runs. */

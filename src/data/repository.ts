@@ -578,23 +578,26 @@ export async function removeGear(db: SQLiteDatabase, id: number): Promise<void> 
 }
 
 /**
- * Add gear (3a minimal). The first gear of a category becomes its default, so
- * 5a's Method fills at once. One transaction; refuses past `limit`. Returns
- * the defaults after the insert.
+ * Add gear (3a). The first gear of a category becomes its default, so 5a's
+ * Method fills at once; items go in the order given (3a: the order they were
+ * checked). A catalogue pick brings its maker and meta, COPIED (migration
+ * 13): the row is the user's from here, and gear.json's later corrections
+ * never reach it. Written by hand: the name alone. One transaction; refuses
+ * past `limit`. Returns the defaults after the insert.
  */
-export async function insertGear(
-  db: SQLiteDatabase,
-  items: { name: string; category: GearCategory }[],
-  limit: number
-): Promise<{ brewer: Gear | null; grinder: Gear | null }> {
+export type NewGear = { name: string; category: GearCategory; maker?: string | null; meta?: string | null };
+
+export async function insertGear(db: SQLiteDatabase, items: NewGear[], limit: number): Promise<{ brewer: Gear | null; grinder: Gear | null }> {
   await db.withExclusiveTransactionAsync(async (tx) => {
     const row = await tx.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM gear');
     if ((row?.n ?? 0) + items.length > limit) throw new Error(`Your shelf holds ${limit} pieces of gear.`);
     for (const item of items) {
       const taken = await tx.getFirstAsync('SELECT 1 FROM gear WHERE category = ? AND is_default = 1', [item.category]);
-      await tx.runAsync('INSERT INTO gear (name, category, is_default, added_at) VALUES (?, ?, ?, ?)', [
+      await tx.runAsync('INSERT INTO gear (name, category, maker, meta, is_default, added_at) VALUES (?, ?, ?, ?, ?, ?)', [
         item.name,
         item.category,
+        item.maker ?? null,
+        item.meta ?? null,
         taken ? 0 : 1,
         Date.now(),
       ]);
@@ -606,6 +609,16 @@ export async function insertGear(
     db.getFirstAsync<Gear>("SELECT * FROM gear WHERE category = 'grinder' AND is_default = 1"),
   ]);
   return { brewer: brewer ?? null, grinder: grinder ?? null };
+}
+
+/**
+ * 3a: the gear cap was pushed against — at 8 / 8, a tap for a ninth piece
+ * (a locked row, or Add your own) on the `category` tab. Not reaching 8:
+ * only the tap past it is wanting more (schema.ts gear_cap_pushes). Kept on
+ * the phone for V1.5's Pro screen; never sent.
+ */
+export async function recordGearCapPush(db: SQLiteDatabase, category: GearCategory): Promise<void> {
+  await db.runAsync('INSERT INTO gear_cap_pushes (at, category) VALUES (?, ?)', [Date.now(), category]);
 }
 
 /**

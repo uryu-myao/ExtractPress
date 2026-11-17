@@ -28,10 +28,10 @@ export const GEAR_CATALOGUE = GEAR_CATALOGUE_DATA;
 /** 3a's tabs, in order. */
 export const GEAR_CATEGORIES = ['brewer', 'grinder', 'kettle', 'scale'];
 
-/** One category's catalogue entries, in the file's order (3a's rows). */
-export const catalogueOf = (category) => GEAR_CATALOGUE.filter((g) => g.category === category);
-
 /**
+ * No longer 3a's list (3a lists GEAR_CATALOGUE, 2026-11-17): kept for first
+ * setup's 8c (V1.5), which picks generic gear.
+ *
  * Gear pick list (design/components.md "Adding a bag and gear…"): 8c's generic
  * gear, verbatim (names and hints), each with the category it fills. 8c's
  * "I mostly drink out" is a setting, not gear, so it is not here.

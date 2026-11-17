@@ -24,6 +24,9 @@ import Text from './Text';
  *   iconToken   icon size/stroke pair (default icon.md — 5a's camera; 3b's plus is icon.sm)
  *   tag         optional trailing copy ("Optional", "5 slots left"), label.caps, muted
  *   disabled
+ *   onDisabledPress  optional: while disabled the button stays pressable,
+ *               with no pressed look, and calls this (3a counts a tap past
+ *               the gear cap, schema.ts gear_cap_pushes)
  *   onPress
  *   testOnly_pressed   force the pressed look (dev harness)
  */
@@ -33,13 +36,14 @@ export default function AddButton({
   iconToken = iconTokens.md,
   tag,
   disabled = false,
+  onDisabledPress,
   onPress,
   testOnly_pressed,
 }) {
   return (
     <Pressable
-      onPress={onPress}
-      disabled={disabled}
+      onPress={disabled ? onDisabledPress : onPress}
+      disabled={disabled && !onDisabledPress}
       accessibilityRole="button"
       accessibilityLabel={tag ? `${label}, ${tag}` : label}
       accessibilityState={{ disabled }}
