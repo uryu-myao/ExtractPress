@@ -128,6 +128,25 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extr
 - **Written values**: Origin takes free text when nothing matches; Region always does (farms and washing stations are in no table). Stored as written (trimmed); "From my bags" groups on trimmed, case-folded text and shows the spelling most bags use.
 - **Copies on cups**: `bean_origin` / `bean_region` are copied at logging and rewritten when the bag is saved, as the other details.
 
+### Gear catalogue: a bundled table (2026-11-17)
+
+`src/constants/gear.json`, read through `src/constants/gear.js` (`GEAR_CATALOGUE`, `catalogueOf`). The same family as origins and regions: static, no backend, no network; reviewable flat data, checked by `npm run check:gear` on every commit.
+- **Four categories in 3a's tab order — brewer · grinder · kettle · scale — five entries each.** Each: `category`, `name`, `maker`, `meta`, and `verify: true` where it was proposed rather than copied.
+- **`meta` is two facts, `A · B`**, chosen so the line helps someone recognise their own gear: brewer *material · type* ("Ceramic · Cone dripper"), grinder *burr · size* ("Conical steel · 39 mm"), kettle *control · spout* ("Variable temp · Gooseneck"), scale *resolution · feature* ("0.1 g · Built-in timer").
+- **The brewer five are 3a's, verbatim** (Hario V60 02, AeroPress, Kalita Wave 185, Chemex 6-cup, Origami Dripper S). The other fifteen are not drawn: proposed, every one marked `verify`, for Uryu to scan. The list leans to what this app's users plausibly own — Japan and the Chinese-speaking market — as 3a's brewers already do, not to English-language rankings.
+- **No generic entries** ("any kettle", "basic scale"). For Try Next, "no kettle recorded" and "a basic kettle recorded" lead to the same conclusion — don't offer temperature advice — so the absence already says it.
+- **A pick is COPIED onto the gear row, never referenced by id**: `name`, `maker` and `meta` are written into the user's `gear` row. 3e renames gear, so the name can't be a foreign key, and copying is how a cup already holds its bag's name, roaster and roast date. **So a later correction to the catalogue does not rewrite gear a user already saved** — which is what we want: the user's row is theirs.
+- **"Not listed — add your own"** writes the same row shape with no catalogue origin (no `meta`, and `maker` only if they give one).
+- **`gear.meta` does not exist yet**: the column comes with the 3a build (Commit B), as migration 13, nullable TEXT. Until then a pick can copy only `name` and `maker`.
+
+### The 8-slot gear cap is the future Pro line (decided 2026-11-17)
+
+`GEAR_LIMIT = 8` (`src/constants/gear.js`), enforced by `insertGear` (`repository.ts`) and shown on 3a, 3b and Profile.
+- **It exists to become the free / Pro boundary at V1.5.** It is not a layout artifact and must not be quietly raised or removed. (Turn 3's board gave the original reason — "durable kit you re-select on every log, so the list must fit one thumb-reach screen" — which still holds; the pricing role is the one that makes the number load-bearing.)
+- **V1 shows no upsell and no Pro mention**: the full state looks exactly as it does today.
+- **But the moment a user hits the cap is a premium-moment event, from day one.** Someone who wants a ninth piece of gear is showing willingness to pay; V1.5's pricing needs that count from the first release, not from whenever collection starts.
+- **Open (2026-11-17)**: V1 has no instrumentation of any kind, and the App Store privacy label is planned as "Data Not Collected" (`release-checklist.md`, `todo.md` T-18: "No analytics, no advertising, no tracking"). Where this event is kept — on the device only, or sent — is undecided, and the answer changes the privacy label and policy.
+
 ### Roast is not a taste axis (decided 2026-11-13, Turn 30)
 
 - **V1's Taste DNA profile is the five tasting axes and nothing else**: acidity, bitterness, body, sweetness, aftertaste — things the drinker tasted, not facts printed on a bag. **`bags.roast_level` never enters the profile**, directly or as a default, and never appears in the DNA card (31f: "Roast isn't an axis").

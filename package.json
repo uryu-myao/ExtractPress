@@ -15,6 +15,7 @@
     "check:trynext": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-trynext.ts",
     "check:notices": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-notices.ts",
     "check:origins": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-origins.ts",
+    "check:gear": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-gear.ts",
     "gen:licences": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/gen-licences.ts",
     "prepare": "git config core.hooksPath .githooks"
   },

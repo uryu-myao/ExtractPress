@@ -5,7 +5,7 @@
 # when a backup no longer restores to the rows it was made from, or when
 # Try next's rules stop holding, or the notices and bag reminders stop
 # following their rules, or the bundled origins and regions stop being
-# clean, keyed data.
+# clean, keyed data, or the gear catalogue stops being 3a's shape.
 # Installed by `npm install` (package.json "prepare" sets core.hooksPath).
 # Runs in well under a second; bypass only deliberately with --no-verify.
 npm run -s check:schema || {
@@ -34,5 +34,9 @@ npm run -s check:notices || {
 }
 npm run -s check:origins || {
   echo "pre-commit: check:origins failed — the bundled origins / regions are malformed (src/constants/origins.json, regions.json)." >&2
+  exit 1
+}
+npm run -s check:gear || {
+  echo "pre-commit: check:gear failed — the bundled gear catalogue is malformed (src/constants/gear.json)." >&2
   exit 1
 }

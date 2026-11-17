@@ -1,0 +1,25 @@
+[
+  {"category": "brewer", "name": "Hario V60 02", "maker": "Hario", "meta": "Ceramic · Cone dripper"},
+  {"category": "brewer", "name": "AeroPress", "maker": "AeroPress", "meta": "Immersion · Pressure"},
+  {"category": "brewer", "name": "Kalita Wave 185", "maker": "Kalita", "meta": "Stainless · Flat bed"},
+  {"category": "brewer", "name": "Chemex 6-cup", "maker": "Chemex", "meta": "Glass · Thick filter"},
+  {"category": "brewer", "name": "Origami Dripper S", "maker": "Origami", "meta": "Ceramic · Ribbed"},
+
+  {"category": "grinder", "name": "Comandante C40", "maker": "Comandante", "meta": "Conical steel · 39 mm", "verify": true},
+  {"category": "grinder", "name": "1Zpresso JX-Pro", "maker": "1Zpresso", "meta": "Conical steel · 48 mm", "verify": true},
+  {"category": "grinder", "name": "Timemore C3", "maker": "Timemore", "meta": "Conical steel · 38 mm", "verify": true},
+  {"category": "grinder", "name": "Kalita Nice Cut G", "maker": "Kalita", "meta": "Steel cutter · Electric", "verify": true},
+  {"category": "grinder", "name": "Hario Mini Mill Slim", "maker": "Hario", "meta": "Conical ceramic · Hand", "verify": true},
+
+  {"category": "kettle", "name": "Fellow Stagg EKG", "maker": "Fellow", "meta": "Variable temp · Gooseneck", "verify": true},
+  {"category": "kettle", "name": "Hario V60 Buono", "maker": "Hario", "meta": "Stovetop · Gooseneck", "verify": true},
+  {"category": "kettle", "name": "Brewista Artisan", "maker": "Brewista", "meta": "Variable temp · Gooseneck", "verify": true},
+  {"category": "kettle", "name": "Takahiro Shizuku 0.9 L", "maker": "Takahiro", "meta": "Stovetop · Fine spout", "verify": true},
+  {"category": "kettle", "name": "Balmuda The Pot", "maker": "Balmuda", "meta": "Boil only · Narrow spout", "verify": true},
+
+  {"category": "scale", "name": "Timemore Black Mirror", "maker": "Timemore", "meta": "0.1 g · Built-in timer", "verify": true},
+  {"category": "scale", "name": "Acaia Pearl", "maker": "Acaia", "meta": "0.1 g · App-connected", "verify": true},
+  {"category": "scale", "name": "Hario V60 Drip Scale", "maker": "Hario", "meta": "0.1 g · Built-in timer", "verify": true},
+  {"category": "scale", "name": "Brewista Smart Scale II", "maker": "Brewista", "meta": "0.1 g · Auto-start timer", "verify": true},
+  {"category": "scale", "name": "Felicita Arc", "maker": "Felicita", "meta": "0.1 g · Flow rate", "verify": true}
+]
