@@ -15,7 +15,7 @@ import Text from './Text';
  *              and 18c / 19a's 46)
  *   title      user data, `title`, 2 lines (§3.1 name)
  *   meta       one line, bodySm muted ("Bag · Blue Bottle · day 7")
- *   rating /   the right column, as RecordRow's: the star and the serif
+ *   rating /   the right column, as ArchiveRow's: the star and the serif
  *   label      numeral over a label.eyebrow ("MORNING", 19a)
  *   onPress    the whole row opens its thing: it ends in the chevron (§1 Tap
  *              affordance) and darkens across the screen's width while
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: spacing.gap.tight,
   },
-  // As RecordRow's: the numeral's natural box already leaves the label room.
+  // As ArchiveRow's: the numeral's natural box already leaves the label room.
   side: {
     flexShrink: 0,
     alignItems: 'flex-end',

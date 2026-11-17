@@ -77,6 +77,14 @@ const SHAPES = {
   share: [<Path key="a" d="M12 3v12" />, <Path key="b" d="M7 8l5-5 5 5" />, <Path key="c" d="M5 13v8h14v-8" />],
   // Home's bell, the way into 7a (4a, 23b; Design Round 26 C1, 28c), verbatim. 7a's empty state in text.muted.
   bell: [<Path key="a" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />, <Path key="b" d="M13.7 21a2 2 0 0 1-3.4 0" />],
+  // Records' row (handoff-records §0, 34a–34g), verbatim (assets/icons/archive/):
+  // the mode on a thumb, I made it / Barista / Packaged, and My words' pen.
+  // Named apart from `dripper` (6a's My gear), `can` (5a's Product) and
+  // `pencil` (2c's edit), which stay as they are.
+  dripperCone: [<Path key="a" d="M5 4h14l-5 7v2h-4v-2z" />, <Path key="b" d="M7 16h10v2a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3z" />],
+  cupSaucer: [<Path key="a" d="M5 8h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z" />, <Path key="b" d="M16 10h1.5a2 2 0 0 1 0 4H16" />, <Path key="c" d="M3 21h15" />],
+  canTall: [<Path key="a" d="M8 3h8l1 3v13l-1 2H8l-1-2V6z" />, <Path key="b" d="M7 9h10" />],
+  pen: [<Path key="a" d="M4 20l1-4L16 5l3 3L8 19z" />, <Path key="b" d="M14 7l3 3" />],
 };
 
 export const GLYPH_NAMES = Object.keys(SHAPES);

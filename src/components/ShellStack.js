@@ -32,9 +32,9 @@ import RecordsSearch from './RecordsSearch';
  * leaving the moment Back or a swipe commits, so a tap on "Manage my beans"
  * while 3d is still sliding out opens a new 3d (on device 2026-10-14 that
  * tap was swallowed). Each entry has its own key and pops itself by it.
- *   shelf     Gear & beans, 17c / 17d ({ side: 'gear' | 'beans' }; Round
- *             14 merged 3b and 3d), from Home's "See all gear & beans" and
- *             Profile's My gear / My beans
+ *   shelf     Beans & gear, 17c / 17d ({ side: 'beans' | 'gear' }; Round
+ *             14 merged 3b and 3d), from Home's "See all beans & gear" and
+ *             Profile's My beans / My gear
  *   addBag    3c — after adding, lands on the beans side (2026-10-12): Gear &
  *             beans goes under it if not there yet, then it slides out
  *   finished  3f, from the beans side's foot

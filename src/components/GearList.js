@@ -8,7 +8,7 @@ import { GEAR_CATEGORY, GEAR_LIMIT, onCups } from '../constants/gear';
 import { icon, layout, size, space, spacing, state } from '../theme/tokens';
 
 /**
- * 3b's list — the gear side of Gear & beans (Round 14, 17c; 3b's own header
+ * 3b's list — the gear side of Beans & gear (Round 14, 17c; 3b's own header
  * went with the merge: its "N / 8 In my kit" is the tab row's slot count).
  *
  * A row per piece of gear, defaults first, then oldest added

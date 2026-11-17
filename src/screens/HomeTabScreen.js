@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Button from '../components/base/Button';
-import RecordRow from '../components/base/RecordRow';
+import ArchiveRow from '../components/base/ArchiveRow';
 import Text from '../components/base/Text';
 import HomeStats, { monthStart } from '../components/HomeStats';
 import ShelfBlock from '../components/ShelfBlock';
 import TasteDnaCard from '../components/TasteDnaCard';
 import TryNextCard from '../components/TryNextCard';
-import { MODE_BADGE, cupTitle } from '../constants/cups';
+import { archiveLines } from '../constants/cups';
 import { useDatabase } from '../data/DatabaseProvider';
 import {
   countBags,
@@ -23,12 +23,12 @@ import {
   undoDismissTryNext,
 } from '../data/repository';
 import { onTabLeave, requestDnaInfo, requestOpenCup, requestPush, requestShell } from '../navigation';
-import { layout, space, spacing } from '../theme/tokens';
+import { component, layout, space, spacing } from '../theme/tokens';
 import BellButton from '../components/BellButton';
 import ScreenFrame from './ScreenFrame';
 
 /**
- * Home (1b; 4a / 4b are Home with My gear / My beans below), top to bottom:
+ * Home (1b; 4a / 4b are Home with My beans / My gear below), top to bottom:
  *   - the bell (23b; Design Round 26 C1): the way into 7a, the blue dot
  *     while a notice is unread (BellButton)
  *   - title: a greeting by part of day — 1b's "Good morning"; "Good
@@ -49,13 +49,14 @@ import ScreenFrame from './ScreenFrame';
  *     2026-11-15; was display.sm) — no divider under it, room alone sets the
  *     block apart — with "See all ›" (to Records; the ›
  *     since Design Round 15, B4, as the shelf's action) and the three
- *     latest cups as list rows (title, mode badge, rating, date) → their 2c
- *   - My gear / My beans (Round 14, 17a / 17b: three rows a side, swiped
- *     or tabbed; "See all gear & beans ›" opens 17c / 17d on that side)
+ *     latest cups in Records' row (ArchiveRow, with the date; Uryu,
+ *     2026-11-17: one cup list across the app) → their 2c
+ *   - My beans / My gear (Round 14, 17a / 17b: three rows a side, swiped
+ *     or tabbed; "See all beans & gear ›" opens 17c / 17d on that side)
  * Not shown: the line under the counts (dropped for V1,
  * Design Round 10, C10; gone in Round 21's 23b too).
  *
- * Screens opened from Home — Gear & beans (17c / 17d), 3c (Add a bag), 3a
+ * Screens opened from Home — Beans & gear (17c / 17d), 3c (Add a bag), 3a
  * (Add gear) — are pushed over Home and the bottom bar (ShellStack; their mocks
  * draw no bar). Back or a swipe from the left edge returns.
  * Everything is read on open and again whenever a cup or the shelf changes.
@@ -151,12 +152,11 @@ export default function HomeTabScreen() {
                   <Button variant="text" label="See all" trailingIcon="chevronRight" onPress={() => requestShell({ tab: 'records' })} />
                 </View>
                 {data.recent.map((cup) => (
-                  <RecordRow
+                  <ArchiveRow
                     key={cup.id}
-                    title={cupTitle(cup).title}
-                    badges={[MODE_BADGE[cup.mode]]}
-                    rating={cup.rating}
-                    date={dayFormat.format(new Date(cup.logged_at))}
+                    cup={cup}
+                    lines={archiveLines(cup, 'none')}
+                    when={dayFormat.format(new Date(cup.logged_at))}
                     onPress={() => {
                       requestShell({ tab: 'records' });
                       requestOpenCup(cup.id);
@@ -194,22 +194,21 @@ const styles = StyleSheet.create({
   // alone, no dividers (Uryu, 2026-11-15): about 32–35 above a heading,
   // about 20 between a heading and its rows, so each heading reads as its
   // block's. Recently sipped: space.8 more above it than the body's 20; and
-  // it hands back its last row's 12 of padding, since the shelf's tabs
-  // already bring their own room (their 44 touch band, about 15 over the
-  // caps). Measured at 430: 32 over Recently sipped, about 35 over My gear.
+  // it hands back its last row's 6 of padding (ArchiveRow), since the
+  // shelf's tabs already bring their own room (their 44 touch band).
   recent: {
     marginTop: space[8],
-    marginBottom: -spacing.inset.listRow.v,
+    marginBottom: -component.archive.row.inset,
   },
-  // space.4 under the heading, then the first row's own 12: about 18 from
-  // the caps to the first thumbnail, as the shelf's tabs to their first row.
-  // Centred, so "See all" (its chevron a little taller than the caps)
-  // shares the heading's line.
+  // space.16 under the heading, then the first row's own 6: about 22 from
+  // the caps' line to the first thumbnail (Uryu, 2026-11-17, on device: was
+  // about 10 with Records' row, too close). Centred, so "See all" (its
+  // chevron a little taller than the caps) shares the heading's line.
   recentHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.gap.section,
-    paddingBottom: space[4],
+    paddingBottom: space[16],
   },
 });

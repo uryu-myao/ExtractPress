@@ -11,7 +11,7 @@ import { color as colorTokens, textStyle } from '../../theme/tokens';
  *   name   2 lines  user-supplied names: café, bean, roaster, gear, drink, profile
  *   shelf  1 line   names in Home's shelf rows, the one exception to `name`
  *                   (Design Round 15, B3): a second line would break the equal
- *                   heights the swipe depends on; "See all gear & beans" has
+ *                   heights the swipe depends on; "See all beans & gear" has
  *                   the full names
  *   meta   1 line   provenance / secondary line under a name
  *   note   3 lines  tasting-note and memo previews

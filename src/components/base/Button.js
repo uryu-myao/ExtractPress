@@ -28,7 +28,7 @@ import Text from './Text';
  *              (decided on device 2026-10-13, for every such stack).
  *              trailingIcon: a text action that leads somewhere, beside a
  *              section title (1b's See all, redrawn 2026-10-18; Home's "See
- *              all gear & beans"): the label then the glyph (icon.sm,
+ *              all beans & gear"): the label then the glyph (icon.sm,
  *              gap.tight), both text.secondary, NO underline — §1 lets it go
  *              where the position already says "action", and the glyph says
  *              it too. The glyph is the › chevron (Design Round 15, B4).

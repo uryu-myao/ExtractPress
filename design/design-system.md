@@ -408,14 +408,23 @@ Not in the shipped screens. Promoted because the pressed state appears in every 
 | `state.pressed.scale` | `0.88` | surface-less elements (bare glyphs) | Added 2026-10-06. ~0.95 is imperceptible on a 20–24px line or fill glyph; 0.88 reads clearly (a 20px glyph becomes 17.6). Visual only: the touch area never scales |
 
 ### Texture
-One texture since 2026-10-11 (`texture.rule` was removed with the old display axis, its only user; do not use it on new screens). `texture.dot` shares `#E4D6CC` with `color.border.subtle` on purpose, so texture density can be tuned without touching the border role.
+One texture: **paper grain** since 2026-11-17 (handoff-ground v1, Uryu's pick, Turn 34 / 35b). It replaced `texture.dot` (the 7 × 7 tile with a 1px `#E4D6CC` dot, 2026-10-05 to 2026-11-17); `texture.rule` went 2026-10-11 with the old display axis.
 
-| token | value | geometry (verbatim) | coverage |
+| token | value | geometry | coverage |
 |---|---|---|---|
-| `texture.dot` | `#E4D6CC` | `radial-gradient(<color> 1px, transparent 1px)`, `background-size: 7px 7px`, default repeat | 16 screens |
+| `texture.grain` | rgb(89, 64, 46) at alpha 0–9% (mean about 4.5%) | a transparent PNG tile, `assets/textures/grain.png` / `@2x` / `@3x` (160 / 320 / 480 px), all 160 × 160 pt, softly blurred noise that tiles seamlessly, over `surface.ground` (unchanged) | every page ground |
 
-**Implemented (2026-10-05)**: `texture.dot` is the base `DotTexture`, a single react-native-svg `<Pattern>` with the 1px dot centred in its 7 × 7 tile. CSS `radial-gradient` centres by default; the token values are used as-is. `ScreenFrame` mounts it **fixed behind everything**, outside any ScrollView, so every screen inherits it, it never scrolls, and it never re-renders on scroll (it takes no props and is memoised). Opaque surfaces (cards, chips, field groups, the bottom bar, thumbnails) cover it, so dots show only on the page background. Verified on device: animated scroll of the Records list held 60 fps on the JS thread (worst frame 17.9 ms, simulator). Text crossing a dot: `text.muted` 5.46 → 4.45, `text.accent` 4.96 → 4.04, on 6.4% of the page (dot vs ground 1.23:1).
+**Implemented (2026-11-17)**: the base `GrainTexture`, a `surface.ground` view under the tile laid by hand, one `Image` per 160pt cell over the window (about 3 × 6 at 430 × 932), clipped to its parent; RN picks @2x / @3x, so the grain is drawn at the phone's own density and stays fine. `resizeMode="repeat"` (the handoff's suggestion) drew one tile at the top-left on iOS (RN 0.88, on device), so it isn't used. Mounted where the dots were: fixed behind everything, outside any ScrollView, memoised, no props, so every screen inherits it, it never scrolls and never re-renders on scroll (`AppShell` behind the tab pager, `ScreenFrame` outside it, `PushedScreen`). A pinned block draws `AlignedGrainTexture`, shifted by its y mod one tile so its grain lands on the page's. Not an SVG `feTurbulence` (the mock's), which react-native-svg doesn't support. Opaque surfaces (cards, chips, field groups, sheets, the bar's pieces, thumbnails) cover it.
 
+Text on the ground:
+
+| Text | Plain paper | Grain, mean | Grain, darkest pixel | Old dots, on a dot |
+|---|---|---|---|---|
+| `text.muted` | 5.46 | 5.09 | 4.73 | 4.45 |
+| `text.secondary` | 6.72 | 6.26 | 5.82 | — |
+| `text.accent` | 4.96 | 4.62 | 4.29 | 4.04 |
+
+The grain costs less contrast than the dots did; only isolated darkest pixels dip under 4.5 for `text.accent`, and the mean holds. The placeholder grey (`#9B8F87`) is a deliberate exception already.
 
 ### Mechanism-bound (class A)
 Promoted regardless of frequency: a low count here means "only a few screens show this state", not "this state is unimportant.
@@ -949,7 +958,7 @@ Swiping horizontally moves between the four tab screens: Home → Records → Tr
 - **Horizontal vs vertical** is decided by the platform, not by thresholds of ours: on iOS, nested perpendicular UIScrollViews claim the gesture by the direction of the initial movement; on Android, by which axis passes the touch slop first. A mostly vertical drag goes to the screen's list. There are no custom numbers to tune. If explicit thresholds are ever needed, that takes react-native-gesture-handler (not installed; deliberately not added for this).
 - **The bar's active state follows the drag continuously.** A native-driver `Animated.event` on the pager offset crossfades each tab's active glyph over its inactive one (opacity 1 on its page, 0 one page away). The settled page then becomes the tab's accessibility state.
 - **A footer tap still switches instantly**: `scrollTo` without animation, no slide through the pages in between.
-- **One backdrop behind all pages.** `AppShell` draws the ground and the dot texture once; `ScreenFrame` skips its own inside the pager (`ScreenBackdropContext`). Otherwise each page's texture would slide with it and break at the seam, since 390 / 7 is not a whole number of tiles. The Record overlay and the error screen sit outside the pager and keep their own.
+- **One backdrop behind all pages.** `AppShell` draws the ground and its texture once (the paper grain since 2026-11-17); `ScreenFrame` skips its own inside the pager (`ScreenBackdropContext`). Otherwise each page's texture would slide with it and break at the seam, since 390 / 7 is not a whole number of tiles. The Record overlay and the error screen sit outside the pager and keep their own.
 - **Scope**: tab screens only. The Record overlay is above the pager, not inside it, so swiping in it never pages. No back gesture yet, because no detail screen exists.
 - Measured (390pt simulator, programmatic animated page changes): 60 fps on the JS thread, p95 17.5 ms, one ~25 ms frame per page change at settle (the bar re-rendering; screens are memoised and do not re-render). Footer taps land on the right page in all four directions. Gesture arbitration with real fingers needs a physical device: the simulator cannot inject swipes here.
 
@@ -965,7 +974,7 @@ Swiping horizontally moves between the four tab screens: Home → Records → Tr
 *The 2026-10-05 objection (elevation over a full list read as noise) is met by the band: the shadows fall on plain ground, never on rows.* (v1, built 2026-11-08 and replaced 2026-11-09: a quiet `border.container` body with no shadow.)
 
 **Built 2026-11-08**:
-- `FooterNav` draws the two pieces. `AppShell` ends the tab pager at the band, so the fixed `DotTexture` shows through.
+- `FooterNav` draws the two pieces. `AppShell` ends the tab pager at the band, so the fixed `DotTexture` shows through. *(2026-11-17, Uryu: the pager runs to the screen's edge, pages show around and between the pieces, and each tab page ends with the band's height of room, `FooterBandContext`.)*
 - The tab screens keep `space[20]` under their content; the toast sits `space[12]` above the band.
 - **Open**: an iPhone with no home indicator (SE) has no inset. There the bar sits `space[12]` above the edge. That value is ours, for Design to confirm.
 
@@ -1504,3 +1513,4 @@ One line per change to this document or to the token values, with the reason.
 - 2026-11-15 — Home's "Recently sipped" in `label.caps` ink, the shelf's open tab's style (MY GEAR), not `display.sm` (Uryu, a trial): Home's two list blocks now head alike. "See all ›" loses its 2pt optical drop (it balanced caps against a serif). D-79.
 - 2026-11-15 — Home's "Recently sipped" sits as far over its first row's divider as the shelf tabs' labels over their line (Uryu): the heading row pads `space[12]` under (was 2), centred so "See all ›" shares its line. Measured at 430: about 15 and 14.4 from the caps' foot to the line (was about 6 and 14.4).
 - 2026-11-15 — Home's titled blocks set apart by room alone (Uryu): no divider under "Recently sipped" (its first RecordRow no longer draws one) or under the shelf's tabs (ShelfBlock's first row loses its rule; the open tab's ink underline stays). More room above a heading than under it: measured at 430, 32 from the DNA card to "Recently sipped" and about 39 from the last cup to "My gear", against about 20 from each heading to its first row. Recently sipped pads space.4 under its heading (was 12) and hands back its last row's 12 (the tabs' 44 touch band brings its own room); the shelf's first row pads 6 on top. D-80.
+- 2026-11-17 — ground: `texture.dot` retired, `texture.grain` (paper grain PNG, 0–9%) replaces it (Uryu, Turn 34 / 35b). `GrainTexture` / `AlignedGrainTexture` replace `DotTexture` / `AlignedDotTexture`.

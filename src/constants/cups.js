@@ -8,13 +8,6 @@ export const NONE = '—';
 
 export const MODE_LABEL = { made_it: 'I made it', barista: 'Barista', packaged: 'Packaged' };
 
-/** The mode as a list row's Badge (2a, 1b's recently sipped). */
-export const MODE_BADGE = {
-  made_it: { label: 'I made it', tone: 'success' },
-  barista: { label: 'Barista', tone: 'info' },
-  packaged: { label: 'Packaged', tone: 'neutral' },
-};
-
 /**
  * A bag's process (3c / 3g, components.md "Bag form"; restored 2026-11-08).
  * No "Unknown": unset is the unknown answer (the set is clearable).
@@ -73,6 +66,48 @@ export function cupTitle(cup) {
   // Packaged (Design Round 7, 14b): one name as typed, no line 2 — no brand
   // field; line 2 is the store once Bought at returns.
   return { title: cup.product_name ?? NONE, source: undefined };
+}
+
+/**
+ * Records' row, three lines at most, one job each (handoff-records §3,
+ * 2026-11-16). cupTitle stays 2c's, the notices' and the delete sheet's.
+ *   title   what it was. A Barista cup with no drink takes its café; a title
+ *           is never "—" (a cup with neither name is "‹Morning› cup", as an
+ *           I made it cup with nothing noted already is).
+ *   source  how and from where: I made it, method · roaster (grouped by
+ *           Roaster, the roaster leaves: the heading says it). No process
+ *           (Uryu, 2026-11-17: §3's "· process" left out; 2c has it);
+ *           Barista, the café (nothing when the café is the title);
+ *           Packaged, the shop. A cup with no bag keeps cupTitle's line
+ *           ("No bag · ‹grinder›").
+ *   words   My words if any, else null; flavours, else null. Line 3 shows
+ *           words, else flavours, else nothing.
+ * TODO(data): Packaged's line is "shop · package"; cups keep no package
+ * (can, bottle…), so it is the shop alone.
+ */
+export function archiveLines(cup, group) {
+  const fallback = () => `${partOfDay(new Date(cup.logged_at))} cup`;
+  let title;
+  let source;
+  if (cup.mode === 'made_it') {
+    if (cup.bean_name) {
+      title = cup.bean_name;
+      const roaster = group === 'roaster' ? null : cup.bean_roaster;
+      source = [cup.brew_method, roaster].filter(Boolean).join(' · ');
+    } else {
+      ({ title, source } = cupTitle(cup));
+    }
+  } else if (cup.mode === 'barista') {
+    title = cup.drink_type || cup.place_name || fallback();
+    source = cup.drink_type ? cup.place_name : null;
+  } else {
+    title = cup.product_name || fallback();
+    source = cup.bought_at_name;
+  }
+  // One line: My words' own line breaks fold to spaces.
+  const words = tidyNote(cup.note).replace(/\s+/g, ' ');
+  const flavours = cup.flavours?.length ? cup.flavours.join(', ') : '';
+  return { title, source: source || null, words: words || null, flavours: words ? null : flavours || null };
 }
 
 /**

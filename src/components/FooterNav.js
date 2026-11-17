@@ -9,29 +9,36 @@ import Text from './base/Text';
 import { AddCoffeeIcon, HomeIcon, ProfileIcon, RecordsIcon } from './icons/TabBarIcons';
 
 const ICONS = { home: HomeIcon, records: RecordsIcon, profile: ProfileIcon };
-const { slot, glyph, icon: iconColor } = component.tabBar;
+const { slot, glyph, icon: iconColor, bodyInset, slotGap, slotDrop, pieceGap } = component.tabBar;
+
+/** The body hugs its three slots: the slots and the gaps between, its inset at each end, its frame. */
+const BODY_WIDTH = 3 * slot.w + 2 * slotGap + 2 * bodyInset + 2 * shape.borderWidth.box;
 
 /**
  * Bottom bar (design-system.md §9; Design Round 23, 25a / 25b, 2026-11-08):
  * two pieces, floating.
- *   body  the three tabs, Home · Records · Profile, on surface.raised. Its
- *         three slots share its width; each is the whole touch area.
- *   +     the screen's primary action, to the body's right, space.12 apart:
- *         a size.tabBar.height square in color.action.bg. No name ("Log a
- *         cup" to VoiceOver).
+ *   body  the three tabs, Home · Records · Profile, on surface.raised. It
+ *         hugs its slots (tabBar.slot, tabBar.slotGap apart, tabBar.bodyInset
+ *         at each end; Uryu, 2026-11-17: the full width left too much room
+ *         between the glyphs); each slot is its whole touch area. The glyph
+ *         and name sit a little under centre (tabBar.slotDrop).
+ *   +     the screen's primary action, to the body's right, tabBar.pieceGap
+ *         (16) apart: a size.tabBar.height square in color.action.bg. No name
+ *         ("Log a cup" to VoiceOver).
+ * The two are centred as a pair.
  * Both are controls, so both take the 2px border.strong frame and
  * shadow.floating (handoff-round23 v2, Uryu on 25a). The 2026-10-05 objection
  * to elevation over a full list is met by the band: the shadows fall on plain
  * ground, never on rows. (v1, built 2026-11-08 and replaced the next day: a
  * quiet border.container body with no shadow.)
- * Both are size.tabBar.height (56) tall, square-cornered, inset by
- * layout.gutter at the sides, the home-indicator inset less space.8 above the
- * bottom edge.
+ * Both are size.tabBar.height (56) tall, square-cornered, the home-indicator
+ * inset less space.8 above the bottom edge.
  *
- * The band: from space.12 above the bar to the screen's bottom edge, content
- * doesn't show. AppShell ends the tab pager that far above the edge
- * (useFooterHeight), so the fixed DotTexture shows through: plain ground, no
- * rule, no fade.
+ * No band behind them (Uryu, 2026-11-17): the page runs to the screen's edge
+ * and shows around and between the pieces; each tab page ends with the
+ * band's height of room (useFooterHeight, FooterBandContext) so its last row
+ * scrolls clear. Was (Design Round 23): the pager ended space.12 above the
+ * bar, the band plain ground.
  *
  * Each tab names itself under its glyph (2026-10-18): tabLabel, gap.tight
  * below the glyph, in the glyph's colour, so the active blue covers both.
@@ -185,16 +192,19 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     flexDirection: 'row',
-    gap: space[12],
+    justifyContent: 'center',
+    gap: pieceGap,
     paddingHorizontal: layout.gutter,
   },
   body: {
-    flex: 1,
+    width: BODY_WIDTH,
     height: size.tabBar.height,
   },
   bodyFace: {
     flex: 1,
     flexDirection: 'row',
+    gap: slotGap,
+    paddingHorizontal: bodyInset,
     borderWidth: shape.borderWidth.box,
     borderColor: color.border.strong,
     backgroundColor: color.surface.raised,
@@ -204,6 +214,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: slotDrop,
   },
   slotBox: {
     width: slot.w,

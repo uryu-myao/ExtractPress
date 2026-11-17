@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Keyboard, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MODE_BADGE, cupTitle, tidyNote } from '../constants/cups';
+import { archiveLines } from '../constants/cups';
 import { DEFAULT_GROUP, DEFAULT_SORT, arrangeCups } from '../constants/records';
 import {
   ALL_SECTIONS,
@@ -38,7 +38,7 @@ import FilterToken from './base/FilterToken';
 import Glyph from './base/Glyph';
 import IconButton from './base/IconButton';
 import ItemRow from './base/ItemRow';
-import RecordRow from './base/RecordRow';
+import ArchiveRow from './base/ArchiveRow';
 import SearchField from './base/SearchField';
 import SectionLabel from './base/SectionLabel';
 import SegmentedControl from './base/SegmentedControl';
@@ -375,20 +375,9 @@ function Results({ query, data, tab, onTab, onBag, onGear, onCup }) {
 const dayFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
 const monthFormat = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
 
-/** 2a's row, as 8l listed its cups. */
+/** 2a's row (ArchiveRow, handoff-records §3), with its date, as 8l listed its cups. */
 function CupRow({ cup, onPress }) {
-  const { title, source } = cupTitle(cup);
-  return (
-    <RecordRow
-      title={title}
-      badges={[MODE_BADGE[cup.mode]]}
-      source={source}
-      note={tidyNote(cup.note) || undefined}
-      rating={cup.rating}
-      date={dayFormat.format(new Date(cup.logged_at))}
-      onPress={onPress}
-    />
-  );
+  return <ArchiveRow cup={cup} lines={archiveLines(cup, 'none')} when={dayFormat.format(new Date(cup.logged_at))} onPress={onPress} />;
 }
 
 /** 18e / 18f: a block's cups in the archive's shape. */
@@ -419,8 +408,8 @@ function Filtered({ filter, cups, order, onOrder, onCup }) {
         <IconButton icon="filter" accessibilityLabel="Sort and group" onPress={() => requestSortSheet({ sort: order.sort, group: order.group, onApply: onOrder })} />
       </View>
       <View>
-        {groups.map((group) => (
-          <RecordGroup key={group.key} group={group} sort={order.sort} onOpen={onCup} />
+        {groups.map((group, i) => (
+          <RecordGroup key={group.key} group={group} grouping={order.group} first={i === 0} onOpen={onCup} />
         ))}
       </View>
     </View>

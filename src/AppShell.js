@@ -4,7 +4,7 @@ import AddCoffeeOverlay from './components/AddCoffeeOverlay';
 import { DnaInfoHost } from './components/DnaInfoSheet';
 import { SortSheetHost } from './components/SortSheet';
 import { onShellRequest, requestOpenCup, requestTabLeave, requestTabReset } from './navigation';
-import DotTexture from './components/base/DotTexture';
+import GrainTexture from './components/base/GrainTexture';
 import FooterNav, { useFooterHeight } from './components/FooterNav';
 import Notice from './components/Notice';
 import { ResetDnaHost } from './components/ResetDnaSheet';
@@ -13,7 +13,7 @@ import ShellStack from './components/ShellStack';
 import { NotificationsHost } from './data/notifications';
 import { TABS } from './constants/navigation';
 import { SCREEN_COMPONENTS } from './screens';
-import { ScreenBackdropContext } from './screens/ScreenFrame';
+import { FooterBandContext, ScreenBackdropContext } from './screens/ScreenFrame';
 import { color } from './theme/tokens';
 
 const PAGES = TABS.map((t) => t.key);
@@ -102,15 +102,17 @@ export default function AppShell() {
   const bandHeight = useFooterHeight();
   return (
     <View style={styles.container}>
-      <DotTexture />
+      <GrainTexture />
       <ScreenBackdropContext.Provider value={false}>
         <>
-          {/* The pager ends at the bar's band (Design Round 23): from space.12
-              above the floating bar to the edge, the DotTexture behind shows,
-              so no half-cut row shows between or under the bar's pieces. */}
+          {/* The pager runs to the screen's edge (Uryu, 2026-11-17; it ended at
+              the bar's band, Design Round 23): pages show through the gaps
+              around the bar's pieces, and each scroll page ends with the
+              band's height of room (FooterBandContext), so its last row
+              scrolls clear of the bar. */}
+          <FooterBandContext.Provider value={bandHeight}>
           <Animated.ScrollView
             ref={pager}
-            style={{ marginBottom: bandHeight }}
             horizontal
             scrollEnabled={false}
             showsHorizontalScrollIndicator={false}
@@ -119,6 +121,7 @@ export default function AppShell() {
             keyboardShouldPersistTaps="handled">
             {pages}
           </Animated.ScrollView>
+          </FooterBandContext.Provider>
         </>
       </ScreenBackdropContext.Provider>
       <FooterNav activeTab={activeTab} position={position} onTabPress={selectTab} onAddPress={() => openRecord()} />

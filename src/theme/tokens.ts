@@ -169,7 +169,7 @@ export const state = {
      * info) — 2026-10-18, on device: surface.muted's beige read loud on a
      * row. The ink at 6%, laid over whatever is under it: #E8E2DE on ground,
      * #F2F0ED on raised — the smallest step that still shows, low in chroma,
-     * from the app's own ink, and the ground's dots show through. The row's
+     * from the app's own ink, and the ground's grain shows through. The row's
      * fill also bleeds past its content to its container's edges (the screen,
      * or the card's frame). Framed controls keep `surface`: their frame
      * carries the shape.
@@ -190,17 +190,18 @@ export const state = {
 } as const;
 
 /**
- * The page texture. RN has no background-image: rebuilt with react-native-svg
- * <Pattern> (DotTexture). texture.rule, the old display axis's rail lines,
- * was removed 2026-10-11 with that axis.
+ * The page texture (GrainTexture). texture.grain, paper grain (handoff-ground
+ * v1, 2026-11-17, Turn 34 / 35b): a transparent PNG tile,
+ * assets/textures/grain.png / @2x / @3x, rgb(89, 64, 46) at alpha 0–9% (mean
+ * about 4.5%), softly blurred, seamless, tiled at 160 × 160 pt over
+ * surface.ground (unchanged). The paper colour stays a token; the grain is
+ * the PNG, not an SVG feTurbulence (react-native-svg has none).
+ * Retired: texture.dot (2026-11-17; the 7 × 7 tile, 1px #E4D6CC dot) and
+ * texture.rule (2026-10-11, with the old display axis).
  */
 export const texture = {
-  dot: {
-    color: '#E4D6CC',
-    dotRadius: 1,
-    tileWidth: 7,
-    tileHeight: 7,
-    css: 'radial-gradient(#E4D6CC 1px, transparent 1px) / 7px 7px',
+  grain: {
+    tile: 160,
   },
 } as const;
 
@@ -223,6 +224,17 @@ export const textStyle = {
    * (2026-10-06).
    */
   note:          { fontFamily: 'Instrument Serif', fontSize: 20, fontWeight: '400', lineHeight: 28 },
+
+  /**
+   * 2a's row, line 3 when it holds My words (handoff-records §3, 34g option
+   * A): Instrument Serif 15 / 17, text.secondary, upright, one line. 2026-11-16.
+   */
+  noteRow:       { fontFamily: 'Instrument Serif', fontSize: 15, fontWeight: '400', lineHeight: 17 },
+  /**
+   * 2a's day gutter (handoff-records §2): the day of the month over its
+   * weekday, Instrument Serif 26 / 24, ink. 2026-11-16.
+   */
+  dayNumeral:    { fontFamily: 'Instrument Serif', fontSize: 26, fontWeight: '400', lineHeight: 24 },
 
   /** lineHeight UNDECLARED in source */
   title:         { fontFamily: 'Archivo', fontSize: 16, fontWeight: '700' },
@@ -283,6 +295,20 @@ export const textStyle = {
   axisReading:   { fontFamily: 'Archivo', fontSize: 15, fontWeight: '700', lineHeight: 15, fontVariant: ['tabular-nums'] },
   /** 5b's reading column when the axis is not assessed: "Not noted", 11 / 600 in text.muted (30a). lineHeight UNDECLARED. 2026-11-14. */
   axisUnset:     { fontFamily: 'Archivo', fontSize: 11, fontWeight: '600' },
+  /**
+   * 2a's row, line 2 (handoff-records §0): how and from where, 13 / 500,
+   * text.secondary. sheetNote's values, its own name for the row. 2026-11-16.
+   * Letter spacing 0.04em x 13 (Uryu, 2026-11-17, on device: "Pour-over
+   * dripper" read cramped).
+   */
+  rowSource:     { fontFamily: 'Archivo', fontSize: 13, fontWeight: '500', lineHeight: 19, letterSpacing: 0.52 },
+  /**
+   * 2a's row, under the rating: the time ("08:10", grouped by Month) or the
+   * date ("Nov 16"): 11 / 600, text.muted, tabular so the column holds still.
+   * Letter spacing 0.04em x 11 (Uryu, 2026-11-17, on device, with rowSource).
+   * lineHeight UNDECLARED. 2026-11-16.
+   */
+  rowWhen:       { fontFamily: 'Archivo', fontSize: 11, fontWeight: '600', letterSpacing: 0.44, fontVariant: ['tabular-nums'] },
   /** lineHeight UNDECLARED · 0.12em x 10 (was 0.16em; tightened on Uryu's ask, 2026-11-09) */
   labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
   /**
@@ -513,6 +539,13 @@ export const icon = {
   clear: { size: 12, strokeWidth: 3 },
   /** the ⓘ inside a status stamp (15a, Design Round 8): 14 at 2.4, lighter than xs */
   stamp: { size: 14, strokeWidth: 2.4 },
+  /** 2a's mode glyph filling a 48 thumb with no photo (handoff-records §3): 22 at 2 */
+  mode: { size: 22, strokeWidth: 2 },
+  /**
+   * 2a's small marks (handoff-records §3): My words' pen, and the mode glyph
+   * in a photo thumb's 20 corner mark. 12 at 2.4.
+   */
+  mark: { size: 12, strokeWidth: 2.4 },
   /** fill icons are a separate system: no stroke, fixed color, rating stars only */
   fill: {
     sm: { size: 14, color: color.icon.rating },
@@ -575,6 +608,11 @@ export const dashed = {
    * built). Was addSlotInert, which also covered a blocked add button.
    */
   emptyFrame:    { width: 2, style: 'dashed', color: color.border.muted },
+  /**
+   * 2a's empty archive (34b): the ghost row and its thumb, an example of a
+   * row not started yet; not pressable (handoff-records §4).
+   */
+  ghost:         { width: 1.5, style: 'dashed', color: color.border.muted },
   /** the line that splits one card or block into two parts that belong together */
   dividerSoft:   { width: 1, style: 'dashed', color: color.divider.hairline },
   /**
@@ -728,6 +766,23 @@ export const component = {
   tabBar: {
     slot: { w: 60, h: 40 },
     /**
+     * The body hugs its three slots (Uryu, 2026-11-17, on device: the full
+     * width left too much room between the glyphs): space.12 inside the
+     * frame at each end and between the slots (side by side at 8 read
+     * cramped, same day); the body and the + centred as a pair, space.16
+     * apart.
+     */
+    bodyInset: space[12],
+    slotGap: space[12],
+    pieceGap: space[16],
+    /**
+     * The glyph and name sit space.4 lower than centred in the body (Uryu,
+     * 2026-11-17, on device: centred, they read high; the names have no
+     * descenders and the hard shadow weights the bottom). Applied as top
+     * padding in the slot, so the block moves down by half of it.
+     */
+    slotDrop: space[4],
+    /**
      * The glyphs' box (2026-10-18): the glyphs are 19–20 tall, so each sits
      * centred in 20 and the names under them share one baseline.
      */
@@ -772,6 +827,32 @@ export const component = {
    * One size and colour on every row and block.
    */
   chevron: { icon: icon.sm, color: color.text.secondary },
+  /**
+   * Records' list, redrawn (handoff-records.md v1, 2026-11-16; 34a–34g).
+   * row:     thumb · space.12 · text (flex) · rating column · space.12 ·
+   *          chevron, 6 above and below, at least 56 tall.
+   * gutter:  the day gutter under a Month heading, written once per day.
+   * frame:   the thumb's and the corner mark's frame.
+   * mode:    the mode shown on the thumb, not read (the I MADE IT / BARISTA /
+   *          PACKAGED badge is gone from the row): the existing badge pairs,
+   *          tint behind, ink for the glyph. Packaged's ink is text.secondary
+   *          (the same value as badge.fg.neutral).
+   */
+  archive: {
+    row: { minHeight: 56, inset: space[6], gap: space[12] },
+    thumb: 48,
+    ratingColumn: 44,
+    corner: 20,
+    gutter: { width: 40, gap: space[12], top: space[8], dayGap: space[6] },
+    frame: { width: shape.borderWidth.weak, color: color.border.muted },
+    mode: {
+      made_it: { tint: color.badge.bg.success, ink: color.badge.fg.success },
+      barista: { tint: color.badge.bg.info, ink: color.badge.fg.info },
+      packaged: { tint: color.badge.bg.neutral, ink: color.text.secondary },
+    },
+    /** My words' pen (34g, A): border.accent, space.4 before the words. */
+    pen: { color: color.border.accent, gap: space[4] },
+  },
 } as const;
 
 export const tokens = {

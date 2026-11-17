@@ -4,15 +4,16 @@ import { color, motion, shape, size, space, spacing, state } from '../theme/toke
 import Text from './base/Text';
 
 /**
- * The My gear / My beans tabs (Round 14): the heading of Home's shelf
- * (17a / 17b) and of Gear & beans (17c / 17d). No box, no folder tabs: two
+ * The My beans / My gear tabs (Round 14; beans first since 2026-11-17): the
+ * heading of Home's shelf (17a / 17b) and of Beans & gear (17c / 17d). No box, no folder tabs: two
  * labels, each with its count, set as a section heading.
  *
  * A tab: label.caps label, then its count in label.caps (Round 14 §0,
  * 2026-10-27: the mock's 13 / .06em and 12 / .04em fold to it), gap.tight
  * apart. Open: ink label, accent count, a box-wide (2) ink underline.
  * Closed: muted label and count, no underline. size.tapTarget tall, the text
- * at its foot, space.12 over the underline. The underlines follow the pages'
+ * at its foot, space.6 over the underline (Uryu, 2026-11-17, on device: the
+ * underline closer to its label; was space.12). The underlines follow the pages'
  * scroll (`progress`): one fades out as the other fades in under the finger,
  * so they never jump; the labels switch at the midpoint.
  *
@@ -26,8 +27,8 @@ import Text from './base/Text';
  * (state.pressed.scale over motion.press), as a text button.
  *
  * Props
- *   active    'gear' | 'beans'
- *   progress  Animated 0 (gear) … 1 (beans), from useShelfPager
+ *   active    'beans' | 'gear'
+ *   progress  Animated 0 (beans) … 1 (gear), from useShelfPager
  *   counts    { gear, beans }
  *   onSelect  (side) => void
  *   trailing  optional node at the row's right end, on the labels' foot
@@ -35,13 +36,21 @@ import Text from './base/Text';
  */
 export const TAB_OVERLAP = shape.borderWidth.divider + (shape.borderWidth.box - shape.borderWidth.divider) / 2;
 
+/**
+ * The shelf's two sides, in order: beans first, then gear (Uryu,
+ * 2026-11-17: everywhere the two stand side by side; was gear first). The
+ * first is the pager's left page (progress 0) and where it opens.
+ */
+export const SIDES = ['beans', 'gear'];
+const [FIRST, SECOND] = SIDES;
+
 const TABS = [
-  { side: 'gear', label: 'My gear' },
   { side: 'beans', label: 'My beans' },
+  { side: 'gear', label: 'My gear' },
 ];
 
 export default function ShelfTabs({ active, progress, counts, onSelect, trailing }) {
-  const shown = { gear: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), beans: progress };
+  const shown = { [FIRST]: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), [SECOND]: progress };
   return (
     <View style={styles.row} accessibilityRole="tablist">
       <View style={styles.tabs}>
@@ -91,8 +100,9 @@ export function Tab({ label, count, on, underline, onPress }) {
 
 /**
  * The two sides as pages in a horizontal Animated.ScrollView (Home's shelf,
- * Gear & beans). `span` is how far the pages scroll from gear to beans.
- * Returns the open side, the scroll's progress (0 gear … 1 beans) for
+ * Beans & gear), in SIDES' order. `span` is how far the pages scroll from
+ * the first to the second. Returns the open side, the scroll's progress (0
+ * beans … 1 gear) for
  * ShelfTabs, select(side) for a tab, and the props for the ScrollView.
  *
  * The open side follows the scroll past the midpoint, except while a tab's
@@ -100,12 +110,12 @@ export function Tab({ label, count, on, underline, onPress }) {
  * there flipped the tab and the slot count back and forth (Uryu, on device,
  * 2026-10-27). A drag, or the scroll's end, hands it back to the scroll.
  */
-export function useShelfPager(span, openOn = 'gear') {
+export function useShelfPager(span, openOn = FIRST) {
   const [side, setSide] = useState(openOn);
   const ref = useRef(null);
   const current = useRef(openOn);
   const tapped = useRef(false);
-  const scrollX = useRef(new Animated.Value(openOn === 'beans' ? span : 0)).current;
+  const scrollX = useRef(new Animated.Value(openOn === SECOND ? span : 0)).current;
   const show = (next) => {
     if (current.current === next) return;
     current.current = next;
@@ -116,7 +126,7 @@ export function useShelfPager(span, openOn = 'gear') {
       Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
         useNativeDriver: true,
         listener: (e) => {
-          if (!tapped.current) show(e.nativeEvent.contentOffset.x > span / 2 ? 'beans' : 'gear');
+          if (!tapped.current) show(e.nativeEvent.contentOffset.x > span / 2 ? SECOND : FIRST);
         },
       }),
     [scrollX, span]
@@ -127,7 +137,7 @@ export function useShelfPager(span, openOn = 'gear') {
   const select = (next) => {
     tapped.current = true;
     show(next);
-    ref.current?.scrollTo({ x: next === 'beans' ? span : 0, animated: true });
+    ref.current?.scrollTo({ x: next === SECOND ? span : 0, animated: true });
   };
   const progress = scrollX.interpolate({ inputRange: [0, span], outputRange: [0, 1], extrapolate: 'clamp' });
   return { side, progress, select, scrollProps: { ref, onScroll, scrollEventThrottle: 16, onScrollBeginDrag: release, onMomentumScrollEnd: release } };
@@ -191,7 +201,7 @@ const styles = StyleSheet.create({
   tab: {
     minHeight: size.tapTarget,
     justifyContent: 'flex-end',
-    paddingBottom: space[12] + shape.borderWidth.box,
+    paddingBottom: space[6] + shape.borderWidth.box,
   },
   underline: {
     position: 'absolute',

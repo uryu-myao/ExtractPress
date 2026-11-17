@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import DotTexture from '../components/base/DotTexture';
+import GrainTexture from '../components/base/GrainTexture';
 import Text from '../components/base/Text';
 import { color, layout, shape, space, spacing, state, textStyle } from '../theme/tokens';
 
@@ -30,9 +30,18 @@ export const ScrollChromeContext = createContext(null);
  *            content, so this stays 0; it grows once the header is fully
  *            collapsed. A block at page y reaches the foot once this passes y.
  *   pageTop  the page's top in the screen's coordinates (Animated): where
- *            AlignedDotTexture lines a pinned block's dots up with the page's.
+ *            AlignedGrainTexture lines a pinned block's grain up with the page's.
  */
 export const ContentScrollContext = createContext(null);
+
+/**
+ * The bottom bar's band under a tab's page (AppShell, from FooterNav's
+ * useFooterHeight): the tab pager runs to the screen's bottom edge, so a
+ * page shows through the bar's gaps (Uryu, 2026-11-17); a scroll page ends
+ * with this much room, so its last content can scroll clear of the bar.
+ * 0 everywhere else.
+ */
+export const FooterBandContext = createContext(0);
 
 /**
  * Header collapse (design-system.md §9 Header collapse). Two tunables:
@@ -127,8 +136,9 @@ export default function ScreenFrame({
   const ownBackdrop = useContext(ScreenBackdropContext);
   const chrome = useContext(ScrollChromeContext);
   const rootStyle = ownBackdrop ? styles.screen : styles.screenBare;
-  const texture = ownBackdrop ? <DotTexture /> : null;
+  const texture = ownBackdrop ? <GrainTexture /> : null;
   const top = Math.max(insets.top, layout.screen.top);
+  const band = useContext(FooterBandContext);
   const headerTop = { paddingTop: top };
 
   // ── Collapse geometry (scroll variants only; design-system.md §9 Header
@@ -493,6 +503,7 @@ export default function ScreenFrame({
           <ContentScrollContext.Provider value={contentScroll}>{page}</ContentScrollContext.Provider>
         </Animated.View>
         {anim ? <View style={{ height: distance }} /> : null}
+        {band ? <View style={{ height: band }} /> : null}
       </Animated.ScrollView>
     </View>
   );

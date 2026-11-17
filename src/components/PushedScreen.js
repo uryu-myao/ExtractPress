@@ -5,7 +5,7 @@ import Reanimated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from
 import { scheduleOnRN } from 'react-native-worklets';
 import { ACTIVE_OFFSET_X, BACK_DISTANCE, BACK_VELOCITY, EDGE, FAIL_OFFSET_Y } from '../constants/edgeSwipe';
 import { color, motion } from '../theme/tokens';
-import DotTexture from './base/DotTexture';
+import GrainTexture from './base/GrainTexture';
 import { SwipeBackHoldContext, useSwipeBackHold } from './swipeBackHold';
 
 /**
@@ -87,7 +87,7 @@ export default function PushedScreen({ onLeave, onBack, children }) {
   return (
     <GestureDetector gesture={swipe}>
       <Reanimated.View style={[StyleSheet.absoluteFill, styles.page, slide]}>
-        <DotTexture />
+        <GrainTexture />
         <SwipeBackHoldContext.Provider value={holdValue}>{children(goBack, guardLeave)}</SwipeBackHoldContext.Provider>
       </Reanimated.View>
     </GestureDetector>

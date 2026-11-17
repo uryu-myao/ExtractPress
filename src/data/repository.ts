@@ -875,6 +875,9 @@ export type CupListItem = {
   grinder: string | null;
   place_name: string | null;
   product_name: string | null;
+  /** Packaged's shop and the cup's photo: Records' row (handoff-records §3). */
+  bought_at_name: string | null;
+  photo_uri: string | null;
 };
 
 /** How many cups are logged (Records' header count, Try next's eyebrow). */
@@ -937,7 +940,7 @@ export async function listCups(db: SQLiteDatabase): Promise<CupListItem[]> {
     `SELECT c.id, c.logged_at, c.rating, c.mode, c.note, c.flavours, c.drink_type,
             c.bean_name, c.bean_roaster, c.bean_process, c.brew_method, c.grinder,
             c.bag_id, c.brewer_id, c.grinder_id,
-            c.product_name, c.place_name
+            c.product_name, c.place_name, c.bought_at_name, c.photo_uri
        FROM cups c
       ORDER BY c.logged_at DESC, c.id DESC`
   );

@@ -12,7 +12,7 @@ import { OPEN_BAG_LIMIT, finishBag, openBag } from '../data/repository';
 import { color, dashed, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
 
 /**
- * 3d's body — the beans side of Gear & beans (Round 14, 17d; 3d's own header
+ * 3d's body — the beans side of Beans & gear (Round 14, 17d; 3d's own header
  * went with the merge: its "N / 5 On the shelf" is the tab row's slot count,
  * counting the bags you have, opened or not; Design Round 7, 18).
  *

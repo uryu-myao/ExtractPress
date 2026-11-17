@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { FreshnessTrack } from './BeanFreshness';
-import ShelfTabs, { useShelfPager } from './ShelfTabs';
+import ShelfTabs, { SIDES, useShelfPager } from './ShelfTabs';
 import { useDatabase } from '../data/DatabaseProvider';
 import { bestBeforeStatus, drinkFirstRank } from '../constants/bagDates';
 import { FRESHNESS_WORDS, freshnessOf } from '../data/freshness';
@@ -16,14 +16,14 @@ import PhotoPlaceholder from './base/PhotoPlaceholder';
 import Text from './base/Text';
 
 /**
- * Home's My gear / My beans (Round 14, 17a / 17b; was 4a / 4b's box with
- * folder tabs).
+ * Home's My beans / My gear (Round 14, 17a / 17b; was 4a / 4b's box with
+ * folder tabs). Beans first, then gear (Uryu, 2026-11-17; was gear first).
  *
  * Heading: ShelfTabs, with the live counts. Under it the two sides as pages
  * side by side, swiped or opened by their tab: the page is the screen less
  * three gutters (402 → 336), space.20 apart, so the closed side peeks
- * 2 × gutter − 20 (24) at the screen's edge, cut straight. Gear snaps to the
- * left gutter, beans to the right one, so the peek is the same on both. The
+ * 2 × gutter − 20 (24) at the screen's edge, cut straight. Beans snap to the
+ * left gutter, gear to the right one, so the peek is the same on both. The
  * open tab follows the scroll past the midpoint. A swipe stops at the ends
  * (the bounce stays inside, the mock's overscroll contain).
  *
@@ -52,7 +52,7 @@ import Text from './base/Text';
  * with its text (2026-10-27; the longer "Last · …" forms don't fit 84).
  *
  * Under the pages: the page indicator (component.pageIndicator) and "See all
- * gear & beans ›", which opens Gear & beans on the open side.
+ * beans & gear ›", which opens Beans & gear on the open side.
  * An empty side: its add button (Add gear → 3a, Add a bag → 3c), under the
  * first row's rule and padding (EmptySide).
  *
@@ -65,7 +65,7 @@ export default function ShelfBlock({ onSeeAll, onAddBag, onAddGear, onOpenBag, o
   const [shelf, setShelf] = useState(null);
   const { width } = useWindowDimensions();
   const page = width - 3 * layout.gutter;
-  // The farthest the pages scroll: beans' right edge on the right gutter.
+  // The farthest the pages scroll: the second page's right edge on the right gutter.
   const end = 2 * page + space[20] + 2 * layout.gutter - width;
   const { side, progress, select, scrollProps } = useShelfPager(end);
 
@@ -99,15 +99,6 @@ export default function ShelfBlock({ onSeeAll, onAddBag, onAddGear, onOpenBag, o
         style={styles.pages}
         contentContainerStyle={styles.pagesContent}>
         <View style={pageStyle}>
-          {shelf.gear.length ? (
-            homeGear(shelf.gear).map((g, i) => <GearRow key={g.id} gear={g} first={i === 0} onPress={() => onOpenGear(g)} />)
-          ) : (
-            <EmptySide>
-              <AddButton icon="plus" iconToken={icon.sm} label="Add gear" onPress={onAddGear} />
-            </EmptySide>
-          )}
-        </View>
-        <View style={pageStyle}>
           {shelf.bags.length ? (
             homeBeans(shelf.bags).map((b, i) => <BeanRow key={b.id} bag={b} first={i === 0} onPress={() => onOpenBag(b)} />)
           ) : (
@@ -116,10 +107,19 @@ export default function ShelfBlock({ onSeeAll, onAddBag, onAddGear, onOpenBag, o
             </EmptySide>
           )}
         </View>
+        <View style={pageStyle}>
+          {shelf.gear.length ? (
+            homeGear(shelf.gear).map((g, i) => <GearRow key={g.id} gear={g} first={i === 0} onPress={() => onOpenGear(g)} />)
+          ) : (
+            <EmptySide>
+              <AddButton icon="plus" iconToken={icon.sm} label="Add gear" onPress={onAddGear} />
+            </EmptySide>
+          )}
+        </View>
       </Animated.ScrollView>
       <View style={styles.foot}>
         <PageIndicator side={side} />
-        <Button variant="text" label="See all gear & beans" trailingIcon="chevronRight" onPress={() => onSeeAll(side)} />
+        <Button variant="text" label="See all beans & gear" trailingIcon="chevronRight" onPress={() => onSeeAll(side)} />
       </View>
     </View>
   );
@@ -228,16 +228,16 @@ const dots = component.pageIndicator;
 
 /** Two bars: the open side's longer and in ink (component.pageIndicator). */
 function PageIndicator({ side }) {
-  const at = useRef(new Animated.Value(side === 'beans' ? 1 : 0)).current;
+  const at = useRef(new Animated.Value(SIDES.indexOf(side))).current;
   useEffect(() => {
-    Animated.timing(at, { toValue: side === 'beans' ? 1 : 0, duration: motion.expand.duration, easing: indicatorEasing, useNativeDriver: false }).start();
+    Animated.timing(at, { toValue: SIDES.indexOf(side), duration: motion.expand.duration, easing: indicatorEasing, useNativeDriver: false }).start();
   }, [at, side]);
   const bar = (open) => ({
     width: at.interpolate({ inputRange: [0, 1], outputRange: open ? [dots.inactive.w, dots.active.w] : [dots.active.w, dots.inactive.w] }),
     backgroundColor: at.interpolate({ inputRange: [0, 1], outputRange: open ? [dots.inactive.color, dots.active.color] : [dots.active.color, dots.inactive.color] }),
   });
   return (
-    <View style={styles.indicator} accessible accessibilityLabel={side === 'beans' ? 'My beans, 2 of 2' : 'My gear, 1 of 2'}>
+    <View style={styles.indicator} accessible accessibilityLabel={side === 'beans' ? 'My beans, 1 of 2' : 'My gear, 2 of 2'}>
       <Animated.View style={[styles.indicatorBar, bar(false)]} />
       <Animated.View style={[styles.indicatorBar, bar(true)]} />
     </View>
@@ -263,10 +263,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.inset.listRow.v,
   },
   // No rule over the first row (Uryu, 2026-11-15: Home's blocks set apart by
-  // room alone): a shorter top padding instead, so the rows sit about 18
-  // under the tabs' caps, past the open tab's underline (as Recently sipped).
+  // room alone). space.6 between the open tab's underline and the first
+  // row, then the row's own 12: its content about 18 under the underline,
+  // and a pressed row's fill clear of the underline (Uryu, 2026-11-17, on
+  // device: the list further from the underline; was 6 in all).
   rowFirst: {
-    paddingTop: space[6],
+    marginTop: space[6],
   },
   rowPressed: {
     backgroundColor: state.pressed.row,

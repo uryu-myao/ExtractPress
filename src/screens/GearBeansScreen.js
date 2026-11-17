@@ -3,7 +3,7 @@ import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
 import BeansList from '../components/BeansList';
 import GearList from '../components/GearList';
 import IconButton from '../components/base/IconButton';
-import ShelfTabs, { SlotCount, TAB_OVERLAP, useShelfPager } from '../components/ShelfTabs';
+import ShelfTabs, { SIDES, SlotCount, TAB_OVERLAP, useShelfPager } from '../components/ShelfTabs';
 import { GEAR_LIMIT } from '../constants/gear';
 import { useDatabase } from '../data/DatabaseProvider';
 import { OPEN_BAG_LIMIT, countFinishedBags, listGearWithUse, listShelfBags, onCupsChanged, onShelfChanged } from '../data/repository';
@@ -11,11 +11,12 @@ import { layout, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
- * Gear & beans (Round 14, 17c / 17d): 3b (My gear) and 3d (My beans) as one
- * screen, from Home's "See all gear & beans ›" (on the side Home had open)
- * and Profile's My gear / My beans rows.
+ * Beans & gear (Round 14, 17c / 17d): 3d (My beans) and 3b (My gear) as one
+ * screen, from Home's "See all beans & gear ›" (on the side Home had open)
+ * and Profile's My beans / My gear rows. Beans first, then gear (Uryu,
+ * 2026-11-17; was "Gear & beans", gear first).
  *
- * Header: compact, Back + "Gear & beans" (Edit cup's pattern).
+ * Header: compact, Back + "Beans & gear" (Edit cup's pattern).
  * Under it the shelf's tabs (ShelfTabs, as Home), with the open side's slot
  * count at the row's right end: "7 / 8 In my kit" / "3 / 5 On the shelf".
  * The body is the open side's: GearList (3b's rows and Add gear) or
@@ -30,10 +31,10 @@ import ScreenFrame from './ScreenFrame';
  * beans' first card sits gap.section under it. 17c / 17d follow (Design
  * Round 15, addendum).
  *
- * Props: side ('gear' | 'beans', the one to open on), onBack, onAddGear,
+ * Props: side ('beans' | 'gear', the one to open on; beans by default), onBack, onAddGear,
  * onEditGear(gear), onAddBag, onFinished, onEditBag(bag)
  */
-export default function GearBeansScreen({ side: openOn = 'gear', onBack, onAddGear, onEditGear, onAddBag, onFinished, onEditBag }) {
+export default function GearBeansScreen({ side: openOn = SIDES[0], onBack, onAddGear, onEditGear, onAddBag, onFinished, onEditBag }) {
   const db = useDatabase();
   const [data, setData] = useState(null);
   const [heights, setHeights] = useState({});
@@ -56,11 +57,11 @@ export default function GearBeansScreen({ side: openOn = 'gear', onBack, onAddGe
     };
   }, [db]);
 
-  // Opened on beans: start there, once the pages are laid out.
+  // Opened on the second side (gear): start there, once the pages are laid out.
   const onPagerLayout = () => {
     if (placed.current) return;
     placed.current = true;
-    if (openOn === 'beans') scrollProps.ref.current?.scrollTo({ x: width, animated: false });
+    if (openOn === SIDES[1]) scrollProps.ref.current?.scrollTo({ x: width, animated: false });
   };
   const measure = (key) => (e) => {
     const h = e.nativeEvent.layout.height;
@@ -72,7 +73,7 @@ export default function GearBeansScreen({ side: openOn = 'gear', onBack, onAddGe
       ? data && { value: `${data.gear.length} / ${GEAR_LIMIT}`, label: 'In my kit' }
       : data && { value: `${data.bags.length} / ${OPEN_BAG_LIMIT}`, label: 'On the shelf' };
   return (
-    <ScreenFrame scroll compact title="Gear & beans" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
+    <ScreenFrame scroll compact title="Beans & gear" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
       {data ? (
         <View>
           <ShelfTabs active={side} progress={progress} counts={{ gear: data.gear.length, beans: data.bags.length }} onSelect={select} trailing={<SlotCount {...slot} />} />
@@ -84,11 +85,11 @@ export default function GearBeansScreen({ side: openOn = 'gear', onBack, onAddGe
             onLayout={onPagerLayout}
             style={[styles.pager, heights[side] != null && { height: heights[side] }]}
             contentContainerStyle={styles.pagerContent}>
-            <View style={[styles.page, { width }]} onLayout={measure('gear')}>
-              <GearList gear={data.gear} onAddGear={onAddGear} onEditGear={onEditGear} />
-            </View>
             <View style={[styles.page, styles.beans, { width }]} onLayout={measure('beans')}>
               <BeansList bags={data.bags} finished={data.finished} onAddBag={onAddBag} onFinished={onFinished} onEditBag={onEditBag} />
+            </View>
+            <View style={[styles.page, { width }]} onLayout={measure('gear')}>
+              <GearList gear={data.gear} onAddGear={onAddGear} onEditGear={onEditGear} />
             </View>
           </Animated.ScrollView>
         </View>
