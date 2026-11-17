@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, Keyboard, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AxisReadout from '../components/base/AxisReadout';
 import Badge from '../components/base/Badge';
@@ -188,7 +188,13 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
   // Added or picked from the map while editing: kept in their sheets (withChosen).
   const [kept, keep] = useKept();
   // 'bag' | 'gear' | 'date' | 'delete' | 'discard' | null
-  const [sheet, setSheet] = useState(null);
+  const [sheet, setSheetState] = useState(null);
+  // A sheet opens with the keyboard down: typing in My words left it up,
+  // over the sheet (as 3c's rows, Uryu on device, 2026-11-17).
+  const setSheet = (next) => {
+    if (next) Keyboard.dismiss();
+    setSheetState(next);
+  };
   const [shelf, setShelf] = useState({ bags: [], brewers: [], grinders: [] });
   const [dropsLockIn, setDropsLockIn] = useState(false);
   const [busy, setBusy] = useState(false);

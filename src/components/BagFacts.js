@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { PROCESS_OPTIONS, ROAST_LEVELS } from '../constants/cups';
 import { flagOf } from '../constants/flags';
 import { ORIGINS, originFlag, originOf, REGIONS, regionsOf } from '../constants/origins';
@@ -86,7 +86,10 @@ export function useBagFacts({ value, onChange }) {
   const [returnTo, setReturnTo] = useState(null);
   const [facts, setFacts] = useState([]);
 
+  // A row opens its sheet with the keyboard down: typing in Bean name or
+  // Roaster left it up, over the sheet (Uryu, on device, 2026-11-17).
   const show = (field) => {
+    Keyboard.dismiss();
     setOpen(field);
     listBagFacts(db).then(setFacts, (error) => console.error('[about] could not read the bags', error));
   };
