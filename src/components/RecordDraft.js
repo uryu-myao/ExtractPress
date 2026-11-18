@@ -112,7 +112,7 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
   const chooseBag = useCallback((bag) => setDefaults((prev) => ({ ...(prev ?? EMPTY_DEFAULTS), bag })), []);
 
   /**
-   * This cup's gear: { brewer?, grinder? }. From 3a (the defaults it leaves)
+   * This cup's gear: { brewer?, grinder? }. From 3a (the gear just added)
    * or the Method picker (this cup only; the shelf's defaults stay).
    */
   const chooseGear = useCallback((gear) => setDefaults((prev) => ({ ...(prev ?? EMPTY_DEFAULTS), ...gear })), []);

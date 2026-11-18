@@ -610,17 +610,23 @@ export async function removeGear(db: SQLiteDatabase, id: number): Promise<void> 
  * checked). A catalogue pick brings its maker and meta, COPIED (migration
  * 13): the row is the user's from here, and gear.json's later corrections
  * never reach it. Written by hand: the name alone. One transaction; refuses
- * past `limit`. Returns the defaults after the insert.
+ * past `limit`. Returns the defaults after the insert, and the rows added
+ * in the order given (3a in the Record sheet puts them on this cup).
  */
 export type NewGear = { name: string; category: GearCategory; maker?: string | null; meta?: string | null };
 
-export async function insertGear(db: SQLiteDatabase, items: NewGear[], limit: number): Promise<{ brewer: Gear | null; grinder: Gear | null }> {
+export async function insertGear(
+  db: SQLiteDatabase,
+  items: NewGear[],
+  limit: number
+): Promise<{ brewer: Gear | null; grinder: Gear | null; added: Gear[] }> {
+  const ids: number[] = [];
   await db.withExclusiveTransactionAsync(async (tx) => {
     const row = await tx.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM gear');
     if ((row?.n ?? 0) + items.length > limit) throw new Error(`Your shelf holds ${limit} pieces of gear.`);
     for (const item of items) {
       const taken = await tx.getFirstAsync('SELECT 1 FROM gear WHERE category = ? AND is_default = 1', [item.category]);
-      await tx.runAsync('INSERT INTO gear (name, category, maker, meta, is_default, added_at) VALUES (?, ?, ?, ?, ?, ?)', [
+      const result = await tx.runAsync('INSERT INTO gear (name, category, maker, meta, is_default, added_at) VALUES (?, ?, ?, ?, ?, ?)', [
         item.name,
         item.category,
         item.maker ?? null,
@@ -628,6 +634,7 @@ export async function insertGear(db: SQLiteDatabase, items: NewGear[], limit: nu
         taken ? 0 : 1,
         Date.now(),
       ]);
+      ids.push(result.lastInsertRowId);
     }
   });
   notifyShelfChanged();
@@ -635,7 +642,8 @@ export async function insertGear(db: SQLiteDatabase, items: NewGear[], limit: nu
     db.getFirstAsync<Gear>("SELECT * FROM gear WHERE category = 'brewer' AND is_default = 1"),
     db.getFirstAsync<Gear>("SELECT * FROM gear WHERE category = 'grinder' AND is_default = 1"),
   ]);
-  return { brewer: brewer ?? null, grinder: grinder ?? null };
+  const added = await Promise.all(ids.map((id) => db.getFirstAsync<Gear>('SELECT * FROM gear WHERE id = ?', [id])));
+  return { brewer: brewer ?? null, grinder: grinder ?? null, added: added.filter((g): g is Gear => g != null) };
 }
 
 /**
