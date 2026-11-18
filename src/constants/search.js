@@ -17,7 +17,7 @@
  */
 import { formatDay } from './dates';
 import { MODE_LABEL, cupTitle } from './cups';
-import { GEAR_CATEGORY, onCups } from './gear';
+import { CUP_GEAR, GEAR_CATEGORY } from './gear';
 import { freshnessOf } from '../data/freshness';
 import { bestBeforeShort } from './bagDates';
 
@@ -83,7 +83,7 @@ export function cupsForFilter(cups, filter) {
     case 'bag':
       return cups.filter((c) => c.bag_id === filter.value);
     case 'gear':
-      return cups.filter((c) => c.brewer_id === filter.value || c.grinder_id === filter.value);
+      return cups.filter((c) => CUP_GEAR.some((r) => c[r.id] === filter.value));
     case 'flavour':
       return cups.filter((c) => c.rating === filter.rating && c.flavours.some((f) => f.toLowerCase() === filter.value));
     default:
@@ -123,7 +123,7 @@ export function filterEmpty(filter, cups) {
 const has = (value, q) => Boolean(value) && value.toLowerCase().includes(q);
 
 /** A cup's name fields: what CUPS matches (its title, source and gear). */
-const cupNames = (cup) => [cup.bean_name, cup.bean_roaster, cup.drink_type, cup.product_name, cup.place_name, cup.brew_method, cup.grinder];
+const cupNames = (cup) => [cup.bean_name, cup.bean_roaster, cup.drink_type, cup.product_name, cup.place_name, ...CUP_GEAR.map((r) => cup[r.name])];
 
 /**
  * A text query over everything (18d): { beans, gear, words, cups }.
@@ -131,7 +131,7 @@ const cupNames = (cup) => [cup.bean_name, cup.bean_roaster, cup.drink_type, cup.
  *   gear   name, maker
  *   words  cups whose My words or flavour tags hold the query
  *   cups   cups whose names hold it (bean, roaster, drink, product, café,
- *          brewer, grinder)
+ *          brewer, grinder, kettle, scale)
  * A cup can be in both WORDS and CUPS: each tab is its own question.
  * TODO(design): 18d draws WORDS with 0 only, so its rows aren't drawn; they
  * are 2a's cup rows here, as 8l's Words scope listed them.
@@ -254,5 +254,3 @@ function completions(q, { cups, bags, gear }, history) {
     .map(([t]) => t);
 }
 
-/** Whether a gear page lists cups at all (19c: kettles and scales don't, Round 15 B5). */
-export const gearHasCups = (gear) => onCups(gear.category);

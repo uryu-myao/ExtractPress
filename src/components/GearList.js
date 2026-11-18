@@ -4,7 +4,7 @@ import Badge from './base/Badge';
 import Chevron from './base/Chevron';
 import PhotoPlaceholder from './base/PhotoPlaceholder';
 import Text from './base/Text';
-import { GEAR_CATEGORY, GEAR_LIMIT, onCups } from '../constants/gear';
+import { GEAR_CATEGORY, GEAR_LIMIT } from '../constants/gear';
 import { icon, layout, size, space, spacing, state } from '../theme/tokens';
 
 /**
@@ -13,8 +13,8 @@ import { icon, layout, size, space, spacing, state } from '../theme/tokens';
  *
  * A row per piece of gear, defaults first, then oldest added
  * (listGearWithUse): thumbnail, name (title) with a "Default" badge, and
- * "Brewer · used in 2 cups" / "· not used yet" (3b's copy). A kettle or
- * scale is never on a cup, so its line is the category alone, as 4a.
+ * "Brewer · used in 2 cups" / "· not used yet" (3b's copy), every kind
+ * (a cup holds a kettle and a scale too since migration 14).
  * The whole row opens 3e, with the row chevron (D-26: no ⋮, no sheet).
  * Pressed: state.pressed.row across the screen's width (out through the
  * gutter, as 3d's "Finished bags").
@@ -28,7 +28,6 @@ import { icon, layout, size, space, spacing, state } from '../theme/tokens';
  * Props: gear (listGearWithUse), onAddGear, onEditGear(gear)
  */
 export function gearLine(g) {
-  if (!onCups(g.category)) return GEAR_CATEGORY[g.category];
   return `${GEAR_CATEGORY[g.category]} · ${g.cups ? `used in ${g.cups === 1 ? '1 cup' : `${g.cups} cups`}` : 'not used yet'}`;
 }
 

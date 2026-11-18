@@ -14,7 +14,8 @@
  *                   copy rule), not the bag as it is now
  *   Roast day       days from the roast to the cup, as 2c's "day 7 when
  *                   brewed": empty with no roast date, and never negative
- *   Brewer, Grinder the cup's copies of its gear's names
+ *   Brewer, Grinder, Kettle, Scale   the cup's copies of its gear's names
+ *                   (Kettle and Scale since migration 14; empty before)
  *   per axis        for each axis in the registry (TASTE_AXES), in its
  *                   order: "Acidity (1–5)", the stored reading (1–5 in
  *                   halves, Taste DNA's own scale, so its sums can be
@@ -32,7 +33,7 @@
  * Encoding (RFC 4180): UTF-8 with a BOM (Excel reads Japanese bean names
  * and words only with it), CRLF between records, a field quoted when it
  * holds a comma, a double quote, CR or LF, its quotes doubled.
- * Free text the user typed (bean, roaster, origin, region, brewer, grinder,
+ * Free text the user typed (bean, roaster, origin, region, the gear,
  * flavours, My words, drink, café, product) starting with = + - @ (or a tab
  * or CR) gets a leading ' (OWASP's CSV injection advice): Excel would read
  * "- juicy" as a formula and show #NAME?. Numbers and Sheets show the '.
@@ -61,6 +62,8 @@ export type CsvCup = {
   bean_roasted_at: number | null;
   brew_method: string | null;
   grinder: string | null;
+  kettle: string | null;
+  scale: string | null;
   /** cup_axes as { [axis id]: value }; no key = not noted. */
   axes: CupAxes;
   drink_type: string | null;
@@ -107,6 +110,8 @@ export const CSV_HEADER = [
   'Roast day',
   'Brewer',
   'Grinder',
+  'Kettle',
+  'Scale',
   ...TASTE_AXES.flatMap((a) => [`${a.label} (1–5)`, a.label]),
   'Flavours',
   'My words',
@@ -132,6 +137,8 @@ function row(cup: CsvCup): (Cell | { text: string })[] {
     day != null && day >= 0 ? day : null,
     typed(cup.brew_method),
     typed(cup.grinder),
+    typed(cup.kettle),
+    typed(cup.scale),
     ...TASTE_AXES.flatMap((a) => {
       const value = cup.axes[a.id] ?? null;
       return [value, stepWordOf(value)];

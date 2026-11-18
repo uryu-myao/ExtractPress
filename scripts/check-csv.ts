@@ -66,7 +66,7 @@ function parse(text: string): string[][] {
 const base: CsvCup = {
   id: 0, logged_at: 0, mode: 'made_it', rating: 4, note: null, flavours: [],
   bean_name: null, bean_roaster: null, bean_origin: null, bean_region: null, bean_process: null, bean_roast_level: null, bean_roasted_at: null,
-  brew_method: null, grinder: null, axes: {},
+  brew_method: null, grinder: null, kettle: null, scale: null, axes: {},
   drink_type: null, place_name: null, product_name: null,
 };
 // Local times, as the sheet writes them.
@@ -77,7 +77,7 @@ const cups: CsvCup[] = [
     ...base, id: 3, logged_at: at(2026, 10, 28, 8, 20),
     bean_name: 'エチオピア グジ', bean_roaster: '丸山珈琲', bean_origin: 'Ethiopia', bean_region: 'Guji',
     bean_process: 'washed', bean_roast_level: 'medium-dark', bean_roasted_at: at(2026, 10, 21),
-    brew_method: 'Hario V60 02', grinder: 'Comandante C40', axes: { acidity: 1, body: 4.5 },
+    brew_method: 'Hario V60 02', grinder: 'Comandante C40', kettle: 'Fellow Stagg EKG', scale: '+Acaia Pearl', axes: { acidity: 1, body: 4.5 },
     flavours: ['juicy', 'ベルガモット', 'stone fruit'],
     note: '明るい酸味, でも後味が "苦い"。\n2行目, comma\r\nCRLF line',
   },
@@ -101,8 +101,8 @@ try {
 
 if (rows.length) {
   const [head, ...body] = rows;
-  const expected = 19 + 2 * TASTE_AXES.length;
-  if (head.length !== expected) fail(`header has ${head.length} columns, expected ${expected} (19 + two per axis)`);
+  const expected = 21 + 2 * TASTE_AXES.length;
+  if (head.length !== expected) fail(`header has ${head.length} columns, expected ${expected} (21 + two per axis)`);
   if (JSON.stringify(head) !== JSON.stringify(CSV_HEADER)) fail('header differs from CSV_HEADER');
   for (const a of TASTE_AXES) {
     if (!head.includes(`${a.label} (1–5)`) || !head.includes(a.label)) fail(`axis ${a.id}: no value / step column pair`);
@@ -125,6 +125,8 @@ if (rows.length) {
       Region: typed(cup.bean_region),
       Brewer: typed(cup.brew_method),
       Grinder: typed(cup.grinder),
+      Kettle: typed(cup.kettle),
+      Scale: typed(cup.scale),
       Flavours: typed(cup.flavours.length ? cup.flavours.join(FLAVOUR_JOIN) : null),
       'My words': typed(cup.note),
       Drink: typed(cup.drink_type),

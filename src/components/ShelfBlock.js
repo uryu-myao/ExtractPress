@@ -7,7 +7,7 @@ import { bestBeforeStatus, drinkFirstRank } from '../constants/bagDates';
 import { FRESHNESS_WORDS, freshnessOf } from '../data/freshness';
 import { listGearWithUse, listShelfBags, onCupsChanged, onShelfChanged } from '../data/repository';
 import { formatLastUsed } from '../constants/dates';
-import { GEAR_CATEGORY, onCups } from '../constants/gear';
+import { GEAR_CATEGORY } from '../constants/gear';
 import { color, component, icon, layout, motion, shape, size, space, spacing, state } from '../theme/tokens';
 import AddButton from './base/AddButton';
 import Badge from './base/Badge';
@@ -37,9 +37,9 @@ import Text from './base/Text';
  * darkens while pressed (state.pressed.row); no chevron (Design Round 16,
  * B7: they are list items, like Records rows). A swipe across the pages cancels the press.
  *   gear   "Brewer" (and a "Default" badge); status "2 cups" / "Last ·
- *          today", or "Not used" / "Add to a cup". A kettle or scale is never
- *          on a cup, so its status is empty (2026-10-27: "Add to a cup" would
- *          promise what can't be done). Used with no date: the count alone.
+ *          today", or "Not used" / "Add to a cup", every kind (a cup holds
+ *          a kettle and a scale too since migration 14; until then their
+ *          status was empty). Used with no date: the count alone.
  *          Default first, then the most used.
  *   beans  "Roaster · 250 g"; status the freshness word over a short bar
  *          (component.beanFreshness, as 3d: Design Round 7 / 14a's colours;
@@ -145,14 +145,11 @@ function homeBeans(bags) {
 }
 
 function GearRow({ gear: g, first, onPress }) {
-  let status = null;
-  if (onCups(g.category)) {
-    status = g.cups ? (
-      <Status word={g.cups === 1 ? '1 cup' : `${g.cups} cups`} wordColor="primary" line={g.last_used_at != null ? `Last · ${formatLastUsed(g.last_used_at)}` : null} />
-    ) : (
-      <Status word="Not used" wordColor="muted" line="Add to a cup" />
-    );
-  }
+  const status = g.cups ? (
+    <Status word={g.cups === 1 ? '1 cup' : `${g.cups} cups`} wordColor="primary" line={g.last_used_at != null ? `Last · ${formatLastUsed(g.last_used_at)}` : null} />
+  ) : (
+    <Status word="Not used" wordColor="muted" line="Add to a cup" />
+  );
   return <Row first={first} name={g.name} badge={g.is_default ? 'Default' : null} meta={GEAR_CATEGORY[g.category]} status={status} photo={g.photo_uri} onPress={onPress} />;
 }
 

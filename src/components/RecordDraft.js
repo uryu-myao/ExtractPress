@@ -2,6 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import { FLAVOUR_LIMIT } from '../constants/flavours';
+import { CUP_GEAR } from '../constants/gear';
 import { useDatabase } from '../data/DatabaseProvider';
 import { insertCup, lastDrinkAt, loadRecordDefaults } from '../data/repository';
 import { useKept } from './SearchSheet';
@@ -43,14 +44,16 @@ import { useKept } from './SearchSheet';
  */
 const RecordDraftContext = createContext(null);
 
-const EMPTY_DEFAULTS = { bag: null, brewer: null, grinder: null, cafe: null, store: null };
+const EMPTY_DEFAULTS = { bag: null, brewer: null, grinder: null, kettle: null, scale: null, cafe: null, store: null };
+/** Any of this cup's gear, of the four kinds (CUP_GEAR). */
+const hasGear = (defaults) => CUP_GEAR.some((r) => defaults?.[r.category]);
 /** No axis noted: no key (cup_axes: not noted is no row). Clearing sets null, which writes nothing. */
 const EMPTY_AXES = {};
 
 /** [{ key, label, filled }] — what this cup needs before it can be saved (see above). */
 function requiredFields(mode, defaults, rating, productName, cafe) {
   const fields = [{ key: 'rating', label: 'Rating', filled: rating > 0 }];
-  if (mode === 'made_it' && defaults?.bag && (defaults.brewer || defaults.grinder)) {
+  if (mode === 'made_it' && defaults?.bag && hasGear(defaults)) {
     fields.push({ key: 'bag', label: 'Bag', filled: true }, { key: 'method', label: 'Method', filled: true });
   }
   if (mode === 'barista') fields.push({ key: 'cafe', label: 'Café', filled: Boolean(cafe) });
@@ -60,8 +63,8 @@ function requiredFields(mode, defaults, rating, productName, cafe) {
 
 /**
  * preset: the bag or gear this cup is logged with, from a bag or gear page's
- * "Log a cup with it ›" (Design Round 15, 19c): { bag } | { brewer } |
- * { grinder }, laid over the shelf's defaults once they are read. This cup
+ * "Log a cup with it ›" (Design Round 15, 19c): { bag } or { <gear kind>:
+ * gear } (brewer, grinder, kettle, scale), laid over the shelf's defaults once they are read. This cup
  * only; the shelf's defaults stay.
  */
 export function RecordDraftProvider({ onSaved, preset, children }) {
@@ -112,7 +115,7 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
   const chooseBag = useCallback((bag) => setDefaults((prev) => ({ ...(prev ?? EMPTY_DEFAULTS), bag })), []);
 
   /**
-   * This cup's gear: { brewer?, grinder? }. From 3a (the gear just added)
+   * This cup's gear: { brewer?, grinder?, kettle?, scale? }. From 3a (the gear just added)
    * or the Method picker (this cup only; the shelf's defaults stay).
    */
   const chooseGear = useCallback((gear) => setDefaults((prev) => ({ ...(prev ?? EMPTY_DEFAULTS), ...gear })), []);
@@ -199,6 +202,10 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
           brewMethod: defaults.brewer?.name ?? null,
           grinderId: defaults.grinder?.id ?? null,
           grinder: defaults.grinder?.name ?? null,
+          kettleId: defaults.kettle?.id ?? null,
+          kettle: defaults.kettle?.name ?? null,
+          scaleId: defaults.scale?.id ?? null,
+          scale: defaults.scale?.name ?? null,
           cafe,
           // Only what was entered or pre-filled from this café's last cup
           // (2026-10-11: a fixed "Flat white" was once written for every cup).

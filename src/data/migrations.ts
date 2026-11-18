@@ -639,6 +639,28 @@ export const migrations: readonly Migration[] = [
       )`,
     ],
   },
+  {
+    /*
+     * A cup holds four gear roles, not two (Uryu, 2026-11-18: Method lists
+     * kettles and scales too). The same shape as brewer / grinder: an id with
+     * ON DELETE SET NULL, and the name COPIED at logging (kettle, scale), so
+     * a removed kettle leaves its cups their text. Still columns, not a join
+     * table: the roles are a closed set, one of each kind (data-model.md
+     * "Gear on a cup"). ADD COLUMN, no rebuild: a REFERENCES column with a
+     * NULL default may be added. Existing cups get NULL: they were logged
+     * when a cup couldn't hold one.
+     */
+    version: 14,
+    name: 'kettle and scale on cups',
+    statements: [
+      `ALTER TABLE cups ADD COLUMN kettle_id INTEGER REFERENCES gear(id) ON DELETE SET NULL`,
+      `ALTER TABLE cups ADD COLUMN kettle TEXT`,
+      `ALTER TABLE cups ADD COLUMN scale_id INTEGER REFERENCES gear(id) ON DELETE SET NULL`,
+      `ALTER TABLE cups ADD COLUMN scale TEXT`,
+      `CREATE INDEX cups_kettle_id ON cups (kettle_id)`,
+      `CREATE INDEX cups_scale_id ON cups (scale_id)`,
+    ],
+  },
 ];
 
 /** The bookkeeping table. Created before any migration runs. */

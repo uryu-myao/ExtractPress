@@ -78,7 +78,12 @@ export const schema = {
     bean_roast_level: { type: 'TEXT', nullable: true, values: ['light', 'medium', 'medium-dark', 'dark'] },
     /** The roast date itself, never a day count ("day 7 when brewed" is computed). */
     bean_roasted_at: { type: 'INTEGER', nullable: true },
-    /** Gear: a reference plus the text as shown, the same shape as the bag. */
+    /**
+     * Gear: a reference plus the text as shown, the same shape as the bag.
+     * Four roles, one of each kind (brewer, grinder; kettle and scale at
+     * the table's end, migration 14): columns, not a join table, because the
+     * set is closed (data-model.md "Gear on a cup").
+     */
     brewer_id: { type: 'INTEGER', nullable: true, references: 'gear', onDelete: 'set null' },
     brew_method: { type: 'TEXT', nullable: true },
     grinder_id: { type: 'INTEGER', nullable: true, references: 'gear', onDelete: 'set null' },
@@ -126,6 +131,12 @@ export const schema = {
      * anything until then (the products table was left like that, migration 4).
      */
     bought_at_name: { type: 'TEXT', nullable: true },
+
+    /** mode = made_it: the kettle and scale (migration 14), as brewer / grinder. */
+    kettle_id: { type: 'INTEGER', nullable: true, references: 'gear', onDelete: 'set null' },
+    kettle: { type: 'TEXT', nullable: true },
+    scale_id: { type: 'INTEGER', nullable: true, references: 'gear', onDelete: 'set null' },
+    scale: { type: 'TEXT', nullable: true },
 
     /*
      * NO PRICE COLUMN — deliberate. A hand-entered price is always partial, and

@@ -21,6 +21,7 @@ import { dayLine, dayTimeLine } from '../components/WhenMeta';
 import { cupTitle } from '../constants/cups';
 import { formatDay, startOfDay } from '../constants/dates';
 import { drinkItems, normalizeDrink, normalizeProduct } from '../constants/drinks';
+import { CUP_GEAR, GEAR_CATEGORY } from '../constants/gear';
 import { AXIS_SCALE, stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deleteCup, deleteDropsLockIn, getBag, listDrinkHistory, listGear, listOpenBags, listProductHistory, updateCup } from '../data/repository';
@@ -73,7 +74,7 @@ import ScreenFrame from './ScreenFrame';
  */
 const bagMeta = (bag) => [bag.roaster, bag.roasted_at != null ? `roasted ${formatDay(bag.roasted_at)}` : null].filter(Boolean).join(' · ') || undefined;
 
-/** The pickers' "No bag" / "No brewer" / "No grinder" row (Round 4, 20–21). */
+/** The pickers' "No bag" / "No brewer" / "No grinder" (… "No kettle", "No scale") row (Round 4, 20–21). */
 const NONE_KEY = 'none';
 
 /** The picker row for the cup's gear: by id, or by name for a cup that kept only the name (the dev seed's). */
@@ -175,8 +176,8 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
   const [bag, setBag] = useState(() =>
     cup.bag_id != null || cup.bean_name ? { id: cup.bag_id, name: cup.bean_name, roaster: cup.bean_roaster, roasted_at: cup.bean_roasted_at } : null
   );
-  const [brewer, setBrewer] = useState(() => (cup.brew_method ? { id: cup.brewer_id, name: cup.brew_method } : null));
-  const [grinder, setGrinder] = useState(() => (cup.grinder ? { id: cup.grinder_id, name: cup.grinder } : null));
+  // The cup's gear by kind (CUP_GEAR): { id, name } or null, from its own columns.
+  const [gear, setGear] = useState(() => Object.fromEntries(CUP_GEAR.map((r) => [r.category, cup[r.name] ? { id: cup[r.id], name: cup[r.name] } : null])));
   const [loggedAt, setLoggedAt] = useState(cup.logged_at);
   const [note, setNote] = useState(cup.note ?? '');
   const [productName, setProductName] = useState(cup.product_name);
@@ -195,7 +196,8 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
     if (next) Keyboard.dismiss();
     setSheetState(next);
   };
-  const [shelf, setShelf] = useState({ bags: [], brewers: [], grinders: [] });
+  // gear: the shelf's gear by kind.
+  const [shelf, setShelf] = useState({ bags: [], gear: {} });
   const [dropsLockIn, setDropsLockIn] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -203,11 +205,11 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
   // when it has left the shelf; the gear by category.
   useEffect(() => {
     let alive = true;
-    Promise.all([listOpenBags(db), listGear(db, 'brewer'), listGear(db, 'grinder'), cup.bag_id != null ? getBag(db, cup.bag_id) : null]).then(
-      ([bags, brewers, grinders, own]) => {
+    Promise.all([listOpenBags(db), cup.bag_id != null ? getBag(db, cup.bag_id) : null, ...CUP_GEAR.map((r) => listGear(db, r.category))]).then(
+      ([bags, own, ...lists]) => {
         if (!alive) return;
         const all = own && !bags.some((b) => b.id === own.id) ? [own, ...bags] : bags;
-        setShelf({ bags: all, brewers, grinders });
+        setShelf({ bags: all, gear: Object.fromEntries(CUP_GEAR.map((r, i) => [r.category, lists[i]])) });
       },
       (error) => console.error('[edit] could not read the shelf', error)
     );
@@ -219,16 +221,15 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
   const madeIt = cup.mode === 'made_it';
   const barista = cup.mode === 'barista';
   const cafeChanged = (cafe?.id ?? null) !== cup.place_id || (cafe != null && cafe.id == null);
-  const method = [brewer?.name, grinder?.name].filter(Boolean).join(' · ');
+  const method = CUP_GEAR.map((r) => gear[r.category]?.name).filter(Boolean).join(' · ');
   const roastDay = madeIt && bag?.roasted_at != null ? bag.roasted_at : null;
   const noteValue = note.trim() ? note : null;
   // One per field that differs from the cup as stored: the Save bar counts
-  // them (32a). The bag, brewer and grinder are one field each (their id and
-  // the name copied with it change together).
+  // them (32a). The bag and each piece of gear are one field each (their id
+  // and the name copied with it change together).
   const changes = [
     (bag?.id ?? null) !== cup.bag_id || (bag?.name ?? null) !== cup.bean_name,
-    (brewer?.id ?? null) !== cup.brewer_id || (brewer?.name ?? null) !== cup.brew_method,
-    (grinder?.id ?? null) !== cup.grinder_id || (grinder?.name ?? null) !== cup.grinder,
+    ...CUP_GEAR.map((r) => (gear[r.category]?.id ?? null) !== cup[r.id] || (gear[r.category]?.name ?? null) !== cup[r.name]),
     loggedAt !== cup.logged_at,
     productName !== cup.product_name,
     cafeChanged,
@@ -254,10 +255,14 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
     try {
       await updateCup(db, cup.id, {
         bagId: madeIt ? (bag?.id ?? null) : cup.bag_id,
-        brewerId: madeIt ? (brewer?.id ?? null) : cup.brewer_id,
-        brewMethod: madeIt ? (brewer?.name ?? null) : cup.brew_method,
-        grinderId: madeIt ? (grinder?.id ?? null) : cup.grinder_id,
-        grinder: madeIt ? (grinder?.name ?? null) : cup.grinder,
+        brewerId: madeIt ? (gear.brewer?.id ?? null) : cup.brewer_id,
+        brewMethod: madeIt ? (gear.brewer?.name ?? null) : cup.brew_method,
+        grinderId: madeIt ? (gear.grinder?.id ?? null) : cup.grinder_id,
+        grinder: madeIt ? (gear.grinder?.name ?? null) : cup.grinder,
+        kettleId: madeIt ? (gear.kettle?.id ?? null) : cup.kettle_id,
+        kettle: madeIt ? (gear.kettle?.name ?? null) : cup.kettle,
+        scaleId: madeIt ? (gear.scale?.id ?? null) : cup.scale_id,
+        scale: madeIt ? (gear.scale?.name ?? null) : cup.scale,
         loggedAt,
         note: noteValue,
         productName: cup.mode === 'packaged' ? productName : cup.product_name,
@@ -422,26 +427,18 @@ export default function EditCupScreen({ cup, onBack, onDeleted, guardLeave }) {
         visible={sheet === 'gear'}
         onClose={() => setSheet(null)}
         label="Method"
-        sections={[
-          {
-            label: 'Brewer',
-            items: [
-              { key: NONE_KEY, label: 'No brewer' },
-              ...shelf.brewers.map((g) => ({ key: g.id, label: g.name, badge: g.is_default ? 'Default' : undefined })),
-            ],
-            selected: brewer ? pickedGear(brewer, shelf.brewers) : NONE_KEY,
-            onPick: (id) => setBrewer(id === NONE_KEY ? null : shelf.brewers.find((g) => g.id === id)),
-          },
-          {
-            label: 'Grinder',
-            items: [
-              { key: NONE_KEY, label: 'No grinder' },
-              ...shelf.grinders.map((g) => ({ key: g.id, label: g.name, badge: g.is_default ? 'Default' : undefined })),
-            ],
-            selected: grinder ? pickedGear(grinder, shelf.grinders) : NONE_KEY,
-            onPick: (id) => setGrinder(id === NONE_KEY ? null : shelf.grinders.find((g) => g.id === id)),
-          },
-        ]}
+        // A kind shows when the shelf has one or the cup holds one (a
+        // removed kettle's name stays on the cup until cleared here).
+        sections={CUP_GEAR.filter((r) => shelf.gear[r.category]?.length || gear[r.category]).map((r) => {
+          const list = shelf.gear[r.category] ?? [];
+          const kind = GEAR_CATEGORY[r.category];
+          return {
+            label: kind,
+            items: [{ key: NONE_KEY, label: `No ${kind.toLowerCase()}` }, ...list.map((g) => ({ key: g.id, label: g.name, badge: g.is_default ? 'Default' : undefined }))],
+            selected: gear[r.category] ? pickedGear(gear[r.category], list) : NONE_KEY,
+            onPick: (id) => setGear((prev) => ({ ...prev, [r.category]: id === NONE_KEY ? null : list.find((g) => g.id === id) })),
+          };
+        })}
       />
       <SearchSheet
         visible={sheet === 'product'}

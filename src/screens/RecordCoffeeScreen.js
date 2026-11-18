@@ -19,6 +19,7 @@ import WhenMeta from '../components/WhenMeta';
 import { useDatabase } from '../data/DatabaseProvider';
 import { listDrinkHistory, listGear, listOpenBags, listProductHistory } from '../data/repository';
 import { drinkItems, normalizeDrink, normalizeProduct } from '../constants/drinks';
+import { CUP_GEAR, GEAR_CATEGORY } from '../constants/gear';
 import { distanceLine, visitLine } from '../constants/places';
 import { color, icon, motion, shape, size, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
@@ -112,8 +113,9 @@ function bagMeta(bag) {
  * Neither blocks Save. "Add a bag" opens 3c (minimal), "Add gear" 3a (minimal).
  */
 function MadeItFields({ defaults, onAddBag, onAddGear, onPick }) {
-  const { bag, brewer, grinder } = defaults;
-  const method = [brewer?.name, grinder?.name].filter(Boolean).join(' · ');
+  const { bag, brewer } = defaults;
+  // Every kind this cup holds, in role order (CUP_GEAR): "Hario V60 02 · Comandante C40 · Stagg EKG".
+  const method = CUP_GEAR.map((r) => defaults[r.category]?.name).filter(Boolean).join(' · ');
   const filled = Boolean(bag && method);
   return (
     <Section label="From my shelf" status={filled ? 'prefilled' : undefined} plain={!filled}>
@@ -367,12 +369,13 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
   // Stage 3's picker (decided 2026-10-11): the Bag / Method rows open the
   // shelf's open bags / gear for this cup. 'bag' | 'gear' | null.
   const [picking, setPicking] = useState(null);
-  const [shelf, setShelf] = useState({ bags: [], brewers: [], grinders: [] });
+  // gear: { brewer: Gear[], grinder: [...], kettle: [...], scale: [...] }
+  const [shelf, setShelf] = useState({ bags: [], gear: {} });
   const openPicker = useCallback(
     async (kind) => {
       try {
-        const [bags, brewers, grinders] = await Promise.all([listOpenBags(db), listGear(db, 'brewer'), listGear(db, 'grinder')]);
-        setShelf({ bags, brewers, grinders });
+        const [bags, ...lists] = await Promise.all([listOpenBags(db), ...CUP_GEAR.map((r) => listGear(db, r.category))]);
+        setShelf({ bags, gear: Object.fromEntries(CUP_GEAR.map((r, i) => [r.category, lists[i]])) });
         setPicking(kind);
       } catch (error) {
         console.error('[record] could not read the shelf', error);
@@ -450,7 +453,7 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
               {/* The Required bar (Design Round 9, 5e), in place of the intro
                   line, in every mode. */}
               <RequiredBar
-                note={maker === 'made_it' && !(defaults.bag && (defaults.brewer || defaults.grinder)) ? BAR_NOTE.made_it_empty : BAR_NOTE[maker]}
+                note={maker === 'made_it' && !(defaults.bag && CUP_GEAR.some((r) => defaults[r.category])) ? BAR_NOTE.made_it_empty : BAR_NOTE[maker]}
                 slots={required}
               />
             </ExpandingBlock>
@@ -514,18 +517,14 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
         onClose={() => setPicking(null)}
         label="Method"
         sections={[
-          {
-            label: 'Brewer',
-            items: shelf.brewers.map((g) => ({ key: g.id, label: g.name, badge: g.is_default ? 'Default' : undefined })),
-            selected: defaults.brewer?.id ?? null,
-            onPick: (id) => chooseGear({ brewer: shelf.brewers.find((g) => g.id === id) }),
-          },
-          {
-            label: 'Grinder',
-            items: shelf.grinders.map((g) => ({ key: g.id, label: g.name, badge: g.is_default ? 'Default' : undefined })),
-            selected: defaults.grinder?.id ?? null,
-            onPick: (id) => chooseGear({ grinder: shelf.grinders.find((g) => g.id === id) }),
-          },
+          // One section per kind on the shelf (Uryu, 2026-11-18: kettles and
+          // scales too); a kind with no gear has none.
+          ...CUP_GEAR.filter((r) => shelf.gear[r.category]?.length).map((r) => ({
+            label: GEAR_CATEGORY[r.category],
+            items: shelf.gear[r.category].map((g) => ({ key: g.id, label: g.name, badge: g.is_default ? 'Default' : undefined })),
+            selected: defaults[r.category]?.id ?? null,
+            onPick: (id) => chooseGear({ [r.category]: shelf.gear[r.category].find((g) => g.id === id) }),
+          })),
           {
             // Its own row after every category: 3a adds any gear, not a grinder only.
             items: [],

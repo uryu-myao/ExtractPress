@@ -17,7 +17,7 @@ import SegmentedControl from '../components/base/SegmentedControl';
 import Switch from '../components/base/Switch';
 import Text from '../components/base/Text';
 import { formatDay } from '../constants/dates';
-import { GEAR_CATEGORIES, GEAR_CATEGORY, onCups } from '../constants/gear';
+import { GEAR_CATEGORIES, GEAR_CATEGORY } from '../constants/gear';
 import { gearFilter } from '../constants/search';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deletePhoto, keepPhoto } from '../data/photos';
@@ -42,8 +42,8 @@ import ScreenFrame from './ScreenFrame';
  *              3e's "Shows on every cup logged with this grinder" is not
  *              used: no cup shows its gear's photo. "Added on" stays in the
  *              sub line only, no Details row (Uryu, 2026-11-18).
- *   cups       a brewer or grinder only (19c; Round 15 B5: a cup can't hold
- *              a kettle or scale, so the list would always be empty):
+ *   cups       every kind (19c drew a brewer or grinder only, Round 15 B5;
+ *              a cup holds a kettle and a scale too since migration 14):
  *              ItemCups, "Cups with this grinder · N", 5 rows, "All N cups ›";
  *              none: "No cups with this grinder yet." and "Log a cup with it
  *              ›" (Log a cup with this gear preselected)
@@ -98,16 +98,15 @@ export default function EditGearScreen({ gear, onBack, onRemoved, guardLeave }) 
   const [sheet, setSheet] = useState(null);
   const [busy, setBusy] = useState(false);
   // The stored category names the page (sub-line, cups); the form's, the Details below.
-  const usable = onCups(stored.category);
   const kind = GEAR_CATEGORY[stored.category].toLowerCase();
   const formKind = GEAR_CATEGORY[form.category].toLowerCase();
 
   // Category changes only while no cup is logged with it ("has cups", not
   // "ever had": deleting them unlocks it; repository.ts updateGear). Locked
   // until the list has loaded, so it never flickers open.
-  const categoryLocked = usable && (cupList == null || cups > 0);
+  const categoryLocked = cupList == null || cups > 0;
   // The default is per category: a change takes it off, said at once.
-  const defaultLost = Boolean(stored.is_default) && usable && form.category !== stored.category;
+  const defaultLost = Boolean(stored.is_default) && form.category !== stored.category;
   const pickCategory = (category) =>
     setForm((f) => ({ ...f, category, isDefault: category === stored.category ? Boolean(stored.is_default) : false }));
 
@@ -215,7 +214,7 @@ export default function EditGearScreen({ gear, onBack, onRemoved, guardLeave }) 
               </View>
             </View>
 
-            {usable && cupList ? (
+            {cupList ? (
               <ItemCups
                 cups={cupList}
                 heading={`Cups with this ${kind}`}
@@ -272,26 +271,22 @@ export default function EditGearScreen({ gear, onBack, onRemoved, guardLeave }) 
                     {`Your settings for this ${formKind}, to look up before you brew.`}
                   </Text>
                 </View>
-                {onCups(form.category) ? (
-                  <>
-                    <DashedRule token={dashed.dividerSoft} />
-                    <View style={styles.defaultRow}>
-                      <View style={styles.defaultText}>
-                        <Text variant="label" color="primary">
-                          {`My default ${formKind}`}
-                        </Text>
-                        <Text variant="bodySm" color="secondary">
-                          Preselected on every new cup.
-                        </Text>
-                      </View>
-                      <Switch
-                        value={form.isDefault}
-                        onValueChange={(isDefault) => setForm((f) => ({ ...f, isDefault }))}
-                        accessibilityLabel={`My default ${formKind}`}
-                      />
-                    </View>
-                  </>
-                ) : null}
+                <DashedRule token={dashed.dividerSoft} />
+                <View style={styles.defaultRow}>
+                  <View style={styles.defaultText}>
+                    <Text variant="label" color="primary">
+                      {`My default ${formKind}`}
+                    </Text>
+                    <Text variant="bodySm" color="secondary">
+                      Preselected on every new cup.
+                    </Text>
+                  </View>
+                  <Switch
+                    value={form.isDefault}
+                    onValueChange={(isDefault) => setForm((f) => ({ ...f, isDefault }))}
+                    accessibilityLabel={`My default ${formKind}`}
+                  />
+                </View>
               </View>
             </View>
 

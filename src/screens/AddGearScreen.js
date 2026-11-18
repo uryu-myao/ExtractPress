@@ -60,8 +60,8 @@ import ScreenFrame from './ScreenFrame';
  *
  * Save writes the checked gear in the order it was checked; a catalogue pick
  * copies name, maker and meta (insertGear). The first of a category becomes
- * its default. From the Record sheet, the first brewer and grinder added go
- * on this cup (not only the defaults).
+ * its default. From the Record sheet, the first of each kind added goes on
+ * this cup (not only the defaults).
  */
 const PLURAL = { brewer: 'brewers', grinder: 'grinders', kettle: 'kettles', scale: 'scales' };
 const TABS = GEAR_CATEGORIES.map((value) => ({ value, label: GEAR_CATEGORY[value] }));
@@ -143,13 +143,13 @@ export default function AddGearScreen({ onBack }) {
       });
       const { added } = await insertGear(db, items, GEAR_LIMIT);
       // In the Record sheet the gear just added is what this cup is made
-      // with: the first brewer and grinder checked go on it, whatever the
+      // with: the first of each kind checked goes on it, whatever the
       // shelf's defaults (Uryu, 2026-11-18: a new dripper didn't follow the
       // cup, which only took the defaults). A kind with nothing added keeps
       // this cup's pick.
       if (chooseGear) {
         const pick = {};
-        for (const kind of ['brewer', 'grinder']) {
+        for (const kind of GEAR_CATEGORIES) {
           const fresh = added.find((g) => g.category === kind);
           if (fresh) pick[kind] = fresh;
         }

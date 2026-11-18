@@ -73,7 +73,7 @@ export async function listCsvCups(db: SQLiteDatabase): Promise<CsvCup[]> {
   const rows = await db.getAllAsync<Omit<CsvCup, 'flavours' | 'axes'> & { flavours: string; axes: string }>(
     `SELECT c.id, c.logged_at, c.mode, c.rating, c.note, c.flavours,
             c.bean_name, c.bean_roaster, c.bean_origin, c.bean_region, c.bean_process, c.bean_roast_level, c.bean_roasted_at,
-            c.brew_method, c.grinder, ${axesJsonSql('c')} AS axes,
+            c.brew_method, c.grinder, c.kettle, c.scale, ${axesJsonSql('c')} AS axes,
             c.drink_type, c.place_name, c.product_name
        FROM cups c
       ORDER BY c.logged_at, c.id`

@@ -11,13 +11,16 @@ import { pickTryNext, type Suggestion, type TryNextCup } from './tryNext';
 /**
  * The reference rows Record coffee pre-fills its field sets with. Until the
  * pickers land (Step 5 TODOs): the most recently opened bag that is still open,
- * the default brewer and grinder, and the most recent café / store.
+ * the default gear of each kind (brewer, grinder, kettle, scale), and the
+ * most recent café / store.
  * Any of them can be null on a database with no rows yet.
  */
 export type RecordDefaults = {
   bag: Bag | null;
   brewer: Gear | null;
   grinder: Gear | null;
+  kettle: Gear | null;
+  scale: Gear | null;
   cafe: Place | null;
   store: Place | null;
 };
@@ -29,10 +32,13 @@ export async function loadRecordDefaults(db: SQLiteDatabase): Promise<RecordDefa
   // record must be a fact. Packaged's product name (design-missing.md 6)
   // and Barista's café (2026-10-30) have their own sheets and start empty:
   // a café is never guessed from where the phone is.
-  const [bag, brewer, grinder] = await Promise.all([
+  const defaultOf = (category: GearCategory) => db.getFirstAsync<Gear>('SELECT * FROM gear WHERE category = ? AND is_default = 1', [category]);
+  const [bag, brewer, grinder, kettle, scale] = await Promise.all([
     db.getFirstAsync<Bag & { notes: string }>('SELECT * FROM bags WHERE finished_at IS NULL AND opened_at IS NOT NULL ORDER BY opened_at DESC, id DESC LIMIT 1'),
-    db.getFirstAsync<Gear>("SELECT * FROM gear WHERE category = 'brewer' AND is_default = 1"),
-    db.getFirstAsync<Gear>("SELECT * FROM gear WHERE category = 'grinder' AND is_default = 1"),
+    defaultOf('brewer'),
+    defaultOf('grinder'),
+    defaultOf('kettle'),
+    defaultOf('scale'),
   ]);
   const cafe: Place | null = null;
   const store: Place | null = null;
@@ -40,6 +46,8 @@ export async function loadRecordDefaults(db: SQLiteDatabase): Promise<RecordDefa
     bag: bag ? { ...bag, notes: JSON.parse(bag.notes as unknown as string) } : null,
     brewer: brewer ?? null,
     grinder: grinder ?? null,
+    kettle: kettle ?? null,
+    scale: scale ?? null,
     cafe: cafe ?? null,
     store: store ?? null,
   };
@@ -524,7 +532,7 @@ export type GearWithUse = Gear & { cups: number; last_used_at: number | null };
 export async function listGearWithUse(db: SQLiteDatabase): Promise<GearWithUse[]> {
   return db.getAllAsync<GearWithUse>(
     `SELECT g.*, COUNT(c.id) AS cups, MAX(c.logged_at) AS last_used_at
-       FROM gear g LEFT JOIN cups c ON c.brewer_id = g.id OR c.grinder_id = g.id
+       FROM gear g LEFT JOIN cups c ON c.brewer_id = g.id OR c.grinder_id = g.id OR c.kettle_id = g.id OR c.scale_id = g.id
       GROUP BY g.id
       ORDER BY g.is_default DESC, g.added_at, g.id`
   );
@@ -546,16 +554,16 @@ export type GearEdit = { name: string; maker: string | null; category: GearCateg
 
 /**
  * Save 3e. As updateBag: the cups logged with the gear carry its name as a
- * copy (brew_method / grinder), rewritten in the same transaction ("Edits
+ * copy (brew_method / grinder / kettle / scale), rewritten in the same transaction ("Edits
  * apply to the N cups already logged with it"). Turning the default on
  * takes it from the category's other gear (one default per category, a
  * partial unique index); turning it off leaves the category with none, so
  * 5a's Method starts empty (Uryu, 2026-10-22).
  *
  * Category changes only while NO cup is logged with the gear (decided
- * 2026-11-18; data-model.md "Gear category"): a cup holds gear in its
- * brewer_id or grinder_id slot, so a used grinder turned brewer would sit in
- * the wrong slot. The rule is "has cups", not "ever had": once its cups are
+ * 2026-11-18; data-model.md "Gear category"): a cup holds gear in the slot
+ * of its kind (brewer_id, grinder_id, kettle_id, scale_id), so a used
+ * grinder turned brewer would sit in the wrong slot. The rule is "has cups", not "ever had": once its cups are
  * deleted it can change again. Checked here too, inside the transaction,
  * whatever the screen showed. The caller sends isDefault as it should end up
  * (3e clears it on a change and says so).
@@ -565,7 +573,10 @@ export async function updateGear(db: SQLiteDatabase, id: number, edit: GearEdit)
     const gear = await tx.getFirstAsync<Gear>('SELECT * FROM gear WHERE id = ?', [id]);
     if (!gear) throw new Error('This gear is no longer on your shelf.');
     if (edit.category !== gear.category) {
-      const used = await tx.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM cups WHERE brewer_id = ? OR grinder_id = ?', [id, id]);
+      const used = await tx.getFirstAsync<{ n: number }>(
+        'SELECT COUNT(*) AS n FROM cups WHERE brewer_id = ? OR grinder_id = ? OR kettle_id = ? OR scale_id = ?',
+        [id, id, id, id]
+      );
       if ((used?.n ?? 0) > 0) throw new Error(`It's logged on cups as a ${gear.category}, so its category can't change.`);
     }
     if (edit.isDefault) await tx.runAsync('UPDATE gear SET is_default = 0 WHERE category = ? AND id != ?', [edit.category, id]);
@@ -579,6 +590,8 @@ export async function updateGear(db: SQLiteDatabase, id: number, edit: GearEdit)
     ]);
     await tx.runAsync('UPDATE cups SET brew_method = ? WHERE brewer_id = ?', [edit.name, id]);
     await tx.runAsync('UPDATE cups SET grinder = ? WHERE grinder_id = ?', [edit.name, id]);
+    await tx.runAsync('UPDATE cups SET kettle = ? WHERE kettle_id = ?', [edit.name, id]);
+    await tx.runAsync('UPDATE cups SET scale = ? WHERE scale_id = ?', [edit.name, id]);
   });
   notifyShelfChanged();
   notifyCupsChanged();
@@ -594,7 +607,7 @@ export async function setGearPhoto(db: SQLiteDatabase, id: number, photo: string
 
 /**
  * Remove gear (3e). Its cups keep their copy of its name; only their link
- * goes (brewer_id / grinder_id → NULL by the foreign key). A removed default
+ * goes (brewer_id / grinder_id / kettle_id / scale_id → NULL by the foreign key). A removed default
  * is not passed on to other gear: that would change the next cup without
  * the user choosing it (Uryu, 2026-10-22).
  */
@@ -610,8 +623,8 @@ export async function removeGear(db: SQLiteDatabase, id: number): Promise<void> 
  * checked). A catalogue pick brings its maker and meta, COPIED (migration
  * 13): the row is the user's from here, and gear.json's later corrections
  * never reach it. Written by hand: the name alone. One transaction; refuses
- * past `limit`. Returns the defaults after the insert, and the rows added
- * in the order given (3a in the Record sheet puts them on this cup).
+ * past `limit`. Returns the rows added, in the order given (3a in the Record
+ * sheet puts them on this cup).
  */
 export type NewGear = { name: string; category: GearCategory; maker?: string | null; meta?: string | null };
 
@@ -619,7 +632,7 @@ export async function insertGear(
   db: SQLiteDatabase,
   items: NewGear[],
   limit: number
-): Promise<{ brewer: Gear | null; grinder: Gear | null; added: Gear[] }> {
+): Promise<{ added: Gear[] }> {
   const ids: number[] = [];
   await db.withExclusiveTransactionAsync(async (tx) => {
     const row = await tx.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM gear');
@@ -638,12 +651,8 @@ export async function insertGear(
     }
   });
   notifyShelfChanged();
-  const [brewer, grinder] = await Promise.all([
-    db.getFirstAsync<Gear>("SELECT * FROM gear WHERE category = 'brewer' AND is_default = 1"),
-    db.getFirstAsync<Gear>("SELECT * FROM gear WHERE category = 'grinder' AND is_default = 1"),
-  ]);
   const added = await Promise.all(ids.map((id) => db.getFirstAsync<Gear>('SELECT * FROM gear WHERE id = ?', [id])));
-  return { brewer: brewer ?? null, grinder: grinder ?? null, added: added.filter((g): g is Gear => g != null) };
+  return { added: added.filter((g): g is Gear => g != null) };
 }
 
 /**
@@ -681,6 +690,10 @@ export type NewCup = {
   brewMethod: string | null;
   grinderId: number | null;
   grinder: string | null;
+  kettleId: number | null;
+  kettle: string | null;
+  scaleId: number | null;
+  scale: string | null;
   /** Barista: the café as chosen (stored on Save, placeIdFor). */
   cafe: CafeChoice | null;
   drinkType: string | null;
@@ -717,11 +730,11 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
     const result = await tx.runAsync(
       `INSERT INTO cups (rating, mode, note, flavours,
                          bag_id, bean_name, bean_roaster, bean_origin, bean_region, bean_process, bean_roast_level, bean_roasted_at,
-                         brewer_id, brew_method, grinder_id, grinder,
+                         brewer_id, brew_method, grinder_id, grinder, kettle_id, kettle, scale_id, scale,
                          place_id, place_name, drink_type, product_name, bought_at_place_id, bought_at_name)
        SELECT ?, ?, ?, ?,
               b.id, b.name, b.roaster, b.origin, b.region, b.process, b.roast_level, b.roasted_at,
-              ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?, ?, ?,
               p.id, p.name, ?, ?, bp.id, bp.name
          FROM (SELECT 1)
          LEFT JOIN bags b ON b.id = ?
@@ -736,6 +749,10 @@ export async function insertCup(db: SQLiteDatabase, cup: NewCup): Promise<number
         madeIt ? cup.brewMethod : null,
         madeIt ? cup.grinderId : null,
         madeIt ? cup.grinder : null,
+        madeIt ? cup.kettleId : null,
+        madeIt ? cup.kettle : null,
+        madeIt ? cup.scaleId : null,
+        madeIt ? cup.scale : null,
         barista ? cup.drinkType : null,
         packaged ? cup.productName : null,
         bagId,
@@ -789,6 +806,10 @@ export type CupEdit = {
   brewMethod: string | null;
   grinderId: number | null;
   grinder: string | null;
+  kettleId: number | null;
+  kettle: string | null;
+  scaleId: number | null;
+  scale: string | null;
   loggedAt: number;
   note: string | null;
   /** Packaged: the product name as typed. */
@@ -836,8 +857,23 @@ export async function updateCup(db: SQLiteDatabase, id: number, edit: CupEdit): 
       ]);
     }
     await tx.runAsync(
-      'UPDATE cups SET brewer_id = ?, brew_method = ?, grinder_id = ?, grinder = ?, logged_at = ?, note = ?, product_name = ?, drink_type = ? WHERE id = ?',
-      [edit.brewerId, edit.brewMethod, edit.grinderId, edit.grinder, edit.loggedAt, edit.note, edit.productName, edit.drinkType, id]
+      `UPDATE cups SET brewer_id = ?, brew_method = ?, grinder_id = ?, grinder = ?, kettle_id = ?, kettle = ?, scale_id = ?, scale = ?,
+                       logged_at = ?, note = ?, product_name = ?, drink_type = ? WHERE id = ?`,
+      [
+        edit.brewerId,
+        edit.brewMethod,
+        edit.grinderId,
+        edit.grinder,
+        edit.kettleId,
+        edit.kettle,
+        edit.scaleId,
+        edit.scale,
+        edit.loggedAt,
+        edit.note,
+        edit.productName,
+        edit.drinkType,
+        id,
+      ]
     );
   });
   notifyCupsChanged();
@@ -915,12 +951,16 @@ export type CupListItem = {
   bag_id: number | null;
   brewer_id: number | null;
   grinder_id: number | null;
+  kettle_id: number | null;
+  scale_id: number | null;
   drink_type: string | null;
   bean_name: string | null;
   bean_roaster: string | null;
   bean_process: Bag['process'];
   brew_method: string | null;
   grinder: string | null;
+  kettle: string | null;
+  scale: string | null;
   place_name: string | null;
   product_name: string | null;
   /** Packaged's shop and the cup's photo: Records' row (handoff-records §3). */
@@ -986,8 +1026,8 @@ export async function cupOrdinal(db: SQLiteDatabase, id: number): Promise<number
 export async function listCups(db: SQLiteDatabase): Promise<CupListItem[]> {
   const rows = await db.getAllAsync<CupListItem>(
     `SELECT c.id, c.logged_at, c.rating, c.mode, c.note, c.flavours, c.drink_type,
-            c.bean_name, c.bean_roaster, c.bean_process, c.brew_method, c.grinder,
-            c.bag_id, c.brewer_id, c.grinder_id,
+            c.bean_name, c.bean_roaster, c.bean_process, c.brew_method, c.grinder, c.kettle, c.scale,
+            c.bag_id, c.brewer_id, c.grinder_id, c.kettle_id, c.scale_id,
             c.product_name, c.place_name, c.bought_at_name, c.photo_uri
        FROM cups c
       ORDER BY c.logged_at DESC, c.id DESC`

@@ -55,5 +55,17 @@ export const GEAR_LIMIT = 8;
 /** A category as the shelf names it (4a "Brewer · 2 cups", 3b, 3e). */
 export const GEAR_CATEGORY = { brewer: 'Brewer', grinder: 'Grinder', kettle: 'Kettle', scale: 'Scale' };
 
-/** Gear a cup can hold (brewer_id / grinder_id): only these count cups or take a default. */
-export const onCups = (category) => category === 'brewer' || category === 'grinder';
+/**
+ * A cup's gear roles (migration 14: all four kinds, one of each): the
+ * category, its id column and its name copy on cups. Every place that reads
+ * or writes a cup's gear goes through this list.
+ */
+export const CUP_GEAR = [
+  { category: 'brewer', id: 'brewer_id', name: 'brew_method' },
+  { category: 'grinder', id: 'grinder_id', name: 'grinder' },
+  { category: 'kettle', id: 'kettle_id', name: 'kettle' },
+  { category: 'scale', id: 'scale_id', name: 'scale' },
+];
+
+/** A cup's gear names in role order: Method's line ("Hario V60 02 · Comandante C40 · Stagg EKG"). */
+export const cupGearNames = (cup) => CUP_GEAR.map((r) => cup[r.name]).filter(Boolean);

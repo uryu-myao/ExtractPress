@@ -14,6 +14,7 @@ import { whenLine } from '../components/WhenMeta';
 import { MODE_LABEL, NONE, cupTitle, tidyNote } from '../constants/cups';
 import { daysBetween, formatDay } from '../constants/dates';
 import { FLAVOUR_LIMIT } from '../constants/flavours';
+import { cupGearNames } from '../constants/gear';
 import { AXIS_SCALE, stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { getCup, onCupsChanged } from '../data/repository';
@@ -91,7 +92,7 @@ export function Stars({ rating, size = 'md' }) {
 
 /** "What I logged": the shelf part, I made it only (Packaged: Round 7; Barista: Round 16, B4). */
 function Logged({ cup }) {
-  const method = [cup.brew_method, cup.grinder].filter(Boolean).join(' · ');
+  const method = cupGearNames(cup).join(' · ');
   return (
     <View style={styles.card}>
       {/* No bag: the Bag row is hidden, since a row reading "—" looks like
@@ -168,7 +169,7 @@ export default function CupRecordScreen({ id, onBack, onEdit }) {
         {/* Packaged and Barista: hidden too — it would only repeat the
             title and the line under it (Design Round 7, 14b; Round 16, B4).
             2c for a Barista cup is answered in words, not drawn. */}
-        {cup.mode === 'made_it' && (cup.bean_name || cup.brew_method || cup.grinder) ? (
+        {cup.mode === 'made_it' && (cup.bean_name || cupGearNames(cup).length) ? (
           <View style={styles.section}>
             <SectionLabel variant="plain" label="What I logged" />
             <Logged cup={cup} />
