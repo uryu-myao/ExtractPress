@@ -14,8 +14,11 @@ const NOTE_MIN_HEIGHT = 84;
  * multiline field otherwise offers no way to finish). Lines still wrap; a
  * line break can no longer be typed. onFocus lets the screen scroll what
  * follows into view.
+ *
+ * Also 3e's "My settings note" (2026-11-18): the same field with its own
+ * placeholder and label.
  */
-export default function NoteField({ value, onChangeText, onFocus }) {
+export default function NoteField({ value, onChangeText, onFocus, placeholder = 'Cooled down it turned into iced tea…', accessibilityLabel = 'My words' }) {
   return (
     <TextInput
       value={value}
@@ -24,9 +27,9 @@ export default function NoteField({ value, onChangeText, onFocus }) {
       multiline
       returnKeyType="done"
       submitBehavior="blurAndSubmit"
-      placeholder="Cooled down it turned into iced tea…"
+      placeholder={placeholder}
       placeholderTextColor={color.text.placeholder}
-      accessibilityLabel="My words"
+      accessibilityLabel={accessibilityLabel}
       style={styles.note}
     />
   );

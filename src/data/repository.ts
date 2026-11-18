@@ -541,8 +541,8 @@ export async function countGear(db: SQLiteDatabase): Promise<number> {
   return row?.n ?? 0;
 }
 
-/** What 3e (minimal) edits. Category is not editable: cups hold gear as brewer or grinder. */
-export type GearEdit = { name: string; maker: string | null; isDefault: boolean };
+/** What 3e edits. */
+export type GearEdit = { name: string; maker: string | null; category: GearCategory; settingsNote: string | null; isDefault: boolean };
 
 /**
  * Save 3e. As updateBag: the cups logged with the gear carry its name as a
@@ -551,18 +551,45 @@ export type GearEdit = { name: string; maker: string | null; isDefault: boolean 
  * takes it from the category's other gear (one default per category, a
  * partial unique index); turning it off leaves the category with none, so
  * 5a's Method starts empty (Uryu, 2026-10-22).
+ *
+ * Category changes only while NO cup is logged with the gear (decided
+ * 2026-11-18; data-model.md "Gear category"): a cup holds gear in its
+ * brewer_id or grinder_id slot, so a used grinder turned brewer would sit in
+ * the wrong slot. The rule is "has cups", not "ever had": once its cups are
+ * deleted it can change again. Checked here too, inside the transaction,
+ * whatever the screen showed. The caller sends isDefault as it should end up
+ * (3e clears it on a change and says so).
  */
 export async function updateGear(db: SQLiteDatabase, id: number, edit: GearEdit): Promise<void> {
   await db.withExclusiveTransactionAsync(async (tx) => {
     const gear = await tx.getFirstAsync<Gear>('SELECT * FROM gear WHERE id = ?', [id]);
     if (!gear) throw new Error('This gear is no longer on your shelf.');
-    if (edit.isDefault) await tx.runAsync('UPDATE gear SET is_default = 0 WHERE category = ? AND id != ?', [gear.category, id]);
-    await tx.runAsync('UPDATE gear SET name = ?, maker = ?, is_default = ? WHERE id = ?', [edit.name, edit.maker, edit.isDefault ? 1 : 0, id]);
+    if (edit.category !== gear.category) {
+      const used = await tx.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM cups WHERE brewer_id = ? OR grinder_id = ?', [id, id]);
+      if ((used?.n ?? 0) > 0) throw new Error(`It's logged on cups as a ${gear.category}, so its category can't change.`);
+    }
+    if (edit.isDefault) await tx.runAsync('UPDATE gear SET is_default = 0 WHERE category = ? AND id != ?', [edit.category, id]);
+    await tx.runAsync('UPDATE gear SET name = ?, maker = ?, category = ?, settings_note = ?, is_default = ? WHERE id = ?', [
+      edit.name,
+      edit.maker,
+      edit.category,
+      edit.settingsNote,
+      edit.isDefault ? 1 : 0,
+      id,
+    ]);
     await tx.runAsync('UPDATE cups SET brew_method = ? WHERE brewer_id = ?', [edit.name, id]);
     await tx.runAsync('UPDATE cups SET grinder = ? WHERE grinder_id = ?', [edit.name, id]);
   });
   notifyShelfChanged();
   notifyCupsChanged();
+}
+
+/** 3e's photo: set or cleared at once (as setBagPhoto). Returns the photo it replaced, for its files to go. */
+export async function setGearPhoto(db: SQLiteDatabase, id: number, photo: string | null): Promise<string | null> {
+  const before = await db.getFirstAsync<{ photo_uri: string | null }>('SELECT photo_uri FROM gear WHERE id = ?', [id]);
+  await db.runAsync('UPDATE gear SET photo_uri = ? WHERE id = ?', [photo, id]);
+  notifyShelfChanged();
+  return before?.photo_uri ?? null;
 }
 
 /**

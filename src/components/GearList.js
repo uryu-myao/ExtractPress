@@ -46,7 +46,7 @@ export default function GearList({ gear, onAddGear, onEditGear }) {
             accessibilityHint="Edit name and details"
             style={({ pressed }) => [styles.touch, pressed && styles.pressed]}>
             <View style={styles.row}>
-              <PhotoPlaceholder size={size.field.height} />
+              <PhotoPlaceholder size={size.field.height} photo={g.photo_uri} />
               <View style={styles.text}>
                 <View style={styles.nameRow}>
                   <Text variant="title" truncate="name" style={styles.name}>

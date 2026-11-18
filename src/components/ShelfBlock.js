@@ -153,7 +153,7 @@ function GearRow({ gear: g, first, onPress }) {
       <Status word="Not used" wordColor="muted" line="Add to a cup" />
     );
   }
-  return <Row first={first} name={g.name} badge={g.is_default ? 'Default' : null} meta={GEAR_CATEGORY[g.category]} status={status} onPress={onPress} />;
+  return <Row first={first} name={g.name} badge={g.is_default ? 'Default' : null} meta={GEAR_CATEGORY[g.category]} status={status} photo={g.photo_uri} onPress={onPress} />;
 }
 
 function BeanRow({ bag, first, onPress }) {

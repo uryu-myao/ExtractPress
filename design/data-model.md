@@ -128,6 +128,15 @@ The database runs in WAL mode (`migrate.ts`). It lives at `Documents/SQLite/extr
 - **Written values**: Origin takes free text when nothing matches; Region always does (farms and washing stations are in no table). Stored as written (trimmed); "From my bags" groups on trimmed, case-folded text and shows the spelling most bags use.
 - **Copies on cups**: `bean_origin` / `bean_region` are copied at logging and rewritten when the bag is saved, as the other details.
 
+### Gear category: changeable until used (decided 2026-11-18, Uryu)
+
+- **A cup holds its gear in two columns, `brewer_id` and `grinder_id`, not a join table — on purpose.** The taste axes are an open set (3 → 4 → 5), which is why `cup_axes` is a join table. A cup's gear roles are a **closed set of exactly two**, and kettles and scales never attach to a cup at all. Columns are right here; the lock below is what protects them. Do not "normalise" this into a cup_gear table.
+- **3e's Category changes only while no cup is logged with the gear.** A used grinder turned brewer would leave its cups pointing at a brewer through their grinder slot. Enforced in `updateGear` inside the transaction, whatever the screen showed.
+- **The rule is "has cups", not "ever had cups"**: delete the cups logged with it and the chips unlock again. A permanent lock would be a different, harsher rule than the one the screen states ("Logged on 2 cups as a grinder.").
+- **No escape hatch for used gear.** Removing and re-adding nulls the cups' links too; recategorising used gear should be rare, and the alternative is cups pointing at the wrong kind of gear.
+- **A change clears the default, and says so.** The default is per category and 5a preselects it on every new cup, so moving a default grinder to another category leaves the grinder slot empty on the next Record screen. 3e says it under the chips the moment the category changes ("It stops being your default grinder: new cups start without one until you pick another."), not silently. Nothing passes the default on to other gear (as a removal).
+- **`settings_note` is used from V1** (3e's My settings note, T-11's shrunk scope); the grind prefill from it waits for the grind field (V1.5, drift D-81).
+
 ### Gear catalogue: a bundled table (2026-11-17)
 
 `src/constants/gear.json`, read through `src/constants/gear.js` (`GEAR_CATALOGUE`, `GEAR_CATEGORIES`). The same family as origins and regions: static, no backend, no network; reviewable flat data, checked by `npm run check:gear` on every commit.

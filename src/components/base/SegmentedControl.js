@@ -35,6 +35,12 @@ import Text from './Text';
  *             over from 2a's category chips and 8l's scopes). 32 tall, with a hit-slop above and
  *             below back to 44 (size.tapTarget); never narrower than 44.
  *             Wraps as before past that.
+ *   disabled  optional: the whole set is locked (§1 Disabled options): the
+ *             chosen chip stays ink (it is still the answer), the others take
+ *             the disabled look (label text.muted, frame border.muted), and
+ *             none responds. The screen shows why on a line of its own (3e's
+ *             Category with cups logged: "Logged on 2 cups as a grinder.",
+ *             2026-11-18).
  *   testOnly_pressedValue   force the pressed look on one option (dev harness)
  */
 // The compact chip is shorter than the regular one (44) by twice this, so a
@@ -42,8 +48,7 @@ import Text from './Text';
 const COMPACT_SLOP = spacing.inset.control.v - spacing.inset.controlCompact.v;
 const COMPACT_HIT_SLOP = { top: COMPACT_SLOP, bottom: COMPACT_SLOP };
 
-export default function SegmentedControl({ options, value, onChange, toggle, clearable, compact, testOnly_pressedValue }) {
-  // TODO: disabled chip state is undesigned (gaps.md 4).
+export default function SegmentedControl({ options, value, onChange, toggle, clearable, compact, disabled = false, testOnly_pressedValue }) {
   const chip = [styles.chip, compact && styles.chipCompact];
   const hitSlop = compact ? COMPACT_HIT_SLOP : undefined;
   return (
@@ -57,12 +62,13 @@ export default function SegmentedControl({ options, value, onChange, toggle, cle
           <Pressable
             key={opt.value}
             onPress={() => onChange(opt.value)}
+            disabled={disabled}
             accessibilityRole="radio"
-            accessibilityState={{ checked: on }}
+            accessibilityState={{ checked: on, disabled }}
             hitSlop={hitSlop}
             testOnly_pressed={opt.value === testOnly_pressedValue}
-            style={({ pressed }) => [chip, on ? styles.chipOn : pressed && styles.chipPressed]}>
-            <Text variant="labelCaps" color={on ? color.badge.fg.selected : color.badge.fg.neutral}>
+            style={({ pressed }) => [chip, on ? styles.chipOn : disabled ? styles.chipDisabled : pressed && styles.chipPressed]}>
+            <Text variant="labelCaps" color={on ? color.badge.fg.selected : disabled ? 'muted' : color.badge.fg.neutral}>
               {opt.label}
             </Text>
           </Pressable>
@@ -141,6 +147,10 @@ const styles = StyleSheet.create({
   },
   chipPressed: {
     backgroundColor: state.pressed.surface,
+  },
+  // §1 Disabled options: the frame is already border.muted, so the label carries it.
+  chipDisabled: {
+    borderColor: color.border.muted,
   },
   chipOn: {
     borderColor: color.badge.bg.selected,
