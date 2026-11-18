@@ -126,6 +126,8 @@ Grind is not in V1, and three parts wait on it. **They move together**: whoever 
 
 When grind is built: the input (5a / 11a), 2c's line, and 3e's note with its prefill, in one change.
 
+**Scope shrinks, not blocked (Uryu, 2026-11-18)**: grind stays out of V1 — the existing decision (`grind_setting`, `water_temp_c`, `ratio` have columns and no UI so V1.5's tuning has history). But **3e's My settings note is built in V1** (the 3b / 3e round): "22 clicks for V60, 18 for AeroPress" is worth having on its own, and notes written in V1 are waiting when the grind field arrives. Only its sub-line changes, to say what the note is rather than promise a prefill (drift D-81). What stays V1.5 here: the grind input, 2c's "22 clicks", and the prefill.
+
 ## T-12. Gestures still use Gesture Handler's legacy API (recorded 2026-10-24, SDK 58)
 
 Expo SDK 58 brought react-native-gesture-handler 3, which deprecates the `Gesture.Pan()` / `Gesture.Tap()` builder API in favour of hooks (`usePanGesture`, `useTapGesture`). The builder still works in 3.x (`GestureDetector` hands legacy gestures to its legacy detector), so the upgrade kept it.

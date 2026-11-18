@@ -40,7 +40,8 @@ import ScreenFrame from './ScreenFrame';
  *            button reads "Add “x” as a brewer" — the same button, no extra
  *            emphasis (confirmed 2026-11-17).
  * Footer: "Save N items" and "N slots left" (as built; 3a's 8-segment meter
- * is not built).
+ * is not built). Full, a line at the top of the body says what frees a
+ * slot (not drawn; design-system.md §9 "Add gear at the cap").
  *
  * The name sheet (not drawn; confirmed 2026-11-17): "Add a brewer", one
  * Name field (the search text carried in), category from the tab. The new
@@ -50,7 +51,7 @@ import ScreenFrame from './ScreenFrame';
  * instead of adding a second.
  *
  * At the cap (0 slots left): unchecked rows and the add button lock;
- * checked rows can still be unchecked; the slots line says what to do. A tap
+ * checked rows can still be unchecked; the line above the tabs says what to do. A tap
  * on a locked row or the locked button gives the warning haptic and is
  * counted (recordGearCapPush): a tap PAST the cap is wanting more than
  * allowed, which reaching 8 is not (schema.ts gear_cap_pushes). Counted at
@@ -150,9 +151,11 @@ export default function AddGearScreen({ onBack }) {
 
   const n = selected.length;
   const noMatch = Boolean(q) && shown.length === 0;
-  // At the cap the line says what frees a slot: unchecking here, or, with
+  const slotsLine = owned == null ? null : left === 1 ? '1 slot left' : `${Math.max(left, 0)} slots left`;
+  // Full only: what frees a slot, at the top with the header's counter
+  // (design-system.md §9 "Add gear at the cap"). Unchecking here, or, with
   // nothing checked, removing gear in My gear (Design 2026-10-20).
-  const slotsLine = owned == null ? null : slotsText(left, n);
+  const fullLine = owned != null && left <= 0 ? (n > 0 ? 'No slots left. Uncheck one to choose another.' : 'No slots left. Remove gear from My gear to free one.') : null;
 
   return (
     // The name sheet sits beside the frame, not in its scrolling content (as 3e's).
@@ -175,8 +178,16 @@ export default function AddGearScreen({ onBack }) {
           </View>
         }>
         <View style={styles.body}>
+          {fullLine ? (
+            <Text variant="body" color="secondary">
+              {fullLine}
+            </Text>
+          ) : null}
           <SegmentedControl compact options={TABS} value={tab} onChange={setTab} />
-          <SearchField value={query} onChangeText={setQuery} placeholder={`Search ${PLURAL[tab]}`} accessibilityLabel={`Search ${PLURAL[tab]}`} />
+          {/* SearchField grows to fill a row (beside Back elsewhere); in this column it needs a row of its own to keep its height. */}
+          <View style={styles.searchRow}>
+            <SearchField value={query} onChangeText={setQuery} placeholder={`Search ${PLURAL[tab]}`} accessibilityLabel={`Search ${PLURAL[tab]}`} />
+          </View>
           {noMatch ? (
             <Text variant="body" color="secondary">
               {`No ${PLURAL[tab]} match “${q}”.`}
@@ -206,16 +217,10 @@ export default function AddGearScreen({ onBack }) {
   );
 }
 
-function slotsText(left, checked) {
-  if (left === 1) return '1 slot left';
-  if (left > 0) return `${left} slots left`;
-  return checked > 0 ? 'No slots left. Uncheck one to choose another.' : 'No slots left. Remove gear from My gear to free one.';
-}
-
 /**
  * "Not listed — add your own" (not drawn; confirmed 2026-11-17): a name, the
- * category from the tab. Maker, photo and the rest are 3e's, later.
- * TODO(design): the sheet's copy ("Add a brewer", "Add") is ours.
+ * category from the tab. Maker, photo and the rest are 3e's, later. The
+ * copy ("Add a grinder", "Add") is ours, confirmed 2026-11-18.
  */
 function NameSheet({ naming, onClose, onAdd }) {
   const [name, setName] = useState('');
@@ -244,6 +249,9 @@ const styles = StyleSheet.create({
   },
   body: {
     gap: spacing.gap.section,
+  },
+  searchRow: {
+    flexDirection: 'row',
   },
   footer: {
     gap: spacing.gap.row,

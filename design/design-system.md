@@ -265,6 +265,7 @@ Non-negotiable, and each one is a measured fact rather than a preference.
 - **Selected options stay live.** Deselecting one unlocks the rest at once.
 - **The count explains it**: at the limit an inline count turns `color.text.accent` ("5 of 5", "3 of 3 picked"). **Not a header stat (2026-10-20)**: 3a's "8 / 8 Selected" is the compact header's running total, always accent; there the light impact and the locked-row hint mark the limit.
 - **A light impact at the moment the limit is reached, once.** "Now locked" reaches the user wherever they are looking. A press on a locked option stays silent.
+  - **Exception, 3a's gear cap (2026-11-17)**: a press on a locked gear row, or on the locked "Not listed — add your own", gives the **warning** haptic and is counted (`gear_cap_pushes`, `data-model.md`): wanting a ninth piece is the event, so it can't be silent. §9 "Add gear at the cap".
   - **Exception, 5b's locked Search opener (2026-10-10)**: a press gives the **warning** haptic. Search opens a sheet rather than choosing an option, and a press that opens nothing gave no sign at all. Settled 2026-10-11: actions warn, options stay silent (§1 Haptics).
 - Why lock rather than allow the tap and then refuse: an option that looks pressable but will not select is a small failure each time.
 
@@ -1011,6 +1012,12 @@ Swiping horizontally moves between the four tab screens: Home → Records → Tr
 **In-list form** (the pickers' "Add a bag" / "Add gear", the search sheet's "Add \"Word\""): **a row like the list's others** — the same height and padding, pressed like them — with an ink plus (`icon.sm`, no frame) in the 24 place where the row's marker or checkbox sits, and the label in `title` (sentence case), ink. No frame: a 2px box would read as an unselected marker. It locks with the list at a cap (plus and label `text.muted`). Was a 24 `border.addSlot` dashed box (2026-10-12).
 
 - **Not part of this component**: the 76px square photo slot (3c), the 2a empty-list frame (`dashed.emptyFrame`, not a button), and the "Try next — opens at 5 cups" teaser card (1b, 4a, 4b, 5c).
+
+### Add gear at the cap (3a; a build-time decision, 2026-11-18, Uryu)
+3a doesn't draw the zero-slot state; this was decided in the build rather than sent back to Design.
+- **Full only, a line at the top of the page, above the tabs and the list**: "No slots left. Uncheck one to choose another." (something is checked) or "No slots left. Remove gear from My gear to free one." (the shelf is already at 8). `body`, `text.secondary`. Not shown otherwise.
+- **Why there**: a tap on a locked row gives the warning haptic (§1 Selection limit, 3a's exception). On a 375 × 667 screen (SE) the footer is below the fold, so with the explanation down there the haptic fired with nothing visible to say why, which read as a bug rather than a limit. The only slot indicator always on screen at 375 is the header's "8 / 8 Selected", so the full-state message goes up with it.
+- **The footer stays as built**: "N slots left" under Save, "0 slots left" when full. It is right in the normal state.
 
 ### Badge (base `Badge`, 2026-10-05)
 A chip that labels, never acts: square, filled, no border, `label.eyebrow` (2a's 11/700/.06em folds to it).
