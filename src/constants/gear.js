@@ -14,8 +14,10 @@ import GEAR_CATALOGUE_DATA from './gear.json';
  *              grinder  burr · size            "Conical steel · 39 mm"
  *              kettle   control · spout        "Variable temp · Gooseneck"
  *              scale    resolution · feature   "0.1 g · Built-in timer"
- *   verify   true: written without a board to copy from; for Uryu to scan.
- *            3a draws only the brewer five, which are verbatim.
+ *   verify   true: written without a board to copy from, for Uryu to scan.
+ *            None now: 3a draws the brewer five (verbatim), and Uryu
+ *            confirmed the other fifteen (2026-11-18). A new undrawn entry
+ *            goes in with it.
  *
  * A pick is copied, never referenced by id: 3e renames gear, so the name
  * can't be a key, and a cup copies its bag the same way. So a correction
