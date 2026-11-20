@@ -36,7 +36,7 @@ import ScreenFrame from './ScreenFrame';
  *            meta line, then any the user wrote in, multi-select checkboxes
  *            (CheckboxList). Checks persist across tabs. A row naming gear
  *            already on the shelf (same kind, same name ignoring case and
- *            accents) starts its meta line "On your shelf · …" (Uryu,
+ *            accents) has an "On your shelf" badge after its name (Uryu,
  *            2026-11-20); it can still be checked.
  *   add      "Not listed — add your own" (AddButton) → the name sheet. With
  *            a search that matches nothing: "No brewers match “x”." and the
@@ -122,9 +122,11 @@ export default function AddGearScreen({ onBack }) {
     const list = rows.map((g) => ({
       name: g.key,
       label: g.name,
-      // Already on the shelf: said first on its meta line, still checkable
-      // (two of the same is a fair shelf).
-      meta: ownedKeys.has(ownedKey(g.category, g.name)) ? [ON_SHELF, g.meta].filter(Boolean).join(' · ') : g.meta,
+      meta: g.meta,
+      // Already on the shelf: a badge after the name, set apart from the
+      // meta line's facts (Uryu, 2026-11-20); still checkable (two of the
+      // same is a fair shelf).
+      badge: ownedKeys.has(ownedKey(g.category, g.name)) ? ON_SHELF : undefined,
       hit: q ? matchWordStart(g.name, q) : null,
     }));
     return q ? list.filter((r) => r.hit) : list;

@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { color, icon, shape, size, space, spacing, state } from '../theme/tokens';
 import { MatchedName } from './ChoiceSheet';
+import Badge from './base/Badge';
 import Glyph from './base/Glyph';
 import Text from './base/Text';
 
@@ -28,9 +29,10 @@ import Text from './base/Text';
  * TODO: no mock draws the add row; to be shown to Design.
  *
  * Props
- *   items     [{ name, label?, hint?, meta?, hit? }] — name is the key; label is
- *             shown (defaults to name); meta, the line under it; hit, a
- *             matchWordStart span while searching
+ *   items     [{ name, label?, hint?, meta?, hit?, badge? }] — name is the key;
+ *             label is shown (defaults to name); meta, the line under it;
+ *             hit, a matchWordStart span while searching; badge, a neutral
+ *             Badge after the name (3a's "On your shelf", 2026-11-20)
  *   selected  names checked
  *   locked    true at the cap: unchecked rows can't be checked
  *   lockedHint what a screen reader adds on a locked row (§1 Selection
@@ -60,18 +62,29 @@ export default function CheckboxList({ items, selected, locked = false, lockedHi
             disabled={off && !onLockedPress}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: on, disabled: off }}
-            accessibilityLabel={[item.label ?? item.name, item.meta, item.hint].filter(Boolean).join(', ')}
+            accessibilityLabel={[item.label ?? item.name, item.badge, item.meta, item.hint].filter(Boolean).join(', ')}
             accessibilityHint={off ? lockedHint : undefined}
             style={({ pressed }) => [styles.row, pressed && !off && styles.pressed]}>
             <View style={[styles.box, on && styles.boxOn, off && styles.boxOff]}>
               {on ? <Glyph name="check" token={icon.xs} color={color.text.onInverse} /> : null}
             </View>
-            {item.meta ? (
+            {item.meta || item.badge ? (
               <View style={styles.stack}>
-                <MatchedName variant="title" label={item.label ?? item.name} hit={off ? null : item.hit} color={on ? 'primary' : off ? 'muted' : 'secondary'} />
-                <Text variant="meta" color="muted" truncate="meta">
-                  {item.meta}
-                </Text>
+                <View style={styles.nameRow}>
+                  <MatchedName
+                    variant="title"
+                    label={item.label ?? item.name}
+                    hit={off ? null : item.hit}
+                    color={on ? 'primary' : off ? 'muted' : 'secondary'}
+                    style={styles.nameShrink}
+                  />
+                  {item.badge ? <Badge label={item.badge} /> : null}
+                </View>
+                {item.meta ? (
+                  <Text variant="meta" color="muted" truncate="meta">
+                    {item.meta}
+                  </Text>
+                ) : null}
               </View>
             ) : (
               <MatchedName variant="title" label={item.label ?? item.name} hit={off ? null : item.hit} color={on ? 'primary' : off ? 'muted' : 'secondary'} style={styles.name} />
@@ -156,5 +169,14 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: space[2],
+  },
+  // The name and its badge, as 3b's rows (GearList).
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.gap.row,
+  },
+  nameShrink: {
+    flexShrink: 1,
   },
 });
