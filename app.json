@@ -67,6 +67,7 @@
           "enableRemoteNotifications": false
         }
       ],
+      "expo-iap",
       [
         "expo-build-properties",
         {
