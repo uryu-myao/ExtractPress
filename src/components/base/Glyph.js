@@ -85,6 +85,15 @@ const SHAPES = {
   cupSaucer: [<Path key="a" d="M5 8h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z" />, <Path key="b" d="M16 10h1.5a2 2 0 0 1 0 4H16" />, <Path key="c" d="M3 21h15" />],
   canTall: [<Path key="a" d="M8 3h8l1 3v13l-1 2H8l-1-2V6z" />, <Path key="b" d="M7 9h10" />],
   pen: [<Path key="a" d="M4 20l1-4L16 5l3 3L8 19z" />, <Path key="b" d="M14 7l3 3" />],
+  // Buy me a coffee's tips (28e / 28g), verbatim: A drip coffee (the small
+  // cup), A pour-over (the dripper on its server); A bag of beans is beanBag.
+  // The paid row's check (its own path, not `check`), and Support more /
+  // Show less's chevrons.
+  tipCup: [<Path key="a" d="M6 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z" />, <Path key="b" d="M17 10h1.5a2 2 0 0 1 0 4H17" />],
+  pourOver: [<Path key="a" d="M5 5h14l-5 6v3h-4v-3z" />, <Path key="b" d="M8 17h8v3H8z" />],
+  tick: [<Path key="p" d="M5 12l5 5 9-10" />],
+  chevronDown: [<Path key="p" d="M6 9l6 6 6-6" />],
+  chevronUp: [<Path key="p" d="M6 15l6-6 6 6" />],
 };
 
 export const GLYPH_NAMES = Object.keys(SHAPES);

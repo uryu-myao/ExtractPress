@@ -80,11 +80,11 @@ import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
  *                screen.
  *   Support & feedback  6c after Design Round 26 (B5, 28a): Send feedback
  *                (Mail, prefilled with the version, build, iOS and model;
- *                shown once constants/links.js has SUPPORT_EMAIL), Review on
- *                App Store and Share the app (once APP_STORE_ID is known).
- *                Out-arrow on a row that leaves the app, chevron on one that
- *                stays (the share sheet). TODO: Buy me a coffee (28e / 28g)
- *                joins as the second row when its screen is built.
+ *                shown once constants/links.js has SUPPORT_EMAIL), Buy me a
+ *                coffee → its screen (28e / 28g), Review on App Store and
+ *                Share the app (once APP_STORE_ID is known). Out-arrow on a
+ *                row that leaves the app, chevron on one that stays (Buy me
+ *                a coffee, the share sheet).
  *   App          6c (28a): Bag going stale (StaleSwitchRow, 8i folded in),
  *                Privacy policy (out-arrow; shown once its URL is set, T-18),
  *                Licences → its page. Terms of use is not built: Apple's
@@ -300,15 +300,14 @@ export default function ProfileTabScreen() {
             <MenuRow icon="download" label="Export everything" sub="Cups, bags, gear and photos" onPress={onExport(shareBackup)} disabled={busy} />
             {data.empty ? <MenuRow icon="restore" label="Restore from a backup" sub="From an Export everything file" onPress={requestRestore} disabled={busy} /> : null}
           </Section>
-          {SUPPORT_EMAIL || APP_STORE_ID ? (
-            <Section title="Support & feedback">
-              {SUPPORT_EMAIL ? (
-                <MenuRow icon="mail" label="Send feedback" sub="Ideas, requests and problems, by email" external onPress={() => Linking.openURL(feedbackMailto(SUPPORT_EMAIL))} />
-              ) : null}
-              {APP_STORE_ID ? <MenuRow icon="review" label="Review on App Store" external onPress={() => Linking.openURL(appStoreReviewUrl(APP_STORE_ID))} /> : null}
-              {APP_STORE_ID ? <MenuRow icon="share" label="Share the app" onPress={() => Share.share({ url: appStoreUrl(APP_STORE_ID) })} /> : null}
-            </Section>
-          ) : null}
+          <Section title="Support & feedback">
+            {SUPPORT_EMAIL ? (
+              <MenuRow icon="mail" label="Send feedback" sub="Ideas, requests and problems, by email" external onPress={() => Linking.openURL(feedbackMailto(SUPPORT_EMAIL))} />
+            ) : null}
+            <MenuRow icon="mug" label="Buy me a coffee" onPress={() => requestPush({ name: 'tips' })} />
+            {APP_STORE_ID ? <MenuRow icon="review" label="Review on App Store" external onPress={() => Linking.openURL(appStoreReviewUrl(APP_STORE_ID))} /> : null}
+            {APP_STORE_ID ? <MenuRow icon="share" label="Share the app" onPress={() => Share.share({ url: appStoreUrl(APP_STORE_ID) })} /> : null}
+          </Section>
           <Section title="App">
             <StaleSwitchRow />
             {PRIVACY_POLICY_URL ? <MenuRow icon="shield" label="Privacy policy" external onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} /> : null}

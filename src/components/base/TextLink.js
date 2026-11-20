@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet } from 'react-native';
-import { motion, size, state } from '../../theme/tokens';
+import { color, icon, motion, size, space, state } from '../../theme/tokens';
+import Glyph from './Glyph';
 import Text from './Text';
 
 /**
@@ -12,10 +13,13 @@ import Text from './Text';
  * Button `text` is its caps sibling (label.caps) for bars and rows.
  *
  * Props: label, onPress, accessibilityLabel
+ *   glyph     a glyph after the label, icon.sm in ink, not underlined (28e's
+ *             Support more ⌄ / Show less ⌃)
+ *   centered  sits in the middle of its column instead of at the start
  */
 const pressEasing = Easing.bezier(...motion.press.controlPoints);
 
-export default function TextLink({ label, onPress, accessibilityLabel }) {
+export default function TextLink({ label, onPress, accessibilityLabel, glyph, centered = false }) {
   const scale = useRef(new Animated.Value(1)).current;
   const to = (toValue) => Animated.timing(scale, { toValue, duration: motion.press.duration, easing: pressEasing, useNativeDriver: true }).start();
   return (
@@ -25,11 +29,12 @@ export default function TextLink({ label, onPress, accessibilityLabel }) {
       onPressOut={() => to(1)}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
-      style={styles.hit}>
-      <Animated.View style={{ transform: [{ scale }] }}>
+      style={[styles.hit, centered && styles.centered]}>
+      <Animated.View style={[styles.line, { transform: [{ scale }] }]}>
         <Text variant="textLink" color="primary" style={styles.underline}>
           {label}
         </Text>
+        {glyph ? <Glyph name={glyph} token={icon.sm} color={color.text.primary} /> : null}
       </Animated.View>
     </Pressable>
   );
@@ -40,6 +45,14 @@ const styles = StyleSheet.create({
     minHeight: size.tapTarget,
     justifyContent: 'center',
     alignSelf: 'flex-start',
+  },
+  centered: {
+    alignSelf: 'center',
+  },
+  line: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[4],
   },
   underline: {
     textDecorationLine: 'underline',

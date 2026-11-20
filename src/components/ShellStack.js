@@ -12,6 +12,7 @@ import EditGearScreen from '../screens/EditGearScreen';
 import FinishedBagsScreen from '../screens/FinishedBagsScreen';
 import GearBeansScreen from '../screens/GearBeansScreen';
 import TasteDnaScreen from '../screens/TasteDnaScreen';
+import TipScreen from '../screens/TipScreen';
 import { ScreenBackdropContext } from '../screens/ScreenFrame';
 import { cupTitle } from '../constants/cups';
 import { onCloseStackRequest, onPushRequest, requestCloseCup, requestNotice } from '../navigation';
@@ -55,6 +56,8 @@ import RecordsSearch from './RecordsSearch';
  *   dnaBuilt  8g, from 8f's footer, 6b's row on Profile and 15b's way on
  *             (Home's and 8f's; not 5c's)
  *   licences  6c's Licences, from Profile's Legal block
+ *   tips      6c's Buy me a coffee (28e / 28g), from Profile's Support &
+ *             feedback block
  *   notifications  7a, from Home's bell (BellButton; 23b, Round 26 C1)
  *   notification   7b ({ id, order }: the notice and 7a's order), from 7a
  */
@@ -126,6 +129,8 @@ export default function ShellStack() {
         return <DnaBuiltScreen onBack={goBack} />;
       case 'licences':
         return <LicencesScreen onBack={goBack} />;
+      case 'tips':
+        return <TipScreen onBack={goBack} />;
       case 'notifications':
         return <NotificationsScreen onBack={goBack} onOpen={(id, order) => push({ name: 'notification', id, order })} />;
       case 'notification':

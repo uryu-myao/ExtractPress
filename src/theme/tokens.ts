@@ -276,6 +276,14 @@ export const textStyle = {
   /** A detail row with nothing recorded: "Add", 15 / 500 in text.muted (31g). 2026-11-14. */
   detailEmpty:   { fontFamily: 'Archivo', fontSize: 15, fontWeight: '500' },
   /**
+   * Buy me a coffee's one line (28e / 28g): "Extract Press has no ads and no
+   * account. …", then the thank-you in its place. 15 / 600 on 22 (the mock's
+   * 1.5), ink, centred. 2026-11-20.
+   */
+  lead:          { fontFamily: 'Archivo', fontSize: 15, fontWeight: '600', lineHeight: 22 },
+  /** A tip's price in its tag (28e / 28g): Instrument Serif 20 on 20 (the mock's line-height 1). StoreKit's string. 2026-11-20. */
+  priceTag:      { fontFamily: 'Instrument Serif', fontSize: 20, fontWeight: '400', lineHeight: 20 },
+  /**
    * A sheet's explaining line (32e "No country called …", 32f "Not here?" and
    * "Regions are listed by origin …"): 13 / 500, text.secondary. 2026-11-14.
    */
@@ -546,6 +554,8 @@ export const icon = {
    * in a photo thumb's 20 corner mark. 12 at 2.4.
    */
   mark: { size: 12, strokeWidth: 2.4 },
+  /** Buy me a coffee's picture (28e): the mug at 48, 1.6, in a 96 tile. */
+  hero: { size: 48, strokeWidth: 1.6 },
   /** fill icons are a separate system: no stroke, fixed color, rating stars only */
   fill: {
     sm: { size: 14, color: color.icon.rating },
@@ -827,6 +837,32 @@ export const component = {
    * One size and colour on every row and block.
    */
   chevron: { icon: icon.sm, color: color.text.secondary },
+  /**
+   * Buy me a coffee's tip rows (28e / 28g, Design Round 26 B6). Each row is
+   * one control: ink frame, ground fill, 64 tall; a 36 glyph tile (1.5 frame
+   * on raised), the name (label), the price in a tag (badge.bg.neutral,
+   * priceTag). Pressed: state.pressed.surface, frame unchanged.
+   * paid: the row just paid for, until the screen is left — the chosen role
+   * (ink fill, raised text) with a check. Its tile frame and tag fill are the
+   * mock's two greens on ink (#5C7253, #3D5236), which no token had; they
+   * are used here only.
+   * hero: the picture's tile, 96, the quiet frame (border.container), not
+   * pressable.
+   */
+  tip: {
+    row: { height: 64, inset: space[14], gap: space[12] },
+    tile: { size: 36, border: shape.borderWidth.weak, borderColor: color.border.muted, background: color.surface.raised },
+    glyph: { size: 20, strokeWidth: 2 },
+    tag: { v: space[6], h: space[8], background: color.badge.bg.neutral },
+    paid: {
+      background: color.surface.inverse,
+      ink: color.surface.raised,
+      tileBorder: '#5C7253',
+      tag: '#3D5236',
+      check: { size: 18, strokeWidth: 2.6 },
+    },
+    hero: { tile: 96 },
+  },
   /**
    * Records' list, redrawn (handoff-records.md v1, 2026-11-16; 34a–34g).
    * row:     thumb · space.12 · text (flex) · rating column · space.12 ·
