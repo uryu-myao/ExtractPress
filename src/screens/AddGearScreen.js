@@ -14,7 +14,7 @@ import Text from '../components/base/Text';
 import { GEAR_CATALOGUE, GEAR_CATEGORIES, GEAR_CATEGORY, GEAR_LIMIT } from '../constants/gear';
 import { foldText, matchWordStart } from '../constants/match';
 import { useDatabase } from '../data/DatabaseProvider';
-import { countGear, insertGear, recordGearCapPush } from '../data/repository';
+import { insertGear, listGearWithUse, recordGearCapPush } from '../data/repository';
 import { icon, spacing } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -34,7 +34,10 @@ import ScreenFrame from './ScreenFrame';
  *            ink. The text stays when the tab changes ("Hario" across tabs).
  *   list     the tab's five catalogue rows (constants/gear.json) with their
  *            meta line, then any the user wrote in, multi-select checkboxes
- *            (CheckboxList). Checks persist across tabs.
+ *            (CheckboxList). Checks persist across tabs. A row naming gear
+ *            already on the shelf (same kind, same name ignoring case and
+ *            accents) starts its meta line "On your shelf · …" (Uryu,
+ *            2026-11-20); it can still be checked.
  *   add      "Not listed — add your own" (AddButton) → the name sheet. With
  *            a search that matches nothing: "No brewers match “x”." and the
  *            button reads "Add “x” as a brewer" — the same button, no extra
@@ -66,6 +69,9 @@ import ScreenFrame from './ScreenFrame';
 const PLURAL = { brewer: 'brewers', grinder: 'grinders', kettle: 'kettles', scale: 'scales' };
 const TABS = GEAR_CATEGORIES.map((value) => ({ value, label: GEAR_CATEGORY[value] }));
 const keyOf = (category, name) => `${category}/${name}`;
+// The shelf's gear matched by kind and name, ignoring case and accents.
+const ownedKey = (category, name) => `${category}/${foldText(tidy(name))}`;
+const ON_SHELF = 'On your shelf';
 const tidy = (s) => s.trim().replace(/\s+/g, ' ');
 
 const CATALOGUE_ROWS = GEAR_CATALOGUE.map((g) => ({ ...g, key: keyOf(g.category, g.name) }));
@@ -88,9 +94,19 @@ export default function AddGearScreen({ onBack }) {
   const [naming, setNaming] = useState(null);
   const pushed = useRef(new Set());
 
+  // The shelf as it is: its size for the cap, and what's on it, by kind and
+  // folded name, for "On your shelf" (Uryu, 2026-11-20).
+  const [ownedKeys, setOwnedKeys] = useState(() => new Set());
   useEffect(() => {
     let alive = true;
-    countGear(db).then((n) => alive && setOwned(n), () => alive && setOwned(0));
+    listGearWithUse(db).then(
+      (gear) => {
+        if (!alive) return;
+        setOwned(gear.length);
+        setOwnedKeys(new Set(gear.map((g) => ownedKey(g.category, g.name))));
+      },
+      () => alive && setOwned(0)
+    );
     return () => {
       alive = false;
     };
@@ -103,9 +119,16 @@ export default function AddGearScreen({ onBack }) {
 
   const rows = useMemo(() => [...CATALOGUE_ROWS, ...written].filter((g) => g.category === tab), [tab, written]);
   const shown = useMemo(() => {
-    const list = rows.map((g) => ({ name: g.key, label: g.name, meta: g.meta, hit: q ? matchWordStart(g.name, q) : null }));
+    const list = rows.map((g) => ({
+      name: g.key,
+      label: g.name,
+      // Already on the shelf: said first on its meta line, still checkable
+      // (two of the same is a fair shelf).
+      meta: ownedKeys.has(ownedKey(g.category, g.name)) ? [ON_SHELF, g.meta].filter(Boolean).join(' · ') : g.meta,
+      hit: q ? matchWordStart(g.name, q) : null,
+    }));
     return q ? list.filter((r) => r.hit) : list;
-  }, [rows, q]);
+  }, [rows, q, ownedKeys]);
 
   const toggle = (key) => {
     const adding = !selected.includes(key);
