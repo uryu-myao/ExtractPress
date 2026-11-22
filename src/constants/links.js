@@ -4,22 +4,26 @@
  * A row whose URL is null is not shown (2026-11-09): no dead row, and nothing
  * that opens a 404 in front of App Review (Guideline 2.1).
  *
- * TODO(T-18): both pages must exist before the December submission
- * (design/todo.md T-18, release-checklist.md §4). App Store Connect requires
- * both URLs, and Guideline 5.1.1(i) wants the privacy policy inside the app
- * too, so PRIVACY_POLICY_URL must not be null in the submitted build.
+ * T-18 (2026-11-22): both pages are live on smallpress.app (site/, Cloudflare
+ * Workers static assets; `cd site && npx wrangler deploy`). App Store Connect
+ * takes both URLs, and Guideline 5.1.1(i) wants the privacy policy inside the
+ * app too, so PRIVACY_POLICY_URL must not be null in the submitted build.
  */
-export const PRIVACY_POLICY_URL = null;
+export const PRIVACY_POLICY_URL = 'https://smallpress.app/extract-press/privacy';
 
-/** App Store Connect's Support URL. No row in 6c draws it; kept here with its pair. */
+/**
+ * App Store Connect's Support URL (https://smallpress.app/extract-press/support).
+ * Null on purpose: no row in 6c leads there; it is entered in App Store
+ * Connect only.
+ */
 export const SUPPORT_URL = null;
 
 /**
- * 6c's Send feedback (Design Round 26 A6, B5): opens Mail to this address.
- * TODO(T-18): the support address, the same one as the support page's. While
- * null, the row isn't shown.
+ * 6c's Send feedback (Design Round 26 A6, B5): opens Mail to this address,
+ * the support page's (smallpress.app/extract-press/support; Uryu,
+ * 2026-11-22). The privacy policy describes this row, so it must stay set.
  */
-export const SUPPORT_EMAIL = null;
+export const SUPPORT_EMAIL = 'hello@smallpress.app';
 
 /**
  * The App Store's numeric id for Extract Press (App Store Connect → the app

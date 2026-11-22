@@ -1,0 +1,9 @@
+name = "smallpress"
+compatibility_date = "2026-11-22"
+
+[assets]
+directory = "./public"
+
+[[routes]]
+pattern = "smallpress.app"
+custom_domain = true

@@ -12,6 +12,17 @@ const config = getDefaultConfig(__dirname);
 
 config.resolver.assetExts.push('wasm');
 
+// site/ is the smallpress.app pages (Cloudflare Workers static assets,
+// deployed with wrangler), not part of the app: Metro neither crawls nor
+// resolves anything under it, so it can't reach a bundle or slow the
+// dev server's file map.
+const path = require('path');
+const siteDir = path.join(__dirname, 'site') + path.sep;
+config.resolver.blockList = [
+  ...[].concat(config.resolver.blockList ?? []),
+  new RegExp(`^${siteDir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`),
+];
+
 config.server.enhanceMiddleware = (middleware) => (req, res, next) => {
   res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');

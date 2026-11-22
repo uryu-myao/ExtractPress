@@ -177,7 +177,8 @@ Design: "the café line shows the short address only, with no distance or visit 
 ## T-18. Privacy policy and support pages: they must exist before submission (recorded 2026-11-09, planner)
 **Deadline: required before the December 2026 submission** (`v1-status.md`: on the store by the end of December). Not "later": without both pages the app can't be submitted. Make one page on GitHub Pages; the content below is settled, so this is only writing it down.
 
-- **Now (in the app only)**: `src/constants/links.js` holds `PRIVACY_POLICY_URL` and `SUPPORT_URL`, both `null`, each with this TODO. While a URL is null its row is not shown (Profile's Legal block, 6c). Filling the constant is the only change needed; the row appears by itself.
+- **Status (2026-11-22)**: both pages are live, https://smallpress.app/extract-press/privacy and /support (`site/`, Cloudflare Workers static assets, `cd site && npx wrangler deploy`; both 200). `PRIVACY_POLICY_URL` and `SUPPORT_EMAIL` (hello@smallpress.app) are filled; `SUPPORT_URL` stays null on purpose (no row in the app; App Store Connect only). Left: the Privacy policy row checked on device, and both URLs entered on the App Store Connect record.
+- **Before (in the app only)**: `src/constants/links.js` holds `PRIVACY_POLICY_URL` and `SUPPORT_URL`, both `null`, each with this TODO. While a URL is null its row is not shown (Profile's Legal block, 6c). Filling the constant is the only change needed; the row appears by itself.
 - **Why it can't wait for after release**:
   - App Store Connect requires both URLs on the app record, and App Review opens them. A 404 or an "under construction" page is a rejection.
   - Guideline 5.1.1(i) also wants the privacy policy inside the app, easy to find. So the submitted build must have `PRIVACY_POLICY_URL` filled: an empty constant means no Privacy policy row, which is itself a rejection.
