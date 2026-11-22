@@ -91,7 +91,10 @@ const belowBaseline = (line) => line.height - line.ascender;
  *             never fades or moves on collapse; the title shrinks below it
  *   leadingEnd  standard header only: a control at the right end of the
  *             leading row (first setup's "Skip setup", Design Round 30 36a /
- *             36d), with or without `leading`. Moves as `leading` does (never)
+ *             36d), with or without `leading`. Moves as `leading` does (never).
+ *             With no `leading` and no title (Welcome, 36a), the eyebrow
+ *             takes the row's start: "EXTRACT PRESS" and "Skip setup" on one
+ *             line
  *   meta      optional information, right-aligned at the foot of the header
  *             (5b "Step 2 of 2 / Skippable"); fades out on collapse
  *   stat      optional { value, label }, right-aligned in place of meta (2a's
@@ -140,6 +143,8 @@ export default function ScreenFrame({
   children,
 }) {
   const insets = useSafeAreaInsets();
+  // Welcome (36a): no back, no title; the eyebrow shares Skip setup's row.
+  const eyebrowInRow = Boolean(leadingEnd && !leading && title == null && eyebrow);
   const ownBackdrop = useContext(ScreenBackdropContext);
   const chrome = useContext(ScrollChromeContext);
   const rootStyle = ownBackdrop ? styles.screen : styles.screenBare;
@@ -396,13 +401,20 @@ export default function ScreenFrame({
       <View style={[styles.titleColumn, leadingEnd && styles.titleColumnFull]} onLayout={onPart('column')}>
         {/* A control: stays put, fully visible and pressable while collapsing. */}
         {leading || leadingEnd ? (
-          <View style={[styles.leading, leadingEnd && styles.leadingRow]} onLayout={onPart('leading')}>
-            {leading ?? <View />}
+          <View style={[styles.leading, leadingEnd && styles.leadingRow, eyebrowInRow && styles.leadingRowOnly]} onLayout={onPart('leading')}>
+            {leading ??
+              (eyebrowInRow ? (
+                <Text variant="labelEyebrow" color="accent">
+                  {eyebrow}
+                </Text>
+              ) : (
+                <View />
+              ))}
             {leadingEnd}
           </View>
         ) : null}
         {/* Information: fades out, riding the title's top. */}
-        {eyebrow ? (
+        {eyebrow && !eyebrowInRow ? (
           <Animated.View style={anim && { opacity: anim.fade, transform: [{ translateY: anim.above }] }}>
             <Text variant="labelEyebrow" color="accent">
               {eyebrow}
@@ -565,6 +577,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  // The row is the whole header (Welcome): nothing under it to keep apart.
+  leadingRowOnly: {
+    marginBottom: 0,
   },
   // Out of flow, so the header height stays the title column's (standard or
   // compact) and the foot sits at the same height on every tab (a swipe shows

@@ -22,9 +22,10 @@ import Text from './base/Text';
  *            over the part of day. Each opens 2c.
  *   more     past 5, "All N cups ›": search with this bag or gear as a
  *            block, in the archive's shape (18e)
- *   empty    one line, "No cups with this grinder yet.", then "Log a cup
- *            with it ›" (Log a cup with the item preselected), when there is
- *            a way to log one
+ *   empty    one row: "No cups with this grinder yet." (bodySm, muted: the
+ *            same quiet hint as the photo's "No photo yet. Tap to add one.")
+ *            and, at its end, "Log a cup with it ›" (Log a cup with the item
+ *            preselected), when there is a way to log one
  *
  * Props: cups (newest first), heading, emptyLine, logLabel, onLog (optional),
  *        onOpen(id), onAll
@@ -84,16 +85,12 @@ export default function ItemCups({ cups, heading, emptyLine, logLabel, onLog, on
           ) : null}
         </>
       ) : (
-        <>
-          <Text variant="body" color="secondary">
+        <View style={styles.empty}>
+          <Text variant="bodySm" color="muted" style={styles.emptyLine}>
             {emptyLine}
           </Text>
-          {onLog ? (
-            <View style={styles.action}>
-              <Button variant="text" label={logLabel} trailingIcon="chevronRight" onPress={onLog} />
-            </View>
-          ) : null}
-        </>
+          {onLog ? <Button variant="text" label={logLabel} trailingIcon="chevronRight" onPress={onLog} /> : null}
+        </View>
       )}
     </View>
   );
@@ -105,5 +102,14 @@ const styles = StyleSheet.create({
   },
   action: {
     alignItems: 'flex-start',
+  },
+  empty: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.gap.row,
+  },
+  emptyLine: {
+    flexShrink: 1,
   },
 });

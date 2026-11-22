@@ -16,18 +16,20 @@ import ScreenFrame from './ScreenFrame';
  * decides whether to use the app at all.
  *
  * Top to bottom (36a):
- *   Skip setup        top right (36e): what you take instead of the screen,
- *                     where every setup step keeps it. Home, setup done for good
- *   EXTRACT PRESS     eyebrow (the header holds it and Skip setup; no
- *                     title there, so it doesn't collapse)
+ *   EXTRACT PRESS     eyebrow, and on its row, at the right end:
+ *   Skip setup        (36e) what you take instead of the screen, where every
+ *                     setup step keeps it. Home, setup done for good. The
+ *                     header holds only this row: no title, so it doesn't
+ *                     collapse
  *   the plate         WelcomePlate: the visual, 196 tall. A provisional
  *                     drawing until Uryu's artwork (TODO there)
- *   headline          "You log a cup." in ink, then "Extract Press works out
- *                     what you like." in brown, the same serif; the screen's
- *                     header for accessibility
+ *   headline          "You log a cup." in ink, then on its own line "Extract
+ *                     Press works out what you like." in brown, the same
+ *                     serif; the screen's header for accessibility
  *   the line          rate AND note: a rating alone doesn't move the profile
- *   the privacy frame 1.5 border.muted on surface.raised, a phone glyph, the
- *                     bold lead "It stays on your phone." then 29e's line:
+ *   the privacy frame 1.5 border.muted on surface.raised, a phone glyph in
+ *                     ink centred on the text, the bold lead "It stays on
+ *                     your phone." and, on the next line, 29e's line:
  *                     backups and exports do leave the phone, never to us
  *   Set up my shelf   primary, at the foot: the bag step, then gear
  *   New phone? Restore a backup
@@ -58,21 +60,21 @@ export default function WelcomeScreen({ onSetUp, onSkip, restore }) {
       <View style={styles.body}>
         <WelcomePlate />
         <Text variant="displayLg" color="primary" accessibilityRole="header">
-          You log a cup.{' '}
+          You log a cup.{'\n'}
           <Text variant="displayLg" color="accent">
             Extract Press works out what you like.
           </Text>
         </Text>
         <Text variant="body" color="secondary">
-          Not a diary — the cups you rate and note add up into a profile of your taste.
+          Not a diary: the cups you rate and note add up to a profile of your taste.
         </Text>
         <View style={styles.privacy}>
-          <Glyph name="phone" token={icon.md} color={color.text.secondary} />
+          <Glyph name="phone" token={icon.md} color={color.text.primary} />
           <Text variant="body" color="secondary" style={styles.privacyText}>
             <Text variant="noticeName" color="primary">
               It stays on your phone.
             </Text>
-            {' No account, no server. Your cups are never sent to us.'}
+            {'\nNo account, no server. Your cups are never sent to us.'}
           </Text>
         </View>
       </View>
@@ -86,7 +88,7 @@ const styles = StyleSheet.create({
   },
   privacy: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: space[12],
     paddingVertical: spacing.inset.container.v,
     paddingHorizontal: spacing.inset.container.h,

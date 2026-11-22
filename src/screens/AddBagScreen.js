@@ -170,23 +170,27 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup }) {
                 In setup it is (36d): "I'll add a bag later" is the way on.
                 A press there warns (§1) and Bean name shows why, its
                 required error, as the app's 3c does on press. */}
-            <Button
-              label="Open this bag"
-              onPress={() => addBag(true)}
-              disabled={full || open == null || (setup && !name)}
-              warnWhenDisabled={full || (setup && open != null && !name)}
-              onDisabledPress={setup && !name ? () => setNameMissing(true) : undefined}
-            />
-            {/* Added, not opened (2026-10-12): it takes a slot and is opened
-                later from 3d. Copy confirmed (Design's reply to brief 18). */}
-            <Button
-              variant="secondary"
-              label="Add without opening"
-              onPress={() => addBag(false)}
-              disabled={full || open == null || (setup && !name)}
-              warnWhenDisabled={full || (setup && open != null && !name)}
-              onDisabledPress={setup && !name ? () => setNameMissing(true) : undefined}
-            />
+            {/* The pair is gap.section apart, as Log a cup's Save / Add
+                tasting note are; the line under them stays gap.row. */}
+            <View style={styles.buttons}>
+              <Button
+                label="Open this bag"
+                onPress={() => addBag(true)}
+                disabled={full || open == null || (setup && !name)}
+                warnWhenDisabled={full || (setup && open != null && !name)}
+                onDisabledPress={setup && !name ? () => setNameMissing(true) : undefined}
+              />
+              {/* Added, not opened (2026-10-12): it takes a slot and is opened
+                  later from 3d. Copy confirmed (Design's reply to brief 18). */}
+              <Button
+                variant="secondary"
+                label="Add without opening"
+                onPress={() => addBag(false)}
+                disabled={full || open == null || (setup && !name)}
+                warnWhenDisabled={full || (setup && open != null && !name)}
+                onDisabledPress={setup && !name ? () => setNameMissing(true) : undefined}
+              />
+            </View>
             {setup ? <TextLink centered label="I'll add a bag later" onPress={setup.onLater} /> : null}
             {free != null && !setup ? (
               <Text variant="bodySm" color="secondary" style={styles.slots}>
@@ -281,6 +285,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     gap: spacing.gap.row,
+  },
+  buttons: {
+    gap: spacing.gap.section,
   },
   slots: {
     textAlign: 'center',
