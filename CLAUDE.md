@@ -16,8 +16,10 @@ npx expo start --web
 # Release build onto Uryu's iPhone (JS bundled in, no Metro needed). Signed
 # by the paid team (Y57C6973DT), so the build no longer expires after 7 days.
 # Phone connected by cable or "Connect via network". Records survive a
-# reinstall.
-npm run ios:device
+# reinstall. EXPO_PUBLIC_SETUP_DEV=1 keeps Profile's "Dev: run first setup
+# again" row in the Release bundle; always set it for the phone, never for an
+# App Store build.
+EXPO_PUBLIC_SETUP_DEV=1 npm run ios:device
 
 # After adding a native dependency or a config plugin, regenerate ios/
 # (gitignored, Continuous Native Generation) before building:
@@ -25,7 +27,7 @@ CI=1 npx expo prebuild --platform ios --no-install && (cd ios && pod install)
 
 # If ios:device can't find a profile or hangs at "Connecting", build and
 # install directly (-allowProvisioningUpdates fetches the profile):
-(cd ios && xcodebuild -workspace ExtractPress.xcworkspace -scheme ExtractPress \
+(cd ios && EXPO_PUBLIC_SETUP_DEV=1 xcodebuild -workspace ExtractPress.xcworkspace -scheme ExtractPress \
   -configuration Release -destination id=00008130-001661C42142001C \
   -derivedDataPath build -allowProvisioningUpdates \
   -allowProvisioningDeviceRegistration build)
