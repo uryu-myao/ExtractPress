@@ -849,9 +849,11 @@ export const component = {
    * The chevron that says a whole row or block opens something
    * (design-system.md §1 Tap affordance; Design Round 11, C, 2026-10-23).
    * It is the only sign: a block's frame or fill never says "pressable".
-   * One size and colour on every row and block.
+   * One size and colour on every row and block. text.placeholder, the tab
+   * bar's inactive grey, since 2026-11-22 (Uryu): in text.secondary the ›
+   * stood out over the row it belongs to; it should only hint.
    */
-  chevron: { icon: icon.sm, color: color.text.secondary },
+  chevron: { icon: icon.sm, color: color.text.placeholder },
   /**
    * Buy me a coffee's tip rows (28e / 28g, Design Round 26 B6). Each row is
    * one control: ink frame, ground fill, 64 tall; a 36 glyph tile (1.5 frame

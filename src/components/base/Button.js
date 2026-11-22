@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, View } from 'react-native';
-import { color, icon, motion, shadow, shape, size, space, spacing, state } from '../../theme/tokens';
+import { color, component, icon, motion, shadow, shape, size, space, spacing, state } from '../../theme/tokens';
 import Glyph from './Glyph';
 import HardShadow from './HardShadow';
 import Text from './Text';
@@ -29,9 +29,10 @@ import Text from './Text';
  *              trailingIcon: a text action that leads somewhere, beside a
  *              section title (1b's See all, redrawn 2026-10-18; Home's "See
  *              all beans & gear"): the label then the glyph (icon.sm,
- *              gap.tight), both text.secondary, NO underline — §1 lets it go
- *              where the position already says "action", and the glyph says
- *              it too. The glyph is the › chevron (Design Round 15, B4).
+ *              gap.tight), the label text.secondary, NO underline — §1 lets
+ *              it go where the position already says "action", and the glyph
+ *              says it too. The glyph is the › chevron (Design Round 15, B4)
+ *              in component.chevron's colour, as on every row (2026-11-22).
  *   disabled   either variant: ground fill, border.muted outline, text.muted
  *              label, no shadow (5d)
  *   pressed    the fill darkens (state.pressed.action / .surface); outline,
@@ -106,7 +107,7 @@ function TextButton({ label, small = false, stacked = false, trailingIcon, disab
           <Text variant="labelCaps" color={disabled ? 'muted' : 'secondary'}>
             {label}
           </Text>
-          <Glyph name={trailingIcon} token={icon.sm} color={disabled ? color.text.muted : color.text.secondary} />
+          <Glyph name={trailingIcon} token={component.chevron.icon} color={component.chevron.color} />
         </Animated.View>
       ) : (
         <Animated.View style={{ transform: [{ scale }] }}>

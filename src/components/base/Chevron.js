@@ -3,7 +3,7 @@ import Glyph from './Glyph';
 
 /**
  * The › at the end of a pressable row or block (design-system.md §1 Tap
- * affordance; Design Round 11, C): component.chevron, 16 in text.secondary,
+ * affordance; Design Round 11, C): component.chevron, 16 in text.placeholder,
  * the same everywhere. Where it sits is the caller's: centred on a one-line
  * row, on the heading line of a multi-line block.
  *
