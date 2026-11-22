@@ -70,10 +70,11 @@ export const NOTICES = [
   },
   {
     /*
-     * What sets the app apart, not how to use it (Uryu, 2026-11-11): used as
-     * a diary, logging stops in two days. Words: Design Round 27 D2 (29e).
-     * 7a's row shows the lead's first two sentences. The date is the planned
-     * release month until the release date is known.
+     * How it works (Design Round 30 B2, 36b; a rewrite of 29e). Welcome (8a)
+     * says what the app is and that nothing is sent to us; this says how it
+     * works. Five axes since 2026-11-13; roast is the bag's (Round 29), not
+     * an axis. "Ten slider notes": flavour words never count toward locking
+     * in. The date is the planned release month until the release date is known.
      */
     id: 'welcome',
     kind: 'notice',
@@ -81,16 +82,16 @@ export const NOTICES = [
     version: '1.0.0',
     date: '2026-12-01',
     title: 'Welcome to Extract Press',
-    summary: "Log a cup, and Extract Press works out what you like. It isn't a diary.",
-    body: ["Log a cup, and Extract Press works out what you like. It isn't a diary: the cups you rate and note add up to a profile of your taste."],
+    summary: 'How it works: a cup in 15 seconds, a taste DNA that builds itself, and nothing sent to us.',
+    body: ["Here's how it works."],
     points: [
       {
         lead: 'A cup in 15 seconds.',
-        text: "Rate it and you're done; a café cup also needs its café. The beans, the gear and the four taste axes are there when you want them.",
+        text: "Rate it and you're done; a café cup also needs its café. The beans, the gear and the five taste sliders are there when you want them.",
       },
       {
         lead: 'Your taste DNA builds itself.',
-        text: 'Acidity, body, roast and sweetness, from what you note. Cups you rated higher count for more, and recent cups count more than old ones.',
+        text: 'Acidity, bitterness, body, sweetness and aftertaste, from the sliders you set. Cups you rated higher count for more, and recent cups more than old ones. Ten slider notes on an axis, and it locks in.',
       },
       { lead: 'It stays on your phone.', text: 'No account, no server. Your cups are never sent to us.' },
     ],

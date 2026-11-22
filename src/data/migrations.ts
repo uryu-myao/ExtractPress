@@ -661,6 +661,34 @@ export const migrations: readonly Migration[] = [
       `CREATE INDEX cups_scale_id ON cups (scale_id)`,
     ],
   },
+  {
+    /*
+     * First setup ships (8a / 8c / 8o, 2026-11-21), so setup_done is read for
+     * the first time. Migration 3 marked a database past setup only if it
+     * had cups or bags WHEN 3 RAN; a database created later (a fresh
+     * install: 1–14 run at once on an empty file) kept 0 while its owner
+     * logged cups, and would now be shown Welcome. Mark it again: anything
+     * the user made means they are past setup. Data only, no schema change.
+     */
+    version: 15,
+    name: 'past first setup where anything was made',
+    statements: [
+      `UPDATE settings SET setup_done = 1
+        WHERE EXISTS (SELECT 1 FROM cups) OR EXISTS (SELECT 1 FROM bags)
+           OR EXISTS (SELECT 1 FROM gear) OR EXISTS (SELECT 1 FROM places)`,
+    ],
+  },
+  {
+    /*
+     * Quitting mid-setup is not a way out (Design Round 30 A3): the next
+     * launch resumes at the step reached. device.setup_step is that step,
+     * NULL before the second. On device, not settings: it is this phone's
+     * progress through Welcome, and a backup never carries it (LOCAL_TABLES).
+     */
+    version: 16,
+    name: 'first setup step reached',
+    statements: [`ALTER TABLE device ADD COLUMN setup_step TEXT CHECK (setup_step IN ('gear'))`],
+  },
 ];
 
 /** The bookkeeping table. Created before any migration runs. */

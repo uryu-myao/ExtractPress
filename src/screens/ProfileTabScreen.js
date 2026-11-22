@@ -14,8 +14,8 @@ import { APP_STORE_ID, PRIVACY_POLICY_URL, SUPPORT_EMAIL, appStoreReviewUrl, app
 import { stepWordOf, TASTE_AXES } from '../constants/tasteAxes';
 import { useDatabase } from '../data/DatabaseProvider';
 import { shareBackup, shareCupsCsv } from '../data/export';
-import { OPEN_BAG_LIMIT, countGear, countOpenBags, countOwnRecords, countStaleBags, loadDnaPage, loadProfile, onCupsChanged, onShelfChanged } from '../data/repository';
-import { requestPush, requestResetDna, requestRestore } from '../navigation';
+import { OPEN_BAG_LIMIT, countGear, countOpenBags, countOwnRecords, countStaleBags, loadDnaPage, loadProfile, onCupsChanged, onShelfChanged, resetSetupForDev } from '../data/repository';
+import { requestFirstSetup, requestPush, requestResetDna, requestRestore } from '../navigation';
 import { color, dashed, layout, shape, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 import { cupsLabel, dnaSummary, shiftedLabel } from './TasteDnaScreen';
@@ -312,6 +312,20 @@ export default function ProfileTabScreen() {
             <StaleSwitchRow />
             {PRIVACY_POLICY_URL ? <MenuRow icon="shield" label="Privacy policy" external onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} /> : null}
             <MenuRow icon="licences" label="Licences" onPress={() => requestPush({ name: 'licences' })} />
+            {/* Development only: show first setup again (8a), so its three
+                ways out can be tried on a phone already past it. Records
+                stay. Not in a release unless built with
+                EXPO_PUBLIC_SETUP_DEV=1 (a Release build on the phone, which
+                has no Metro); never set for the store. */}
+            {__DEV__ || process.env.EXPO_PUBLIC_SETUP_DEV === '1' ? (
+              <MenuRow
+                icon="reset"
+                chevron={false}
+                label="Dev: run first setup again"
+                sub="Sets setup_done to 0 and shows Welcome. Records stay."
+                onPress={() => resetSetupForDev(db).then(requestFirstSetup, (error) => console.error('[setup] dev reset failed', error))}
+              />
+            ) : null}
           </Section>
           <Text variant="bodySm" color="muted" style={styles.version}>
             {versionLine(Constants.expoConfig)}

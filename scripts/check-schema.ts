@@ -192,6 +192,28 @@ if (!row.created_at || row.logged_at !== row.created_at) fail('a minimal cup (ra
   if (setup.setup_done !== 1) fail('migration 3: an existing user should be marked past setup');
 }
 
+// Migration 15: a database made empty after migration 3 (a fresh install),
+// then used, still had setup_done 0; anything made marks it past setup. An
+// empty one stays before setup.
+for (const [what, insert] of [
+  ['a cup', `INSERT INTO cups (id, created_at, logged_at, rating, mode) VALUES (1, 1, 1, 4, 'made_it')`],
+  ['gear', `INSERT INTO gear (id, name, category, is_default, added_at) VALUES (1, 'V60', 'brewer', 1, 1)`],
+  ['nothing', null],
+] as const) {
+  const d = new DatabaseSync(':memory:');
+  d.exec('PRAGMA foreign_keys = ON');
+  d.exec(MIGRATIONS_TABLE);
+  for (const m of migrations.filter((m) => m.version < 15)) {
+    d.exec('BEGIN');
+    for (const sql of m.statements) d.exec(sql);
+    d.exec('COMMIT');
+  }
+  if (insert) d.exec(insert);
+  for (const sql of migrations.find((m) => m.version === 15)!.statements) d.exec(sql);
+  const { setup_done } = d.prepare('SELECT setup_done FROM settings').get() as { setup_done: number };
+  if (setup_done !== (insert ? 1 : 0)) fail(`migration 15 with ${what}: setup_done ${setup_done}, expected ${insert ? 1 : 0}`);
+}
+
 // Migration 11: a version-10 database with cups on the old bipolar columns.
 // Only Body and Sweetness carry over (0–100 → 1–5, nearest whole step);
 // Acidity and Roast become not noted (no row); the columns are gone; every

@@ -235,6 +235,12 @@ export async function copyInto(live: SqlDb, tables: Tables): Promise<void> {
       await live.run(`INSERT INTO ${quote(name)} (${cols.map(quote).join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`, cols.map((c) => row[c]));
     }
   }
+  // Restored means past first setup (2026-11-21), whatever the backup says:
+  // one made before setup existed, or by someone who never finished it,
+  // carries setup_done 0, and Welcome would ask a returning user to set up
+  // a shelf they just brought back. notices and device are this phone's own
+  // (SKIP), so the welcome notice stays as delivered here.
+  await live.run('UPDATE settings SET setup_done = 1');
 }
 
 async function columnsOf(db: SqlDb): Promise<Map<string, Set<string>>> {

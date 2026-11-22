@@ -25,6 +25,7 @@
  *                        filter button): { sort, group, onApply }
  *   requestRestore()     AppShell runs Restore from a backup: the file
  *                        picker, then its sheets (6b's row, Design Round 23)
+ *   requestFirstSetup()  AppShell shows first setup again (development only)
  *   requestResetDna()    AppShell asks Reset my taste DNA's confirmation
  *                        over the tabs and the bar (6b's row)
  *   requestCloseStack()  ShellStack drops every pushed screen, so a tab shows
@@ -95,6 +96,18 @@ export function requestSortSheet(request) {
 export function onSortSheetRequest(listener) {
   sortSheetListeners.add(listener);
   return () => sortSheetListeners.delete(listener);
+}
+
+const setupListeners = new Set();
+
+/** Development only (Profile's dev row): AppShell shows first setup (8a) again. */
+export function requestFirstSetup() {
+  setupListeners.forEach((l) => l());
+}
+
+export function onFirstSetupRequest(listener) {
+  setupListeners.add(listener);
+  return () => setupListeners.delete(listener);
 }
 
 const restoreListeners = new Set();

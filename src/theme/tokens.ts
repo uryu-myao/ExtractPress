@@ -724,6 +724,21 @@ const requiredBar = {
 /** Component anatomies whose parts are mechanism-bound. */
 export const component = {
   /**
+   * Welcome's plate (Design Round 30, 36a): 9b's printed extraction rings,
+   * smaller, on a brown plate at the gutter. 196 tall, a 2px ink frame, no
+   * shadow (shadows are for things you press). One static image; until
+   * Uryu's artwork arrives a provisional drawing stands in (WelcomePlate).
+   * `rings` and `offset` are the provisional drawing's two inks: the ground
+   * colour and the ink, printed a few points out of register.
+   */
+  welcomePlate: {
+    height: 196,
+    fill: color.text.accent,
+    frame: { width: shape.borderWidth.box, color: color.border.strong },
+    rings: color.surface.ground,
+    offset: color.border.strong,
+  },
+  /**
    * Days since a bag was ROASTED (decided 2026-10-14, data/freshness.ts):
    * track + peak band + elapsed fill + today marker, 4px tall, with a clock
    * glyph before it and "Day 7 · drink now" after it. Single-directional, has

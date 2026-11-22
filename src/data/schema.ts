@@ -285,16 +285,18 @@ export const schema = {
     id: { type: 'INTEGER', nullable: false, pk: true },
     /**
      * ALWAYS EMPTY IN V1 — on purpose, as drinks_out and coffee_style both.
-     * V1 never reads them, and has no way to set them: first setup (8n / 8c)
-     * is V1.5 (gaps.md 22, closed 2026-11-09). They are used in V1.5, built
-     * with first setup, the flavour reordering (constants/flavours.js) and
-     * the first cup's mode from drinks_out, and a place to change both.
+     * V1 never reads them, and has no way to set them: V1's first setup
+     * (2026-11-21) is 8a / 8c / 8o without 8n and without 8c's "I mostly
+     * drink out", since an answer nothing reads would change nothing
+     * (gaps.md 22). They are used in V1.5, built with 8n and drinks_out's
+     * choice, the flavour reordering (constants/flavours.js), the first
+     * cup's mode from drinks_out, and a place to change both.
      */
     drinks_out: { type: 'INTEGER', nullable: true },
     coffee_style: { type: 'TEXT', nullable: true, values: ['black', 'with_milk', 'depends'] },
     /** Reset my taste DNA (6b, built 2026-11-09): only cups logged from this time count. NULL: never reset. */
     reset_at: { type: 'INTEGER', nullable: true },
-    /** 0 / 1: the first setup (8a / 8n / 8c / 8o) was finished or skipped. */
+    /** 0 / 1: first setup (8a / 8c / 8o; components/FirstSetup.js) was finished, skipped, or a backup restored. Never back to 0. */
     setup_done: { type: 'INTEGER', nullable: false },
   },
 
@@ -344,6 +346,8 @@ export const schema = {
     notify_stale: { type: 'INTEGER', nullable: false },
     /** 3c's date sheet: the kind chosen last (migration 10; Design Round 27 B1). NULL: Roasted on. */
     bag_date_kind: { type: 'TEXT', nullable: true, values: ['roasted', 'bestBefore'] },
+    /** First setup's step reached (migration 16; Design Round 30 A3): a relaunch resumes there. NULL: Welcome / the first step. */
+    setup_step: { type: 'TEXT', nullable: true, values: ['gear'] },
   },
 } as const satisfies Record<string, Record<string, ColumnDef>>;
 

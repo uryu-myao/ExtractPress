@@ -113,6 +113,38 @@ export async function resetTasteDna(db: SQLiteDatabase, now = Date.now()): Promi
   notifyCupsChanged();
 }
 
+/**
+ * First setup (8a / 8c / 8o, built 2026-11-21): whether Welcome still shows
+ * at launch. 1 once setup is finished, skipped or a backup restored
+ * (backupFormat.ts copyInto), and never 0 again outside development: a skip
+ * is a choice, and everything setup does can be done in the app.
+ */
+export async function isSetupDone(db: SQLiteDatabase): Promise<boolean> {
+  const row = await db.getFirstAsync<{ setup_done: number }>('SELECT setup_done FROM settings');
+  return row?.setup_done === 1;
+}
+
+export async function markSetupDone(db: SQLiteDatabase): Promise<void> {
+  await db.runAsync('UPDATE settings SET setup_done = 1');
+  await db.runAsync('UPDATE device SET setup_step = NULL');
+}
+
+/** The setup step reached (Design Round 30 A3: a relaunch resumes there); null before the second. */
+export async function getSetupStep(db: SQLiteDatabase): Promise<'gear' | null> {
+  const row = await db.getFirstAsync<{ setup_step: 'gear' | null }>('SELECT setup_step FROM device');
+  return row?.setup_step ?? null;
+}
+
+export async function setSetupStep(db: SQLiteDatabase, step: 'gear' | null): Promise<void> {
+  await db.runAsync('UPDATE device SET setup_step = ?', [step]);
+}
+
+/** Development only (Profile's dev row): show first setup again, from Welcome. Records stay. */
+export async function resetSetupForDev(db: SQLiteDatabase): Promise<void> {
+  await db.runAsync('UPDATE settings SET setup_done = 0');
+  await db.runAsync('UPDATE device SET setup_step = NULL');
+}
+
 /** Taste DNA now, from every counted cup (computed on read, never stored). */
 export async function loadTasteDna(db: SQLiteDatabase): Promise<Dna> {
   const settings = await db.getFirstAsync<{ reset_at: number | null }>('SELECT reset_at FROM settings');

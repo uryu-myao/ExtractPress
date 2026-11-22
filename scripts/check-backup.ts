@@ -98,6 +98,12 @@ if (parsed.photos.size !== 1 || parsed.photos.get('mh2k1a9x3f')?.join() !== phot
 if ([...parsed.photos.keys()].some((id) => id.includes('/') || id.includes('.'))) fail('an unsafe photo name came out of the zip');
 const live = await appDb();
 await restore(live, zip);
+// A restore marks first setup done, whatever the file says (the source never
+// finished it: setup_done 0), so Welcome never asks a returning user to set up.
+const setupOf = (d: DatabaseSync) => (d.prepare('SELECT setup_done FROM settings').get() as { setup_done: number }).setup_done;
+if (setupOf(source) !== 0) fail('the source should still be before first setup (setup_done 0)');
+if (setupOf(live) !== 1) fail('a restore left setup_done 0: Welcome would show again after it');
+source.prepare('UPDATE settings SET setup_done = 1').run();
 if ((await userTables(live)) !== (await userTables(source))) fail('round trip: the restored rows differ from the exported ones');
 const cups = (live.prepare('SELECT COUNT(*) AS n FROM cups').get() as { n: number }).n;
 
@@ -149,4 +155,4 @@ if (problems.length) {
   console.error(`check:backup FAILED (${problems.length})\n  - ${problems.slice(0, 30).join('\n  - ')}`);
   process.exit(1);
 }
-console.log(`check:backup OK — ${cups} cups and a photo round-trip through the zip; format 1 and app 'MoreCoffee' read; a v5 file migrates up; only into an empty app; this phone's notices and device row untouched; 7 refusals.`);
+console.log(`check:backup OK — ${cups} cups and a photo round-trip through the zip, first setup marked done; format 1 and app 'MoreCoffee' read; a v5 file migrates up; only into an empty app; this phone's notices and device row untouched; 7 refusals.`);

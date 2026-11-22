@@ -79,13 +79,19 @@ const belowBaseline = (line) => line.height - line.ascender;
  * never sit inside a taller safe-area inset.
  *
  * Props
- *   title     screen title (display.lg; titleCaps when compact)
+ *   title     screen title (display.lg; titleCaps when compact). Standard
+ *             header only, it may be left out (Welcome, 36a: its headline
+ *             sits under the plate, in the body); then the header holds the
+ *             leading row and the eyebrow, and doesn't collapse
  *   userTitle the title is user data (2c's bean name): `name` truncation,
  *             2 lines (§3.1). Fixed screen titles never truncate.
  *   eyebrow   optional small label above the title (label.eyebrow, accent):
  *             "The archive" (2a), "Extract Press" (1b). Fades out on collapse.
  *   leading   optional control above the title (5b's back button). A control
  *             never fades or moves on collapse; the title shrinks below it
+ *   leadingEnd  standard header only: a control at the right end of the
+ *             leading row (first setup's "Skip setup", Design Round 30 36a /
+ *             36d), with or without `leading`. Moves as `leading` does (never)
  *   meta      optional information, right-aligned at the foot of the header
  *             (5b "Step 2 of 2 / Skippable"); fades out on collapse
  *   stat      optional { value, label }, right-aligned in place of meta (2a's
@@ -121,6 +127,7 @@ export default function ScreenFrame({
   title,
   eyebrow,
   leading,
+  leadingEnd,
   trailing,
   meta,
   stat,
@@ -209,7 +216,7 @@ export default function ScreenFrame({
         leadingMove: centreC - leadingCentre,
       };
     } else {
-      if (!p.column || !p.title || p.baseline == null || (leading && !p.leading)) return;
+      if (!p.column || !p.title || p.baseline == null || ((leading || leadingEnd) && !p.leading)) return;
       if (stat && (!p.stat || !p.number || p.numberBaseline == null)) return;
       const tH = p.title.height;
       const titleTop = p.column.y + p.title.y;
@@ -386,11 +393,12 @@ export default function ScreenFrame({
     </View>
   ) : (
     <View style={[styles.header, headerTop]}>
-      <View style={styles.titleColumn} onLayout={onPart('column')}>
+      <View style={[styles.titleColumn, leadingEnd && styles.titleColumnFull]} onLayout={onPart('column')}>
         {/* A control: stays put, fully visible and pressable while collapsing. */}
-        {leading ? (
-          <View style={styles.leading} onLayout={onPart('leading')}>
-            {leading}
+        {leading || leadingEnd ? (
+          <View style={[styles.leading, leadingEnd && styles.leadingRow]} onLayout={onPart('leading')}>
+            {leading ?? <View />}
+            {leadingEnd}
           </View>
         ) : null}
         {/* Information: fades out, riding the title's top. */}
@@ -401,16 +409,18 @@ export default function ScreenFrame({
             </Text>
           </Animated.View>
         ) : null}
-        <Animated.View
-          onLayout={onPart('title')}
-          style={
-            anim && {
-              transformOrigin: [0, geo.baseline, 0],
-              transform: [{ translateY: anim.title }, { scale: anim.scale }],
-            }
-          }>
-          {titleText}
-        </Animated.View>
+        {title != null ? (
+          <Animated.View
+            onLayout={onPart('title')}
+            style={
+              anim && {
+                transformOrigin: [0, geo.baseline, 0],
+                transform: [{ translateY: anim.title }, { scale: anim.scale }],
+              }
+            }>
+            {titleText}
+          </Animated.View>
+        ) : null}
       </View>
       {trailing ? (
         // A control: never fades. Its foot at the title's baseline (the
@@ -545,6 +555,16 @@ const styles = StyleSheet.create({
   },
   leading: {
     marginBottom: spacing.gap.row,
+  },
+  // leadingEnd: the column spans the header, so the row can put it at the end.
+  titleColumnFull: {
+    flexGrow: 1,
+  },
+  leadingRow: {
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   // Out of flow, so the header height stays the title column's (standard or
   // compact) and the foot sits at the same height on every tab (a swipe shows

@@ -67,6 +67,9 @@ import Text from './Text';
  *             Haptics). Only where the screen already shows why the button
  *             is off (decided 2026-10-11); otherwise leave it false and show
  *             the reason first. Still no visual press feedback.
+ *   onDisabledPress  with warnWhenDisabled: also called on that press, so
+ *             the screen can show why (first setup's bag step: Bean name's
+ *             required error, 36d)
  *   onPress
  *   testOnly_pressed   force the pressed look (dev harness)
  */
@@ -126,6 +129,7 @@ function FilledButton({
   trailingIcon,
   disabled = false,
   warnWhenDisabled = false,
+  onDisabledPress,
   size: buttonSize = 'full',
   raised = false,
   destructive = false,
@@ -149,7 +153,14 @@ function FilledButton({
   return (
     <HardShadow shadow={hardShadow}>
       <Pressable
-        onPress={warns ? warnDisabled : onPress}
+        onPress={
+          warns
+            ? () => {
+                warnDisabled();
+                onDisabledPress?.();
+              }
+            : onPress
+        }
         disabled={disabled && !warns}
         accessibilityRole="button"
         accessibilityState={{ disabled }}

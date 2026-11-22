@@ -94,6 +94,8 @@ const SHAPES = {
   tick: [<Path key="p" d="M5 12l5 5 9-10" />],
   chevronDown: [<Path key="p" d="M6 9l6 6 6-6" />],
   chevronUp: [<Path key="p" d="M6 15l6-6 6 6" />],
+  // Welcome's privacy frame (36a): a phone. Ours, in the set's stroke; TODO(Design): its path.
+  phone: [<Rect key="r" x="7" y="3" width="10" height="18" rx="1.5" />, <Path key="p" d="M11 18h2" />],
 };
 
 export const GLYPH_NAMES = Object.keys(SHAPES);

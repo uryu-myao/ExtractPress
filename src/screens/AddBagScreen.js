@@ -7,6 +7,7 @@ import PhotoSheet from '../components/PhotoSheet';
 import Button from '../components/base/Button';
 import IconButton from '../components/base/IconButton';
 import Text from '../components/base/Text';
+import TextLink from '../components/base/TextLink';
 import { useRecordDraftIfAny } from '../components/RecordDraft';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deletePhoto, dropPhoto, keepPhoto } from '../data/photos';
@@ -37,6 +38,26 @@ import ScreenFrame from './ScreenFrame';
  * the bag is added. Leaving without adding drops it.
  */
 /**
+ * First setup's first step (Design Round 30, 36d; built 2026-11-21): this
+ * screen with `setup` = { step, onLater, onSkip } and onAdded. Beans come
+ * first, then gear, as everywhere in the app (My beans before My gear;
+ * Uryu, 2026-11-21: 36c / 36d draw gear first). 8o is 3c in a setup mode:
+ *   header  the standard header: ‹ (to Welcome) and "Skip setup" at the
+ *           top right; "SETUP · 1 OF 2" (eyebrow) over the question as the
+ *           title. No "2 / 5" stat and no "N of 5 slots free": here they
+ *           can only read 0 / 5, a number that never changes
+ *   body    8o's line, then 3c's form as it is in the app (Uryu: roast
+ *           level stays as the app has it)
+ *   footer  "Open this bag" and "Add without opening" (Uryu, 2026-11-21:
+ *           a bag bought ahead goes on the shelf too; 36d drops it), both
+ *           off until there is a name (36d), then "I'll add a bag later"
+ *           space[8] under them, centred. All three go on to gear. Only the
+ *           opened bag fills 5a's Bag.
+ *   keyboard  not up on arrival (Uryu, 2026-11-21): Bean name isn't focused
+ * 36d's question title is serif 34 / 36; ours is display.lg (40 / 41), the
+ * token the standard header has.
+ */
+/**
  * prefill: { name, roaster } from Try next's "Add it to my beans" (Design
  * Round 23, 25d: buying a bean again); the fields start filled, still editable.
  */
@@ -46,7 +67,7 @@ const DATE_KINDS = [
   { value: 'bestBefore', label: 'Best before' },
 ];
 
-export default function AddBagScreen({ onBack, onAdded, prefill }) {
+export default function AddBagScreen({ onBack, onAdded, prefill, setup }) {
   const db = useDatabase();
   // In the Record sheet the new bag becomes the cup's bag; from 3d it just joins the shelf.
   const chooseBag = useRecordDraftIfAny()?.chooseBag;
@@ -113,6 +134,13 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
       });
       // Only an opened bag can be the cup's bag.
       if (opened) chooseBag?.(bag);
+      // Setup keeps this step under the gear step: Back from gear finds an
+      // empty form, not the bag just added, ready to add again.
+      if (setup) {
+        setForm({ name: '', roaster: '', process: null, roastLevel: null, origin: null, region: null });
+        setBagDate((d) => ({ ...d, value: null }));
+        setPhoto(null);
+      }
       (onAdded ?? onBack)();
     } catch (error) {
       // A photo kept for a bag that wasn't added would be an orphan.
@@ -129,31 +157,58 @@ export default function AddBagScreen({ onBack, onAdded, prefill }) {
     <View style={styles.screen}>
       <ScreenFrame
         scroll
-        compact
-        title="Add a bag"
+        compact={!setup}
+        eyebrow={setup?.step}
+        title={setup ? "What's in your bag right now?" : 'Add a bag'}
         leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
-        stat={open != null ? { value: `${open} / ${OPEN_BAG_LIMIT}`, label: 'On the shelf' } : undefined}
+        leadingEnd={setup ? <TextLink label="Skip setup" onPress={setup.onSkip} /> : undefined}
+        stat={open != null && !setup ? { value: `${open} / ${OPEN_BAG_LIMIT}`, label: 'On the shelf' } : undefined}
         footer={
           <View style={styles.footer}>
             {/* Full: the line below says why, so a press warns (§1). An empty
-                name is not a disabled state: the press shows the field's error. */}
-            <Button label="Open this bag" onPress={() => addBag(true)} disabled={full || open == null} warnWhenDisabled={full} />
+                name is not a disabled state: the press shows the field's error.
+                In setup it is (36d): "I'll add a bag later" is the way on.
+                A press there warns (§1) and Bean name shows why, its
+                required error, as the app's 3c does on press. */}
+            <Button
+              label="Open this bag"
+              onPress={() => addBag(true)}
+              disabled={full || open == null || (setup && !name)}
+              warnWhenDisabled={full || (setup && open != null && !name)}
+              onDisabledPress={setup && !name ? () => setNameMissing(true) : undefined}
+            />
             {/* Added, not opened (2026-10-12): it takes a slot and is opened
                 later from 3d. Copy confirmed (Design's reply to brief 18). */}
-            <Button variant="secondary" label="Add without opening" onPress={() => addBag(false)} disabled={full || open == null} warnWhenDisabled={full} />
-            {free != null ? (
+            <Button
+              variant="secondary"
+              label="Add without opening"
+              onPress={() => addBag(false)}
+              disabled={full || open == null || (setup && !name)}
+              warnWhenDisabled={full || (setup && open != null && !name)}
+              onDisabledPress={setup && !name ? () => setNameMissing(true) : undefined}
+            />
+            {setup ? <TextLink centered label="I'll add a bag later" onPress={setup.onLater} /> : null}
+            {free != null && !setup ? (
               <Text variant="bodySm" color="secondary" style={styles.slots}>
                 {full ? 'No slots free. Finish a bag to free one up.' : `${free} of ${OPEN_BAG_LIMIT} slots free. Finish a bag to free one up.`}
               </Text>
             ) : null}
           </View>
         }>
+        {setup ? (
+          <Text variant="body" color="secondary" style={styles.intro}>
+            Your first cup gets logged against it. Only the name is needed.
+          </Text>
+        ) : null}
         {firstCup ? (
           <Text variant="body" color="secondary" style={styles.firstCup}>
             Just the name is needed for now. The rest can be added or changed any time in My beans.
           </Text>
         ) : null}
         <BagForm
+          // Setup opens without the keyboard (Uryu, 2026-11-21): the step
+          // reads first, and the name isn't the only thing it asks.
+          autoFocusName={!setup}
           value={form}
           onChange={(next) => {
             if (next.name.trim()) setNameMissing(false);
@@ -231,6 +286,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   firstCup: {
+    marginBottom: spacing.gap.section,
+  },
+  intro: {
     marginBottom: spacing.gap.section,
   },
 });

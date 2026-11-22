@@ -7,11 +7,12 @@ import ModeThumb from '../components/base/ModeThumb';
 import Text from '../components/base/Text';
 import TextLink from '../components/base/TextLink';
 import RecordGroup from '../components/RecordGroup';
+import RestoreRow from '../components/RestoreRow';
 import RecordsSearch, { SEARCH_PLACEHOLDER } from '../components/RecordsSearch';
 import { DEFAULT_GROUP, DEFAULT_SORT, arrangeCups, isDefaultOrder, orderPhrase } from '../constants/records';
 import { useDatabase } from '../data/DatabaseProvider';
 import { countOwnRecords, listCups, onCupsChanged, onShelfChanged } from '../data/repository';
-import { onOpenCupRequest, onTabLeave, onTabReset, requestPush, requestRestore, requestShell, requestSortSheet } from '../navigation';
+import { onOpenCupRequest, onTabLeave, onTabReset, requestPush, requestShell, requestSortSheet } from '../navigation';
 import { color, component, dashed, icon, shape, size, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
@@ -209,14 +210,7 @@ function EmptyArchive({ restore }) {
         </View>
       </View>
       <Button label="Record a coffee" onPress={() => requestShell({ record: true })} />
-      {restore ? (
-        <View style={styles.restore}>
-          <Text variant="sheetNote" color="secondary">
-            New phone?
-          </Text>
-          <TextLink label="Restore a backup" onPress={requestRestore} />
-        </View>
-      ) : null}
+      {restore ? <RestoreRow /> : null}
     </View>
   );
 }
@@ -286,15 +280,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.gap.tight,
-  },
-  // A hairline above, the line at the left, the action at the right.
-  restore: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.gap.row,
-    borderTopWidth: shape.borderWidth.divider,
-    borderTopColor: color.divider.hairline,
   },
   // 8l's 16 from the search row to the list (it sat under the chips).
   list: {

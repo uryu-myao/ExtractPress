@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import AddCoffeeOverlay from './components/AddCoffeeOverlay';
 import { DnaInfoHost } from './components/DnaInfoSheet';
+import { FirstSetupHost } from './components/FirstSetup';
 import { SortSheetHost } from './components/SortSheet';
 import { onShellRequest, requestOpenCup, requestTabLeave, requestTabReset } from './navigation';
 import GrainTexture from './components/base/GrainTexture';
@@ -135,6 +136,9 @@ export default function AppShell() {
       <DnaInfoHost />
       {/* 2b: Records' filter button opens Sort & group over the tabs and the bar. */}
       <SortSheetHost />
+      {/* 8a / 8c / 8o first setup, over everything while setup_done is 0;
+          before RestoreHost, so Welcome's "Restore a backup" opens over it. */}
+      <FirstSetupHost />
       {/* 6b's Restore from a backup: its sheets over the tabs and the bar. */}
       <RestoreHost />
       {/* 6b's Reset my taste DNA: its confirmation over the tabs and the bar. */}
