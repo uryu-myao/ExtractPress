@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import { useBagFacts } from '../components/BagFacts';
+import { BagVisual } from '../components/BagTile';
 import BagForm from '../components/BagForm';
 import BeanFreshness from '../components/BeanFreshness';
 import { bagDatesLine } from '../constants/bagDates';
@@ -13,16 +14,15 @@ import BottomSheet from '../components/base/BottomSheet';
 import Button from '../components/base/Button';
 import Glyph from '../components/base/Glyph';
 import IconButton from '../components/base/IconButton';
-import PhotoPlaceholder from '../components/base/PhotoPlaceholder';
 import SectionLabel from '../components/base/SectionLabel';
 import Text from '../components/base/Text';
 import { formatDay, startOfDay } from '../constants/dates';
 import { bagFilter } from '../constants/search';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deletePhoto, keepPhoto, makeCutouts } from '../data/photos';
-import { deleteBag, finishBag, setBagPhoto, updateBag } from '../data/repository';
+import { deleteBag, finishBag, getBag, onShelfChanged, setBagPhoto, updateBag } from '../data/repository';
 import { requestPush, requestShell, requestNotice } from '../navigation';
-import { color, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
+import { color, component, icon, layout, shape, space, spacing, state } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
@@ -30,22 +30,21 @@ import ScreenFrame from './ScreenFrame';
  * 2026-10-14). A page arrived at to look, from a 3d card, a search result
  * (finished bags too) or a cup's bag; its details can be corrected in place.
  *
- * Header: compact, ‹ (a page you go back from, not a form you dismiss) and
- * the bag's name as the title (user data, 2 lines, as 2c). The "Cups logged"
- * count is gone from it: the cup list carries it.
+ * Top (Design Round 31 v2, 37f–37h; ScreenFrame's hero): the bag itself
+ * on the dots (BagVisual: the cutout, the print or the letter block), the
+ * name under it (displayLg, user data, 2 lines) and "Roaster · 250 g"
+ * (37f). No bar at rest: ‹ and More float over the visual; scrolled past
+ * it, the bar fades in with the name. More opens the photo sheet (take,
+ * choose, remove): the 76 photo square of 19a is gone, and a bad cutout is
+ * fixed by retaking it here (Round 31 v2, note 5). TODO(Design): 37f draws
+ * More but not what it holds; the photo sheet is ours.
  * Body, top to bottom (19a: status, cups, details, end actions):
- *   facts      under the title, each after its label (labelEyebrow muted,
- *              then the value in body): "SIZE 250 g" (Uryu, 2026-10-28;
- *              19a draws a bare "Blue Bottle · 250 g"). No roaster since
- *              2026-11-14 (Uryu): Details below has it, editable.
- *   photo      in the status block, in 3c's photo slot frame (2px ink), so
- *              it reads as editable (Uryu, 2026-11-14)
  *   facts      Roast level, Origin, Region, Process: rows in Details under
  *              Roaster with their sheets (useBagFacts; Uryu, 2026-11-15:
  *              one Details, no "About the coffee" block). A change or a
  *              clear is an edit for the Save bar; a region that sets its
  *              origin is two.
- *   status     the photo, then beanFreshness
+ *   status     beanFreshness
  *              stacked (19a: the day and state over the bar) from the roast
  *              date being edited, and "Roasted Mar 30 ·
  *              opened Apr 6". Sealed: 3d's sealed line. Finished: "Finished
@@ -96,6 +95,19 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   const [sheet, setSheet] = useState(null);
   const [busy, setBusy] = useState(false);
   const [photoSheet, setPhotoSheet] = useState(false);
+
+  // The cutout is made in the background after a photo is set (photos.ts
+  // makeCutouts), which says so through the shelf: take its result.
+  useEffect(
+    () =>
+      onShelfChanged(() => {
+        getBag(db, bag.id).then(
+          (row) => row && setStored((s) => (s.photo_cutout === row.photo_cutout && s.photo_uri === row.photo_uri ? s : { ...s, photo_uri: row.photo_uri, photo_cutout: row.photo_cutout })),
+          () => {}
+        );
+      }),
+    [db, bag.id]
+  );
 
   const cupCount = cups?.length ?? 0;
   const firstCupAt = cups?.length ? cups[cups.length - 1].logged_at : null;
@@ -211,7 +223,8 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   // "Blue Bottle · 250 g" hung there unexplained). Not the roaster (Uryu,
   // 2026-11-14): it repeats the editable Roaster in Details below. Size stays:
   // it has no input on this page.
-  const facts = [stored.size_g ? { label: 'Size', value: `${stored.size_g} g` } : null].filter(Boolean);
+  // Under the name (37f): "Roaster · 250 g", what there is of it.
+  const subLine = [stored.roaster, stored.size_g ? `${stored.size_g} g` : null].filter(Boolean).join(' · ');
   // The line under the status (Design Round 27, 29b): "Roasted Mar 30 · opened
   // Apr 6 · best before Sep 30"; best-before only: "Best before Oct 1, 2027 ·
   // opened Apr 6" (· "12 days ago" once passed).
@@ -224,38 +237,25 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   return (
     <View style={styles.screen}>
       <View style={styles.page}>
-        <ScreenFrame scroll compact userTitle title={stored.name} leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
+        <ScreenFrame
+          hero={({ scrollY, barLine, width }) => <BagVisual bag={stored} width={width} barLine={barLine} scrollY={scrollY} />}
+          heroHeight={component.bagPage.visualHeight}
+          userTitle
+          title={stored.name}
+          meta={subLine || null}
+          leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
+          trailing={
+            <IconButton
+              icon="more"
+              accessibilityLabel={stored.photo_uri ? 'More: change or remove the photo' : 'More: add a photo of the bag'}
+              onPress={() => {
+                Keyboard.dismiss();
+                setPhotoSheet(true);
+              }}
+            />
+          }>
           <View style={styles.body}>
-            {facts.length ? (
-              <View style={styles.facts}>
-                {facts.map((f) => (
-                  <View key={f.label} style={styles.fact} accessible accessibilityLabel={`${f.label}, ${f.value}`}>
-                    <Text variant="labelEyebrow" color="muted">
-                      {f.label}
-                    </Text>
-                    <Text variant="body" color="primary" numberOfLines={1} style={styles.factValue}>
-                      {f.value}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-
             <View style={styles.status}>
-              <Pressable
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setPhotoSheet(true);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={stored.photo_uri ? 'Bag photo, change or remove' : 'Add a photo of the bag'}>
-                {({ pressed }) => (
-                  <View style={styles.photoFrame}>
-                    <PhotoPlaceholder size={size.thumbnail.list - 2 * shape.borderWidth.box} photo={stored.photo_uri} />
-                    {pressed ? <View style={styles.photoPressed} /> : null}
-                  </View>
-                )}
-              </Pressable>
               <View style={styles.statusText}>
                 {finished ? (
                   <Text variant="meterLabel" color="muted">
@@ -271,11 +271,6 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
                     {dates}
                   </Text>
                 ) : null}
-                {stored.photo_uri ? null : (
-                  <Text variant="bodySm" color="muted">
-                    No photo yet. Tap to add one.
-                  </Text>
-                )}
               </View>
             </View>
 
@@ -448,38 +443,10 @@ const styles = StyleSheet.create({
     // Room under the end actions, off the home indicator (as 2c, 3f).
     paddingBottom: layout.empty.block,
   },
-  // Roaster, then Size, on one line; wraps when a roaster's name is long.
-  facts: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    columnGap: space[20],
-    rowGap: spacing.gap.tight,
-  },
-  fact: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    flexShrink: 1,
-    gap: spacing.gap.row,
-  },
-  factValue: {
-    flexShrink: 1,
-  },
   status: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[14],
-  },
-  // The photo is editable, so it wears 3c's photo slot frame (2px ink; Uryu,
-  // 2026-11-14: frameless, it didn't read as something to tap). The outer
-  // size stays thumbnail.list; the photo sits inside the frame.
-  photoFrame: {
-    borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
-  },
-  // The photo has a surface, so pressed darkens it (§1), never opacity.
-  photoPressed: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: state.pressed.row,
   },
   statusText: {
     flex: 1,

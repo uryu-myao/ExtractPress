@@ -871,6 +871,37 @@ export const component = {
     empty: { gap: space[16], textWidth: 190, textTop: space[28], textGap: space[6], markGap: space[8] },
   },
   /**
+   * The bag page's top (Design Round 31 v2, 37f–37h; components/BagTile.js
+   * BagVisual, ScreenFrame's hero mode). The visual is visualHeight tall,
+   * the dots full bleed. Its footprint is measured in the area under the
+   * bar's line (the floating buttons' foot: the safe top plus a tap
+   * target, 104 at 402 × 874): the tile's maxH and 5 : 7 of that area,
+   * standing the tile's lift of the visual's height above its foot (152 ×
+   * 213, top line 140, at 402 × 874). Only the bottom snaps: the subject
+   * stays centred. The print's mat is `mat`; the letter block's eyebrow
+   * sits `eyebrowInset` in.
+   *   bar      no bar at rest; past the threshold (the visual's foot at
+   *            the bar's line) the bar's paper, its hairline and the
+   *            title fade in over `fade`. The bar runs `below` past the
+   *            buttons' foot
+   *   pull     pulling down grows the visual (the dots stay anchored to
+   *            its foot) and scales the subject from its baseline by
+   *            (area + pull) ÷ area, up to `max`; `dots` is how far the dots
+   *            reach above the visual for it (a whole number of pitches, so
+   *            they stay on the grid)
+   *   title    the name under the visual: its space above, and to its meta
+   *   bodyTop  the page's body under the name block
+   */
+  bagPage: {
+    visualHeight: 384,
+    mat: 7,
+    eyebrowInset: 14,
+    bar: { fade: 24, below: space[8] },
+    pull: { max: 120, dots: 132 },
+    title: { top: 18, gap: space[4] },
+    bodyTop: space[16],
+  },
+  /**
    * The bag camera (Design Round 31 v2, 37j; components/BagCamera.js). Over
    * the feed: the frame (frameWidth of the screen's width, 3 : 4, centred in
    * the feed) as a thin line with four white corner marks, everything

@@ -1,9 +1,9 @@
 import { createContext, useContext, useMemo, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GrainTexture from '../components/base/GrainTexture';
 import Text from '../components/base/Text';
-import { color, layout, shape, space, spacing, state, textStyle } from '../theme/tokens';
+import { color, component, layout, shape, size, space, spacing, state, textStyle } from '../theme/tokens';
 
 /**
  * Whether ScreenFrame draws its own backdrop (ground + dot texture). AppShell's
@@ -124,9 +124,20 @@ const belowBaseline = (line) => line.height - line.ascender;
  *                 "Go to first"
  *   footerTone    'error': the footer panel's top rule takes state.error.border
  *                 (5d)
+ *   hero      the bag page's top (Design Round 31 v2, 37f / 37g): a node,
+ *             or (ctx) => node with ctx { scrollY, barLine, width }. A
+ *             separate frame (HeroFrame below): the hero is the top of the
+ *             scrolling page, the title (displayLg, `userTitle`) and `meta`
+ *             under it; no bar at rest, `leading` and `trailing` float at
+ *             the safe top; past the threshold the bar fades in with the
+ *             title. heroHeight: the hero's height
  *   children  screen body
  */
-export default function ScreenFrame({
+export default function ScreenFrame(props) {
+  return props.hero ? <HeroFrame {...props} /> : <StandardFrame {...props} />;
+}
+
+function StandardFrame({
   title,
   eyebrow,
   leading,
@@ -531,7 +542,106 @@ export default function ScreenFrame({
   );
 }
 
+const heroCfg = component.bagPage;
+
+/**
+ * The hero frame (Design Round 31 v2, 37f / 37g; the bag page). The hero
+ * scrolls as the top of the page, the title block and the body under it.
+ * At rest there is no bar: `leading` and `trailing` float at the safe top
+ * (layout.screen.top at least), over the hero, in their ink frames. The
+ * bar's line is their foot (barLine). Past the threshold, the hero's foot
+ * at the bar's line (heroHeight − barLine), the bar's paper, its hairline
+ * (shape.borderWidth.divider, border.soft) and the title (title, centred,
+ * one line) fade in together over bagPage.bar.fade, and out at the same
+ * points. Native-driver Animated, as the other frames (legacy Animated for
+ * scroll, §1).
+ */
+function HeroFrame({ hero, heroHeight, title, meta, leading, trailing, userTitle = false, scrollRef, children }) {
+  const insets = useSafeAreaInsets();
+  const ownBackdrop = useContext(ScreenBackdropContext);
+  const { width } = useWindowDimensions();
+  const top = Math.max(insets.top, layout.screen.top);
+  const barLine = top + size.tapTarget;
+  const threshold = heroHeight - barLine;
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const onScroll = useMemo(() => Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true }), [scrollY]);
+  const fade = scrollY.interpolate({ inputRange: [threshold, threshold + heroCfg.bar.fade], outputRange: [0, 1], extrapolate: 'clamp' });
+  const ctx = useMemo(() => ({ scrollY, barLine, width }), [scrollY, barLine, width]);
+  const side = layout.gutter + size.tapTarget + spacing.gap.section;
+  return (
+    <View style={ownBackdrop ? styles.screen : styles.screenBare}>
+      {ownBackdrop ? <GrainTexture /> : null}
+      <Animated.ScrollView
+        ref={scrollRef}
+        style={styles.scroller}
+        contentContainerStyle={styles.scrollContent}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled">
+        {typeof hero === 'function' ? hero(ctx) : hero}
+        <View style={styles.heroTitle}>
+          <Text variant="displayLg" truncate={userTitle ? 'name' : 'none'} accessibilityRole="header">
+            {title}
+          </Text>
+          {typeof meta === 'string' ? (
+            <Text variant="sheetNote" color="secondary">
+              {meta}
+            </Text>
+          ) : (
+            meta ?? null
+          )}
+        </View>
+        <View style={[styles.body, styles.heroBody]}>{children}</View>
+      </Animated.ScrollView>
+      <Animated.View pointerEvents="none" style={[styles.heroBar, { height: barLine + heroCfg.bar.below, opacity: fade }]}>
+        <View style={[styles.heroBarTitle, { top, left: side, right: side }]}>
+          <Text variant="title" truncate="shelf" style={styles.centred}>
+            {title}
+          </Text>
+        </View>
+      </Animated.View>
+      <View pointerEvents="box-none" style={[styles.heroControls, { top }]}>
+        {leading ?? <View />}
+        {trailing ?? null}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  heroTitle: {
+    paddingHorizontal: layout.gutter,
+    paddingTop: heroCfg.title.top,
+    gap: heroCfg.title.gap,
+  },
+  heroBody: {
+    paddingTop: heroCfg.bodyTop,
+  },
+  heroBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: color.surface.ground,
+    borderBottomWidth: shape.borderWidth.divider,
+    borderBottomColor: color.border.soft,
+  },
+  heroBarTitle: {
+    position: 'absolute',
+    height: size.tapTarget,
+    justifyContent: 'center',
+  },
+  centred: {
+    textAlign: 'center',
+  },
+  heroControls: {
+    position: 'absolute',
+    left: layout.gutter,
+    right: layout.gutter,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   screen: {
     flex: 1,
     backgroundColor: color.surface.ground,

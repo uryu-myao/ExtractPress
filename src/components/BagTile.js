@@ -4,6 +4,7 @@ import { bestBeforeStatus } from '../constants/bagDates';
 import { FRESHNESS_WORDS, freshnessOf } from '../data/freshness';
 import { cutoutEdges, cutoutUri, photoUri } from '../data/photos';
 import { color, component, motion, state, textStyle } from '../theme/tokens';
+import DotGround from './base/DotGround';
 import Text from './base/Text';
 
 const tile = component.bagTile;
@@ -114,26 +115,81 @@ export function placeCutout(aspect, edges, width, height) {
 }
 
 function Subject({ bag, width, height }) {
+  const f = footprintOf(width, height);
+  return <Drawn bag={bag} which="small" footprint={f} place={(aspect, edges) => placeCutout(aspect, edges, width, height)} mat={f.w * tile.mat} eyebrowInset={tile.letter.eyebrowInset} />;
+}
+
+/**
+ * The bag in one of its three states (see the top of this file), in a
+ * footprint: the cutout (`which` file) where `place` puts it, else the print
+ * with a `mat`, else the letter block.
+ */
+function Drawn({ bag, which, footprint: f, place, mat, eyebrowInset }) {
   const edges = cutoutEdges(bag.photo_cutout);
-  const cut = useMemo(() => (edges ? cutoutUri(bag.photo_uri, 'small') : null), [bag.photo_uri, bag.photo_cutout]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cut = useMemo(() => (edges ? cutoutUri(bag.photo_uri, which) : null), [bag.photo_uri, bag.photo_cutout, which]); // eslint-disable-line react-hooks/exhaustive-deps
   const photo = useMemo(() => (cut ? null : photoUri(bag.photo_uri)), [cut, bag.photo_uri]);
   const aspect = useAspect(cut);
-  const f = footprintOf(width, height);
 
   if (cut) {
     if (!aspect) return null;
-    const at = placeCutout(aspect, edges, width, height);
+    const at = place(aspect, edges);
     return <Image source={{ uri: cut }} style={{ position: 'absolute', left: at.x, top: at.y, width: at.w, height: at.h }} accessible={false} />;
   }
   if (photo) {
-    const mat = f.w * tile.mat;
     return (
       <View style={[styles.print, { left: f.x, top: f.top, width: f.w, height: f.h, padding: mat }]}>
         <Image source={{ uri: photo }} style={styles.fill} resizeMode="cover" accessible={false} />
       </View>
     );
   }
-  return <LetterBlock bag={bag} footprint={f} />;
+  return <LetterBlock bag={bag} footprint={f} eyebrowInset={eyebrowInset} />;
+}
+
+/**
+ * The bag page's visual (Design Round 31 v2, 37f–37h; component.bagPage):
+ * the bag on the dots, full bleed, visualHeight tall, as ScreenFrame's hero.
+ * The footprint is measured in the area under the bar's line (barLine); the
+ * three states are the tile's, at this size, and the print takes
+ * bagPage.mat. Only the bottom snaps (fit from the top line to the foot,
+ * centred): at full width a corner snap would leave half the visual empty,
+ * and the fade carries a cut on the right on its own.
+ *
+ * Pulled down (scrollY below 0), the dots reach up with it, anchored to the
+ * visual's foot, and the subject scales from its baseline by (area + pull)
+ * ÷ area, up to bagPage.pull.max.
+ *
+ * Props: bag, width, barLine (the floating buttons' foot), scrollY (the
+ * page's, Animated)
+ */
+export function BagVisual({ bag, width, barLine, scrollY }) {
+  const page = component.bagPage;
+  const height = page.visualHeight;
+  const area = height - barLine;
+  const { aspect, maxH, lift } = tile.footprint;
+  const fh = area * maxH;
+  const fw = fh * aspect;
+  const baseline = height * (1 - lift);
+  const f = { w: fw, h: fh, x: (width - fw) / 2, top: baseline - fh, baseline };
+  const place = (a, edges) => {
+    const box = edges.bottom ? { w: width * tile.snapWidth, h: height - f.top } : { w: f.w, h: f.h };
+    const h = Math.min(box.h, box.w / a);
+    const w = h * a;
+    return { w, h, x: (width - w) / 2, y: (edges.bottom ? height : baseline) - h };
+  };
+  const { max, dots } = page.pull;
+  const scale = scrollY.interpolate({ inputRange: [-max, 0], outputRange: [(area + max) / area, 1], extrapolate: 'clamp' });
+  return (
+    <View style={{ width, height }}>
+      <View style={[styles.reach, { top: -dots }]}>
+        <DotGround />
+      </View>
+      <View style={[styles.reach, styles.clip, { top: -dots }]}>
+        <Animated.View style={{ position: 'absolute', left: 0, top: dots, width, height, transformOrigin: [width / 2, baseline, 0], transform: [{ scale }] }}>
+          <Drawn bag={bag} which="large" footprint={f} place={place} mat={page.mat} eyebrowInset={page.eyebrowInset} />
+        </Animated.View>
+      </View>
+    </View>
+  );
 }
 
 /** A cutout's width ÷ height, read from its file once per URI. */
@@ -176,10 +232,10 @@ export function firstCharacter(name) {
   return first.toLocaleUpperCase();
 }
 
-function LetterBlock({ bag, footprint: f }) {
+function LetterBlock({ bag, footprint: f, eyebrowInset }) {
   const letter = firstCharacter(bag.name);
   const cjk = CJK.test(letter);
-  const { latin, cjk: cjkShare, lineHeight, insetX, insetY, eyebrowInset, eyebrowOpacity } = tile.letter;
+  const { latin, cjk: cjkShare, lineHeight, insetX, insetY, eyebrowOpacity } = tile.letter;
   const size = f.w * (cjk ? cjkShare : latin);
   return (
     <View style={[styles.block, { left: f.x, top: f.top, width: f.w, height: f.h }]}>
@@ -243,6 +299,16 @@ const styles = StyleSheet.create({
   },
   fill: {
     flex: 1,
+  },
+  // The visual's dots and subject reach above it by bagPage.pull.dots, for the pull.
+  reach: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  clip: {
+    overflow: 'hidden',
   },
   block: {
     position: 'absolute',

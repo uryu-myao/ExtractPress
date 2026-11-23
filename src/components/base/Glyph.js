@@ -10,6 +10,9 @@ const SHAPES = {
   chevronRight: [<Path key="p" d="M9 6l6 6-6 6" />],
   chevronLeft: [<Path key="p" d="M15 6l-6 6 6 6" />],
   close: [<Path key="p" d="M6 6l12 12M18 6L6 18" />],
+  // The bag page's More (Design Round 31 v2, 37f): three dots, r 1.8 in the
+  // source; drawn as stroked circles of r 0.8, which the stroke fills out.
+  more: [<Circle key="a" cx="5" cy="12" r="0.8" />, <Circle key="b" cx="12" cy="12" r="0.8" />, <Circle key="c" cx="19" cy="12" r="0.8" />],
   // 2a's filter button (opens 2b), verbatim; drawn at icon.md (18 / 2.2) as in 2a.
   filter: [<Path key="p" d="M4 6h16M7 12h10M10 18h4" />],
   plus: [<Path key="a" d="M12 6v12" />, <Path key="b" d="M6 12h12" />],
