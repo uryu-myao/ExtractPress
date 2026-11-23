@@ -203,6 +203,19 @@ export const texture = {
   grain: {
     tile: 160,
   },
+  /**
+   * The dot grid under a section of bags (Design Round 31 v2, 37e; 35d's
+   * grid): #DCCEC5 (35d's warm-200, edge-faint) dots 2 pt across, every 22
+   * both ways from an 11, 11 origin, so a column lands on every gutter line,
+   * on flat paper. Home's shelf, the Beans grid, the bag page's visual;
+   * never inside a tile, never a page ground (the page keeps the grain).
+   */
+  dots: {
+    color: '#DCCEC5',
+    pitch: 22,
+    origin: 11,
+    radius: 1,
+  },
 } as const;
 
 /**
@@ -319,6 +332,12 @@ export const textStyle = {
   rowWhen:       { fontFamily: 'Archivo', fontSize: 11, fontWeight: '600', letterSpacing: 0.44, fontVariant: ['tabular-nums'] },
   /** lineHeight UNDECLARED · 0.12em x 10 (was 0.16em; tightened on Uryu's ask, 2026-11-09) */
   labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
+  /** A bag tile's caption (Design Round 31, 37a): the name, the status under it ("Day 7 · drink now"), and the roaster over a letter block. */
+  tileName:      { fontFamily: 'Archivo', fontSize: 14, fontWeight: '700', lineHeight: 18 },
+  tileStatus:    { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', lineHeight: 13, letterSpacing: 1.6, textTransform: 'uppercase' },
+  tileEyebrow:   { fontFamily: 'Archivo', fontSize: 9, fontWeight: '700', lineHeight: 11, letterSpacing: 1.26, textTransform: 'uppercase' },
+  /** The bag camera's title over the feed (Design Round 31 v2, 37j): serif 26, white. */
+  cameraTitle:   { fontFamily: 'Instrument Serif', fontSize: 26, fontWeight: '400', lineHeight: 28 },
   /**
    * The Save bar's button (32a, 2026-11-14): 14 / 700 caps .06em, between
    * labelCaps (12) and buttonCaps (16). lineHeight UNDECLARED.
@@ -631,6 +650,11 @@ export const dashed = {
    */
   sealed:        { width: 2, style: 'dashed', color: color.border.strong },
   /**
+   * Home's empty beans shelf (Design Round 31 v2, 37l): the Add a bag tile,
+   * a bag tile's size on the dots, dashed: not started (§8). Pressable.
+   */
+  addTile:       { width: 1.5, style: 'dashed', color: color.text.muted },
+  /**
    * a required field not filled yet, in Log a cup's Required bar (Design
    * Round 9, 2026-10-18): 1.5 dashed, no fill. The "not entered" use (as the
    * old track), not an add entry: the slot is not pressable. Colour:
@@ -818,6 +842,54 @@ export const component = {
     },
   },
   requiredBar,
+  /**
+   * A bag as a tile (Design Round 31 v2, 37a–37c, 37i): no frame, the bag
+   * alone on the section's dots, a caption under it. Placement is a rule,
+   * not fixed numbers (components/BagTile.js):
+   *   footprint  the largest 5 : 7 box inside maxW × maxH of the tile,
+   *              its foot `lift` of the tile's height above the tile's foot
+   *              (the baseline); its top is the top line every bag starts at
+   *   snapWidth  the widest a cutout snapped to an edge may be
+   *   mat        the print's white mat (state b), a share of its width
+   *   letter     the no-photo block (state c): the letter's size as a share
+   *              of the block's width, Latin and CJK, its line height as a
+   *              share of its size, and its insets (37a: 7 / 8 at 104 wide)
+   *   fade       not here: the cut's fade is made with the cutout
+   *              (data/photos.ts CUTOUT)
+   *   home       Home's row: tiles, their gap, the section's padding
+   *              above (under the tabs' divider) and below
+   *   caption    space over the caption, between its lines, over the status
+   */
+  bagTile: {
+    footprint: { aspect: 5 / 7, maxW: 0.72, maxH: 0.76, lift: 0.08 },
+    snapWidth: 0.86,
+    mat: 0.035,
+    letter: { latin: 1.08, cjk: 0.8, lineHeight: 0.78, insetX: 0.067, insetY: 0.077, eyebrowInset: 9, eyebrowOpacity: 0.72 },
+    home: { w: 144, h: 192, gap: space[12], top: space[16], bottom: space[28] },
+    caption: { top: space[8], gap: 3, status: 2 },
+    /** Home's empty shelf (37l): the words beside the Add a bag tile, their width and drop. */
+    empty: { gap: space[16], textWidth: 190, textTop: space[28], textGap: space[6], markGap: space[8] },
+  },
+  /**
+   * The bag camera (Design Round 31 v2, 37j; components/BagCamera.js). Over
+   * the feed: the frame (frameWidth of the screen's width, 3 : 4, centred in
+   * the feed) as a thin line with four white corner marks, everything
+   * outside it dimmed (#171717 at 48 %), the title and its line above it,
+   * an eyebrow under it. White on the feed in three strengths. Under the
+   * feed a panel (surface.raised, a 2 px ink top line): Take photo, then
+   * Cancel centred under it.
+   */
+  bagCamera: {
+    frameWidth: 288 / 402,
+    dim: 'rgba(23, 23, 23, 0.48)',
+    line: { width: 1, color: 'rgba(255, 255, 255, 0.55)' },
+    mark: { length: 22, width: 3, overhang: 2, color: '#FFFFFF' },
+    text: { title: '#FFFFFF', line: 'rgba(255, 255, 255, 0.88)', eyebrow: 'rgba(255, 255, 255, 0.8)' },
+    textGap: space[6],
+    textAbove: space[16],
+    eyebrowBelow: space[16],
+    panel: { top: space[20], gap: space[8], border: shape.borderWidth.box },
+  },
   /**
    * Home's shelf: which of the two sides is open (Round 14, 17a / 17b). Two
    * square-ended bars at the left of the action row, not dots: the open side

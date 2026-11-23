@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { FreshnessTrack } from './BeanFreshness';
-import ShelfTabs, { SIDES, useShelfPager } from './ShelfTabs';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import BagTile, { CAPTION_HEIGHT } from './BagTile';
+import ShelfTabs, { SIDES } from './ShelfTabs';
 import { useDatabase } from '../data/DatabaseProvider';
-import { bestBeforeStatus, drinkFirstRank } from '../constants/bagDates';
-import { FRESHNESS_WORDS, freshnessOf } from '../data/freshness';
+import { drinkFirstRank } from '../constants/bagDates';
 import { listGearWithUse, listShelfBags, onCupsChanged, onShelfChanged } from '../data/repository';
 import { formatLastUsed } from '../constants/dates';
 import { GEAR_CATEGORY } from '../constants/gear';
-import { color, component, icon, layout, motion, shape, size, space, spacing, state } from '../theme/tokens';
+import { color, component, dashed, icon, layout, motion, shape, size, space, spacing, state } from '../theme/tokens';
+import Glyph from './base/Glyph';
+import DotGround from './base/DotGround';
 import AddButton from './base/AddButton';
 import Badge from './base/Badge';
 import Button from './base/Button';
@@ -16,45 +17,32 @@ import PhotoPlaceholder from './base/PhotoPlaceholder';
 import Text from './base/Text';
 
 /**
- * Home's My beans / My gear (Round 14, 17a / 17b; was 4a / 4b's box with
- * folder tabs). Beans first, then gear (Uryu, 2026-11-17; was gear first).
+ * Home's My beans / My gear (Round 14, 17a / 17b; beans redrawn by Design
+ * Round 31 v2, 37a / 37b, 2026-11-23). Beans first, then gear (Uryu,
+ * 2026-11-17; 37a draws gear first, kept as Uryu decided).
  *
- * Heading: ShelfTabs, with the live counts. Under it the two sides as pages
- * side by side, swiped or opened by their tab: the page is the screen less
- * three gutters (402 → 336), space.20 apart, so the closed side peeks
- * 2 × gutter − 20 (24) at the screen's edge, cut straight. Beans snap to the
- * left gutter, gear to the right one, so the peek is the same on both. The
- * open tab follows the scroll past the midpoint. A swipe stops at the ends
- * (the bounce stays inside, the mock's overscroll contain).
+ * Heading: ShelfTabs, with the live counts, and "See all" at its right end
+ * (37a), which opens Beans & gear on the open side. The two sides are TABS,
+ * not swiped pages (37a): the beans row scrolls sideways itself, so it can't
+ * sit in a sideways pager. A tab's underline fades over motion.expand.
  *
- * Three rows a side, all alike (68: the 44 thumbnail and space.12 above and
- * below): thumbnail, name (label, one line: §3.1's shelf exception, Design
- * Round 15, B3) over one line (bodySm, muted), and a status
- * column at the right. No rule over the first row (Uryu, 2026-11-15): room
- * alone sets the rows under the tabs; the open tab's underline stays.
- * Pressable (Uryu, 2026-10-28; Round 15 B3 had them open nothing): a bean
- * row opens its bag page (3g, 19a), a gear row its page (3e, 19c). The row
- * darkens while pressed (state.pressed.row); no chevron (Design Round 16,
- * B7: they are list items, like Records rows). A swipe across the pages cancels the press.
- *   gear   "Brewer" (and a "Default" badge); status "2 cups" / "Last ·
- *          today", or "Not used" / "Add to a cup", every kind (a cup holds
- *          a kettle and a scale too since migration 14; until then their
- *          status was empty). Used with no date: the count alone.
- *          Default first, then the most used.
- *   beans  "Roaster · 250 g"; status the freshness word over a short bar
- *          (component.beanFreshness, as 3d: Design Round 7 / 14a's colours;
- *          Round 14's table was an error, Design Round 15, B1). A sealed bag:
- *          "Sealed" alone; an opened bag with no roast date: an empty column
- *          (Round 15, B2). Past peak, then drink now, then resting, the
- *          oldest roast first in each; then no roast date, then sealed,
- *          oldest added first.
- * The status column is at least size.statusColumn wide (the bar) and grows
- * with its text (2026-10-27; the longer "Last · …" forms don't fit 84).
+ * Beans (37a): every bag on the shelf as a tile (BagTile, 144 × 192,
+ * space.12 apart), in drink-first order, in one row that scrolls sideways
+ * out to the screen's edges, the next tile peeking. The row stands on the
+ * dot grid (DotGround), which runs edge to edge from the tabs' divider
+ * (shape.borderWidth.divider, border.soft; the open tab's underline sits
+ * centred on it) to below the captions. Empty, the same section holds a
+ * dashed Add a bag tile and a few words (37l, EmptyShelf).
  *
- * Under the pages: the page indicator (component.pageIndicator) and "See all
- * beans & gear ›", which opens Beans & gear on the open side.
- * An empty side: its add button (Add gear → 3a, Add a bag → 3c), under the
- * first row's rule and padding (EmptySide).
+ * Gear: unchanged for now (Uryu, 2026-11-23: gear waits until beans are
+ * settled). Three rows alike (68: the 44 thumbnail and space.12 above and
+ * below): thumbnail, name (label, one line) over one line (bodySm, muted),
+ * and a status column at the right. No rule over the first row (Uryu,
+ * 2026-11-15). Pressable, opening the gear's page (3e, 19c); the row darkens
+ * while pressed (state.pressed.row).
+ *   status "2 cups" / "Last · today", or "Not used" / "Add to a cup". Used
+ *          with no date: the count alone. Default first, then the most used.
+ * The status column is at least size.statusColumn wide and grows with its text.
  *
  * Props: onSeeAll(side), onAddBag, onAddGear, onOpenBag(bag), onOpenGear(gear)
  */
@@ -63,11 +51,8 @@ const ROWS = 3;
 export default function ShelfBlock({ onSeeAll, onAddBag, onAddGear, onOpenBag, onOpenGear }) {
   const db = useDatabase();
   const [shelf, setShelf] = useState(null);
-  const { width } = useWindowDimensions();
-  const page = width - 3 * layout.gutter;
-  // The farthest the pages scroll: the second page's right edge on the right gutter.
-  const end = 2 * page + space[20] + 2 * layout.gutter - width;
-  const { side, progress, select, scrollProps } = useShelfPager(end);
+  const [side, setSide] = useState(SIDES[0]);
+  const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const load = () =>
@@ -84,46 +69,47 @@ export default function ShelfBlock({ onSeeAll, onAddBag, onAddGear, onOpenBag, o
     };
   }, [db]);
 
+  const select = (next) => {
+    setSide(next);
+    Animated.timing(progress, { toValue: SIDES.indexOf(next), duration: motion.expand.duration, easing: tabEasing, useNativeDriver: true }).start();
+  };
+
   if (!shelf) return null;
-  const pageStyle = [styles.page, { width: page }];
+  const { w, h, gap } = component.bagTile.home;
   return (
     <View>
-      <ShelfTabs active={side} progress={progress} counts={{ gear: shelf.gear.length, beans: shelf.bags.length }} onSelect={select} />
-      <Animated.ScrollView
-        {...scrollProps}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToOffsets={[0, end]}
-        decelerationRate="fast"
-        disableIntervalMomentum
-        style={styles.pages}
-        contentContainerStyle={styles.pagesContent}>
-        <View style={pageStyle}>
+      <ShelfTabs
+        active={side}
+        progress={progress}
+        counts={{ gear: shelf.gear.length, beans: shelf.bags.length }}
+        onSelect={select}
+        trailing={<Button variant="text" label="See all" trailingIcon="chevronRight" onPress={() => onSeeAll(side)} />}
+      />
+      {side === 'beans' ? (
+        <View style={styles.beans}>
+          <DotGround />
           {shelf.bags.length ? (
-            homeBeans(shelf.bags).map((b, i) => <BeanRow key={b.id} bag={b} first={i === 0} onPress={() => onOpenBag(b)} />)
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.row, { gap }]}>
+              {homeBeans(shelf.bags).map((b) => (
+                <BagTile key={b.id} bag={b} width={w} height={h} onPress={() => onOpenBag(b)} />
+              ))}
+            </ScrollView>
           ) : (
-            <EmptySide>
-              <AddButton icon="plus" iconToken={icon.sm} label="Add a bag" onPress={onAddBag} />
-            </EmptySide>
+            <EmptyShelf onAdd={onAddBag} />
           )}
         </View>
-        <View style={pageStyle}>
-          {shelf.gear.length ? (
-            homeGear(shelf.gear).map((g, i) => <GearRow key={g.id} gear={g} first={i === 0} onPress={() => onOpenGear(g)} />)
-          ) : (
-            <EmptySide>
-              <AddButton icon="plus" iconToken={icon.sm} label="Add gear" onPress={onAddGear} />
-            </EmptySide>
-          )}
-        </View>
-      </Animated.ScrollView>
-      <View style={styles.foot}>
-        <PageIndicator side={side} />
-        <Button variant="text" label="See all beans & gear" trailingIcon="chevronRight" onPress={() => onSeeAll(side)} />
-      </View>
+      ) : shelf.gear.length ? (
+        homeGear(shelf.gear).map((g, i) => <GearRow key={g.id} gear={g} first={i === 0} onPress={() => onOpenGear(g)} />)
+      ) : (
+        <EmptySide>
+          <AddButton icon="plus" iconToken={icon.sm} label="Add gear" onPress={onAddGear} />
+        </EmptySide>
+      )}
     </View>
   );
 }
+
+const tabEasing = Easing.bezier(...motion.expand.controlPoints);
 
 /** Default first, then the most used (a stable sort keeps 3b's order in a tie). */
 function homeGear(gear) {
@@ -134,14 +120,14 @@ function homeGear(gear) {
  * What to drink first (Round 14; Round 15, B2; Design Round 27, B3): date
  * passed and past peak (longest past first), drink now, best-before by
  * nearest date, resting, neither date, sealed (constants/bagDates.js).
+ * Every bag on the shelf (37a: the row scrolls; was three rows).
  */
 function homeBeans(bags) {
   const now = Date.now();
   const ranked = bags.map((b) => [drinkFirstRank(b, now), b]);
   return ranked
     .sort(([x, a], [y, b]) => x[0] - y[0] || x[1] - y[1] || a.id - b.id)
-    .map(([, b]) => b)
-    .slice(0, ROWS);
+    .map(([, b]) => b);
 }
 
 function GearRow({ gear: g, first, onPress }) {
@@ -153,27 +139,12 @@ function GearRow({ gear: g, first, onPress }) {
   return <Row first={first} name={g.name} badge={g.is_default ? 'Default' : null} meta={GEAR_CATEGORY[g.category]} status={status} photo={g.photo_uri} onPress={onPress} />;
 }
 
-function BeanRow({ bag, first, onPress }) {
-  const meta = [bag.roaster, bag.size_g ? `${bag.size_g} g` : null].filter(Boolean).join(' · ') || ' ';
-  let status = null;
-  if (!bag.opened_at) {
-    status = <Status word="Sealed" wordColor={component.beanFreshness.sealed.label} />;
-  } else {
-    const f = freshnessOf(bag.roasted_at);
-    const dated = f ? null : bestBeforeStatus(bag);
-    if (f) status = <Status word={FRESHNESS_WORDS[f.state]} wordColor={component.beanFreshness[f.state].label} track={f} />;
-    // A best-before bag: "Best before" / "Date passed" over the date, no bar (Round 27, 29c).
-    else if (dated) status = <Status word={dated.word} wordColor={dated.passed ? 'secondary' : 'muted'} line={dated.line} />;
-  }
-  return <Row first={first} name={bag.name} meta={meta} status={status} photo={bag.photo_uri} onPress={onPress} />;
-}
-
 function Row({ first, name, badge, meta, status, photo, onPress }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.row, first && styles.rowFirst, pressed && styles.rowPressed]}>
+      style={({ pressed }) => [styles.gearRow, first && styles.rowFirst, pressed && styles.rowPressed]}>
       <PhotoPlaceholder size={size.thumbnail.compact} photo={photo} />
       <View style={styles.text}>
         <View style={styles.nameRow}>
@@ -192,6 +163,40 @@ function Row({ first, name, badge, meta, status, photo, onPress }) {
 }
 
 /**
+ * The empty beans shelf (Design Round 31 v2, 37l): the same dotted section
+ * as a full one, with a dashed Add a bag tile the size of a bag tile
+ * (dashed.addTile: not started) and room for a caption under it, so the
+ * shelf is as tall empty as full and nothing jumps when the first bag
+ * arrives. Beside it "Your shelf is empty" (displayXs) and a line
+ * (sheetNote, secondary).
+ */
+function EmptyShelf({ onAdd }) {
+  const { w, h } = component.bagTile.home;
+  const empty = component.bagTile.empty;
+  return (
+    <View style={[styles.row, styles.emptyShelf, { gap: empty.gap }]}>
+      <View>
+        <Pressable
+          onPress={onAdd}
+          accessibilityRole="button"
+          accessibilityLabel="Add a bag"
+          style={({ pressed }) => [styles.addTile, { width: w, height: h, gap: empty.markGap }, pressed && styles.rowPressed]}>
+          <Glyph name="plus" token={icon.sm} color={color.icon.default} />
+          <Text variant="tileStatus">Add a bag</Text>
+        </Pressable>
+        <View style={{ height: CAPTION_HEIGHT }} />
+      </View>
+      <View style={[styles.emptyWords, { width: empty.textWidth, paddingTop: empty.textTop, gap: empty.textGap }]}>
+        <Text variant="displayXs">Your shelf is empty</Text>
+        <Text variant="sheetNote" color="secondary">
+          Add the bag you're drinking from. Its photo stands here, and your next cup is logged against it.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/**
  * An empty side's add button, in the same room as a first row (on device,
  * 2026-10-30): without it the button's frame sat right under the tabs and
  * the open tab's underline ran into it.
@@ -201,10 +206,10 @@ function EmptySide({ children }) {
 }
 
 /**
- * The status column: a word (meterLabel) over a line (bodySm, muted) or a
- * freshness bar. Without either under it the word sits alone, centred.
+ * A gear row's status column: a word (meterLabel) over a line (bodySm,
+ * muted). Without a line the word sits alone, centred.
  */
-function Status({ word, wordColor, line, track }) {
+function Status({ word, wordColor, line }) {
   return (
     <View style={styles.status}>
       <Text variant="meterLabel" color={wordColor}>
@@ -215,45 +220,37 @@ function Status({ word, wordColor, line, track }) {
           {line}
         </Text>
       ) : null}
-      {track ? <FreshnessTrack freshness={track} style={styles.track} /> : null}
-    </View>
-  );
-}
-
-const indicatorEasing = Easing.bezier(...motion.expand.controlPoints);
-const dots = component.pageIndicator;
-
-/** Two bars: the open side's longer and in ink (component.pageIndicator). */
-function PageIndicator({ side }) {
-  const at = useRef(new Animated.Value(SIDES.indexOf(side))).current;
-  useEffect(() => {
-    Animated.timing(at, { toValue: SIDES.indexOf(side), duration: motion.expand.duration, easing: indicatorEasing, useNativeDriver: false }).start();
-  }, [at, side]);
-  const bar = (open) => ({
-    width: at.interpolate({ inputRange: [0, 1], outputRange: open ? [dots.inactive.w, dots.active.w] : [dots.active.w, dots.inactive.w] }),
-    backgroundColor: at.interpolate({ inputRange: [0, 1], outputRange: open ? [dots.inactive.color, dots.active.color] : [dots.active.color, dots.inactive.color] }),
-  });
-  return (
-    <View style={styles.indicator} accessible accessibilityLabel={side === 'beans' ? 'My beans, 1 of 2' : 'My gear, 2 of 2'}>
-      <Animated.View style={[styles.indicatorBar, bar(false)]} />
-      <Animated.View style={[styles.indicatorBar, bar(true)]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  // Out to the screen's edges: the closed side is cut by them.
-  pages: {
+  // Out to the screen's edges, the dots edge to edge (37a), from the tabs'
+  // divider to below the captions.
+  beans: {
     marginHorizontal: -layout.gutter,
-  },
-  pagesContent: {
-    paddingHorizontal: layout.gutter,
-    gap: space[20],
-  },
-  page: {
-    flexDirection: 'column',
+    paddingTop: component.bagTile.home.top,
+    paddingBottom: component.bagTile.home.bottom,
+    borderTopWidth: shape.borderWidth.divider,
+    borderTopColor: color.border.soft,
   },
   row: {
+    paddingHorizontal: layout.gutter,
+  },
+  emptyShelf: {
+    flexDirection: 'row',
+  },
+  addTile: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: dashed.addTile.width,
+    borderStyle: dashed.addTile.style,
+    borderColor: dashed.addTile.color,
+  },
+  emptyWords: {
+    flexShrink: 1,
+  },
+  gearRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[12],
@@ -291,24 +288,5 @@ const styles = StyleSheet.create({
     minWidth: size.statusColumn,
     alignItems: 'flex-end',
     gap: space[6],
-  },
-  track: {
-    width: size.statusColumn,
-  },
-  foot: {
-    minHeight: size.tapTarget,
-    paddingTop: space[6],
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.gap.section,
-  },
-  indicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dots.gap,
-  },
-  indicatorBar: {
-    height: dots.height,
   },
 });
