@@ -1,13 +1,17 @@
 /**
- * The house style every photo is shown in (Uryu, 2026-11-01): the one place
+ * RETIRED from the app 2026-11-23 (Design Round 31): photos are shown in full
+ * colour, and nothing in the app calls the duotone. Kept, with
+ * modules/photo-style's render() / restyle(), for the unifying filter or
+ * outline to come, and for the dev lab (src/dev/pages/PhotoStylePage.js).
+ * The kept original's size and quality now live in data/photos.ts ORIGINAL.
+ *
+ * The house style every photo was shown in (Uryu, 2026-11-01): the one place
  * its numbers live, as DNA_TUNING is for Taste DNA. They will be tuned; never
  * scatter them. Applied on the phone by modules/photo-style (Core Image),
  * which takes them on every call, so changing one needs no native rebuild.
  *
- * CHANGING THESE DOES NOT CHANGE THE PHOTOS ALREADY KEPT. Their styled copies
- * stay in the old style, and old and new then sit side by side. Every
- * original is kept (data/photos.ts), so they can all be re-made: run
- * restyleAll() (data/photos.ts) after a change.
+ * Every original is kept (data/photos.ts), so a style can be applied to
+ * every photo already kept whenever one comes back.
  *
  *   ink, paper  the duotone's two ends, dark and light. PROVISIONAL: the
  *               app's ink and ground (Design Round 19, A1 sets them)

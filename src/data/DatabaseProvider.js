@@ -7,7 +7,7 @@ import { spacing } from '../theme/tokens';
 import { NOTICES } from '../constants/notices';
 import { asSqlDb, inTransaction, openDatabase } from './migrate';
 import { deliverNotices } from './notices';
-import { sweepPhotos } from './photos';
+import { makeCutouts, sweepPhotos } from './photos';
 
 const DatabaseContext = createContext(null);
 
@@ -62,9 +62,12 @@ export default function DatabaseProvider({ children }) {
           console.error('[notices] delivery failed', error);
         }
         if (!cancelled) setState({ db, error: null });
-        // Photo files no row points at (a deleted bag's), and pending leftovers.
-        // Not awaited: the app doesn't wait on housekeeping.
-        if (Platform.OS !== 'web') sweepPhotos(db);
+        // Photo files no row points at (a deleted bag's), the retired duotone
+        // copies and pending leftovers; then the bag cutouts not made yet
+        // (photos.ts: new since the last launch, a restore, or every bag's
+        // photo on the first launch after migration 17). Not awaited: the
+        // app doesn't wait on housekeeping.
+        if (Platform.OS !== 'web') sweepPhotos(db).then(() => makeCutouts(db));
       } catch (error) {
         console.error('[db] failed to open', error);
         if (!cancelled) setState({ db: null, error });

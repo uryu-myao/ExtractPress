@@ -8,9 +8,9 @@ import { migrations } from './migrations.ts';
  *
  * The file:
  *   format 2 (2026-11-08)  a zip: backup.json, plus photos/<id>.jpg, the
- *                          ORIGINAL of every kept photo. The styled copy is
- *                          not carried: restyling the original remakes it
- *                          (photos.ts), which halves the size.
+ *                          ORIGINAL of every kept photo. Nothing made from
+ *                          it is carried (a bag's cutouts, 2026-11-23; the
+ *                          duotone copy before): photos.ts makes them again.
  *   format 1 (2026-10-20)  backup.json on its own, no photos. Still read.
  * backup.json is { app, format, exported_at, schema_version, tables }:
  * every table as stored, rows untouched (export.ts). `app` is 'ExtractPress',

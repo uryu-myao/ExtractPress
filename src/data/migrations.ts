@@ -689,6 +689,19 @@ export const migrations: readonly Migration[] = [
     name: 'first setup step reached',
     statements: [`ALTER TABLE device ADD COLUMN setup_step TEXT CHECK (setup_step IN ('gear'))`],
   },
+  {
+    /*
+     * The bag lifted out of its photo (Design Round 31, 2026-11-23): whether
+     * the cutout was tried and what came of it, so Vision isn't run again on
+     * every launch. One column, a bitmask (schema.ts bags.photo_cutout).
+     * Existing bags get NULL, "not tried": the next launch makes their
+     * cutouts (data/photos.ts makeCutouts). The files are never in a backup;
+     * a restore makes them again from the originals.
+     */
+    version: 17,
+    name: 'bag photo cutout',
+    statements: [`ALTER TABLE bags ADD COLUMN photo_cutout INTEGER CHECK (photo_cutout BETWEEN 0 AND 31)`],
+  },
 ];
 
 /** The bookkeeping table. Created before any migration runs. */

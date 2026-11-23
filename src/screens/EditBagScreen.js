@@ -19,7 +19,7 @@ import Text from '../components/base/Text';
 import { formatDay, startOfDay } from '../constants/dates';
 import { bagFilter } from '../constants/search';
 import { useDatabase } from '../data/DatabaseProvider';
-import { deletePhoto, keepPhoto } from '../data/photos';
+import { deletePhoto, keepPhoto, makeCutouts } from '../data/photos';
 import { deleteBag, finishBag, setBagPhoto, updateBag } from '../data/repository';
 import { requestPush, requestShell, requestNotice } from '../navigation';
 import { color, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
@@ -134,7 +134,9 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
       if (next) await keepPhoto(next.id);
       const before = await setBagPhoto(db, stored.id, next?.id ?? null);
       deletePhoto(before);
-      setStored((s) => ({ ...s, photo_uri: next?.id ?? null }));
+      setStored((s) => ({ ...s, photo_uri: next?.id ?? null, photo_cutout: null }));
+      // The new photo's cutout, in the background (photos.ts); not awaited.
+      if (next) makeCutouts(db);
     } catch (error) {
       if (next) deletePhoto(next.id);
       console.error('[3g] could not change the photo', error);
@@ -368,6 +370,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
 
       {about.sheets}
       <PhotoSheet
+        guide="bag"
         visible={photoSheet}
         onClose={() => setPhotoSheet(false)}
         onChosen={changePhoto}

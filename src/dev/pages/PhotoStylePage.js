@@ -13,8 +13,8 @@ import { HarnessGroup, HarnessPage } from '../harness';
  * Photo style lab (dev only, 2026-11-01): pick a photo, change the house
  * style's numbers, see the styled copy each time (the native render, as the
  * app does it). Starts from PHOTO_STYLE; nothing here changes it. When a
- * setting looks right, copy the numbers shown into src/constants/photoStyle.js
- * (then restyleAll for the photos already kept).
+ * setting looks right, copy the numbers shown into src/constants/photoStyle.js.
+ * The app doesn't use the style since 2026-11-23 (photoStyle.js).
  *
  * In place of Skia's live preview (Uryu, 2026-11-01): each change re-renders
  * through Core Image, a fraction of a second on the phone.

@@ -2,7 +2,7 @@ Pod::Spec.new do |s|
   s.name           = 'PhotoStyle'
   s.version        = '1.0.0'
   s.summary        = "Core Image's house style for MoreCoffee's photos"
-  s.description    = "Resizes a photo, keeps it as the original, and writes its styled copy (duotone, dither) with Core Image."
+  s.description    = "Resizes a photo and keeps it as the original, lifts a bag out of it with Vision (HEIC with alpha), and keeps the duotone house style for later use."
   s.license        = 'UNLICENSED'
   s.author         = 'MoreCoffee'
   s.homepage       = 'https://github.com/'
@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
-  s.frameworks = 'CoreImage', 'ImageIO'
+  s.frameworks = 'CoreImage', 'ImageIO', 'Vision'
 
   s.source_files = "**/*.{h,m,swift}"
   s.pod_target_xcconfig = {

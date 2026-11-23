@@ -47,9 +47,10 @@ export const schema = {
     mode: { type: 'TEXT', nullable: false, values: ['made_it', 'barista', 'packaged'] },
     /**
      * A PHOTO'S ID, NOT A URI (2026-11-01, despite the name): the basename
-     * both files follow from, Documents/photos/<id>.jpg (the original) and
-     * <id>-styled.jpg (what the app shows); data/photos.ts. Never a full path:
-     * the app's container moves on every reinstall and update.
+     * its files follow from, Documents/photos/<id>.jpg (the original, shown
+     * in full colour since 2026-11-23); a bag's cutouts are <id>-cut.heic
+     * and <id>-cut-s.heic; data/photos.ts. Never a full path: the app's
+     * container moves on every reinstall and update.
      */
     photo_uri: { type: 'TEXT', nullable: true },
     /** My words (5b): a free memo, stored as written, never rewritten; never feeds Taste DNA (2026-10-31). */
@@ -185,9 +186,10 @@ export const schema = {
     size_g: { type: 'INTEGER', nullable: true },
     /**
      * A PHOTO'S ID, NOT A URI (2026-11-01, despite the name): the basename
-     * both files follow from, Documents/photos/<id>.jpg (the original) and
-     * <id>-styled.jpg (what the app shows); data/photos.ts. Never a full path:
-     * the app's container moves on every reinstall and update.
+     * its files follow from, Documents/photos/<id>.jpg (the original, shown
+     * in full colour since 2026-11-23); a bag's cutouts are <id>-cut.heic
+     * and <id>-cut-s.heic; data/photos.ts. Never a full path: the app's
+     * container moves on every reinstall and update.
      */
     photo_uri: { type: 'TEXT', nullable: true },
     /**
@@ -196,6 +198,16 @@ export const schema = {
      * state or a bar (data-model.md "Best-before"). Not copied onto cups.
      */
     best_before: { type: 'INTEGER', nullable: true },
+    /**
+     * The photo's cutout (migration 17; Design Round 31): NULL not tried yet
+     * (or the photo just changed); 0 tried, and no subject found or one
+     * filling three or four sides of the photo (a close-up), so the bag
+     * shows its rectangular photo; otherwise 1 (made) plus the sides of the
+     * photo the cutout runs into, where a held bag's hand is cut off:
+     * 2 top, 4 right, 8 bottom, 16 left (data/photos.ts CUTOUT_EDGE).
+     * Meaningless while photo_uri is NULL.
+     */
+    photo_cutout: { type: 'INTEGER', nullable: true },
   },
 
   /**
@@ -231,9 +243,10 @@ export const schema = {
     is_default: { type: 'INTEGER', nullable: false },
     /**
      * A PHOTO'S ID, NOT A URI (2026-11-01, despite the name): the basename
-     * both files follow from, Documents/photos/<id>.jpg (the original) and
-     * <id>-styled.jpg (what the app shows); data/photos.ts. Never a full path:
-     * the app's container moves on every reinstall and update.
+     * its files follow from, Documents/photos/<id>.jpg (the original, shown
+     * in full colour since 2026-11-23); a bag's cutouts are <id>-cut.heic
+     * and <id>-cut-s.heic; data/photos.ts. Never a full path: the app's
+     * container moves on every reinstall and update.
      */
     photo_uri: { type: 'TEXT', nullable: true },
     added_at: { type: 'INTEGER', nullable: false },

@@ -62,6 +62,14 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Take a photo of a bag of beans. It stays on your phone.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "expo-notifications",
         {
           "enableRemoteNotifications": false

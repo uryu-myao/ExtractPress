@@ -10,7 +10,7 @@ import Text from '../components/base/Text';
 import TextLink from '../components/base/TextLink';
 import { useRecordDraftIfAny } from '../components/RecordDraft';
 import { useDatabase } from '../data/DatabaseProvider';
-import { deletePhoto, dropPhoto, keepPhoto } from '../data/photos';
+import { deletePhoto, dropPhoto, keepPhoto, makeCutouts } from '../data/photos';
 import { startOfDay } from '../constants/dates';
 import { OPEN_BAG_LIMIT, countCups, countOpenBags, getBagDateKind, insertBag, setBagDateKind } from '../data/repository';
 import { spacing } from '../theme/tokens';
@@ -34,7 +34,7 @@ import ScreenFrame from './ScreenFrame';
  * placement are ours (not drawn); TODO: Design to confirm.
  *
  * Photo (2026-11-01, bags first): 3c's slot over the fields opens PhotoSheet;
- * the chosen photo (already styled) waits in the cache and is kept only when
+ * the chosen photo waits in the cache and is kept only when
  * the bag is added. Leaving without adding drops it.
  */
 /**
@@ -132,6 +132,8 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup }) {
         open: opened,
         photo: kept,
       });
+      // Its cutout is made in the background (photos.ts); not awaited.
+      if (kept) makeCutouts(db);
       // Only an opened bag can be the cup's bag.
       if (opened) chooseBag?.(bag);
       // Setup keeps this step under the gear step: Back from gear finds an
@@ -240,6 +242,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup }) {
       </ScreenFrame>
       {about.sheets}
       <PhotoSheet
+        guide="bag"
         visible={photoSheet}
         onClose={() => setPhotoSheet(false)}
         onChosen={(next) => {

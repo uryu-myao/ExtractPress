@@ -14,8 +14,9 @@ import Glyph from './Glyph';
  *   46 (5a, the picker, the shelf) icon.md 18 · 40 (5b) icon.sm 16.
  * Bags use the same cup for now (Design's open question: a bag glyph).
  *
- * With a photo (2026-11-01): its styled copy fills the square instead
- * (data/photos.ts photoUri; cropped to the square, `cover`). A photo whose
+ * With a photo (2026-11-01): the photo fills the square instead, in full
+ * colour since 2026-11-23 (data/photos.ts photoUri; cropped to the square,
+ * `cover`). A photo whose
  * files are gone shows the placeholder.
  *
  * Props: size (the square's side, from a size token), photo (a photo's id,

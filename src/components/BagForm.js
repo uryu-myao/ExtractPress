@@ -58,7 +58,7 @@ import Text from './base/Text';
  *   children    3g: drawn last inside the card (the freshness block)
  *   autoFocusName  3c: the keyboard comes up on Bean name; 3g: off (it opens to correct, not to type)
  *   photo       3c: { uri, onPress } — the photo slot over the fields
- *               (PhotoField): uri, the styled copy chosen (null for none)
+ *               (PhotoField): uri, the photo chosen (null for none)
  *   nameMissing "Open this bag" was pressed with no name: Bean name takes 5d's
  *             error vocabulary — the label reads "Bean name · required" and
  *             it and the underline take the error colour (no mock draws an
@@ -146,7 +146,7 @@ export function Field({ label, value = '', placeholder, onChangeText, editable =
  * (3c's copy: "Shoot the bag" / "Optional. Becomes this bag's thumbnail
  * everywhere."). It is a button, so a solid 2px ink frame (§8: dashed never
  * says "press this"; 3c draws it dashed, drift D-63). Chosen, the square
- * shows the styled copy. Opens PhotoSheet.
+ * shows the photo. Opens PhotoSheet.
  * PROVISIONAL: the title once a photo is in ("Bag photo") is ours.
  */
 function PhotoField({ uri, onPress }) {

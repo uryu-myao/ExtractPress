@@ -4,10 +4,25 @@ import ExpoModulesCore
 import ImageIO
 
 /**
- * The house style for MoreCoffee's photos (Uryu, 2026-11-01): every photo is
- * kept twice, the original and a styled copy, so that side by side they agree
- * with each other and with the app. Core Image, so nothing is added to the
- * bundle (Skia was weighed and not taken, 2026-11-01).
+ * The app's photos, made on the phone with Core Image (nothing added to the
+ * bundle; Skia was weighed and not taken, 2026-11-01).
+ *
+ * Since 2026-11-23 (Design Round 31) every photo is shown in full colour:
+ * the app keeps the original (original()) and, for a bag, its cutout
+ * (cutout(), PhotoCutout.swift). The duotone below is no longer called by
+ * the app. It stays, with render() and restyle(), for the unifying filter
+ * or outline to come, which belongs in this module.
+ *
+ *   original(source, original, longSide, quality)
+ *     reads the picked photo, turns it upright (EXIF orientation), scales its
+ *     long side down to longSide and writes it as a JPEG. Metadata as below.
+ *     Resolves { width, height }.
+ *   cutout(original, large, small, options)
+ *     PhotoCutout.swift.
+ *
+ * The 2026-11-01 house style, kept: every photo kept twice, the original and
+ * a styled copy, so that side by side they agree with each other and with
+ * the app.
  *
  * The style's numbers come from JS on every call (src/constants/photoStyle.js,
  * the one place they live): changing them needs no native rebuild. Only a new
@@ -40,11 +55,18 @@ public final class PhotoStyleModule: Module {
   public func definition() -> ModuleDefinition {
     Name("PhotoStyle")
 
+    AsyncFunction("original") { (source: String, original: String, longSide: Double, quality: Double) -> [String: Int] in
+      let sized = try upright(source, longSide: longSide)
+      try self.write(sized, to: fileURL(original), quality: quality)
+      return ["width": Int(sized.extent.width.rounded()), "height": Int(sized.extent.height.rounded())]
+    }
+
+    AsyncFunction("cutout") { (original: String, large: String, small: String, options: CutoutOptions) -> [String: Any] in
+      try makeCutout(self.context, original: original, large: large, small: small, options: options)
+    }
+
     AsyncFunction("render") { (source: String, original: String, styled: String, style: Style) -> [String: Int] in
-      guard let input = CIImage(contentsOf: fileURL(source), options: [.applyOrientationProperty: true]) else {
-        throw Exception(name: "ERR_PHOTO_READ", description: "The photo couldn't be read.")
-      }
-      let sized = scaled(input, longSide: style.longSide).settingProperties(takenAt(input.properties))
+      let sized = try upright(source, longSide: style.longSide)
       try self.write(sized, to: fileURL(original), quality: style.quality)
       do {
         try self.write(styledCopy(sized, style), to: fileURL(styled), quality: style.quality)
@@ -88,12 +110,20 @@ struct Style: Record {
   @Field var quality: Double = 0.8
 }
 
-private func fileURL(_ path: String) -> URL {
+/** The picked photo, upright, long side at most longSide, keeping only when it was taken. */
+private func upright(_ source: String, longSide: Double) throws -> CIImage {
+  guard let input = CIImage(contentsOf: fileURL(source), options: [.applyOrientationProperty: true]) else {
+    throw Exception(name: "ERR_PHOTO_READ", description: "The photo couldn't be read.")
+  }
+  return scaled(input, longSide: longSide).settingProperties(takenAt(input.properties))
+}
+
+func fileURL(_ path: String) -> URL {
   if let url = URL(string: path), url.isFileURL { return url }
   return URL(fileURLWithPath: path)
 }
 
-private func scaled(_ image: CIImage, longSide: Double) -> CIImage {
+func scaled(_ image: CIImage, longSide: Double) -> CIImage {
   let longest = max(image.extent.width, image.extent.height)
   guard longest > CGFloat(longSide) else { return image }
   let filter = CIFilter.lanczosScaleTransform()

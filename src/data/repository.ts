@@ -431,10 +431,12 @@ export async function updateBag(db: SQLiteDatabase, id: number, edit: BagEdit): 
 /**
  * A bag's photo (the bag page, 19a; 2026-11-02): a kept photo's id, or null to
  * remove it. Returns the one it replaces, whose files the caller deletes.
+ * Its cutout goes back to "not tried" (photo_cutout NULL): the caller then
+ * runs photos.ts makeCutouts.
  */
 export async function setBagPhoto(db: SQLiteDatabase, id: number, photo: string | null): Promise<string | null> {
   const before = await db.getFirstAsync<{ photo_uri: string | null }>('SELECT photo_uri FROM bags WHERE id = ?', [id]);
-  await db.runAsync('UPDATE bags SET photo_uri = ? WHERE id = ?', [photo, id]);
+  await db.runAsync('UPDATE bags SET photo_uri = ?, photo_cutout = NULL WHERE id = ?', [photo, id]);
   notifyShelfChanged();
   return before?.photo_uri ?? null;
 }
@@ -960,7 +962,8 @@ export function onShelfChanged(listener: Listener): () => void {
   };
 }
 
-function notifyShelfChanged() {
+/** Also photos.ts, when a bag's cutout is made. */
+export function notifyShelfChanged() {
   shelfListeners.forEach((listener) => listener());
 }
 

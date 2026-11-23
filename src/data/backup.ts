@@ -3,7 +3,7 @@ import { File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 import { asSqlDb, inTransaction } from './migrate';
 import { BackupError, copyInto, countBackup, parseBackup, photoIdsOf, rebuild, type Backup, type Tables } from './backupFormat';
-import { restorePhoto } from './photos';
+import { makeCutouts, restorePhoto } from './photos';
 import { notifyEverythingChanged } from './repository';
 
 /**
@@ -42,8 +42,8 @@ export async function readBackupFile(uri: string): Promise<{ backup: Backup; sum
 
 /**
  * Put the backup into the live database, then its photos. Returns the ids of
- * photos the rows point at that couldn't be restored (missing from the file,
- * or not restyled): their bags show the placeholder, or the original.
+ * photos the rows point at that couldn't be restored (missing from the
+ * file, or not written): their bags show the placeholder.
  */
 export async function restoreBackup(
   db: SQLite.SQLiteDatabase,
@@ -71,5 +71,8 @@ export async function restoreBackup(
     onPhoto?.(i + 1, ids.length);
   }
   notifyEverythingChanged();
+  // The bags' cutouts: the backup carries originals only (photos.ts). In the
+  // background; each bag shows its photo until its cutout is made.
+  makeCutouts(db);
   return { photosMissing };
 }
