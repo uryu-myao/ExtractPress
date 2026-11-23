@@ -37,49 +37,50 @@ const tile = component.bagTile;
  * bottom and right sides place it (Uryu, 2026-11-23); a cut on the top or
  * left is faded with the others but moves nothing.
  *
- * Caption (37a): name (tileName, ink, one line), roaster (bodySm, muted),
- * the status (tileStatus): text.success when it's time to drink, else muted.
+ * Caption (37a; fixed at 66 since 37c): name (tileName, ink), roaster
+ * (tileMeta, muted), the status (tileStatus: text.success when it's time to
+ * drink, else muted), each one line, each keeping its height when empty.
+ * `action` (the Beans grid's Finish bag / Open this bag, 37c) sits
+ * caption.action under it, outside the tile's own press.
  *
  * Presses by scale (state.pressed.scale over motion.press), having no surface,
  * as the shelf's tabs.
  *
  * Props: bag (a listShelfBags row), width, height (the tile's, a
- * component.bagTile size), onPress
+ * component.bagTile size), onPress, action (optional node under the caption)
  */
-export default function BagTile({ bag, width, height, onPress }) {
+export default function BagTile({ bag, width, height, onPress, action }) {
   const scale = useRef(new Animated.Value(1)).current;
   const scaleTo = (toValue) =>
     Animated.timing(scale, { toValue, duration: motion.press.duration, easing: pressEasing, useNativeDriver: true }).start();
   const status = bagStatus(bag);
   return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={() => scaleTo(state.pressed.scale)}
-      onPressOut={() => scaleTo(1)}
-      accessibilityRole="button"
-      accessibilityLabel={[bag.name, bag.roaster, status?.text].filter(Boolean).join(', ')}
-      style={{ width }}>
-      <Animated.View style={{ transform: [{ scale }] }}>
-        <View style={{ width, height, overflow: 'hidden' }}>
-          <Subject bag={bag} width={width} height={height} />
-        </View>
-        <View style={styles.caption}>
-          <Text variant="tileName" truncate="shelf">
-            {bag.name}
-          </Text>
-          {bag.roaster ? (
-            <Text variant="bodySm" color="muted" truncate="meta">
-              {bag.roaster}
+    <View style={{ width }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => scaleTo(state.pressed.scale)}
+        onPressOut={() => scaleTo(1)}
+        accessibilityRole="button"
+        accessibilityLabel={[bag.name, bag.roaster, status?.text].filter(Boolean).join(', ')}>
+        <Animated.View style={{ transform: [{ scale }] }}>
+          <View style={{ width, height, overflow: 'hidden' }}>
+            <Subject bag={bag} width={width} height={height} />
+          </View>
+          <View style={styles.caption}>
+            <Text variant="tileName" truncate="shelf">
+              {bag.name}
             </Text>
-          ) : null}
-          {status ? (
-            <Text variant="tileStatus" color={status.drink ? 'success' : 'muted'} truncate="meta" style={styles.status}>
-              {status.text}
+            <Text variant="tileMeta" color="muted" truncate="meta" style={styles.meta}>
+              {bag.roaster || ' '}
             </Text>
-          ) : null}
-        </View>
-      </Animated.View>
-    </Pressable>
+            <Text variant="tileStatus" color={status?.drink ? 'success' : 'muted'} truncate="meta" style={styles.status}>
+              {status?.text || ' '}
+            </Text>
+          </View>
+        </Animated.View>
+      </Pressable>
+      {action ? <View style={styles.action}>{action}</View> : null}
+    </View>
   );
 }
 
@@ -281,17 +282,22 @@ export function bagStatus(bag) {
   return null;
 }
 
-/** A caption's height (name, roaster, status, at their line heights): the empty shelf's room under its tile (37l). */
+/** A caption's height, fixed (37c: 66): the empty shelf's room under its tile (37l). */
 export const CAPTION_HEIGHT =
-  tile.caption.top + textStyle.tileName.lineHeight + tile.caption.gap + textStyle.bodySm.lineHeight + tile.caption.gap + tile.caption.status + textStyle.tileStatus.lineHeight;
+  tile.caption.top + textStyle.tileName.lineHeight + tile.caption.nameGap + textStyle.tileMeta.lineHeight + tile.caption.statusGap + textStyle.tileStatus.lineHeight;
 
 const styles = StyleSheet.create({
   caption: {
     paddingTop: tile.caption.top,
-    gap: tile.caption.gap,
+  },
+  meta: {
+    marginTop: tile.caption.nameGap,
   },
   status: {
-    marginTop: tile.caption.status,
+    marginTop: tile.caption.statusGap,
+  },
+  action: {
+    marginTop: tile.caption.action,
   },
   print: {
     position: 'absolute',

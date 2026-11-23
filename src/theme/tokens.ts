@@ -334,7 +334,8 @@ export const textStyle = {
   labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
   /** A bag tile's caption (Design Round 31, 37a): the name, the status under it ("Day 7 · drink now"), and the roaster over a letter block. */
   tileName:      { fontFamily: 'Archivo', fontSize: 14, fontWeight: '700', lineHeight: 18 },
-  tileStatus:    { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', lineHeight: 13, letterSpacing: 1.6, textTransform: 'uppercase' },
+  tileMeta:      { fontFamily: 'Archivo', fontSize: 12, fontWeight: '500', lineHeight: 16 },
+  tileStatus:    { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', lineHeight: 14, letterSpacing: 1.6, textTransform: 'uppercase' },
   tileEyebrow:   { fontFamily: 'Archivo', fontSize: 9, fontWeight: '700', lineHeight: 11, letterSpacing: 1.26, textTransform: 'uppercase' },
   /** The bag camera's title over the feed (Design Round 31 v2, 37j): serif 26, white. */
   cameraTitle:   { fontFamily: 'Instrument Serif', fontSize: 26, fontWeight: '400', lineHeight: 28 },
@@ -866,7 +867,15 @@ export const component = {
     mat: 0.035,
     letter: { latin: 1.08, cjk: 0.8, lineHeight: 0.78, insetX: 0.067, insetY: 0.077, eyebrowInset: 9, eyebrowOpacity: 0.72 },
     home: { w: 144, h: 192, gap: space[12], top: space[16], bottom: space[28] },
-    caption: { top: space[8], gap: 3, status: 2 },
+    /**
+     * The caption, fixed at 66 whatever it holds (37c): space[8] above, the
+     * name (18), nameGap, the roaster (16), statusGap, the status (14), each
+     * one line, each keeping its height when empty, so every tile in a row
+     * is as tall and the grid's buttons line up `action` under it.
+     */
+    caption: { top: space[8], nameGap: space[4], statusGap: space[6], action: 10 },
+    /** The Beans grid (37c): two columns, `gap` apart, rows `rowGap` apart, 3 : 4 tiles; the section's padding above. */
+    grid: { gap: space[16], rowGap: space[20], top: space[20] },
     /** Home's empty shelf (37l): the words beside the Add a bag tile, their width and drop. */
     empty: { gap: space[16], textWidth: 190, textTop: space[28], textGap: space[6], markGap: space[8] },
   },

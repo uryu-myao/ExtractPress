@@ -3,7 +3,7 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react
 import BagTile, { CAPTION_HEIGHT } from './BagTile';
 import ShelfTabs, { SIDES } from './ShelfTabs';
 import { useDatabase } from '../data/DatabaseProvider';
-import { drinkFirstRank } from '../constants/bagDates';
+import { sortDrinkFirst } from '../constants/bagDates';
 import { listGearWithUse, listShelfBags, onCupsChanged, onShelfChanged } from '../data/repository';
 import { formatLastUsed } from '../constants/dates';
 import { GEAR_CATEGORY } from '../constants/gear';
@@ -90,7 +90,7 @@ export default function ShelfBlock({ onSeeAll, onAddBag, onAddGear, onOpenBag, o
           <DotGround />
           {shelf.bags.length ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.row, { gap }]}>
-              {homeBeans(shelf.bags).map((b) => (
+              {sortDrinkFirst(shelf.bags).map((b) => (
                 <BagTile key={b.id} bag={b} width={w} height={h} onPress={() => onOpenBag(b)} />
               ))}
             </ScrollView>
@@ -116,19 +116,6 @@ function homeGear(gear) {
   return [...gear].sort((a, b) => b.is_default - a.is_default || b.cups - a.cups).slice(0, ROWS);
 }
 
-/**
- * What to drink first (Round 14; Round 15, B2; Design Round 27, B3): date
- * passed and past peak (longest past first), drink now, best-before by
- * nearest date, resting, neither date, sealed (constants/bagDates.js).
- * Every bag on the shelf (37a: the row scrolls; was three rows).
- */
-function homeBeans(bags) {
-  const now = Date.now();
-  const ranked = bags.map((b) => [drinkFirstRank(b, now), b]);
-  return ranked
-    .sort(([x, a], [y, b]) => x[0] - y[0] || x[1] - y[1] || a.id - b.id)
-    .map(([, b]) => b);
-}
 
 function GearRow({ gear: g, first, onPress }) {
   const status = g.cups ? (

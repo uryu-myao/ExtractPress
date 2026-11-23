@@ -7,7 +7,7 @@ import ShelfTabs, { SIDES, SlotCount, TAB_OVERLAP, useShelfPager } from '../comp
 import { GEAR_LIMIT } from '../constants/gear';
 import { useDatabase } from '../data/DatabaseProvider';
 import { OPEN_BAG_LIMIT, countFinishedBags, listGearWithUse, listShelfBags, onCupsChanged, onShelfChanged } from '../data/repository';
-import { layout, spacing } from '../theme/tokens';
+import { layout } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
@@ -20,7 +20,7 @@ import ScreenFrame from './ScreenFrame';
  * Under it the shelf's tabs (ShelfTabs, as Home), with the open side's slot
  * count at the row's right end: "7 / 8 In my kit" / "3 / 5 On the shelf".
  * The body is the open side's: GearList (3b's rows and Add gear) or
- * BeansList (3d's cards, Add a bag, Finished bags ›). A tab or a sideways
+ * BeansList (37c's grid of bag tiles, Add a bag, Finished bags ›). A tab or a sideways
  * swipe swaps all of it, slot count included; the tab follows the swipe
  * past the midpoint.
  *
@@ -113,8 +113,11 @@ const styles = StyleSheet.create({
     paddingTop: TAB_OVERLAP,
     paddingHorizontal: layout.gutter,
   },
-  // gap.section from the underline's foot to the first card's frame.
+  // Beans (Design Round 31 v2, 37c): the dots run edge to edge from the
+  // tabs' divider, which BeansList draws at its top; the open tab's
+  // underline sits centred on it, as on Home.
   beans: {
-    paddingTop: TAB_OVERLAP + spacing.gap.section,
+    paddingTop: 0,
+    paddingHorizontal: 0,
   },
 });

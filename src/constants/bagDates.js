@@ -94,3 +94,11 @@ export function drinkFirstRank(bag, now = Date.now()) {
   if (b) return b.passed ? [0, b.daysLeft] : [2, b.daysLeft];
   return [4, bag.id];
 }
+
+/** The bags in drinkFirstRank's order (Home's shelf and the Beans grid, Design Round 31 v2: the same order on both). */
+export function sortDrinkFirst(bags, now = Date.now()) {
+  return bags
+    .map((b) => [drinkFirstRank(b, now), b])
+    .sort(([x, a], [y, b]) => x[0] - y[0] || x[1] - y[1] || a.id - b.id)
+    .map(([, b]) => b);
+}

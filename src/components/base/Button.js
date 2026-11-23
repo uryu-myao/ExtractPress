@@ -61,9 +61,12 @@ import Text from './Text';
  *             inside a card's strip, 3d "Finish bag"; label.caps) | 'bar'
  *             (44, sized to its label, buttonCapsBar, shadow.floating when
  *             primary: the Save bar's "Save changes", 32a). §9 Buttons.
+ *             'tile' (36, size.button.small, meterLabel: the action under a
+ *             bag tile in the Beans grid, Design Round 31 v2, 37c; the
+ *             tile's width)
  *   raised    row size, primary: the control hard shadow (shadow.control, 3)
  *             — 3d's "Open this bag" (2026-10-17). Row size has none by
- *             default.
+ *             default. Tile size: shadow.floating (4 / 4, 37c).
  *   warnWhenDisabled  a press while disabled gives the warning haptic (§1
  *             Haptics). Only where the screen already shows why the button
  *             is off (decided 2026-10-11); otherwise leave it false and show
@@ -138,7 +141,8 @@ function FilledButton({
   testOnly_pressed,
 }) {
   const bar = buttonSize === 'bar';
-  const row = buttonSize === 'row' || bar;
+  const tile = buttonSize === 'tile';
+  const row = buttonSize === 'row' || bar || tile;
   const warns = disabled && warnWhenDisabled;
   const primary = variant === 'primary' && !disabled;
   if (__DEV__ && destructive && variant === 'primary') {
@@ -150,7 +154,7 @@ function FilledButton({
 
   // Row size has no hard shadow unless raised (1b's See all, 2026-10-12).
   // The Save bar's button keeps a shadow (32a: 4, shadow.floating).
-  const hardShadow = primary ? (bar ? shadow.floating : row ? (raised ? shadow.control : null) : shadow.primary) : null;
+  const hardShadow = primary ? (bar ? shadow.floating : row ? (raised ? (tile ? shadow.floating : shadow.control) : null) : shadow.primary) : null;
   return (
     <HardShadow shadow={hardShadow}>
       <Pressable
@@ -169,13 +173,14 @@ function FilledButton({
         style={({ pressed }) => [
           styles.base,
           row && styles.row,
+          tile && styles.tile,
           primary && styles.primary,
           variant === 'secondary' && styles.secondary,
           disabled && styles.disabled,
           pressed && !disabled && (primary ? styles.primaryPressed : styles.secondaryPressed),
         ]}>
         <View style={styles.content}>
-          <Text variant={bar ? 'buttonCapsBar' : row ? 'labelCaps' : 'buttonCaps'} color={labelColor} style={styles.label}>
+          <Text variant={bar ? 'buttonCapsBar' : tile ? 'meterLabel' : row ? 'labelCaps' : 'buttonCaps'} color={labelColor} style={styles.label}>
             {label}
           </Text>
           {trailingIcon ? <Glyph name={trailingIcon} token={icon.sm} color={iconColor} /> : null}
@@ -211,6 +216,9 @@ const styles = StyleSheet.create({
   },
   row: {
     height: size.button.row,
+  },
+  tile: {
+    height: size.button.small,
   },
   primary: {
     backgroundColor: color.action.bg,
