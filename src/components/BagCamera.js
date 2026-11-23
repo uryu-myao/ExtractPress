@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, component, layout, space } from '../theme/tokens';
 import Button from './base/Button';
 import Text from './base/Text';
+import TextLink from './base/TextLink';
 
 const cam = component.bagCamera;
 
@@ -77,9 +78,7 @@ export default function BagCamera({ visible, onTaken, onCancel }) {
         </View>
         <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, space[20]) }]}>
           <Button label={busy ? 'Taking…' : 'Take photo'} onPress={take} disabled={!ready || busy} />
-          <View style={styles.cancel}>
-            <Button variant="text" label="Cancel" onPress={onCancel} />
-          </View>
+          <TextLink centered label="Cancel" onPress={onCancel} />
         </View>
       </View>
     </Modal>
@@ -173,8 +172,5 @@ const styles = StyleSheet.create({
     paddingTop: cam.panel.top,
     paddingHorizontal: layout.gutter,
     gap: cam.panel.gap,
-  },
-  cancel: {
-    alignItems: 'center',
   },
 });

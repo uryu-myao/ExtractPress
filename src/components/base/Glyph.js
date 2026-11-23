@@ -10,9 +10,12 @@ const SHAPES = {
   chevronRight: [<Path key="p" d="M9 6l6 6-6 6" />],
   chevronLeft: [<Path key="p" d="M15 6l-6 6 6 6" />],
   close: [<Path key="p" d="M6 6l12 12M18 6L6 18" />],
-  // The bag page's More (Design Round 31 v2, 37f): three dots, r 1.8 in the
-  // source; drawn as stroked circles of r 0.8, which the stroke fills out.
-  more: [<Circle key="a" cx="5" cy="12" r="0.8" />, <Circle key="b" cx="12" cy="12" r="0.8" />, <Circle key="c" cx="19" cy="12" r="0.8" />],
+  // The bag photo (Design Round 31 v2, 37m): the bag page's photo button and
+  // the Bag photo sheet's Take / Retake row; square-cornered, as 37m draws
+  // it (the rounded `camera` above is the mode glyph's).
+  photo: [<Path key="p" d="M3 8h4l2-2.5h6L17 8h4v12H3z" />, <Circle key="c" cx="12" cy="13.5" r="3.5" />],
+  // The Bag photo sheet's Choose from Photos row (37m).
+  photos: [<Rect key="r" x="3" y="4" width="18" height="16" />, <Circle key="c" cx="8.5" cy="9.5" r="1.6" />, <Path key="p" d="M21 16l-5-5-9 9" />],
   // 2a's filter button (opens 2b), verbatim; drawn at icon.md (18 / 2.2) as in 2a.
   filter: [<Path key="p" d="M4 6h16M7 12h10M10 18h4" />],
   plus: [<Path key="a" d="M12 6v12" />, <Path key="b" d="M6 12h12" />],

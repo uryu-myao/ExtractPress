@@ -484,6 +484,8 @@ export const size = {
    * (32e draws 10, off the scale; every list row is 12).
    */
   choiceRow: 48,
+  /** A row of the Bag photo sheet (Design Round 31 v2, 37m), at least this tall. */
+  sheetRow: 56,
   /**
    * The flag's slot at the front of an Origin sheet row: kept on every row,
    * empty for a written origin with no code, so names never shift.
@@ -561,6 +563,8 @@ export const icon = {
   /** default */
   md: { size: 18, strokeWidth: 2.2 },
   lg: { size: 22, strokeWidth: 1.8 },
+  /** The bag photo's glyphs (Design Round 31 v2, 37m): the bag page's photo button and the Bag photo sheet's rows, 20 at 2.2. */
+  action: { size: 20, strokeWidth: 2.2 },
   /** decorative large glyph — stroke widens back */
   xl: { size: 38, strokeWidth: 2.0 },
   /** 5b's ✕ on a 24 square (30b): 12 at 3, so the cross holds its weight that small */

@@ -14,11 +14,13 @@ import Glyph from './Glyph';
  *
  * Props
  *   icon                Glyph name ('close', 'chevronLeft', …)
+ *   iconToken           optional icon token (default icon.md); the bag
+ *                       page's photo button takes icon.action (37m)
  *   accessibilityLabel  required — the button has no visible text
  *   onPress
  *   testOnly_pressed    force the pressed look (dev harness)
  */
-export default function IconButton({ icon: iconName, accessibilityLabel, onPress, testOnly_pressed }) {
+export default function IconButton({ icon: iconName, iconToken = icon.md, accessibilityLabel, onPress, testOnly_pressed }) {
   return (
     <Pressable
       onPress={onPress}
@@ -26,7 +28,7 @@ export default function IconButton({ icon: iconName, accessibilityLabel, onPress
       accessibilityLabel={accessibilityLabel}
       testOnly_pressed={testOnly_pressed}
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
-      <Glyph name={iconName} token={icon.md} color={color.icon.default} />
+      <Glyph name={iconName} token={iconToken} color={color.icon.default} />
     </Pressable>
   );
 }

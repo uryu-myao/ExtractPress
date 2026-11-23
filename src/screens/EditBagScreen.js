@@ -33,11 +33,12 @@ import ScreenFrame from './ScreenFrame';
  * Top (Design Round 31 v2, 37f–37h; ScreenFrame's hero): the bag itself
  * on the dots (BagVisual: the cutout, the print or the letter block), the
  * name under it (displayLg, user data, 2 lines) and "Roaster · 250 g"
- * (37f). No bar at rest: ‹ and More float over the visual; scrolled past
- * it, the bar fades in with the name. More opens the photo sheet (take,
- * choose, remove): the 76 photo square of 19a is gone, and a bad cutout is
- * fixed by retaking it here (Round 31 v2, note 5). TODO(Design): 37f draws
- * More but not what it holds; the photo sheet is ours.
+ * (37f). No bar at rest: ‹ and the photo button float over the visual,
+ * and stay over the bar once scrolled past it, when the bar fades in with
+ * the name. The photo button (37m: a camera, not More; everything else the
+ * page does is already on it) opens the Bag photo sheet (PhotoSheet
+ * guide="bag": retake, choose, remove). 19a's 76 photo square is gone; a
+ * bad cutout is fixed by retaking it here (Round 31 v2, note 5).
  * Body, top to bottom (19a: status, cups, details, end actions):
  *   facts      Roast level, Origin, Region, Process: rows in Details under
  *              Roaster with their sheets (useBagFacts; Uryu, 2026-11-15:
@@ -246,8 +247,9 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
           leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
           trailing={
             <IconButton
-              icon="more"
-              accessibilityLabel={stored.photo_uri ? 'More: change or remove the photo' : 'More: add a photo of the bag'}
+              icon="photo"
+              iconToken={icon.action}
+              accessibilityLabel={stored.photo_uri ? 'Bag photo: retake, choose or remove' : 'Bag photo: take or choose one'}
               onPress={() => {
                 Keyboard.dismiss();
                 setPhotoSheet(true);
