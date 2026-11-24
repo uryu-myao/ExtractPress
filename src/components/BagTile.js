@@ -50,31 +50,49 @@ const tile = component.bagTile;
  * component.bagTile size), onPress, action (optional node under the caption)
  */
 export default function BagTile({ bag, width, height, onPress, action }) {
+  const status = bagStatus(bag);
+  return (
+    <ShelfTile
+      width={width}
+      height={height}
+      onPress={onPress}
+      action={action}
+      accessibilityLabel={[bag.name, bag.roaster, status?.text].filter(Boolean).join(', ')}
+      name={bag.name}
+      meta={bag.roaster}
+      status={status?.text}
+      statusColor={status?.drink ? 'success' : 'muted'}>
+      <Subject bag={bag} width={width} height={height} />
+    </ShelfTile>
+  );
+}
+
+/**
+ * The tile every shelf object stands in (Design Round 31 v2: 37a–37c beans,
+ * 37b / 37n gear, 37o "one system"): no frame, the subject (children) in a
+ * width × height box clipped to it, then the fixed 66 caption (name, meta,
+ * status, each one line, each keeping its height when empty) and an
+ * optional action caption.action under it, outside the tile's press.
+ * Presses by scale, having no surface.
+ */
+export function ShelfTile({ width, height, onPress, action, accessibilityLabel, name, meta, status, statusColor = 'muted', children }) {
   const scale = useRef(new Animated.Value(1)).current;
   const scaleTo = (toValue) =>
     Animated.timing(scale, { toValue, duration: motion.press.duration, easing: pressEasing, useNativeDriver: true }).start();
-  const status = bagStatus(bag);
   return (
     <View style={{ width }}>
-      <Pressable
-        onPress={onPress}
-        onPressIn={() => scaleTo(state.pressed.scale)}
-        onPressOut={() => scaleTo(1)}
-        accessibilityRole="button"
-        accessibilityLabel={[bag.name, bag.roaster, status?.text].filter(Boolean).join(', ')}>
+      <Pressable onPress={onPress} onPressIn={() => scaleTo(state.pressed.scale)} onPressOut={() => scaleTo(1)} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
         <Animated.View style={{ transform: [{ scale }] }}>
-          <View style={{ width, height, overflow: 'hidden' }}>
-            <Subject bag={bag} width={width} height={height} />
-          </View>
+          <View style={{ width, height, overflow: 'hidden' }}>{children}</View>
           <View style={styles.caption}>
             <Text variant="tileName" truncate="shelf">
-              {bag.name}
+              {name}
             </Text>
             <Text variant="tileMeta" color="muted" truncate="meta" style={styles.meta}>
-              {bag.roaster || ' '}
+              {meta || ' '}
             </Text>
-            <Text variant="tileStatus" color={status?.drink ? 'success' : 'muted'} truncate="meta" style={styles.status}>
-              {status?.text || ' '}
+            <Text variant="tileStatus" color={statusColor} truncate="meta" style={styles.status}>
+              {status || ' '}
             </Text>
           </View>
         </Animated.View>
@@ -125,7 +143,7 @@ function Subject({ bag, width, height }) {
  * footprint: the cutout (`which` file) where `place` puts it, else the print
  * with a `mat`, else the letter block.
  */
-function Drawn({ bag, which, footprint: f, place, mat, eyebrowInset }) {
+export function Drawn({ bag, which, footprint: f, place, mat, eyebrowInset }) {
   const edges = cutoutEdges(bag.photo_cutout);
   const cut = useMemo(() => (edges ? cutoutUri(bag.photo_uri, which) : null), [bag.photo_uri, bag.photo_cutout, which]); // eslint-disable-line react-hooks/exhaustive-deps
   const photo = useMemo(() => (cut ? null : photoUri(bag.photo_uri)), [cut, bag.photo_uri]);

@@ -18,8 +18,8 @@ import ScreenFrame from './ScreenFrame';
  *
  * Header: compact, Back + "Beans & gear" (Edit cup's pattern).
  * Under it the shelf's tabs (ShelfTabs, as Home), with the open side's slot
- * count at the row's right end: "7 / 8 In my kit" / "3 / 5 On the shelf".
- * The body is the open side's: GearList (3b's rows and Add gear) or
+ * count at the row's right end: "5 / 8 On the shelf" (37n) / "3 / 5 On the shelf".
+ * The body is the open side's: GearList (37n's grid of gear tiles) or
  * BeansList (37c's grid of bag tiles, Add a bag, Finished bags ›). A tab or a sideways
  * swipe swaps all of it, slot count included; the tab follows the swipe
  * past the midpoint.
@@ -70,7 +70,7 @@ export default function GearBeansScreen({ side: openOn = SIDES[0], onBack, onAdd
 
   const slot =
     side === 'gear'
-      ? data && { value: `${data.gear.length} / ${GEAR_LIMIT}`, label: 'In my kit' }
+      ? data && { value: `${data.gear.length} / ${GEAR_LIMIT}`, label: 'On the shelf' }
       : data && { value: `${data.bags.length} / ${OPEN_BAG_LIMIT}`, label: 'On the shelf' };
   return (
     <ScreenFrame scroll compact title="Beans & gear" leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}>
@@ -85,10 +85,10 @@ export default function GearBeansScreen({ side: openOn = SIDES[0], onBack, onAdd
             onLayout={onPagerLayout}
             style={[styles.pager, heights[side] != null && { height: heights[side] }]}
             contentContainerStyle={styles.pagerContent}>
-            <View style={[styles.page, styles.beans, { width }]} onLayout={measure('beans')}>
+            <View style={[styles.page, styles.edge, { width }]} onLayout={measure('beans')}>
               <BeansList bags={data.bags} finished={data.finished} onAddBag={onAddBag} onFinished={onFinished} onEditBag={onEditBag} />
             </View>
-            <View style={[styles.page, { width }]} onLayout={measure('gear')}>
+            <View style={[styles.page, styles.edge, { width }]} onLayout={measure('gear')}>
               <GearList gear={data.gear} onAddGear={onAddGear} onEditGear={onEditGear} />
             </View>
           </Animated.ScrollView>
@@ -113,10 +113,10 @@ const styles = StyleSheet.create({
     paddingTop: TAB_OVERLAP,
     paddingHorizontal: layout.gutter,
   },
-  // Beans (Design Round 31 v2, 37c): the dots run edge to edge from the
-  // tabs' divider, which BeansList draws at its top; the open tab's
-  // underline sits centred on it, as on Home.
-  beans: {
+  // Both sides (Design Round 31 v2, 37c / 37n): the dots run edge to edge
+  // from the tabs' divider, which BeansList / GearList draw at their top;
+  // the open tab's underline sits centred on it, as on Home.
+  edge: {
     paddingTop: 0,
     paddingHorizontal: 0,
   },

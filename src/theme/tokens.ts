@@ -884,6 +884,18 @@ export const component = {
     empty: { gap: space[16], textWidth: 190, textTop: space[28], textGap: space[6], markGap: space[8] },
   },
   /**
+   * A piece of gear as a tile (Design Round 31 addendum, 2026-11-24: 37b,
+   * 37n, 37o, 37p). The bag tile's box, footprint, mat and caption; gear is
+   * never lifted, so a photo is always the print, and no photo is the ink
+   * block with the maker as its eyebrow and the type's icon (GearIcon):
+   * `share` of the block's width (64 on the shelf, 76 in the grid), centred
+   * across, its centre at `centreY` of the block's height. The icons are
+   * drawn on a `master` square at `stroke`, which scales with them.
+   */
+  gearTile: {
+    icon: { share: 0.62, centreY: 0.56, master: 64, stroke: 2.5 },
+  },
+  /**
    * The bag page's top (Design Round 31 v2, 37f–37h; components/BagTile.js
    * BagVisual, ScreenFrame's hero mode). The visual is visualHeight tall,
    * the dots full bleed. Its footprint is measured in the area under the

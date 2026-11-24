@@ -1,29 +1,27 @@
-import { Pressable, StyleSheet, View } from 'react-native';
-import AddButton from './base/AddButton';
-import Badge from './base/Badge';
-import Chevron from './base/Chevron';
-import PhotoPlaceholder from './base/PhotoPlaceholder';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { CAPTION_HEIGHT } from './BagTile';
+import GearTile from './GearTile';
+import DotGround from './base/DotGround';
+import Glyph from './base/Glyph';
 import Text from './base/Text';
 import { GEAR_CATEGORY, GEAR_LIMIT } from '../constants/gear';
-import { icon, layout, size, space, spacing, state } from '../theme/tokens';
+import { color, component, dashed, icon, layout, shape, space, state } from '../theme/tokens';
+
+const grid = component.bagTile.grid;
 
 /**
- * 3b's list — the gear side of Beans & gear (Round 14, 17c; 3b's own header
- * went with the merge: its "N / 8 In my kit" is the tab row's slot count).
+ * 3b's body — the gear side of Beans & gear, as a grid of gear tiles (Design
+ * Round 31 addendum, 2026-11-24: 37n; was 17c's rows). The tab row's slot
+ * count says "N / 8 On the shelf".
  *
- * A row per piece of gear, defaults first, then oldest added
- * (listGearWithUse): thumbnail, name (title) with a "Default" badge, and
- * "Brewer · used in 2 cups" / "· not used yet" (3b's copy), every kind
- * (a cup holds a kettle and a scale too since migration 14).
- * The whole row opens 3e, with the row chevron (D-26: no ⋮, no sheet).
- * Pressed: state.pressed.row across the screen's width (out through the
- * gutter, as 3d's "Finished bags").
- * No item dividers (Design Round 9), and no rule over the first row either:
- * 17c draws one for the tab's underline to land on; on device the rows sit
- * under the underline instead (Uryu, 2026-10-27).
- * "Add gear" (an AddButton, with "N slots left") → 3a; hidden at 8 / 8, as 3d.
- * The thumbnail is FieldRow's swatch (46); 3b draws 52, which has no token
- * (as 3d, drift D-51).
+ * The beans grid's layout (BeansList), gear in it: the dots edge to edge
+ * from the tabs' divider, two columns of 3 : 4 tiles, grid.gap apart, rows
+ * grid.rowGap apart, the same 66 caption, defaults first, then oldest added
+ * (listGearWithUse). Each tile is GearTile (the print or the icon block).
+ * No buttons: gear has nothing to do from the list. A tile opens 3e.
+ * The last cell, with a slot free: a dashed Add gear tile (dashed.addTile)
+ * with "N slots left" on its caption line → 3a; hidden at 8 / 8, as before.
+ * No Finished row: gear isn't finished.
  *
  * Props: gear (listGearWithUse), onAddGear, onEditGear(gear)
  */
@@ -32,72 +30,67 @@ export function gearLine(g) {
 }
 
 export default function GearList({ gear, onAddGear, onEditGear }) {
+  const { width } = useWindowDimensions();
+  const w = (width - 2 * layout.gutter - grid.gap) / 2;
+  const h = (w * 4) / 3;
   const left = GEAR_LIMIT - gear.length;
   return (
-    <View style={styles.body}>
-      <View>
+    <View style={styles.side}>
+      <DotGround />
+      <View style={[styles.grid, { columnGap: grid.gap, rowGap: grid.rowGap }]}>
         {gear.map((g) => (
-          <Pressable
-            key={g.id}
-            onPress={() => onEditGear(g)}
-            accessibilityRole="button"
-            accessibilityLabel={[g.name, g.is_default ? 'Default' : null, gearLine(g)].filter(Boolean).join(', ')}
-            accessibilityHint="Edit name and details"
-            style={({ pressed }) => [styles.touch, pressed && styles.pressed]}>
-            <View style={styles.row}>
-              <PhotoPlaceholder size={size.field.height} photo={g.photo_uri} />
-              <View style={styles.text}>
-                <View style={styles.nameRow}>
-                  <Text variant="title" truncate="name" style={styles.name}>
-                    {g.name}
-                  </Text>
-                  {g.is_default ? <Badge label="Default" tone="selected" /> : null}
-                </View>
-                <Text variant="bodySm" color="muted" truncate="meta">
-                  {gearLine(g)}
-                </Text>
-              </View>
-              <Chevron />
-            </View>
-          </Pressable>
+          <GearTile key={g.id} gear={g} width={w} height={h} onPress={() => onEditGear(g)} />
         ))}
+        {left > 0 ? (
+          <View style={{ width: w }}>
+            <Pressable
+              onPress={onAddGear}
+              accessibilityRole="button"
+              accessibilityLabel={`Add gear, ${left === 1 ? '1 slot left' : `${left} slots left`}`}
+              style={({ pressed }) => [styles.addCell, { height: h }, pressed && styles.pressed]}>
+              <Glyph name="plus" token={icon.sm} color={color.icon.default} />
+              <Text variant="tileStatus">Add gear</Text>
+            </Pressable>
+            <View style={[styles.slots, { height: CAPTION_HEIGHT }]}>
+              <Text variant="tileMeta" color="muted">
+                {left === 1 ? '1 slot left' : `${left} slots left`}
+              </Text>
+            </View>
+          </View>
+        ) : null}
       </View>
-      {left > 0 ? <AddButton icon="plus" iconToken={icon.sm} label="Add gear" tag={left === 1 ? '1 slot left' : `${left} slots left`} onPress={onAddGear} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  body: {
-    gap: space[14],
-    // Room under the last block so the bottom bar never covers it (as 2a).
+  // Edge to edge on the dots, from the tabs' divider; room under the last
+  // block so the bottom bar never covers it (as 2a).
+  side: {
+    borderTopWidth: shape.borderWidth.divider,
+    borderTopColor: color.border.soft,
+    paddingTop: grid.top,
     paddingBottom: layout.empty.block,
   },
-  // The touch area spans the screen (out through the gutter, padded back in).
-  touch: {
-    marginHorizontal: -layout.gutter,
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: layout.gutter,
+  },
+  addCell: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space[16],
+    gap: component.bagTile.empty.markGap,
+    borderWidth: dashed.addTile.width,
+    borderStyle: dashed.addTile.style,
+    borderColor: dashed.addTile.color,
+  },
+  // "N slots left" where a tile's caption would be.
+  slots: {
+    paddingTop: component.bagTile.caption.top,
   },
   pressed: {
     backgroundColor: state.pressed.row,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[12],
-    paddingVertical: spacing.inset.listRow.v,
-  },
-  text: {
-    flex: 1,
-    minWidth: 0,
-    gap: spacing.gap.tight,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.gap.row,
-  },
-  name: {
-    flexShrink: 1,
   },
 });
