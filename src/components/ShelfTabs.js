@@ -12,8 +12,9 @@ import Text from './base/Text';
  * 2026-10-27: the mock's 13 / .06em and 12 / .04em fold to it), gap.tight
  * apart. Open: ink label, accent count, a box-wide (2) ink underline.
  * Closed: muted label and count, no underline. size.tapTarget tall, the text
- * at its foot, space.6 over the underline (Uryu, 2026-11-17, on device: the
- * underline closer to its label; was space.12). The underlines follow the pages'
+ * at its foot, space.8 over the underline (LABEL_FOOT; Uryu, 2026-11-25: a
+ * little more air over the divider than 11-17's space.6; 11-17 brought it
+ * down from space.12). The underlines follow the pages'
  * scroll (`progress`): one fades out as the other fades in under the finger,
  * so they never jump; the labels switch at the midpoint.
  *
@@ -31,8 +32,13 @@ import Text from './base/Text';
  *   progress  Animated 0 (beans) … 1 (gear), from useShelfPager
  *   counts    { gear, beans }
  *   onSelect  (side) => void
- *   trailing  optional node at the row's right end, on the labels' foot
- *             (17c's slot count)
+ *   trailing  optional node at the row's right end, its text on the
+ *             tabs' baseline (Home's "See all", 17c's slot count). The row
+ *             aligns by baseline, not by a matching padding (Uryu,
+ *             2026-11-25: the padding kept 11-17's old space.12 and sat 6
+ *             higher; and "See all" centres its label on a 16 chevron, a
+ *             line taller than the label, so even a matching padding left
+ *             it ~1.5 high)
  */
 export const TAB_OVERLAP = shape.borderWidth.divider + (shape.borderWidth.box - shape.borderWidth.divider) / 2;
 
@@ -43,6 +49,9 @@ export const TAB_OVERLAP = shape.borderWidth.divider + (shape.borderWidth.box - 
  */
 export const SIDES = ['beans', 'gear'];
 const [FIRST, SECOND] = SIDES;
+
+/** From a tab label's foot to the tab's foot: the gap, then the underline. */
+const LABEL_FOOT = space[8] + shape.borderWidth.box;
 
 const TABS = [
   { side: 'beans', label: 'My beans' },
@@ -58,7 +67,7 @@ export default function ShelfTabs({ active, progress, counts, onSelect, trailing
           <Tab key={t.side} label={t.label} count={counts[t.side]} on={active === t.side} underline={shown[t.side]} onPress={() => onSelect(t.side)} />
         ))}
       </View>
-      {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
+      {trailing}
     </View>
   );
 }
@@ -185,9 +194,10 @@ export function SlotCount({ value, label }) {
 }
 
 const styles = StyleSheet.create({
+  // Baseline: a tab's is its label's, the trailing's its first text's.
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: spacing.gap.section,
     marginBottom: -TAB_OVERLAP,
@@ -201,7 +211,7 @@ const styles = StyleSheet.create({
   tab: {
     minHeight: size.tapTarget,
     justifyContent: 'flex-end',
-    paddingBottom: space[6] + shape.borderWidth.box,
+    paddingBottom: LABEL_FOOT,
   },
   underline: {
     position: 'absolute',
@@ -215,10 +225,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: spacing.gap.tight,
-  },
-  // On the labels' foot: the same space.12 over the underline's line.
-  trailing: {
-    paddingBottom: space[12] + shape.borderWidth.box,
   },
   slot: {
     flexDirection: 'row',
