@@ -279,6 +279,7 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
             {cups ? (
               <ItemCups
                 cups={cups}
+                page="bag"
                 heading="Cups from this bag"
                 emptyLine="No cups from this bag yet."
                 logLabel="Log a cup from it"

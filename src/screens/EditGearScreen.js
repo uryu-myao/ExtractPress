@@ -217,6 +217,7 @@ export default function EditGearScreen({ gear, onBack, onRemoved, guardLeave }) 
             {cupList ? (
               <ItemCups
                 cups={cupList}
+                page={gear.category}
                 heading={`Cups with this ${kind}`}
                 emptyLine={`No cups with this ${kind} yet.`}
                 logLabel="Log a cup with it"
