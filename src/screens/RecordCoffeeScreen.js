@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Keyboard, StyleSheet, View } from 'react-native';
 import Button from '../components/base/Button';
 import FieldRow from '../components/base/FieldRow';
 import Glyph from '../components/base/Glyph';
@@ -11,6 +11,7 @@ import SegmentedControl from '../components/base/SegmentedControl';
 import StarRating from '../components/base/StarRating';
 import Text from '../components/base/Text';
 import CafeSheet from '../components/CafeSheet';
+import DiscardSheet from '../components/DiscardSheet';
 import PickerSheet from '../components/PickerSheet';
 import RequiredBar from '../components/RequiredBar';
 import SearchSheet, { withChosen } from '../components/SearchSheet';
@@ -363,6 +364,7 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
     required,
     missing,
     missingFields,
+    hasInput,
     save,
   } = useRecordDraft();
   const db = useDatabase();
@@ -420,6 +422,17 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
     if (missing) goToFirst();
   }, [missing, goToFirst]);
 
+  // Close with something entered asks first (Uryu, 2026-11-26; Round 4's
+  // discard sheet): the cup isn't kept anywhere once the sheet closes.
+  const close = () => {
+    if (!hasInput) {
+      onClose();
+      return;
+    }
+    Keyboard.dismiss();
+    setPicking('discard');
+  };
+
   // The defaults are a local read (milliseconds); render once they are in, so
   // the field sets never flash empty values while the sheet slides up.
   if (!defaults) return null;
@@ -432,7 +445,7 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
         scrollRef={scrollRef}
         footerTone={missing ? 'error' : undefined}
         title="Log a cup"
-        leading={<IconButton icon="close" accessibilityLabel="Close" onPress={onClose} />}
+        leading={<IconButton icon="close" accessibilityLabel="Close" onPress={close} />}
         meta={<WhenMeta at={now} />}
         footer={
           <>
@@ -556,6 +569,16 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
         onAdd={addProduct}
       />
       <CafeSheet visible={picking === 'cafe'} onClose={() => setPicking(null)} selected={cafe} kept={kept.cafes} onPick={chooseCafe} />
+      {/* Copy ours (TODO: Design): Round 4's sheet, its body for a cup not saved yet. */}
+      <DiscardSheet
+        visible={picking === 'discard'}
+        onClose={() => setPicking(null)}
+        body="This cup won't be logged. What you entered isn't kept."
+        onDiscard={() => {
+          setPicking(null);
+          onClose();
+        }}
+      />
       {/* "Drink name", to pair with "Café name" (Design Round 16, B3). */}
       <SearchSheet
         visible={picking === 'drink'}

@@ -75,12 +75,13 @@ import ScreenFrame from './ScreenFrame';
  *   Opened on   from the roast date to the first cup (no cups: today).
  * Leaving with edits asks first (Round 4's sheet; the bag's own body).
  * Delete: 11b's sheet with "bag" (Round 6, 36); back with 13b's notice.
- * Photo (2026-11-02, Uryu): the status block's square is the photo and the
- * way to change it: it opens PhotoSheet (take, choose, remove; the same
- * sheet as 3c's, PROVISIONAL until Design Round 19). With none, "No photo
- * yet. Tap to add one." beside it (19c's line). A change applies at once,
- * not through the Save bar: the sheet's "Use this photo" is its own confirm,
- * as Finish is. The replaced photo's files go with it.
+ * Photo: the camera button (37m, above) opens the Bag photo sheet. A change
+ * applies at once, not through the Save bar, as Finish does. There is no
+ * confirm step (Design Turn 37, 2026-11-25: the "Use this photo / Choose
+ * another" sheet is gone); a wrong photo is retaken from the same button.
+ * The replaced photo's files go with it; the new one's cutout is made in
+ * the background. TODO(Design): Turn 37 plays the lift on Add a bag only;
+ * whether a retake here plays it too isn't drawn.
  */
 const countFormat = new Intl.NumberFormat('en-US');
 

@@ -11,18 +11,18 @@ import Glyph from './base/Glyph';
 import Text from './base/Text';
 
 /**
- * Adding a photo (2026-11-01; bags first, 3c). PROVISIONAL throughout: the
- * choice, the confirm screen and their words wait on Design Round 19 (A3,
- * A4, A8). One bottom sheet, two steps:
+ * Adding a photo (2026-11-01; bags first, 3c). One bottom sheet:
  *   choose   "Take a photo" / "Choose from library" (and "Remove photo"
  *            when the field has one)
- *   confirm  the photo as it will be kept, in full colour (the duotone it
- *            showed until 2026-11-23 is retired), with "Use this photo" and
- *            "Choose another". A bag's cutout is made after Save, in the
- *            background (data/photos.ts makeCutouts). TODO(Round 31):
- *            whether the confirm step shows the cutout is Design's call
+ *   confirm  gear only: the photo as it will be kept, with "Use this photo"
+ *            and "Choose another". A bag has no confirm step (Design Turn
+ *            37, 2026-11-25: on Add a bag the lift is the confirmation, the
+ *            camera button changes the photo; 38b): the photo goes straight
+ *            back to the screen
  * Nothing is kept until the screen's own Save: the sheet hands back a
  * prepared photo (data/photos.ts preparePhoto), the screen keeps it.
+ * usePhotoPick is the taking and choosing without the sheet: Add a bag's
+ * footprint offers both on the page (38a).
  *
  * Failures say what happened and change nothing: no camera (the simulator),
  * the camera refused (with a way to Settings), the photo couldn't be read,
@@ -46,24 +46,127 @@ import Text from './base/Text';
  *
  * Props
  *   visible, onClose
- *   onChosen   (PendingPhoto) => void, after "Use this photo"
+ *   onChosen   (PendingPhoto) => void: a bag's at once, gear's after "Use this photo"
  *   onRemove   optional: offers "Remove photo"
  *   guide      optional 'bag': take the photo with BagCamera's frame
+ *   removeNote the line under Remove photo (bag sheet). Add a bag passes
+ *              null: there the footprint comes back, not the letter block
  */
-export default function PhotoSheet({ visible, onClose, onChosen, onRemove, guide }) {
+export default function PhotoSheet({ visible, onClose, onChosen, onRemove, guide, removeNote = 'The letter block takes its place' }) {
   const { width } = useWindowDimensions();
-  // null (choose) | 'working' | { id, uri } (confirm)
-  const [step, setStep] = useState(null);
-  const [framing, setFraming] = useState(false);
+  // A bag's photo goes straight back (no confirm step, 38b); gear's waits in the sheet.
+  const { step, setStep, pick, camera } = usePhotoPick({ guide, onChosen: guide === 'bag' ? onChosen : undefined });
 
   // Closing at any step drops a photo not taken.
   useEffect(() => {
     if (!visible) setStep(null);
-  }, [visible]);
+  }, [visible, setStep]);
 
   const close = () => {
     if (step && step !== 'working') dropPhoto(step.id);
     onClose();
+  };
+
+  const use = () => {
+    const chosen = step;
+    setStep(null);
+    onChosen(chosen);
+  };
+
+  const again = () => {
+    dropPhoto(step.id);
+    setStep(null);
+  };
+
+  const preview = width - 2 * layout.gutter;
+  return (
+    <>
+      {camera}
+      <BottomSheet visible={visible} onClose={close} swipeToClose>
+        {step === 'working' ? (
+          <View style={[styles.working, { height: preview * 0.75 }]}>
+            <ActivityIndicator color={color.text.primary} />
+            <Text variant="meta" color="muted">
+              Preparing the photo…
+            </Text>
+          </View>
+        ) : step ? (
+          <View style={styles.body}>
+            <Image source={{ uri: step.uri }} style={{ width: preview, height: preview * 0.75 }} resizeMode="contain" accessibilityLabel="The photo as it will be kept" />
+            <Button label="Use this photo" onPress={use} />
+            <Button variant="secondary" label="Choose another" onPress={again} />
+          </View>
+        ) : guide === 'bag' ? (
+          <View style={styles.body}>
+            <Text variant="displaySm">Bag photo</Text>
+            <View>
+              <SheetRow glyph="photo" label={onRemove ? 'Retake photo' : 'Take a photo'} onPress={() => pick('camera')} />
+              <SheetRow glyph="photos" label="Choose from Photos" onPress={() => pick('library')} last={!onRemove} />
+              {onRemove ? (
+                <SheetRow
+                  glyph="trash"
+                  label="Remove photo"
+                  sub={removeNote ?? undefined}
+                  destructive
+                  last
+                  onPress={() => {
+                    onRemove();
+                    onClose();
+                  }}
+                />
+              ) : null}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.body}>
+            <Button variant="secondary" label="Take a photo" onPress={() => pick('camera')} />
+            <Button variant="secondary" label="Choose from library" onPress={() => pick('library')} />
+            {onRemove ? (
+              <Button
+                variant="text"
+                destructive
+                label="Remove photo"
+                onPress={() => {
+                  onRemove();
+                  onClose();
+                }}
+              />
+            ) : null}
+          </View>
+        )}
+      </BottomSheet>
+    </>
+  );
+}
+
+/**
+ * Taking or choosing a photo, without the sheet (PhotoSheet's choose step,
+ * Add a bag's footprint, 38a). pick('camera' | 'library') checks the module
+ * and the camera permission, takes the photo (a bag's through BagCamera,
+ * whose modal is `camera`, to be rendered by the caller) and prepares it.
+ * With onChosen the prepared photo goes straight to it; without, it waits
+ * in `step` (PhotoSheet's confirm). step: null | 'working' | PendingPhoto.
+ * Failures say what happened and change nothing.
+ */
+export function usePhotoPick({ guide, onChosen }) {
+  const [step, setStep] = useState(null);
+  const [framing, setFraming] = useState(false);
+
+  const prepare = async (uri) => {
+    try {
+      setStep('working');
+      const photo = await preparePhoto(uri);
+      if (onChosen) {
+        setStep(null);
+        onChosen(photo);
+      } else {
+        setStep(photo);
+      }
+    } catch (error) {
+      console.error('[photo] could not prepare the photo', error);
+      setStep(null);
+      Alert.alert("The photo couldn't be used", String(error?.message ?? error));
+    }
   };
 
   const pick = async (source) => {
@@ -97,94 +200,18 @@ export default function PhotoSheet({ visible, onClose, onChosen, onRemove, guide
     }
   };
 
-  const prepare = async (uri) => {
-    try {
-      setStep('working');
-      setStep(await preparePhoto(uri));
-    } catch (error) {
-      console.error('[photo] could not prepare the photo', error);
-      setStep(null);
-      Alert.alert("The photo couldn't be used", String(error?.message ?? error));
-    }
-  };
-
-  const use = () => {
-    const chosen = step;
-    setStep(null);
-    onChosen(chosen);
-  };
-
-  const again = () => {
-    dropPhoto(step.id);
-    setStep(null);
-  };
-
-  const preview = width - 2 * layout.gutter;
-  return (
-    <>
-      <BagCamera
-        visible={framing}
-        onCancel={() => setFraming(false)}
-        onTaken={(uri) => {
-          setFraming(false);
-          prepare(uri);
-        }}
-      />
-      <BottomSheet visible={visible} onClose={close} swipeToClose>
-        {step === 'working' ? (
-          <View style={[styles.working, { height: preview * 0.75 }]}>
-            <ActivityIndicator color={color.text.primary} />
-            <Text variant="meta" color="muted">
-              Preparing the photo…
-            </Text>
-          </View>
-        ) : step ? (
-          <View style={styles.body}>
-            <Image source={{ uri: step.uri }} style={{ width: preview, height: preview * 0.75 }} resizeMode="contain" accessibilityLabel="The photo as it will be kept" />
-            <Button label="Use this photo" onPress={use} />
-            <Button variant="secondary" label="Choose another" onPress={again} />
-          </View>
-        ) : guide === 'bag' ? (
-          <View style={styles.body}>
-            <Text variant="displaySm">Bag photo</Text>
-            <View>
-              <SheetRow glyph="photo" label={onRemove ? 'Retake photo' : 'Take a photo'} onPress={() => pick('camera')} />
-              <SheetRow glyph="photos" label="Choose from Photos" onPress={() => pick('library')} last={!onRemove} />
-              {onRemove ? (
-                <SheetRow
-                  glyph="trash"
-                  label="Remove photo"
-                  sub="The letter block takes its place"
-                  destructive
-                  last
-                  onPress={() => {
-                    onRemove();
-                    onClose();
-                  }}
-                />
-              ) : null}
-            </View>
-          </View>
-        ) : (
-          <View style={styles.body}>
-            <Button variant="secondary" label="Take a photo" onPress={() => pick('camera')} />
-            <Button variant="secondary" label="Choose from library" onPress={() => pick('library')} />
-            {onRemove ? (
-              <Button
-                variant="text"
-                destructive
-                label="Remove photo"
-                onPress={() => {
-                  onRemove();
-                  onClose();
-                }}
-              />
-            ) : null}
-          </View>
-        )}
-      </BottomSheet>
-    </>
+  const camera = (
+    <BagCamera
+      visible={framing}
+      onCancel={() => setFraming(false)}
+      onTaken={(uri) => {
+        setFraming(false);
+        prepare(uri);
+      }}
+    />
   );
+
+  return { step, setStep, pick, camera };
 }
 
 /** A row of the Bag photo sheet (37m): glyph, label, optional sub line; a line under all but the last. */

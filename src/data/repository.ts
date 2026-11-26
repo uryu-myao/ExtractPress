@@ -71,7 +71,7 @@ export async function countOpenBags(db: SQLiteDatabase): Promise<number> {
 /** bestBefore: the best-before date (migration 9), a local midnight, or null. 3c takes one date; either may be set. */
 /** roastLevel: the label's roast level (four values), or null: not recorded. */
 /** origin, region: as picked or written (origins.json names, or free text), or null. */
-export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; bestBefore?: number | null; process?: Bag['process']; roastLevel?: Bag['roast_level']; origin?: string | null; region?: string | null; open: boolean; photo?: string | null };
+export type NewBag = { name: string; roaster: string | null; roastedAt: number | null; bestBefore?: number | null; process?: Bag['process']; roastLevel?: Bag['roast_level']; origin?: string | null; region?: string | null; open: boolean; photo?: string | null; photoCutout?: number | null };
 
 /**
  * Add a bag: opened now (3c "Open this bag"), or not yet (3c "Add without
@@ -81,7 +81,7 @@ export type NewBag = { name: string; roaster: string | null; roastedAt: number |
  */
 export async function insertBag(db: SQLiteDatabase, bag: NewBag): Promise<Bag> {
   if ((await countOpenBags(db)) >= OPEN_BAG_LIMIT) throw new Error(`All ${OPEN_BAG_LIMIT} slots are taken. Finish a bag to free one up.`);
-  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, best_before, process, roast_level, origin, region, opened_at, photo_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+  const result = await db.runAsync('INSERT INTO bags (name, roaster, roasted_at, best_before, process, roast_level, origin, region, opened_at, photo_uri, photo_cutout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
     bag.name,
     bag.roaster,
     bag.roastedAt,
@@ -92,6 +92,8 @@ export async function insertBag(db: SQLiteDatabase, bag: NewBag): Promise<Bag> {
     bag.region ?? null,
     bag.open ? Date.now() : null,
     bag.photo ?? null,
+    // Add a bag's lift (photos.ts liftPhoto) already made the cutout; NULL: not tried, makeCutouts will.
+    bag.photo ? (bag.photoCutout ?? null) : null,
   ]);
   const row = await db.getFirstAsync<Bag & { notes: string }>('SELECT * FROM bags WHERE id = ?', [result.lastInsertRowId]);
   if (!row) throw new Error('The bag was not stored.');

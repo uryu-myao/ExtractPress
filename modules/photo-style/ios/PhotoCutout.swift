@@ -18,10 +18,14 @@ import Vision
  *     (the shelf's). Both or neither. Resolves
  *       { found: false }  no subject (nothing written; the app shows the
  *                         rectangular photo)
- *       { found: true, width, height, edges: { top, right, bottom, left } }
+ *       { found: true, width, height, edges: { top, right, bottom, left },
+ *         box: { x, y, width, height } }
  *     edges: the sides of the PHOTO the cutout runs into, where a held bag's
  *     hand is cut off (Round 31, 2a). A side counts when more than
  *     options.edgeShare of it is inside the mask.
+ *     box: where the cutout was in the photo, as shares of the photo's
+ *     width and height from its top left (Add a bag's lift, Design Turn 37,
+ *     38b: the cutout starts where it was in the photo, then settles).
  *
  * The fade (Design Round 31 v2, §6, 37i): the straight line where the photo
  * cut the subject is what reads as a severed hand, so it is faded out, once,
@@ -76,6 +80,7 @@ func makeCutout(_ context: CIContext, original: String, large: String, small: St
   }
 
   let edges = edgesTouched(mask, share: options.edgeShare)
+  let box = maskBox(mask)
   let cut = faded(CIImage(cvPixelBuffer: masked), alpha: masked, edges: edges, share: options.fade)
   try writeHEIC(context, cut, to: fileURL(large), quality: options.quality)
   do {
@@ -89,6 +94,7 @@ func makeCutout(_ context: CIContext, original: String, large: String, small: St
     "width": Int(cut.extent.width.rounded()),
     "height": Int(cut.extent.height.rounded()),
     "edges": edges,
+    "box": box,
   ]
 }
 
@@ -122,6 +128,34 @@ private func edgesTouched(_ mask: CVPixelBuffer, share: Double) -> [String: Bool
     "left": covers((0..<height).filter { inside(0, $0) }.count, of: height),
     "right": covers((0..<height).filter { inside(width - 1, $0) }.count, of: height),
   ]
+}
+
+/**
+ * The mask's bounding box (any pixel above 0), as shares of its width and
+ * height from the top left: where the cutout sat in the photo. The whole
+ * photo when the mask is empty (it isn't, once an instance was found).
+ */
+private func maskBox(_ mask: CVPixelBuffer) -> [String: Double] {
+  CVPixelBufferLockBaseAddress(mask, .readOnly)
+  defer { CVPixelBufferUnlockBaseAddress(mask, .readOnly) }
+  let width = CVPixelBufferGetWidth(mask)
+  let height = CVPixelBufferGetHeight(mask)
+  let row = CVPixelBufferGetBytesPerRow(mask)
+  let whole: [String: Double] = ["x": 0, "y": 0, "width": 1, "height": 1]
+  guard width > 0, height > 0, let base = CVPixelBufferGetBaseAddress(mask) else { return whole }
+  var minX = width, minY = height, maxX = -1, maxY = -1
+  for y in 0..<height {
+    let line = base.advanced(by: y * row).assumingMemoryBound(to: Float.self)
+    for x in 0..<width where line[x] > 0 {
+      if x < minX { minX = x }
+      if x > maxX { maxX = x }
+      if y < minY { minY = y }
+      if y > maxY { maxY = y }
+    }
+  }
+  guard maxX >= minX, maxY >= minY else { return whole }
+  let w = Double(width), h = Double(height)
+  return ["x": Double(minX) / w, "y": Double(minY) / h, "width": Double(maxX - minX + 1) / w, "height": Double(maxY - minY + 1) / h]
 }
 
 /**

@@ -251,6 +251,8 @@ export const textStyle = {
 
   /** lineHeight UNDECLARED in source */
   title:         { fontFamily: 'Archivo', fontSize: 16, fontWeight: '700' },
+  /** Add a bag's Roaster value (Design Turn 37, 38a: 16 / 600 ink; the placeholder takes the same face, a TextInput has one) */
+  fieldValue:    { fontFamily: 'Archivo', fontSize: 16, fontWeight: '600' },
   /** lineHeight UNDECLARED in source */
   label:         { fontFamily: 'Archivo', fontSize: 15, fontWeight: '700' },
   body:          { fontFamily: 'Archivo', fontSize: 14, fontWeight: '500', lineHeight: 21 },
@@ -332,6 +334,8 @@ export const textStyle = {
   rowWhen:       { fontFamily: 'Archivo', fontSize: 11, fontWeight: '600', letterSpacing: 0.44, fontVariant: ['tabular-nums'] },
   /** lineHeight UNDECLARED · 0.12em x 10 (was 0.16em; tightened on Uryu's ask, 2026-11-09) */
   labelEyebrow:  { fontFamily: 'Archivo', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
+  /** lineHeight UNDECLARED · 9 / 700 caps, .14em: the Optional tag (Design Turn 37, 38a; Badge placement 'tag') */
+  tagCaps:       { fontFamily: 'Archivo', fontSize: 9, fontWeight: '700', letterSpacing: 1.26, textTransform: 'uppercase' },
   /** A bag tile's caption (Design Round 31, 37a): the name, the status under it ("Day 7 · drink now"), and the roaster over a letter block. */
   tileName:      { fontFamily: 'Archivo', fontSize: 14, fontWeight: '700', lineHeight: 18 },
   tileMeta:      { fontFamily: 'Archivo', fontSize: 12, fontWeight: '500', lineHeight: 16 },
@@ -415,6 +419,8 @@ export const spacing = {
     inline:     { v: space[4], h: space[8] },
     /** chips that sit alone on a surface */
     standalone: { v: space[8], h: space[12] },
+    /** the Optional tag beside a label (Design Turn 37, 38a: 3 / 6) */
+    tag:        { v: 3, h: space[6] },
   },
   gap: {
     /** within one meaning unit (label + value, heading + caption) */
@@ -565,6 +571,8 @@ export const icon = {
   lg: { size: 22, strokeWidth: 1.8 },
   /** The bag photo's glyphs (Design Round 31 v2, 37m): the bag page's photo button and the Bag photo sheet's rows, 20 at 2.2. */
   action: { size: 20, strokeWidth: 2.2 },
+  /** Add a bag's empty footprint (Design Turn 37, 38a): the camera over Take a photo, 22 at 2.2. */
+  ghost: { size: 22, strokeWidth: 2.2 },
   /** decorative large glyph — stroke widens back */
   xl: { size: 38, strokeWidth: 2.0 },
   /** 5b's ✕ on a 24 square (30b): 12 at 3, so the cross holds its weight that small */
@@ -925,6 +933,52 @@ export const component = {
     pull: { max: 120, dots: 132 },
     title: { top: 18, gap: space[4] },
     bodyTop: space[16],
+  },
+  /**
+   * Add a bag, the bag page before it's filled (Design Turn 37, 38a–38c;
+   * components/BagLift.js). Its visual is the bag page's (bagPage); these
+   * are what only Add a bag draws there.
+   *   ghost   the empty footprint (152 × 213 at 402, the page's): dashed
+   *           (dashed.addTile), paper at 72 %, the camera (in
+   *           text.placeholder, Bean name's placeholder; Uryu, 2026-11-26),
+   *           Take a photo and Choose from Photos stacked `gap` apart, the
+   *           last two `linkGap` apart (Uryu, 2026-11-26: 10 was easy to
+   *           mis-tap), `padX` inside
+   *   photo   the shot as it lands: 3 : 4, its top on the floating
+   *           buttons' foot (the bar's line), `height` of the area under
+   *           that line (as the footprint is measured; 204 × 272 at 402),
+   *           centred
+   *   line    the pull's line: paper, `height` tall with an `edge` ink top,
+   *           reaching `overhang` past the photo on each side
+   *   halo    the paper glow round the cutout once lifted (38b's
+   *           drop-shadow 0 / 3 / 6, as one iOS shadow)
+   *   note    "Lifted out · …" and "Couldn't lift it out · …", both
+   *           `bottom` above the visual's foot, under the bag (Uryu,
+   *           2026-11-26; 38b draws the first under the bar's line);
+   *           eyebrow, text.secondary; shown `hold`, faded in and out over
+   *           `fade`
+   *   time    38b's storyboard (ms): the shot, the pull, the halo (in, then
+   *           out), the settle; `breathe` one half of the wait's pulse
+   *           (opacity breatheMin ↔ 1); `crossfade` Reduce Motion's and the
+   *           failed lift's; `ui` the camera button's fade in
+   *   ease    38b's cubic-bezier(.2, .7, .2, 1), the shot and the settle
+   */
+  /**
+   * Add a bag's fields under the visual (Design Turn 37, 38a, revised
+   * 2026-11-26): the name's line (1.5 border.muted) `nameLine` under the
+   * name; the Roaster field `roasterTop` under that line, its label row and
+   * its `roasterHeight` value line `labelGap` apart. 38a draws 6 and 40;
+   * closer on Uryu's ask (2026-11-26): the label read far from its value.
+   */
+  addBag: { nameLine: space[8], roasterTop: space[16], labelGap: space[2], roasterHeight: 34 },
+  bagLift: {
+    ghost: { fill: 'rgba(244, 237, 234, 0.72)', gap: 10, linkGap: space[20], padX: space[12] },
+    photo: { height: 272 / 280, aspect: 3 / 4, scaleFrom: 0.96 },
+    line: { height: 3, edge: 1, overhang: space[8], color: color.surface.raised, edgeColor: color.text.primary },
+    halo: { color: color.surface.raised, radius: 4 },
+    note: { bottom: space[8], hold: 2000, fade: 200 },
+    time: { shot: 200, pull: 700, haloIn: 100, haloOut: 100, settle: 400, breathe: 600, breatheMin: 0.4, crossfade: 200, ui: 200 },
+    ease: [0.2, 0.7, 0.2, 1] as const,
   },
   /**
    * The bag camera (Design Round 31 v2, 37j; components/BagCamera.js). Over

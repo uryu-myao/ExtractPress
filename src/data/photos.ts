@@ -1,6 +1,6 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { cutOut, writeOriginal, type CutoutEdges } from '../../modules/photo-style';
+import { cutOut, writeOriginal, type CutoutBox, type CutoutEdges } from '../../modules/photo-style';
 import { notifyShelfChanged } from './repository';
 
 /**
@@ -23,6 +23,12 @@ import { notifyShelfChanged } from './repository';
  *   keepPhoto(id)         moves it into Documents/photos, after Save
  *   dropPhoto(id)         a prepared photo not kept
  * deletePhoto(id) removes a kept one with its row.
+ *
+ * Add a bag lifts its photo while it is still pending (Design Turn 37, 38b:
+ * the lift is the confirmation, played on the page): liftPhoto(pending)
+ * writes the cutouts next to the pending original, keepPhoto moves them
+ * with it, and the bag is stored with the code liftPhoto gave
+ * (insertBag's photoCutout), so makeCutouts has nothing left to do for it.
  *
  * Cutouts (bags only): never made while the user waits. After a bag's photo
  * is set, and on every launch, makeCutouts() works through the bags whose
@@ -60,8 +66,8 @@ const MAX_EDGES = 2;
 export const CUTOUT_EDGE = { made: 1, top: 2, right: 4, bottom: 8, left: 16 } as const;
 
 const original = (dir: Directory, id: string) => new File(dir, `${id}.jpg`);
-const cutLarge = (id: string) => new File(KEPT, `${id}-cut.heic`);
-const cutSmall = (id: string) => new File(KEPT, `${id}-cut-s.heic`);
+const cutLarge = (id: string, dir: Directory = KEPT) => new File(dir, `${id}-cut.heic`);
+const cutSmall = (id: string, dir: Directory = KEPT) => new File(dir, `${id}-cut-s.heic`);
 /** Every file a kept photo may have, the retired duotone copy included. */
 const keptFiles = (id: string) => [original(KEPT, id), cutLarge(id), cutSmall(id), new File(KEPT, `${id}-styled.jpg`)];
 
@@ -70,24 +76,78 @@ const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slic
 /** A file's URI with its time, so a remade file isn't shown from the image cache under the same name. */
 const fresh = (file: File) => `${file.uri}?v=${file.lastModified ?? 0}`;
 
-/** A photo ready to confirm: its id and the original to show. */
-export type PendingPhoto = { id: string; uri: string };
+/** A photo not kept yet: its id, the original to show and its size in pixels. */
+export type PendingPhoto = { id: string; uri: string; width: number; height: number };
 
 export async function preparePhoto(pickedUri: string): Promise<PendingPhoto> {
   PENDING.create({ intermediates: true, idempotent: true });
   const id = newId();
-  await writeOriginal(pickedUri, original(PENDING, id).uri, ORIGINAL.longSide, ORIGINAL.quality);
-  return { id, uri: original(PENDING, id).uri };
+  const { width, height } = await writeOriginal(pickedUri, original(PENDING, id).uri, ORIGINAL.longSide, ORIGINAL.quality);
+  return { id, uri: original(PENDING, id).uri, width, height };
 }
 
+/** The original, and the cutouts liftPhoto made for it, if any. */
 export async function keepPhoto(id: string): Promise<void> {
   KEPT.create({ intermediates: true, idempotent: true });
   await original(PENDING, id).move(original(KEPT, id));
+  for (const [from, to] of [
+    [cutLarge(id, PENDING), cutLarge(id)],
+    [cutSmall(id, PENDING), cutSmall(id)],
+  ]) {
+    if (!from.exists) continue;
+    if (to.exists) to.delete();
+    await from.move(to);
+  }
 }
 
 export function dropPhoto(id: string): void {
-  const file = original(PENDING, id);
-  if (file.exists) file.delete();
+  for (const file of [original(PENDING, id), cutLarge(id, PENDING), cutSmall(id, PENDING)]) {
+    try {
+      if (file.exists) file.delete();
+    } catch (error) {
+      console.warn('[photos] could not drop', file.uri, error);
+    }
+  }
+}
+
+/**
+ * A pending bag photo lifted out (Add a bag, 38b):
+ *   code   bags.photo_cutout to store with the bag (0: not lifted, the print)
+ *   uri    the large cutout, null when not lifted
+ *   aspect the cutout's width ÷ height
+ *   edges  the sides it runs into (placement)
+ *   box    where it sat in the photo (shares of the photo), null from a
+ *          build made before 2026-11-25
+ * Rejects when Vision itself fails: the bag is stored with photo_cutout
+ * NULL, and makeCutouts tries again after it is added.
+ */
+export type Lift = { code: number; uri: string | null; aspect: number | null; edges: CutoutEdges | null; box: CutoutBox | null };
+
+export async function liftPhoto(photo: PendingPhoto): Promise<Lift> {
+  const result = await cutOutFiles(original(PENDING, photo.id), cutLarge(photo.id, PENDING), cutSmall(photo.id, PENDING));
+  if (!result.found || !result.code) return { code: 0, uri: null, aspect: null, edges: null, box: null };
+  return {
+    code: result.code,
+    uri: fresh(cutLarge(photo.id, PENDING)),
+    aspect: result.width / result.height,
+    edges: cutoutEdges(result.code),
+    box: result.box ?? null,
+  };
+}
+
+/**
+ * Lift one original into its two cutout files, with the code to store
+ * (schema.ts bags.photo_cutout). Throws when Vision fails.
+ */
+async function cutOutFiles(source: File, large: File, small: File) {
+  const result = await cutOut(source.uri, large.uri, small.uri, CUTOUT);
+  if (!result.found) return { ...result, code: 0 };
+  if (Object.values(result.edges).filter(Boolean).length > MAX_EDGES) {
+    // The photo again: shown as the print, so its cutout files go.
+    for (const file of [large, small]) if (file.exists) file.delete();
+    return { ...result, code: 0 };
+  }
+  return { ...result, code: cutoutCode(result.edges) };
 }
 
 export function deletePhoto(id: string | null | undefined): void {
@@ -181,14 +241,7 @@ async function cutoutPass(db: SQLiteDatabase): Promise<void> {
     if (!original(KEPT, row.photo).exists) continue;
     let code: number;
     try {
-      const result = await cutOut(original(KEPT, row.photo).uri, cutLarge(row.photo).uri, cutSmall(row.photo).uri, CUTOUT);
-      if (result.found && Object.values(result.edges).filter(Boolean).length > MAX_EDGES) {
-        // The photo again: shown as the print, so its cutout files go.
-        for (const file of [cutLarge(row.photo), cutSmall(row.photo)]) if (file.exists) file.delete();
-        code = 0;
-      } else {
-        code = result.found ? cutoutCode(result.edges) : 0;
-      }
+      ({ code } = await cutOutFiles(original(KEPT, row.photo), cutLarge(row.photo), cutSmall(row.photo)));
     } catch (error) {
       console.warn('[photos] cutout failed', row.photo, error);
       continue;

@@ -140,9 +140,11 @@ export default function ShellStack() {
           <AddBagScreen
             prefill={entry.prefill}
             onBack={goBack}
+            guardLeave={guardLeave}
             onAdded={() => {
               setStack((s) => (s.some((e) => e.name === 'shelf' && !e.leaving) ? s : [{ name: 'shelf', side: 'beans', key: (nextKey.current += 1) }, ...s]));
-              goBack();
+              // Added: nothing left to discard (the leave guard, Uryu 2026-11-26).
+              goBack({ force: true });
             }}
           />
         );

@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { color, shape, space, spacing, state } from '../../theme/tokens';
+import { color, shape, size, space, spacing, state } from '../../theme/tokens';
 import Chevron from './Chevron';
 import Text from './Text';
 
@@ -21,10 +21,14 @@ import Text from './Text';
  *
  *   flush    no side padding: rows inside a card that pads them already (the
  *            bag form's Details, under Roaster; Uryu, 2026-11-15)
+ *   framed   at least size.control.row (52) tall, keeping its own side
+ *            padding (listRow.h, 16): Add a bag's "About the coffee" frame
+ *            (Design Turn 37, 38a: rows of 52). The frame doesn't pad, so
+ *            the pressed fill runs the frame's full width (Uryu, 2026-11-26)
  *
- * Props: label, value (null: "Add"), onPress, divided, flush, flag
+ * Props: label, value (null: "Add"), onPress, divided, flush, framed, flag
  */
-export default function DetailRow({ label, value, onPress, divided = false, flush = false, flag }) {
+export default function DetailRow({ label, value, onPress, divided = false, flush = false, framed = false, flag }) {
   const empty = value == null || value === '';
   return (
     <Pressable
@@ -32,7 +36,7 @@ export default function DetailRow({ label, value, onPress, divided = false, flus
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${empty ? 'not recorded' : value}`}
       accessibilityHint={empty ? 'Add' : 'Change'}
-      style={({ pressed }) => [styles.row, flush && styles.flush, divided && styles.divided, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.row, flush && !framed && styles.flush, framed && styles.framed, divided && styles.divided, pressed && styles.pressed]}>
       <Text variant="detailLabel" color="secondary" numberOfLines={1} style={styles.label}>
         {label}
       </Text>
@@ -62,6 +66,9 @@ const styles = StyleSheet.create({
   },
   flush: {
     paddingHorizontal: 0,
+  },
+  framed: {
+    minHeight: size.control.row,
   },
   divided: {
     borderTopWidth: shape.borderWidth.divider,

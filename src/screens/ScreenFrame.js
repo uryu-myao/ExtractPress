@@ -130,7 +130,11 @@ const belowBaseline = (line) => line.height - line.ascender;
  *             scrolling page, the title (displayLg, `userTitle`) and `meta`
  *             under it; no bar at rest, `leading` and `trailing` float at
  *             the safe top; past the threshold the bar fades in with the
- *             title. heroHeight: the hero's height
+ *             title. heroHeight: the hero's height. Two more for Add a
+ *             bag (Design Turn 37, 38a: the bag page before it's filled):
+ *             titleSlot, a node in the title's place (the name field; the
+ *             bar still shows `title`), and `footer`, as the standard
+ *             frame's: after the body, at the page's end
  *   children  screen body
  */
 export default function ScreenFrame(props) {
@@ -556,7 +560,7 @@ const heroCfg = component.bagPage;
  * points. Native-driver Animated, as the other frames (legacy Animated for
  * scroll, §1).
  */
-function HeroFrame({ hero, heroHeight, title, meta, leading, trailing, userTitle = false, scrollRef, children }) {
+function HeroFrame({ hero, heroHeight, title, titleSlot, meta, leading, trailing, footer, userTitle = false, scrollRef, children }) {
   const insets = useSafeAreaInsets();
   const ownBackdrop = useContext(ScreenBackdropContext);
   const { width } = useWindowDimensions();
@@ -581,9 +585,11 @@ function HeroFrame({ hero, heroHeight, title, meta, leading, trailing, userTitle
         keyboardShouldPersistTaps="handled">
         {typeof hero === 'function' ? hero(ctx) : hero}
         <View style={styles.heroTitle}>
-          <Text variant="displayLg" truncate={userTitle ? 'name' : 'none'} accessibilityRole="header">
-            {title}
-          </Text>
+          {titleSlot ?? (
+            <Text variant="displayLg" truncate={userTitle ? 'name' : 'none'} accessibilityRole="header">
+              {title}
+            </Text>
+          )}
           {typeof meta === 'string' ? (
             <Text variant="sheetNote" color="secondary">
               {meta}
@@ -592,7 +598,8 @@ function HeroFrame({ hero, heroHeight, title, meta, leading, trailing, userTitle
             meta ?? null
           )}
         </View>
-        <View style={[styles.body, styles.heroBody]}>{children}</View>
+        <View style={[styles.body, styles.heroBody, footer && styles.bodyAboveFooter]}>{children}</View>
+        {footer ? <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, layout.screen.bottom) }]}>{footer}</View> : null}
       </Animated.ScrollView>
       <Animated.View pointerEvents="none" style={[styles.heroBar, { height: barLine + heroCfg.bar.below, opacity: fade }]}>
         <View style={[styles.heroBarTitle, { top, left: side, right: side }]}>

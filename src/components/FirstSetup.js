@@ -143,9 +143,9 @@ export function FirstSetupHost() {
       <ScreenBackdropContext.Provider value={false}>
         {stack.map((e) => (
           <PushedScreen key={e.key} onLeave={() => leaving(e.key)} onBack={() => popKey(e.key)}>
-            {(goBack) =>
+            {(goBack, guardLeave) =>
               e.name === 'bag' ? (
-                <AddBagScreen onBack={goBack} onAdded={toGear} setup={{ step: stepLabel(1), onLater: toGear, onSkip: finish }} />
+                <AddBagScreen onBack={goBack} guardLeave={guardLeave} onAdded={toGear} setup={{ step: stepLabel(1), onLater: toGear, onSkip: finish }} />
               ) : (
                 <AddGearScreen
                   onBack={() => {

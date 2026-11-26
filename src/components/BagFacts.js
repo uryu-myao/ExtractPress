@@ -43,13 +43,14 @@ import DetailRow from './base/DetailRow';
  * "From my bags" groups on trimmed, case-folded text ("Guji" and "guji" are
  * one row) and shows the spelling most bags use.
  *
- * useBagFacts({ value, onChange }) → { rows, sheets }: `rows` for the form
+ * useBagFacts({ value, onChange, framed }) → { rows, sheets }: `rows` for the form
  * (BagForm's `facts`, under Roaster), `sheets` for the screen's root (a
  * sheet covers the screen).
  *   value     { roastLevel, origin, region, process }
  *   onChange  (patch) => void: the fields that change, e.g. { region,
  *             origin } (the screen decides when it is saved: 19a's Save bar,
  *             3c's add)
+ *   framed    the rows as DetailRow's framed (Add a bag's About the coffee, 38a)
  */
 const fold = (s) => s.trim().toLocaleLowerCase('en');
 const PROCESS_LABEL = Object.fromEntries(PROCESS_OPTIONS.map((p) => [p.value, p.label]));
@@ -79,7 +80,7 @@ function mine(values) {
     .sort((a, b) => b.n - a.n || byName(a, b));
 }
 
-export function useBagFacts({ value, onChange }) {
+export function useBagFacts({ value, onChange, framed = false }) {
   const db = useDatabase();
   const [open, setOpen] = useState(null);
   // Choose origin first: the Origin sheet, then back to Region.
@@ -182,7 +183,7 @@ export function useBagFacts({ value, onChange }) {
   const rows = (
     <View>
       {factRows.map((r) => (
-        <DetailRow key={r.field} label={r.label} value={r.shown} flag={r.flag} flush onPress={() => show(r.field)} />
+        <DetailRow key={r.field} label={r.label} value={r.shown} flag={r.flag} flush framed={framed} onPress={() => show(r.field)} />
       ))}
     </View>
   );

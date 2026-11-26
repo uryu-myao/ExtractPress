@@ -37,6 +37,11 @@ const stepEasing = REasing.bezier(...motion.expand.controlPoints);
  * owns the position). On step 2, a swipe from the LEFT EDGE follows the finger
  * and goes back past 25% or on a flick. Step 1 stays mounted, so its rating
  * and fields survive; it is never swiped to step 2.
+ *
+ * Leave guard (as PushedScreen's): the second page can hold its leave with
+ * guardLeave(active, onBlocked). 3c does, with something entered (Uryu,
+ * 2026-11-26): a swipe past the threshold springs back and onBlocked runs
+ * (its discard sheet). 3c's own ‹ asks before calling onBack.
  */
 /** preset: the bag or gear to log this cup with (RecordDraftProvider), or null. */
 export default function AddCoffeeOverlay({ visible, preset, onClose, onNavigate }) {
@@ -101,8 +106,19 @@ export default function AddCoffeeOverlay({ visible, preset, onClose, onNavigate 
     'worklet';
     pos.value = withTiming(to, { duration: motion.expand.duration, easing: stepEasing });
   };
+  const guarded = useSharedValue(false);
+  const onBlocked = useRef(null);
+  const guardLeave = useCallback(
+    (active, blocked) => {
+      guarded.value = active;
+      onBlocked.current = blocked;
+    },
+    [guarded]
+  );
+  const notifyBlocked = () => onBlocked.current?.();
   const push = (page) => {
     setSecond(page);
+    guarded.value = false;
     setPushes((n) => n + 1);
     setOnNote(true);
     toStep(1);
@@ -115,6 +131,7 @@ export default function AddCoffeeOverlay({ visible, preset, onClose, onNavigate 
   // 2026-10-12: the keyboard stayed up over 5a). The edge swipe does the same.
   const backToRecord = () => {
     Keyboard.dismiss();
+    guarded.value = false;
     setOnNote(false);
     toStep(0);
   };
@@ -138,7 +155,9 @@ export default function AddCoffeeOverlay({ visible, preset, onClose, onNavigate 
       pos.value = 1 - Math.min(1, Math.max(0, e.translationX / w.value));
     })
     .onEnd((e) => {
-      const back = e.translationX > w.value * BACK_DISTANCE || e.velocityX > BACK_VELOCITY;
+      const wantsBack = e.translationX > w.value * BACK_DISTANCE || e.velocityX > BACK_VELOCITY;
+      const back = wantsBack && !guarded.value;
+      if (wantsBack && !back) scheduleOnRN(notifyBlocked);
       toStep(back ? 0 : 1);
       if (back) scheduleOnRN(setOnNote, false);
       if (GESTURE_LOG) scheduleOnRN(log, back ? 'END → back' : 'END → stay');
@@ -180,7 +199,7 @@ export default function AddCoffeeOverlay({ visible, preset, onClose, onNavigate 
                 {second === 'note' ? (
                   <TastingNoteScreen onBack={backToRecord} />
                 ) : second === 'bag' ? (
-                  <AddBagScreen key={pushes} onBack={backToRecord} />
+                  <AddBagScreen key={pushes} onBack={backToRecord} guardLeave={guardLeave} />
                 ) : (
                   <AddGearScreen key={pushes} onBack={backToRecord} />
                 )}

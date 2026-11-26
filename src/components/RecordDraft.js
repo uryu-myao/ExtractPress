@@ -38,6 +38,12 @@ import { useKept } from './SearchSheet';
  * keeps its own state and typing never re-renders either step. Only the
  * empty ↔ non-empty transition is lifted (noteFilled), for hasTastingInput.
  *
+ * hasInput: anything the user entered on either step: a rating, the
+ * tasting input, a café, a drink they chose (not one pre-filled), a
+ * product, or a bag or gear picked for this cup (not the shelf's defaults
+ * or the preset). Closing the sheet with it asks first (Uryu, 2026-11-26).
+ * Switching the mode alone is not input.
+ *
  * hasTastingInput: any axis entered, any flavour, or any words. 5b's second
  * button reads "Discard and save" then, "Save without the note" otherwise
  * (decided 2026-10-10, design-system.md §1 Saving a cup).
@@ -111,14 +117,23 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
 
   const setAxis = useCallback((key, value) => setAxes((prev) => ({ ...prev, [key]: value })), []);
 
+  // A bag or gear chosen for this cup (hasInput).
+  const [picked, setPicked] = useState(false);
+
   /** This cup's bag: one just added (3c), or picked (the bag picker). */
-  const chooseBag = useCallback((bag) => setDefaults((prev) => ({ ...(prev ?? EMPTY_DEFAULTS), bag })), []);
+  const chooseBag = useCallback((bag) => {
+    setPicked(true);
+    setDefaults((prev) => ({ ...(prev ?? EMPTY_DEFAULTS), bag }));
+  }, []);
 
   /**
    * This cup's gear: { brewer?, grinder?, kettle?, scale? }. From 3a (the gear just added)
    * or the Method picker (this cup only; the shelf's defaults stay).
    */
-  const chooseGear = useCallback((gear) => setDefaults((prev) => ({ ...(prev ?? EMPTY_DEFAULTS), ...gear })), []);
+  const chooseGear = useCallback((gear) => {
+    setPicked(true);
+    setDefaults((prev) => ({ ...(prev ?? EMPTY_DEFAULTS), ...gear }));
+  }, []);
 
   /**
    * Barista's café, from the café sheet. Picking one pre-fills the drink
@@ -241,6 +256,7 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
   saveRef.current = save;
 
   const hasTastingInput = noteFilled || flavours.length > 0 || Object.values(axes).some((v) => v != null);
+  const hasInput = rating > 0 || hasTastingInput || cafe != null || Boolean(drink.name && !drink.prefilled) || productName != null || picked;
 
   const value = useMemo(
     () => ({
@@ -268,12 +284,13 @@ export function RecordDraftProvider({ onSaved, preset, children }) {
       noteRef,
       setNoteFilled,
       hasTastingInput,
+      hasInput,
       required,
       missing,
       missingFields,
       save,
     }),
-    [axes, cafe, chooseCafe, drink, chooseDrink, addDrink, addProduct, addFlavour, kept, defaults, flavours, hasTastingInput, missing, missingFields, mode, productName, rating, required, save, setAxis, toggleFlavour, chooseBag, chooseGear]
+    [axes, cafe, chooseCafe, drink, chooseDrink, addDrink, addProduct, addFlavour, kept, defaults, flavours, hasTastingInput, hasInput, missing, missingFields, mode, productName, rating, required, save, setAxis, toggleFlavour, chooseBag, chooseGear]
   );
   return <RecordDraftContext.Provider value={value}>{children}</RecordDraftContext.Provider>;
 }

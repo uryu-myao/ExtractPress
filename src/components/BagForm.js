@@ -57,8 +57,10 @@ import Text from './base/Text';
  *   facts       the bag's facts rows (useBagFacts), drawn under Roaster
  *   children    3g: drawn last inside the card (the freshness block)
  *   autoFocusName  3c: the keyboard comes up on Bean name; 3g: off (it opens to correct, not to type)
- *   photo       3c: { uri, onPress } — the photo slot over the fields
- *               (PhotoField): uri, the photo chosen (null for none)
+ *   photo       first setup's bag step (36d): { uri, onPress } — the photo
+ *               slot over the fields (PhotoField): uri, the photo chosen
+ *               (null for none). 3c itself is the bag page's layout since
+ *               Design Turn 37 (38a)
  *   nameMissing "Open this bag" was pressed with no name: Bean name takes 5d's
  *             error vocabulary — the label reads "Bean name · required" and
  *             it and the underline take the error colour (no mock draws an

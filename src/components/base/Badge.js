@@ -11,7 +11,10 @@ import Text from './Text';
  *   tone       neutral | accent | success | info | raised | selected —
  *              color.badge.bg.* with its paired color.badge.fg.*
  *   placement  inline (badge.inline, inside a list row) |
- *              standalone (badge.standalone, alone on a surface)
+ *              standalone (badge.standalone, alone on a surface) |
+ *              tag (badge.tag, tagCaps: the small Optional tag at the
+ *              right of a field's or a section's label, Design Turn 37, 38a)
+ *   tone optional  badge.bg.neutral with text.muted, the label's grey (38a)
  *   icon       optional leading Glyph (icon.stamp, the label's colour, gap 6):
  *              the ⓘ of a status stamp that opens an explanation (15a,
  *              Design Round 8; the stamp's button is DnaStamp, the Badge
@@ -33,7 +36,9 @@ const FG = {
   info: color.badge.fg.info,
   raised: color.badge.fg.neutral,
   selected: color.badge.fg.selected,
+  optional: color.text.muted,
 };
+const BG = { ...color.badge.bg, optional: color.badge.bg.neutral };
 
 export default function Badge({ label, tone = 'neutral', placement = 'inline', icon: glyph, axis, accessibilityLabel }) {
   return (
@@ -45,11 +50,11 @@ export default function Badge({ label, tone = 'neutral', placement = 'inline', i
         styles[placement],
         glyph && [styles.withIcon, { paddingLeft: styles[placement].paddingHorizontal - space[2] }],
         axis && styles.withIcon,
-        { backgroundColor: color.badge.bg[tone] },
+        { backgroundColor: BG[tone] },
       ]}>
       {glyph ? <Glyph name={glyph} token={icon.stamp} color={FG[tone]} /> : null}
       {axis ? <AxisKey axis={axis} /> : null}
-      <Text variant="labelEyebrow" color={FG[tone]}>
+      <Text variant={placement === 'tag' ? 'tagCaps' : 'labelEyebrow'} color={FG[tone]}>
         {label}
       </Text>
     </View>
@@ -68,6 +73,10 @@ const styles = StyleSheet.create({
   standalone: {
     paddingVertical: spacing.badge.standalone.v,
     paddingHorizontal: spacing.badge.standalone.h,
+  },
+  tag: {
+    paddingVertical: spacing.badge.tag.v,
+    paddingHorizontal: spacing.badge.tag.h,
   },
   withIcon: {
     flexDirection: 'row',

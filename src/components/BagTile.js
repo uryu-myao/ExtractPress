@@ -184,17 +184,8 @@ export function BagVisual({ bag, width, barLine, scrollY }) {
   const page = component.bagPage;
   const height = page.visualHeight;
   const area = height - barLine;
-  const { aspect, maxH, lift } = tile.footprint;
-  const fh = area * maxH;
-  const fw = fh * aspect;
-  const baseline = height * (1 - lift);
-  const f = { w: fw, h: fh, x: (width - fw) / 2, top: baseline - fh, baseline };
-  const place = (a, edges) => {
-    const box = edges.bottom ? { w: width * tile.snapWidth, h: height - f.top } : { w: f.w, h: f.h };
-    const h = Math.min(box.h, box.w / a);
-    const w = h * a;
-    return { w, h, x: (width - w) / 2, y: (edges.bottom ? height : baseline) - h };
-  };
+  const { f, place } = pageGeometry(width, barLine);
+  const baseline = f.baseline;
   const { max, dots } = page.pull;
   const scale = scrollY.interpolate({ inputRange: [-max, 0], outputRange: [(area + max) / area, 1], extrapolate: 'clamp' });
   return (
@@ -209,6 +200,28 @@ export function BagVisual({ bag, width, barLine, scrollY }) {
       </View>
     </View>
   );
+}
+
+/**
+ * The bag page's visual, measured (see BagVisual): the footprint `f` and
+ * `place` (a cutout's aspect and edges → its box). Add a bag uses the same,
+ * so a bag lifted there stands where its page will show it (38b).
+ */
+export function pageGeometry(width, barLine) {
+  const height = component.bagPage.visualHeight;
+  const area = height - barLine;
+  const { aspect, maxH, lift } = tile.footprint;
+  const fh = area * maxH;
+  const fw = fh * aspect;
+  const baseline = height * (1 - lift);
+  const f = { w: fw, h: fh, x: (width - fw) / 2, top: baseline - fh, baseline };
+  const place = (a, edges) => {
+    const box = edges.bottom ? { w: width * tile.snapWidth, h: height - f.top } : { w: f.w, h: f.h };
+    const h = Math.min(box.h, box.w / a);
+    const w = h * a;
+    return { w, h, x: (width - w) / 2, y: (edges.bottom ? height : baseline) - h };
+  };
+  return { f, place };
 }
 
 /** A cutout's width ÷ height, read from its file once per URI. */

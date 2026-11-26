@@ -13,7 +13,11 @@ export type PhotoStyle = {
 /** Where a cutout runs into the sides of its photo (a held bag's hand is cut off there). */
 export type CutoutEdges = { top: boolean; right: boolean; bottom: boolean; left: boolean };
 
-export type CutoutResult = { found: false } | { found: true; width: number; height: number; edges: CutoutEdges };
+/** Where the cutout sat in its photo: shares of the photo's width and height, from the top left. */
+export type CutoutBox = { x: number; y: number; width: number; height: number };
+
+/** box is missing from a build made before 2026-11-25 (Add a bag's lift). */
+export type CutoutResult = { found: false } | { found: true; width: number; height: number; edges: CutoutEdges; box?: CutoutBox };
 
 export type CutoutOptions = { smallLongSide: number; quality: number; edgeShare: number; fade: number };
 
