@@ -19,6 +19,9 @@ import ImageIO
  *     Resolves { width, height }.
  *   cutout(original, large, small, options)
  *     PhotoCutout.swift.
+ *   text(original)
+ *     PhotoText.swift: the lines of text on the photo (Add a bag's
+ *     candidates, 2026-11-26).
  *
  * The 2026-11-01 house style, kept: every photo kept twice, the original and
  * a styled copy, so that side by side they agree with each other and with
@@ -63,6 +66,11 @@ public final class PhotoStyleModule: Module {
 
     AsyncFunction("cutout") { (original: String, large: String, small: String, options: CutoutOptions) -> [String: Any] in
       try makeCutout(self.context, original: original, large: large, small: small, options: options)
+    }
+
+    // PhotoText.swift: Add a bag's label text, beside the cutout, never inside it.
+    AsyncFunction("text") { (original: String) -> [[String: Any]] in
+      try readText(original)
     }
 
     AsyncFunction("render") { (source: String, original: String, styled: String, style: Style) -> [String: Int] in

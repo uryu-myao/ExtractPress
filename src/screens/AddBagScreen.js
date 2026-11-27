@@ -13,6 +13,8 @@ import IconButton from '../components/base/IconButton';
 import Text from '../components/base/Text';
 import TextLink from '../components/base/TextLink';
 import { useRecordDraftIfAny } from '../components/RecordDraft';
+import LabelBar from '../components/LabelBar';
+import useLabelCandidates from '../components/useLabelCandidates';
 import { useDatabase } from '../data/DatabaseProvider';
 import { deletePhoto, dropPhoto, keepPhoto, liftPhoto, makeCutouts } from '../data/photos';
 import { formatDay, startOfDay } from '../constants/dates';
@@ -98,6 +100,14 @@ import ScreenFrame from './ScreenFrame';
  * prefill: { name, roaster } from Try next's "Add it to my beans" (Design
  * Round 23, 25d: buying a bean again); the fields start filled, still editable.
  */
+/**
+ * The label candidates' accessory views (LabelBar): one per field, the same
+ * content. RN's new architecture attaches an InputAccessoryView to only the
+ * first TextInput carrying its nativeID (RCTInputAccessoryComponentView), so
+ * a shared one never reached Roaster (found on the phone, 2026-11-27).
+ */
+const LABEL_BAR = { name: 'add-bag-labels-name', roaster: 'add-bag-labels-roaster' };
+
 /** 3c's date sheet's two kinds (29a). */
 const DATE_KINDS = [
   { value: 'roasted', label: 'Roasted on' },
@@ -174,6 +184,10 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
     setSettled(false);
     cameraIn.setValue(0);
   };
+  // The text on the bag, as candidates for Bean name and Roaster (2026-11-26;
+  // the bar, Design Turn 38, 39a–39d). A tap replaces the focused field's text.
+  const labels = useLabelCandidates(setup ? null : photo);
+  const hasLabels = labels.length > 0;
   const { step: photoStep, pick, camera } = usePhotoPick({ guide: 'bag', onChosen: takePhoto });
 
   useEffect(() => {
@@ -426,8 +440,8 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
         title={name || 'Add a bag'}
         titleSlot={
           <View>
-            <NameField value={form.name} onChangeText={changeName} missing={nameMissing} />
-            <RoasterField value={form.roaster} onChangeText={(roaster) => setForm((f) => ({ ...f, roaster }))} />
+            <NameField value={form.name} onChangeText={changeName} missing={nameMissing} accessoryID={hasLabels ? LABEL_BAR.name : undefined} />
+            <RoasterField value={form.roaster} onChangeText={(roaster) => setForm((f) => ({ ...f, roaster }))} accessoryID={hasLabels ? LABEL_BAR.roaster : undefined} />
           </View>
         }
         leading={
@@ -475,6 +489,18 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
         </View>
       </ScreenFrame>
       {sheets}
+      {hasLabels
+        ? Object.entries(LABEL_BAR).map(([field, id]) => (
+            <LabelBar
+              key={id}
+              nativeID={id}
+              candidates={labels}
+              source={lift?.uri ?? photo?.uri ?? null}
+              isUsed={(text) => form.name.trim() === text || form.roaster.trim() === text}
+              onPick={(text) => (field === 'roaster' ? setForm((f) => ({ ...f, roaster: text })) : changeName(text))}
+            />
+          ))
+        : null}
     </View>
   );
 }
@@ -486,7 +512,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
  * 16 / 600, "e.g. Kurasu, Blue Bottle", a 1.5 border.muted line under it
  * (ink while focused).
  */
-function RoasterField({ value, onChangeText }) {
+function RoasterField({ value, onChangeText, accessoryID, onFocus }) {
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.roasterField}>
@@ -503,7 +529,11 @@ function RoasterField({ value, onChangeText }) {
         placeholderTextColor={color.text.placeholder}
         selectionColor={color.caret}
         autoCorrect={false}
-        onFocus={() => setFocused(true)}
+        onFocus={() => {
+          setFocused(true);
+          onFocus?.();
+        }}
+        inputAccessoryViewID={accessoryID}
         onBlur={() => setFocused(false)}
         accessibilityLabel="Roaster, optional"
         style={[styles.roaster, focused && styles.lineFocused]}
@@ -520,7 +550,7 @@ function RoasterField({ value, onChangeText }) {
  * Not focused on arrival (Uryu, 2026-11-26): the page opens without the
  * keyboard, on the photo and the fields.
  */
-function NameField({ value, onChangeText, missing }) {
+function NameField({ value, onChangeText, missing, accessoryID, onFocus }) {
   const [focused, setFocused] = useState(false);
   return (
     <View>
@@ -534,7 +564,11 @@ function NameField({ value, onChangeText, missing }) {
         multiline
         submitBehavior="blurAndSubmit"
         returnKeyType="done"
-        onFocus={() => setFocused(true)}
+        onFocus={() => {
+          setFocused(true);
+          onFocus?.();
+        }}
+        inputAccessoryViewID={accessoryID}
         onBlur={() => setFocused(false)}
         accessibilityLabel={missing ? 'Bean name, required' : 'Bean name'}
         style={styles.name}

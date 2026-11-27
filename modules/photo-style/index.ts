@@ -19,11 +19,15 @@ export type CutoutBox = { x: number; y: number; width: number; height: number };
 /** box is missing from a build made before 2026-11-25 (Add a bag's lift). */
 export type CutoutResult = { found: false } | { found: true; width: number; height: number; edges: CutoutEdges; box?: CutoutBox };
 
+/** A line of text Vision read on a photo: its height is a share of the photo's (PhotoText.swift). */
+export type TextLine = { text: string; confidence: number; height: number };
+
 export type CutoutOptions = { smallLongSide: number; quality: number; edgeShare: number; fade: number };
 
 type PhotoStyleModule = {
   original(source: string, original: string, longSide: number, quality: number): Promise<{ width: number; height: number }>;
   cutout(original: string, large: string, small: string, options: CutoutOptions): Promise<CutoutResult>;
+  text(original: string): Promise<TextLine[]>;
   render(source: string, original: string, styled: string, style: PhotoStyle): Promise<{ width: number; height: number }>;
   restyle(original: string, styled: string, style: PhotoStyle): Promise<void>;
 };
@@ -60,6 +64,16 @@ export function writeOriginal(source: string, original: string, longSide: number
 export function cutOut(original: string, large: string, small: string, options: CutoutOptions) {
   if (!has('cutout')) return Promise.reject(new Error(photoStyleMissing));
   return native!.cutout(original, large, small, options);
+}
+
+/**
+ * The lines of text on a photo (PhotoText.swift; Add a bag's candidates,
+ * src/data/labelText.ts). A build without it (before 2026-11-26) reads
+ * nothing: the candidates are an extra, never worth an error.
+ */
+export function readText(original: string): Promise<TextLine[]> {
+  if (!has('text')) return Promise.resolve([]);
+  return native!.text(original);
 }
 
 /**

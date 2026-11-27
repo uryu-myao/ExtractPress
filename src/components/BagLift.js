@@ -22,7 +22,9 @@ const NOT_LIFTED = "Couldn't lift it out · kept the photo";
  * (pageGeometry), so a bag lifted here stands where its page will show it.
  *
  *   no photo  the footprint, dashed (§8: not started), paper at 72 %, holding
- *             the camera, Take a photo and Choose from Photos (38a). No sheet
+ *             the camera, Take a photo and Choose from Photos (38a), and
+ *             under it "Reads the label, so you can tap instead of type."
+ *             (Turn 38), gone with it. No sheet
  *   the lift  (38b) the confirmation, played once a photo is in:
  *     1 shot    0–200: the photo lands, 3 : 4, fading in and scaling from 0.96
  *     2 pull    200–900: a paper line with an ink top edge runs down the
@@ -214,6 +216,14 @@ export default function BagLift({ width, barLine, photo, lift, busy, onTake, onC
             </View>
           </View>
         ) : null}
+        {phase === 'ghost' || !photo ? (
+          // Turn 38 (38a): what the photo is for, at the moment of choosing; it goes with the footprint.
+          <View pointerEvents="none" style={[styles.hint, { top: f.top + f.h + cfg.ghost.hintGap }]}>
+            <Text variant="bodySm" color="secondary">
+              Reads the label, so you can tap instead of type.
+            </Text>
+          </View>
+        ) : null}
 
         {photo && cut ? (
           <Animated.View pointerEvents="none" style={{ position: 'absolute', left: cut.x, top: cut.y, width: cut.w, height: cut.h, opacity: v.result, transformOrigin: [0, 0, 0], transform: cutTransform }}>
@@ -305,6 +315,12 @@ const styles = StyleSheet.create({
   },
   ghostButton: {
     alignSelf: 'stretch',
+  },
+  hint: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   ghostLink: {
     marginTop: cfg.ghost.linkGap - cfg.ghost.gap,

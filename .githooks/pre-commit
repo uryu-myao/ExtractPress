@@ -5,7 +5,8 @@
 # when a backup no longer restores to the rows it was made from, or when
 # Try next's rules stop holding, or the notices and bag reminders stop
 # following their rules, or the bundled origins and regions stop being
-# clean, keyed data, or the gear catalogue stops being 3a's shape.
+# clean, keyed data, or the gear catalogue stops being 3a's shape, or Add a
+# bag's label text candidates stop following their rules.
 # Installed by `npm install` (package.json "prepare" sets core.hooksPath).
 # Runs in well under a second; bypass only deliberately with --no-verify.
 npm run -s check:schema || {
@@ -38,5 +39,9 @@ npm run -s check:origins || {
 }
 npm run -s check:gear || {
   echo "pre-commit: check:gear failed — the bundled gear catalogue is malformed (src/constants/gear.json)." >&2
+  exit 1
+}
+npm run -s check:labeltext || {
+  echo "pre-commit: check:labeltext failed — Add a bag's label text candidates no longer follow their rules (src/data/labelText.ts)." >&2
   exit 1
 }

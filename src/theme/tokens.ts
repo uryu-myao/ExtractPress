@@ -943,7 +943,9 @@ export const component = {
    *           text.placeholder, Bean name's placeholder; Uryu, 2026-11-26),
    *           Take a photo and Choose from Photos stacked `gap` apart, the
    *           last two `linkGap` apart (Uryu, 2026-11-26: 10 was easy to
-   *           mis-tap), `padX` inside
+   *           mis-tap), `padX` inside; under it, `hintGap` below, the
+   *           label line (Turn 38: "Reads the label, so you can tap instead
+   *           of type.", bodySm, text.secondary, centred), gone with it
    *   photo   the shot as it lands: 3 : 4, its top on the floating
    *           buttons' foot (the bar's line), `height` of the area under
    *           that line (as the footprint is measured; 204 × 272 at 402),
@@ -971,8 +973,30 @@ export const component = {
    * closer on Uryu's ask (2026-11-26): the label read far from its value.
    */
   addBag: { nameLine: space[8], roasterTop: space[16], labelGap: space[2], roasterHeight: 34 },
+  /**
+   * Add a bag's label candidates (Design Turn 38, 39a–39d; components/
+   * LabelBar.js): the keyboard's accessory bar, shared by Bean name and
+   * Roaster. `height` tall on surface.raised with a weak border.muted line
+   * on top. At the left the source mark: the bag's cutout `source.image`
+   * tall in a `source.width` slot, a divider after it. Then the chips,
+   * scrolling: `chip.height` tall, square, `chip.padX` inside, `chip.gap`
+   * apart, `chip.inset` from the divider. Chips 1–2 lead (a 2 ink frame,
+   * text style lead, up to lead.max wide); 3–6 step back (a weak
+   * border.muted frame, body in text.secondary, up to quiet.max). CJK text
+   * in Hiragino Sans (W6 lead, W3 the rest: 39d's font stack at 600 / 500).
+   * Used (in either field): the quiet frame, text.muted, the check before
+   * the text `checkGap` apart. Pressed: ink fill, paper text.
+   */
+  labelBar: {
+    height: 52,
+    source: { width: 46, image: 36 },
+    chip: { height: 36, padX: space[12], gap: space[8], inset: space[12], checkGap: space[6] },
+    lead: { max: 156 },
+    quiet: { max: 112 },
+    cjk: { lead: 'HiraginoSans-W6', quiet: 'HiraginoSans-W3' },
+  },
   bagLift: {
-    ghost: { fill: 'rgba(244, 237, 234, 0.72)', gap: 10, linkGap: space[20], padX: space[12] },
+    ghost: { fill: 'rgba(244, 237, 234, 0.72)', gap: 10, linkGap: space[20], padX: space[12], hintGap: 9 },
     photo: { height: 272 / 280, aspect: 3 / 4, scaleFrom: 0.96 },
     line: { height: 3, edge: 1, overhang: space[8], color: color.surface.raised, edgeColor: color.text.primary },
     halo: { color: color.surface.raised, radius: 4 },

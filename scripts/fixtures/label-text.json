@@ -1,0 +1,340 @@
+{
+ "ogawa": [
+  {
+   "text": "4UPう",
+   "confidence": 0.3,
+   "height": 0.0317
+  },
+  {
+   "text": "JONA",
+   "confidence": 0.5,
+   "height": 0.0167
+  },
+  {
+   "text": "J0010131PR",
+   "confidence": 1.0,
+   "height": 0.0158
+  },
+  {
+   "text": "FAIRTRADE",
+   "confidence": 1.0,
+   "height": 0.0183
+  },
+  {
+   "text": "京都",
+   "confidence": 0.5,
+   "height": 0.03
+  },
+  {
+   "text": "西京極。",
+   "confidence": 0.3,
+   "height": 0.03
+  },
+  {
+   "text": "小川珈琲店",
+   "confidence": 0.5,
+   "height": 0.0575
+  },
+  {
+   "text": "1952",
+   "confidence": 1.0,
+   "height": 0.01
+  },
+  {
+   "text": "ORGANIC FAIRTRADE MOCHA BLEND",
+   "confidence": 1.0,
+   "height": 0.0167
+  },
+  {
+   "text": "有機珈琲",
+   "confidence": 0.3,
+   "height": 0.0233
+  },
+  {
+   "text": "フェアトレードモカブレンド",
+   "confidence": 0.5,
+   "height": 0.0383
+  },
+  {
+   "text": "フルーティーな香りと爽やかな味わい",
+   "confidence": 1.0,
+   "height": 0.025
+  },
+  {
+   "text": "有機エチオピア 中煎 50%",
+   "confidence": 0.5,
+   "height": 0.0258
+  },
+  {
+   "text": "有機グアテマラ 中煎 50％",
+   "confidence": 0.5,
+   "height": 0.0258
+  },
+  {
+   "text": "粉140g",
+   "confidence": 0.5,
+   "height": 0.0392
+  },
+  {
+   "text": "レギュラーコーヒー",
+   "confidence": 1.0,
+   "height": 0.015
+  },
+  {
+   "text": "GROUND COFFEE",
+   "confidence": 1.0,
+   "height": 0.0158
+  },
+  {
+   "text": "OGAWA",
+   "confidence": 0.5,
+   "height": 0.03
+  },
+  {
+   "text": "※写真はイメージです。",
+   "confidence": 1.0,
+   "height": 0.0233
+  }
+ ],
+ "kaldi": [
+  {
+   "text": "KALDI",
+   "confidence": 0.5,
+   "height": 0.0708
+  },
+  {
+   "text": "CEFEE FARIA-",
+   "confidence": 0.5,
+   "height": 0.0458
+  },
+  {
+   "text": "BRAZIL",
+   "confidence": 0.5,
+   "height": 0.1383
+  },
+  {
+   "text": "MONTE ALTO",
+   "confidence": 1.0,
+   "height": 0.0867
+  },
+  {
+   "text": "ブラジルモンテ・アルト回",
+   "confidence": 0.5,
+   "height": 0.0683
+  },
+  {
+   "text": "＜生豆生産国名）ブラジル",
+   "confidence": 0.5,
+   "height": 0.0675
+  },
+  {
+   "text": "テイストバランス酸味日11",
+   "confidence": 0.3,
+   "height": 0.0708
+  },
+  {
+   "text": "ボディ",
+   "confidence": 1.0,
+   "height": 0.02
+  },
+  {
+   "text": "ライトに",
+   "confidence": 0.5,
+   "height": 0.0292
+  },
+  {
+   "text": "ロースト",
+   "confidence": 1.0,
+   "height": 0.0217
+  },
+  {
+   "text": "浅煎り口",
+   "confidence": 0.3,
+   "height": 0.025
+  },
+  {
+   "text": "NET WT. 200g",
+   "confidence": 1.0,
+   "height": 0.0183
+  }
+ ],
+ "ok": [
+  {
+   "text": "モリ",
+   "confidence": 0.3,
+   "height": 0.01
+  },
+  {
+   "text": "マイルドプレ",
+   "confidence": 0.5,
+   "height": 0.0208
+  },
+  {
+   "text": "OK",
+   "confidence": 0.5,
+   "height": 0.05
+  },
+  {
+   "text": "オーケー特選",
+   "confidence": 0.5,
+   "height": 0.0492
+  },
+  {
+   "text": "モカブレンド",
+   "confidence": 0.5,
+   "height": 0.0442
+  },
+  {
+   "text": "AMOCHA BLEND",
+   "confidence": 1.0,
+   "height": 0.02
+  },
+  {
+   "text": "モカの柔らかな酸味と",
+   "confidence": 1.0,
+   "height": 0.0233
+  },
+  {
+   "text": "みのあるマイルドな味わい",
+   "confidence": 1.0,
+   "height": 0.0267
+  },
+  {
+   "text": "189（14",
+   "confidence": 0.5,
+   "height": 0.0117
+  },
+  {
+   "text": "ペーパード",
+   "confidence": 0.5,
+   "height": 0.0083
+  },
+  {
+   "text": "コーヒー",
+   "confidence": 1.0,
+   "height": 0.01
+  },
+  {
+   "text": "ロク★",
+   "confidence": 0.5,
+   "height": 0.0267
+  },
+  {
+   "text": "甘味★",
+   "confidence": 0.5,
+   "height": 0.0283
+  },
+  {
+   "text": "浚味",
+   "confidence": 0.3,
+   "height": 0.0267
+  },
+  {
+   "text": "苦味",
+   "confidence": 0.3,
+   "height": 0.025
+  },
+  {
+   "text": "粉",
+   "confidence": 0.3,
+   "height": 0.0367
+  },
+  {
+   "text": "ーオリジナル",
+   "confidence": 0.5,
+   "height": 0.0167
+  },
+  {
+   "text": "オニター",
+   "confidence": 0.5,
+   "height": 0.0142
+  },
+  {
+   "text": "コクの長さの",
+   "confidence": 0.5,
+   "height": 0.0142
+  },
+  {
+   "text": "80★5年",
+   "confidence": 1.0,
+   "height": 0.0117
+  },
+  {
+   "text": "CREATION。",
+   "confidence": 0.5,
+   "height": 0.01
+  }
+ ],
+ "morihiko": [
+  {
+   "text": "「高温・Everyday Low Price」",
+   "confidence": 1.0,
+   "height": 0.0133
+  },
+  {
+   "text": "インスリン♪まろやかで豊かなコクと香り",
+   "confidence": 0.5,
+   "height": 0.0117
+  },
+  {
+   "text": "AGF プレ",
+   "confidence": 0.5,
+   "height": 0.0167
+  },
+  {
+   "text": "192",
+   "confidence": 1.0,
+   "height": 0.015
+  },
+  {
+   "text": "豆",
+   "confidence": 0.3,
+   "height": 0.025
+  },
+  {
+   "text": "北海道珈琲店森彦",
+   "confidence": 0.5,
+   "height": 0.0242
+  },
+  {
+   "text": "since 1996",
+   "confidence": 1.0,
+   "height": 0.0167
+  },
+  {
+   "text": "MORRIHIICO.",
+   "confidence": 0.5,
+   "height": 0.0242
+  },
+  {
+   "text": "Colloo & Somothing",
+   "confidence": 1.0,
+   "height": 0.01
+  },
+  {
+   "text": "AGF®",
+   "confidence": 0.5,
+   "height": 0.025
+  },
+  {
+   "text": "スイック",
+   "confidence": 0.5,
+   "height": 0.0117
+  },
+  {
+   "text": "SSCAFE",
+   "confidence": 0.5,
+   "height": 0.0233
+  },
+  {
+   "text": "909",
+   "confidence": 1.0,
+   "height": 0.03
+  },
+  {
+   "text": "9",
+   "confidence": 0.5,
+   "height": 0.0133
+  }
+ ]
+}
