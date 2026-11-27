@@ -251,6 +251,15 @@ export const textStyle = {
 
   /** lineHeight UNDECLARED in source */
   title:         { fontFamily: 'Archivo', fontSize: 16, fontWeight: '700' },
+  /**
+   * lineHeight UNDECLARED · the label candidates' chips (Design Turn 38, 39d):
+   * lead 15 / 600, quiet 14 / 500. No line height: on iOS a taller line box
+   * puts the glyphs at its top, so centred in the 36 chip, capitals rode high
+   * (found on the phone, 2026-11-27; the CJK chips, on Hiragino's own box,
+   * sat right).
+   */
+  chipLead:      { fontFamily: 'Archivo', fontSize: 15, fontWeight: '600' },
+  chipQuiet:     { fontFamily: 'Archivo', fontSize: 14, fontWeight: '500' },
   /** Add a bag's Roaster value (Design Turn 37, 38a: 16 / 600 ink; the placeholder takes the same face, a TextInput has one) */
   fieldValue:    { fontFamily: 'Archivo', fontSize: 16, fontWeight: '600' },
   /** lineHeight UNDECLARED in source */

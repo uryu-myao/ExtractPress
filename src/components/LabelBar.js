@@ -71,7 +71,7 @@ function Chip({ text, lead, used, onPress }) {
                 {text}
               </RNText>
             ) : (
-              <Text variant={lead ? 'lead' : 'body'} color={tone} numberOfLines={1} style={styles.text}>
+              <Text variant={lead ? 'chipLead' : 'chipQuiet'} color={tone} numberOfLines={1} style={styles.text}>
                 {text}
               </Text>
             )}
@@ -133,10 +133,10 @@ const styles = StyleSheet.create({
   },
   cjkLead: {
     fontFamily: bar.cjk.lead,
-    fontSize: textStyle.lead.fontSize,
+    fontSize: textStyle.chipLead.fontSize,
   },
   cjkQuiet: {
     fontFamily: bar.cjk.quiet,
-    fontSize: textStyle.body.fontSize,
+    fontSize: textStyle.chipQuiet.fontSize,
   },
 });
