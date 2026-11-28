@@ -14,9 +14,10 @@ import Text from './base/Text';
  * Closed: muted label and count, no underline. size.tapTarget tall, the text
  * at its foot, space.8 over the underline (LABEL_FOOT; Uryu, 2026-11-25: a
  * little more air over the divider than 11-17's space.6; 11-17 brought it
- * down from space.12). The underlines follow the pages'
- * scroll (`progress`): one fades out as the other fades in under the finger,
- * so they never jump; the labels switch at the midpoint.
+ * down from space.12). One underline slides between the tabs (TabIndicator,
+ * Uryu 2026-11-27: was one fading out as the other faded in), its position
+ * and width following the pages' scroll (`progress`) under the finger; the
+ * labels switch at the midpoint.
  *
  * The row sits on the first row's divider (shape.borderWidth.divider) below
  * it: it overlaps the content under it by the divider plus half of what the
@@ -59,13 +60,14 @@ const TABS = [
 ];
 
 export default function ShelfTabs({ active, progress, counts, onSelect, trailing }) {
-  const shown = { [FIRST]: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), [SECOND]: progress };
+  const [layouts, onTabLayout] = useTabLayouts(TABS.length);
   return (
     <View style={styles.row} accessibilityRole="tablist">
       <View style={styles.tabs}>
-        {TABS.map((t) => (
-          <Tab key={t.side} label={t.label} count={counts[t.side]} on={active === t.side} underline={shown[t.side]} onPress={() => onSelect(t.side)} />
+        {TABS.map((t, i) => (
+          <Tab key={t.side} label={t.label} count={counts[t.side]} on={active === t.side} onLayout={onTabLayout(i)} onPress={() => onSelect(t.side)} />
         ))}
+        <TabIndicator layouts={layouts} position={progress} />
       </View>
       {trailing}
     </View>
@@ -75,11 +77,50 @@ export default function ShelfTabs({ active, progress, counts, onSelect, trailing
 const pressEasing = Easing.bezier(...motion.press.controlPoints);
 
 /**
- * One tab, also search's (Design Round 15, 18d: "Home's tab component").
- * underline: its opacity, Animated (the shelf's scroll) or 0 / 1. count is
- * optional (search's ALL has none).
+ * Each tab's place in its row ({ x, width }, from onLayout), for
+ * TabIndicator. Returns [layouts, onTabLayout(i)]; layouts is null until
+ * every tab has been laid out.
  */
-export function Tab({ label, count, on, underline, onPress }) {
+export function useTabLayouts(count) {
+  const [layouts, setLayouts] = useState(() => Array(count).fill(null));
+  const onTabLayout = (i) => (e) => {
+    const { x, width } = e.nativeEvent.layout;
+    setLayouts((prev) => {
+      if (prev[i] && prev[i].x === x && prev[i].width === width) return prev;
+      const next = prev.length === count ? [...prev] : Array(count).fill(null);
+      next[i] = { x, width };
+      return next;
+    });
+  };
+  return [layouts.every(Boolean) && layouts.length === count ? layouts : null, onTabLayout];
+}
+
+/** The indicator's own width: scaled to each tab's (native driver: no width animation). */
+const BAR = 100;
+
+/**
+ * The open tab's underline as one bar that slides between the tabs (Uryu,
+ * 2026-11-27: every tab row, instead of one underline fading into the
+ * next): a box-wide (2) ink line at the row's foot, moved and stretched to
+ * the tab at `position` (Animated, in tab indexes: 0 … n − 1; between two,
+ * between their places). Drawn in the tabs' row, after them, absolute.
+ * Nothing until every tab is laid out.
+ */
+export function TabIndicator({ layouts, position }) {
+  if (!layouts) return null;
+  const inputRange = layouts.map((_, i) => i);
+  const single = layouts.length === 1;
+  const translateX = single ? layouts[0].x : position.interpolate({ inputRange, outputRange: layouts.map((l) => l.x), extrapolate: 'clamp' });
+  const scaleX = single ? layouts[0].width / BAR : position.interpolate({ inputRange, outputRange: layouts.map((l) => l.width / BAR), extrapolate: 'clamp' });
+  return <Animated.View pointerEvents="none" style={[styles.indicator, { transform: [{ translateX }, { scaleX }] }]} />;
+}
+
+/**
+ * One tab, also search's (Design Round 15, 18d: "Home's tab component").
+ * Its underline is the row's TabIndicator; `underline` (an opacity) is only
+ * for a row that has none. count is optional (search's ALL has none).
+ */
+export function Tab({ label, count, on, underline, onPress, onLayout }) {
   const scale = useRef(new Animated.Value(1)).current;
   const scaleTo = (toValue) =>
     Animated.timing(scale, { toValue, duration: motion.press.duration, easing: pressEasing, useNativeDriver: true }).start();
@@ -91,8 +132,9 @@ export function Tab({ label, count, on, underline, onPress }) {
       accessibilityRole="tab"
       accessibilityLabel={count == null ? label : `${label}, ${count}`}
       accessibilityState={{ selected: on }}
+      onLayout={onLayout}
       style={styles.tab}>
-      <Animated.View style={[styles.underline, { opacity: underline }]} />
+      {underline == null ? null : <Animated.View style={[styles.underline, { opacity: underline }]} />}
       <Animated.View style={[styles.text, { transform: [{ scale }] }]}>
         <Text variant="labelCaps" color={on ? 'primary' : 'muted'}>
           {label}
@@ -220,6 +262,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     height: shape.borderWidth.box,
     backgroundColor: color.border.strong,
+  },
+  indicator: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    width: BAR,
+    height: shape.borderWidth.box,
+    backgroundColor: color.border.strong,
+    transformOrigin: 'left',
   },
   text: {
     flexDirection: 'row',

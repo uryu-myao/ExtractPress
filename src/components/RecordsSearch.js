@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Keyboard, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Animated, Easing, Keyboard, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { archiveLines } from '../constants/cups';
 import { DEFAULT_GROUP, DEFAULT_SORT, arrangeCups } from '../constants/records';
@@ -32,7 +32,7 @@ import {
   onShelfChanged,
 } from '../data/repository';
 import { requestPush, requestSortSheet } from '../navigation';
-import { color, icon, layout, shape, size, space, spacing, state } from '../theme/tokens';
+import { color, icon, layout, motion, shape, size, space, spacing, state } from '../theme/tokens';
 import Button from './base/Button';
 import FilterToken from './base/FilterToken';
 import Glyph from './base/Glyph';
@@ -45,7 +45,7 @@ import SegmentedControl from './base/SegmentedControl';
 import Text from './base/Text';
 import { gearLine } from './GearList';
 import RecordGroup from './RecordGroup';
-import { Tab } from './ShelfTabs';
+import { Tab, TabIndicator, useTabLayouts } from './ShelfTabs';
 
 /** What search finds, in its field and in 2a's opener (18a). */
 export const SEARCH_PLACEHOLDER = 'Cups, beans, gear, words';
@@ -320,8 +320,17 @@ function Typing({ query, hits, terms, onSearch, onBag, onGear, onCup }) {
 }
 
 /** 18d (and 18f's text cases). */
+const tabEasing = Easing.bezier(...motion.expand.controlPoints);
+
 function Results({ query, data, tab, onTab, onBag, onGear, onCup }) {
   const found = useMemo(() => searchText(query, data), [query, data]);
+  // The tabs' underline slides to the open tab over motion.expand (TabIndicator).
+  const [layouts, onTabLayout] = useTabLayouts(TABS.length);
+  const tabIndex = Math.max(0, TABS.findIndex((t) => t.key === tab));
+  const tabPosition = useRef(new Animated.Value(tabIndex)).current;
+  useEffect(() => {
+    Animated.timing(tabPosition, { toValue: tabIndex, duration: motion.expand.duration, easing: tabEasing, useNativeDriver: true }).start();
+  }, [tabPosition, tabIndex]);
   const total = found.beans.length + found.gear.length + found.words.length + found.cups.length;
   if (!total) {
     return (
@@ -341,9 +350,11 @@ function Results({ query, data, tab, onTab, onBag, onGear, onCup }) {
       <View style={styles.tabBar}>
         <View style={styles.tabLine} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs}>
-          {TABS.map((t) => (
-            <Tab key={t.key} label={t.label} count={t.key === 'all' ? undefined : found[t.key].length} on={tab === t.key} underline={tab === t.key ? 1 : 0} onPress={() => onTab(t.key)} />
+          {TABS.map((t, i) => (
+            <Tab key={t.key} label={t.label} count={t.key === 'all' ? undefined : found[t.key].length} on={tab === t.key} onLayout={onTabLayout(i)} onPress={() => onTab(t.key)} />
           ))}
+          {/* One underline slides to the open tab (Uryu, 2026-11-27). */}
+          <TabIndicator layouts={layouts} position={tabPosition} />
         </ScrollView>
       </View>
       {tab === 'all' ? (
