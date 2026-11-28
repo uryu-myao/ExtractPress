@@ -1,10 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Image, Platform, StyleSheet, View } from 'react-native';
-import { color, component, dashed } from '../theme/tokens';
+import { color, component, dashed, icon } from '../theme/tokens';
 import { pageGeometry } from './BagTile';
 import Button from './base/Button';
 import DotGround from './base/DotGround';
+import Glyph from './base/Glyph';
 import Text from './base/Text';
 
 const page = component.bagPage;
@@ -21,9 +22,11 @@ const NOT_LIFTED = "Couldn't lift it out · kept the photo";
  * (pageGeometry), so a bag lifted here stands where its page will show it.
  *
  *   no photo  the footprint, dashed (§8: not started), paper at 72 %, holding
- *             Take a photo and Choose from Photos, two equal buttons (Turn
- *             39, 2026-11-28; nothing asks for a permission until Take a
- *             photo is tapped), and under it "Reads the label, so you can
+ *             the two ways in: everyday (38a) the camera, Take a photo (a
+ *             button) and Choose from Photos (a text action); with
+ *             `equalWays` (first setup, 40a) two equal buttons, no glyph
+ *             (Uryu, 2026-11-28: equal in setup only). Nothing asks for a
+ *             permission until Take a photo is tapped. Under it "Reads the label, so you can
  *             tap instead of type." (Turn 38), gone with it. No sheet
  *   the lift  (38b) the confirmation, played once a photo is in:
  *     1 shot    0–200: the photo lands, 3 : 4, fading in and scaling from 0.96
@@ -66,7 +69,7 @@ const NOT_LIFTED = "Couldn't lift it out · kept the photo";
  *             settle (the haptic stays). A retake is usually because the
  *             last lift failed or was poor: this shows whether this one took
  */
-export default function BagLift({ width, barLine, height = page.visualHeight, photo, lift, busy, onTake, onChoose, onSettled, onDone, short = false }) {
+export default function BagLift({ width, barLine, height = page.visualHeight, photo, lift, busy, onTake, onChoose, onSettled, onDone, short = false, equalWays = false }) {
   const reduceMotion = useReduceMotion();
   const { f, place } = pageGeometry(width, barLine, height);
   // A taller visual (first setup's) only adds room above: everything keeps its distance from the foot.
@@ -218,9 +221,18 @@ export default function BagLift({ width, barLine, height = page.visualHeight, ph
       </View>
       <View style={[StyleSheet.absoluteFill, styles.clip]}>
         {phase === 'ghost' || !photo ? (
-          <View style={[styles.ghost, { left: f.x, top: f.top, width: f.w, height: f.h }]}>
-            <Button variant="secondary" size="compact" raised label="Take a photo" onPress={onTake} disabled={busy} />
-            <Button variant="secondary" size="compact" raised label="Choose from Photos" onPress={onChoose} disabled={busy} />
+          <View style={[styles.ghost, equalWays ? styles.equal : styles.ranked, { left: f.x, top: f.top, width: f.w, height: f.h }]}>
+            {equalWays ? null : <Glyph name="photo" token={icon.ghost} color={color.text.placeholder} />}
+            <View style={styles.wide}>
+              <Button variant="secondary" size="compact" raised label="Take a photo" onPress={onTake} disabled={busy} />
+            </View>
+            {equalWays ? (
+              <Button variant="secondary" size="compact" raised label="Choose from Photos" onPress={onChoose} disabled={busy} />
+            ) : (
+              <View style={styles.link}>
+                <Button variant="text" small label="Choose from Photos" onPress={onChoose} disabled={busy} />
+              </View>
+            )}
           </View>
         ) : null}
         {phase === 'ghost' || !photo ? (
@@ -309,19 +321,35 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  // The two ways in, placed by their shadow's edge (Turn 39): see tokens' bagLift.ghost.
+  // The footprint holding the two ways in (tokens' bagLift.ghost).
   ghost: {
     position: 'absolute',
-    alignItems: 'stretch',
-    justifyContent: 'flex-start',
-    gap: cfg.ghost.gap,
-    paddingTop: cfg.ghost.pad.top,
-    paddingRight: cfg.ghost.pad.right,
-    paddingLeft: cfg.ghost.pad.left,
     borderWidth: dashed.addTile.width,
     borderStyle: dashed.addTile.style,
     borderColor: dashed.addTile.color,
     backgroundColor: cfg.ghost.fill,
+  },
+  // Everyday (38a): glyph, button, link, centred.
+  ranked: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: cfg.ghost.ranked.gap,
+    paddingHorizontal: cfg.ghost.ranked.padX,
+  },
+  wide: {
+    alignSelf: 'stretch',
+  },
+  link: {
+    marginTop: cfg.ghost.ranked.linkGap - cfg.ghost.ranked.gap,
+  },
+  // First setup (40a): two equal buttons, placed by their shadow's edge.
+  equal: {
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    gap: cfg.ghost.equal.gap,
+    paddingTop: cfg.ghost.equal.pad.top,
+    paddingRight: cfg.ghost.equal.pad.right,
+    paddingLeft: cfg.ghost.equal.pad.left,
   },
   hint: {
     position: 'absolute',

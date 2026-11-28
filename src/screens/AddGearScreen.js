@@ -9,6 +9,7 @@ import AddButton from '../components/base/AddButton';
 import BottomSheet from '../components/base/BottomSheet';
 import Button from '../components/base/Button';
 import IconButton from '../components/base/IconButton';
+import TextLink from '../components/base/TextLink';
 import SearchField from '../components/base/SearchField';
 import SegmentedControl from '../components/base/SegmentedControl';
 import Text from '../components/base/Text';
@@ -67,23 +68,22 @@ import ScreenFrame from './ScreenFrame';
  * its default. From the Record sheet, the first of each kind added goes on
  * this cup (not only the defaults).
  *
- * First setup's last step (Design Round 30, 36c; built 2026-11-21): this
- * screen with `setup` = { step, onDone }. Gear comes after beans, as
- * everywhere in the app (Uryu, 2026-11-21; 36c draws it first). 8c is 3a
- * once drinks_out is gone: the same cap (8, written "up to 8" in figures),
- * the same rule for defaults (the first of a category fills 5a's Method),
- * the same catalogue (not 8c's generic kinds). What changes:
- *   header  the standard header: ‹ (back to the bag step), "SETUP · 2 OF 2"
- *           (eyebrow) over the question as the title. No "Skip setup": on
- *           the last step it would do what Done does with nothing checked
- *           (as 36d drops it on its last step). No stat: "N slots left"
- *           keeps the count
+ * First setup's first step (Design Round 30, 36c; built 2026-11-21, first
+ * since 2026-11-28: Uryu, gear before the bag, as the boards draw it): this
+ * screen with `setup` = { step, onNext, onSkip }. 8c is 3a once drinks_out
+ * is gone: the same cap (8, written "up to 8" in figures), the same rule
+ * for defaults (the first of a category fills 5a's Method), the same
+ * catalogue (not 8c's generic kinds). What changes:
+ *   header  the standard header: ‹ (back to Welcome) and "Skip setup" at
+ *           the top right (36e: where every step but the last keeps it);
+ *           "SETUP · 1 OF 2" (eyebrow) over the question as the title. No
+ *           stat: "N slots left" keeps the count
  *   body    8c's line over 3a as it is
- *   footer  "Done", never off: it saves what is checked, or with nothing
- *           checked just finishes. TODO(Design): 36c's "Next" is a first
- *           step's word; "Done" is ours for the last. 36c puts the slots line
- *           above the button; it stays under, as 3a has it.
+ *   footer  "Next" (36c's word), never off: it saves what is checked, or
+ *           with nothing checked just moves on to the bag. 36c puts the
+ *           slots line above the button; it stays under, as 3a has it.
  * 36c's question title is serif 34 / 36; ours is display.lg (40 / 41).
+ * TODO(Design): the bag step's question is 34 (40a); the two now differ.
  */
 const PLURAL = { brewer: 'brewers', grinder: 'grinders', kettle: 'kettles', scale: 'scales' };
 const TABS = GEAR_CATEGORIES.map((value) => ({ value, label: GEAR_CATEGORY[value] }));
@@ -200,7 +200,7 @@ export default function AddGearScreen({ onBack, setup, guardLeave }) {
         chooseGear(pick);
       }
       guardLeave?.(false);
-      if (setup) setup.onDone();
+      if (setup) setup.onNext();
       else onBack({ force: true });
     } catch (error) {
       console.error('[gear] could not add', error);
@@ -237,12 +237,14 @@ export default function AddGearScreen({ onBack, setup, guardLeave }) {
         eyebrow={setup?.step}
         title={setup ? 'How do you usually brew?' : 'Add gear'}
         leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={back} />}
+        // Setup's first step keeps Skip setup at the top right (36e).
+        leadingEnd={setup ? <TextLink label="Skip setup" onPress={setup.onSkip} /> : undefined}
         stat={owned != null && !setup ? { value: `${total} / ${GEAR_LIMIT}`, label: 'Selected' } : undefined}
         footer={
           <View style={styles.footer}>
             {setup ? (
-              // Setup's last step: Done saves what is checked, or with nothing checked finishes.
-              <Button label="Done" onPress={n > 0 ? save : setup.onDone} disabled={owned == null} />
+              // Setup's first step (36c): Next saves what is checked, or with nothing checked just moves on.
+              <Button label="Next" onPress={n > 0 ? save : setup.onNext} disabled={owned == null} />
             ) : (
               // "Save 0 items" says why it is off, so a press warns (§1).
               <Button label={n === 1 ? 'Save 1 item' : `Save ${n} items`} onPress={save} disabled={n === 0 || owned == null} warnWhenDisabled={n === 0} />

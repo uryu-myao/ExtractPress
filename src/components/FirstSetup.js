@@ -15,14 +15,16 @@ import PushedScreen from './PushedScreen';
  * First setup (Design Round 30, 36a–36e; built 2026-11-21), over the whole
  * app while settings.setup_done is 0. Welcome is the base; the two steps are
  * pushed over it, so Back and the edge swipe go back a step as everywhere.
- * Beans first, then gear, as everywhere in the app (Uryu, 2026-11-21; the
- * boards draw gear first).
+ * Gear first, then the bag, as the boards draw it (Uryu, 2026-11-28, on
+ * the Planner's case: the camera step is the heavier one and comes second;
+ * gear is set once, bags keep coming; with the bag last it needs no Skip
+ * setup. Was beans first from 2026-11-21).
  *
- *   Welcome  Set up my shelf → bag · Skip setup → Home ·
+ *   Welcome  Set up my shelf → gear · Skip setup → Home ·
  *            New phone? Restore a backup (only while the app is empty)
- *   bag      Open this bag → gear · I'll add a bag later → gear ·
- *            Back → Welcome (no Skip setup on this step since 40a)
- *   gear     Done → Home · Back → bag
+ *   gear     Next → bag · Skip setup (top right, 36e) → Home · Back → Welcome
+ *   bag      Open this bag / Add without opening / I'll add a bag later →
+ *            Home · Back → gear (no Skip setup on the last step, 40a)
  *
  * setup_done becomes 1 on every way out (36e "For Code"): Done, Skip setup,
  * or a restore (backupFormat.ts copyInto writes it; the shelf's change
@@ -30,8 +32,8 @@ import PushedScreen from './PushedScreen';
  * over Home). Never shown again: skipping is a choice, and both steps are
  * ordinary screens in the app.
  *
- * Quitting mid-setup is not a way out (Round 30 A3): reaching the gear step
- * stores it (device.setup_step), and a relaunch opens there, the bag step
+ * Quitting mid-setup is not a way out (Round 30 A3): reaching the bag step
+ * stores it (device.setup_step), and a relaunch opens there, the gear step
  * under it for Back.
  *
  * Left out on purpose (Uryu, 2026-11-21): 8n "How do you take your coffee?"
@@ -50,7 +52,7 @@ export function FirstSetupHost() {
   // undefined: not read yet (the ground covers the app, so Home doesn't
   // flash first); null: setup done; true: showing.
   const [open, setOpen] = useState(undefined);
-  // The pushed steps over Welcome: { name: 'bag' | 'gear', key }.
+  // The pushed steps over Welcome: { name: 'gear' | 'bag', key }.
   const [stack, setStack] = useState([]);
   // Welcome's restore row: only while the app is empty (Round 30 A2).
   const [empty, setEmpty] = useState(false);
@@ -62,7 +64,7 @@ export function FirstSetupHost() {
     Promise.all([isSetupDone(db), getSetupStep(db)]).then(
       ([done, step]) => {
         if (!alive) return;
-        if (!done && step === 'gear') setStack([entry('bag'), entry('gear')]);
+        if (!done && step === 'bag') setStack([entry('gear'), entry('bag')]);
         setOpen(done ? null : true);
       },
       (error) => {
@@ -109,11 +111,11 @@ export function FirstSetupHost() {
   const leaving = (key) => setStack((s) => s.map((e) => (e.key === key ? { ...e, leaving: true } : e)));
   const popKey = (key) => setStack((s) => s.filter((e) => e.key !== key));
 
-  const toGear = () => {
-    // The bag's name field had the keyboard; gear's list needs the room.
+  const toBag = () => {
+    // Gear's search may have had the keyboard; the bag step opens without it.
     Keyboard.dismiss();
-    setSetupStep(db, 'gear').catch((error) => console.error('[setup] could not keep the step', error));
-    push('gear');
+    setSetupStep(db, 'bag').catch((error) => console.error('[setup] could not keep the step', error));
+    push('bag');
   };
 
   const finish = async () => {
@@ -139,22 +141,23 @@ export function FirstSetupHost() {
 
   return (
     <View style={[StyleSheet.absoluteFill, styles.cover]}>
-      <WelcomeScreen onSetUp={() => push('bag')} onSkip={finish} restore={empty} />
+      <WelcomeScreen onSetUp={() => push('gear')} onSkip={finish} restore={empty} />
       <ScreenBackdropContext.Provider value={false}>
         {stack.map((e) => (
           <PushedScreen key={e.key} onLeave={() => leaving(e.key)} onBack={() => popKey(e.key)}>
             {(goBack, guardLeave) =>
-              e.name === 'bag' ? (
-                <AddBagScreen onBack={goBack} guardLeave={guardLeave} onAdded={toGear} setup={{ step: stepLabel(1), onLater: toGear }} />
+              e.name === 'gear' ? (
+                <AddGearScreen guardLeave={guardLeave} onBack={goBack} setup={{ step: stepLabel(1), onNext: toBag, onSkip: finish }} />
               ) : (
-                <AddGearScreen
+                <AddBagScreen
                   guardLeave={guardLeave}
                   onBack={(options) => {
-                    // Back to the bag step: a relaunch starts there too.
+                    // Back to the gear step: a relaunch starts there too.
                     setSetupStep(db, null).catch(() => {});
                     goBack(options);
                   }}
-                  setup={{ step: stepLabel(2), onDone: finish }}
+                  onAdded={finish}
+                  setup={{ step: stepLabel(2), onLater: finish }}
                 />
               )
             }

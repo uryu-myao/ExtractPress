@@ -132,12 +132,12 @@ export async function markSetupDone(db: SQLiteDatabase): Promise<void> {
 }
 
 /** The setup step reached (Design Round 30 A3: a relaunch resumes there); null before the second. */
-export async function getSetupStep(db: SQLiteDatabase): Promise<'gear' | null> {
-  const row = await db.getFirstAsync<{ setup_step: 'gear' | null }>('SELECT setup_step FROM device');
+export async function getSetupStep(db: SQLiteDatabase): Promise<'bag' | null> {
+  const row = await db.getFirstAsync<{ setup_step: 'bag' | null }>('SELECT setup_step FROM device');
   return row?.setup_step ?? null;
 }
 
-export async function setSetupStep(db: SQLiteDatabase, step: 'gear' | null): Promise<void> {
+export async function setSetupStep(db: SQLiteDatabase, step: 'bag' | null): Promise<void> {
   await db.runAsync('UPDATE device SET setup_step = ?', [step]);
 }
 

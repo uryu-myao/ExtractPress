@@ -702,6 +702,19 @@ export const migrations: readonly Migration[] = [
     name: 'bag photo cutout',
     statements: [`ALTER TABLE bags ADD COLUMN photo_cutout INTEGER CHECK (photo_cutout BETWEEN 0 AND 31)`],
   },
+  {
+    /*
+     * First setup's order turned round (Uryu, 2026-11-28, as Design Turn 39
+     * draws it): gear first, the bag last. The second step is now 'bag', and
+     * SQLite can't change a CHECK in place, so the column is dropped and
+     * added again. A phone left mid-setup at the old second step ('gear')
+     * starts setup again at Welcome: nothing it made is lost, only where
+     * Welcome resumes.
+     */
+    version: 18,
+    name: 'first setup step: the bag is second',
+    statements: [`ALTER TABLE device DROP COLUMN setup_step`, `ALTER TABLE device ADD COLUMN setup_step TEXT CHECK (setup_step IN ('bag'))`],
+  },
 ];
 
 /** The bookkeeping table. Created before any migration runs. */

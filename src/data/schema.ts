@@ -359,8 +359,8 @@ export const schema = {
     notify_stale: { type: 'INTEGER', nullable: false },
     /** 3c's date sheet: the kind chosen last (migration 10; Design Round 27 B1). NULL: Roasted on. */
     bag_date_kind: { type: 'TEXT', nullable: true, values: ['roasted', 'bestBefore'] },
-    /** First setup's step reached (migration 16; Design Round 30 A3): a relaunch resumes there. NULL: Welcome / the first step. */
-    setup_step: { type: 'TEXT', nullable: true, values: ['gear'] },
+    /** First setup's step reached (migration 16; 'bag' since migration 18, gear first): a relaunch resumes there. NULL: Welcome / the first step. */
+    setup_step: { type: 'TEXT', nullable: true, values: ['bag'] },
   },
 } as const satisfies Record<string, Record<string, ColumnDef>>;
 

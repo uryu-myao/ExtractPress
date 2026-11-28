@@ -584,6 +584,8 @@ export const icon = {
   lg: { size: 22, strokeWidth: 1.8 },
   /** The bag photo's glyphs (Design Round 31 v2, 37m): the bag page's photo button and the Bag photo sheet's rows, 20 at 2.2. */
   action: { size: 20, strokeWidth: 2.2 },
+  /** Add a bag's empty footprint (Design Turn 37, 38a): the camera over Take a photo, 22 at 2.2. */
+  ghost: { size: 22, strokeWidth: 2.2 },
   /** decorative large glyph — stroke widens back */
   xl: { size: 38, strokeWidth: 2.0 },
   /** 5b's ✕ on a 24 square (30b): 12 at 3, so the cross holds its weight that small */
@@ -950,12 +952,15 @@ export const component = {
    * components/BagLift.js). Its visual is the bag page's (bagPage); these
    * are what only Add a bag draws there.
    *   ghost   the empty footprint (152 × 213 at 402, the page's): dashed
-   *           (dashed.addTile), paper at 72 %, holding Take a photo and
-   *           Choose from Photos as two equal compact buttons, no glyph,
-   *           `gap` apart (Design Turn 39, 2026-11-28: was a camera glyph,
-   *           a button and a text link). Placed by the shadow's edge: `pad`
-   *           (56 / 13 / 0 / 9) leaves 56 above and below and 9 each side
-   *           once the 4 / 4 shadow counts. Under it, `hintGap` below, the
+   *           (dashed.addTile), paper at 72 %. Everyday (38a, `ranked`):
+   *           the camera (icon.ghost, text.placeholder), Take a photo (a
+   *           compact button) and Choose from Photos (a text action),
+   *           centred `gap` apart, the link `linkGap` under the button
+   *           (Uryu, 2026-11-26). First setup (40a, `equal`): the two as
+   *           equal compact buttons, no glyph, `gap` apart, placed by the
+   *           shadow's edge: `pad` (56 / 13 / 0 / 9) leaves 56 above and
+   *           below and 9 each side once the 4 / 4 shadow counts (Uryu,
+   *           2026-11-28: equal in setup only). Under it, `hintGap` below, the
    *           label line (Turn 38: "Reads the label, so you can tap instead
    *           of type.", bodySm, text.secondary, centred), gone with it
    *   photo   the shot as it lands: 3 : 4, its top on the floating
@@ -1021,7 +1026,12 @@ export const component = {
     cjk: { lead: 'HiraginoSans-W6', quiet: 'HiraginoSans-W3' },
   },
   bagLift: {
-    ghost: { fill: 'rgba(244, 237, 234, 0.72)', gap: space[14], pad: { top: 56, right: 13, left: 9 }, hintGap: 9 },
+    ghost: {
+      fill: 'rgba(244, 237, 234, 0.72)',
+      hintGap: 9,
+      equal: { gap: space[14], pad: { top: 56, right: 13, left: 9 } },
+      ranked: { gap: 10, linkGap: space[20], padX: space[12] },
+    },
     photo: { height: 272 / 280, aspect: 3 / 4, scaleFrom: 0.96 },
     line: { height: 3, edge: 1, overhang: space[8], color: color.surface.raised, edgeColor: color.text.primary },
     halo: { color: color.surface.raised, radius: 4 },

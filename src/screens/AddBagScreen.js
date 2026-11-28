@@ -73,9 +73,11 @@ import ScreenFrame from './ScreenFrame';
  * onAdded. The Add a bag page with a setup flag:
  *   visual  446 tall (component.addBag.setup): room above for the question;
  *           the footprint keeps 38a's size and baseline. The two ways in and
- *           the lift as everywhere (the label candidates too: a first bag
+ *           the lift as everywhere, but the two ways in as two equal
+ *           buttons (40a: the first launch, and the camera's permission;
+ *           38a keeps its button and text link). The label candidates too: a first bag
  *           has no history, so they help most here)
- *   header  ‹ only, then under it the step ("SETUP · 1 OF 2", eyebrow,
+ *   header  ‹ only, then under it the step ("SETUP · 2 OF 2", eyebrow,
  *           accent) and the question in serif 34 / 36 on one line, in place
  *           of the "Add a bag" title. Top right: the camera button once a
  *           photo is in, nothing before. No Skip setup on this step (40a)
@@ -83,8 +85,9 @@ import ScreenFrame from './ScreenFrame';
  *           a name, then "I'll add a bag later" centred under them. 40a drops
  *           Add without opening (only an opened bag fills 5a's Bag); Uryu
  *           keeps it (2026-11-21, again 2026-11-28): starting the app isn't
- *           always starting a bag, so a sealed one can go on the shelf. Both
- *           go on to gear. No "N of 5 slots free"
+ *           always starting a bag, so a sealed one can go on the shelf. All
+ *           three finish setup (the bag is the last step since 2026-11-28).
+ *           No "N of 5 slots free"
  *   keyboard  not up on arrival (Uryu, 2026-11-21)
  * Dropped from 36d: "Your first cup gets logged against it. Only the name
  * is needed." (the Optional tags and the line under the footprint say it).
@@ -266,8 +269,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
       if (kept && cutout == null) makeCutouts(db);
       // Only an opened bag can be the cup's bag.
       if (opened) chooseBag?.(bag);
-      // Setup keeps this step under the gear step: Back from gear finds an
-      // empty form, not the bag just added, ready to add again.
+      // Setup finishes here (onAdded); an empty form in case it stays a moment.
       if (setup) {
         setForm({ name: '', roaster: '', process: null, roastLevel: null, origin: null, region: null });
         setBagDate((d) => ({ ...d, value: null }));
@@ -402,6 +404,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
             photo={photo}
             lift={lift}
             busy={photoStep === 'working'}
+            equalWays={Boolean(setup)}
             onTake={() => {
               Keyboard.dismiss();
               pick('camera');
