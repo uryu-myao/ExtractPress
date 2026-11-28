@@ -64,8 +64,8 @@ import Text from './Text';
  *             'tile' (36, size.button.small, meterLabel: the action under a
  *             bag tile in the Beans grid, Design Round 31 v2, 37c; the
  *             tile's width). 'compact' (40, size.button.compact,
- *             meterLabel; secondary on surface.raised: Add a bag's "Take
- *             a photo" in the empty footprint, Design Turn 37, 38a)
+ *             buttonSmall, as written; secondary on surface.raised: Add a
+ *             bag's Take a photo / Choose from Photos, Design Turn 39)
  *   raised    row size, primary: the control hard shadow (shadow.control, 3)
  *             — 3d's "Open this bag" (2026-10-17). Row size has none by
  *             default. Tile size: shadow.floating (4 / 4, 37c). Compact
@@ -187,7 +187,7 @@ function FilledButton({
           pressed && !disabled && (primary ? styles.primaryPressed : styles.secondaryPressed),
         ]}>
         <View style={styles.content}>
-          <Text variant={bar ? 'buttonCapsBar' : tile || compact ? 'meterLabel' : row ? 'labelCaps' : 'buttonCaps'} color={labelColor} style={styles.label}>
+          <Text variant={bar ? 'buttonCapsBar' : compact ? 'buttonSmall' : tile ? 'meterLabel' : row ? 'labelCaps' : 'buttonCaps'} color={labelColor} style={styles.label}>
             {label}
           </Text>
           {trailingIcon ? <Glyph name={trailingIcon} token={icon.sm} color={iconColor} /> : null}
@@ -227,10 +227,11 @@ const styles = StyleSheet.create({
   tile: {
     height: size.button.small,
   },
-  // Inside a 152 footprint (38a): the side padding gives way so the label keeps one line.
+  // Inside the 152 footprint (38a / 40a): no side padding, so "Choose from
+  // Photos" (12 / 700, ~115) keeps one line in the button's ~123 inside.
   compact: {
     height: size.button.compact,
-    paddingHorizontal: space[8],
+    paddingHorizontal: 0,
   },
   primary: {
     backgroundColor: color.action.bg,

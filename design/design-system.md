@@ -28,12 +28,12 @@ Non-negotiable, and each one is a measured fact rather than a preference.
 ### Shape
 - **Containers are square-cornered.** `border-radius` appears **0 times across all 30 screens**: every card, sheet, field, chip, button and thumbnail has square corners. Do not round a container.
 - **Press feedback follows the shape of the element it sits behind.** Rectangular controls get a square fill; radial controls get a circle (the StarRating star, §9 Star rating). A press fill is feedback, not a container, so the container rule above does not govern its shape.
-- **Border width is binary: `1.5` or `2`.** Both appear on all 30 screens and they are role-separated — `2` is the outline of a box, `1.5` is an internal divider or a weak frame. No other width exists; do not introduce one.
+- **Border width has three roles: `2`, `1.5`, `1`** (was "binary: 1.5 or 2" until 2026-11-15). `2` is the outline of a box; `1.5` is a weak frame (chips, tags, the delete row, a swatch, the Required bar); `1` is a divider: every line that divides, **field underlines included** (One divider, everywhere, below). No other width exists; do not introduce one. **Boards that draw a field's underline or a row's divider at 1.5 are drawn on the old rule: build it at 1** (Planner, 2026-11-27; e.g. 38a's name and Roaster lines).
 - **Border style is binary: `solid` or `dashed`.** No dotted, no double.
 - Shadows are **hard**: blur 0, isotropic offset (x = y), single ink colour. No soft or directional shadows exist.
 
 ### Border colour: who gets ink (added 2026-11-07, Design Round 22, 24b)
-- **Width says what an edge is (Shape above: 2 = a box's outline, 1.5 = an internal divider or a weak frame). Colour says whether the box acts.** The two are independent: every frame keeps its width.
+- **Width says what an edge is (Shape above: 2 = a box's outline, 1.5 = a weak frame, 1 = a divider). Colour says whether the box acts.** The two are independent: every frame keeps its width.
 - **Control → ink** (`border.strong`). A box whose whole body is the thing you press and which holds nothing but its own label, glyph or value; it acts where it is (commits, types, toggles, sets, adds).
 - **Container → quiet** (`border.container`, an alias of `border.muted`, 2px). A box that encloses information or other things — including a whole card or row block that leads to another screen. Leading somewhere is the chevron's job (§1 Tap affordance), not the frame's.
 - **Chrome edges → quiet** (`border.container`): the bottom bar's top rule, a fixed foot panel's top rule, a sheet's top edge.
@@ -349,7 +349,7 @@ Grouped by role. Every hex is a value that qualified **inside that role** (≥3 
 
 ### Dividers
 **One divider, everywhere (Uryu, 2026-11-15): `color.divider.hairline` (`#E4D6CC`) at `shape.borderWidth.divider` (1).**
-- **What is a divider**: every line that divides — list and sheet rows' hairlines, the bag / gear form fields' underlines, Profile's stat rules, Search's rule and tab line, the shelf's first-row rule, 3f's, 8g's and 21a's rules, and the dashed card split (`dashed.dividerSoft`, 1, dashed).
+- **What is a divider**: every line that divides — list and sheet rows' hairlines, every typed field's underline (the bag / gear forms', Add a bag's name and Roaster), Profile's stat rules, Search's rule and tab line, the shelf's first-row rule, 3f's, 8g's and 21a's rules, and the dashed card split (`dashed.dividerSoft`, 1, dashed).
 - **Lighter and thinner than a frame**: two tiers lighter than the frames' `border.container` (`#C8BCB4` → `#D8C9BF` → `#E4D6CC`) and half its width (1 against 2), so a divider never reads as a frame. 1.5 was tried first and read too close to 2.
 - **Selection rows have no dividers** (Uryu, 2026-11-15): rows with a chevron that open a picker — 5a / 11a's FieldRows (Bag, Method, Drink…), the bag's facts in Details (Roast level, Origin, Region, Process) — sit apart by their padding alone, as Profile's rows (Design Round 9). Typed fields keep their underline; read-only rows (2c) keep their divider.
 - **Not dividers** (unchanged): panel edges (sheet, Save bar, footer: `border.container`, 2), ink indicators (the open tab's and Home's today underline, a focused field's underline), and weak frames (`shape.borderWidth.weak`, 1.5: chips, the delete row, a swatch, the Required bar).

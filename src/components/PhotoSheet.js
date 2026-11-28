@@ -155,7 +155,9 @@ export function usePhotoPick({ guide, onChosen }) {
   const prepare = async (uri) => {
     try {
       setStep('working');
-      const photo = await preparePhoto(uri);
+      // takenAt: when the shot or the pick came back (Add a bag measures from it to its candidates).
+      const takenAt = Date.now();
+      const photo = { ...(await preparePhoto(uri)), takenAt };
       if (onChosen) {
         setStep(null);
         onChosen(photo);

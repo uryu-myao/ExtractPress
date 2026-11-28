@@ -205,15 +205,17 @@ export function BagVisual({ bag, width, barLine, scrollY }) {
 /**
  * The bag page's visual, measured (see BagVisual): the footprint `f` and
  * `place` (a cutout's aspect and edges → its box). Add a bag uses the same,
- * so a bag lifted there stands where its page will show it (38b).
+ * so a bag lifted there stands where its page will show it (38b). A taller
+ * visual (`height`, first setup's 446, 40a) keeps the footprint's size and
+ * its baseline's distance from the foot: only room above is added.
  */
-export function pageGeometry(width, barLine) {
-  const height = component.bagPage.visualHeight;
-  const area = height - barLine;
+export function pageGeometry(width, barLine, height = component.bagPage.visualHeight) {
+  const standard = component.bagPage.visualHeight;
+  const area = standard - barLine;
   const { aspect, maxH, lift } = tile.footprint;
   const fh = area * maxH;
   const fw = fh * aspect;
-  const baseline = height * (1 - lift);
+  const baseline = height - standard * lift;
   const f = { w: fw, h: fh, x: (width - fw) / 2, top: baseline - fh, baseline };
   const place = (a, edges) => {
     const box = edges.bottom ? { w: width * tile.snapWidth, h: height - f.top } : { w: f.w, h: f.h };

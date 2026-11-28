@@ -58,14 +58,17 @@ export default function Text({
     }
   }
 
-  const lines = TRUNCATION[truncate];
+  // truncate's policy, else a numberOfLines given directly. Until 2026-11-27
+  // the policy's undefined ('none') overwrote a passed numberOfLines, so
+  // every one-line row wrapped (Records' source line, the label chips).
+  const lines = TRUNCATION[truncate] ?? rest.numberOfLines;
 
   return (
     <RNText
       {...rest}
       style={[resolved[variant], { color: colorTokens.text[color] ?? color }, style]}
       numberOfLines={lines}
-      ellipsizeMode={lines ? 'tail' : undefined}
+      ellipsizeMode={lines ? (rest.ellipsizeMode ?? 'tail') : undefined}
       // CJK: 'standard' turns on the system line-break rules UILabel uses
       // (kinsoku: no line-leading 。、」 and no line-ending 「). RN's default is 'none'.
       lineBreakStrategyIOS="standard"

@@ -1,11 +1,10 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Image, Platform, StyleSheet, View } from 'react-native';
-import { color, component, dashed, icon } from '../theme/tokens';
+import { color, component, dashed } from '../theme/tokens';
 import { pageGeometry } from './BagTile';
 import Button from './base/Button';
 import DotGround from './base/DotGround';
-import Glyph from './base/Glyph';
 import Text from './base/Text';
 
 const page = component.bagPage;
@@ -22,9 +21,10 @@ const NOT_LIFTED = "Couldn't lift it out · kept the photo";
  * (pageGeometry), so a bag lifted here stands where its page will show it.
  *
  *   no photo  the footprint, dashed (§8: not started), paper at 72 %, holding
- *             the camera, Take a photo and Choose from Photos (38a), and
- *             under it "Reads the label, so you can tap instead of type."
- *             (Turn 38), gone with it. No sheet
+ *             Take a photo and Choose from Photos, two equal buttons (Turn
+ *             39, 2026-11-28; nothing asks for a permission until Take a
+ *             photo is tapped), and under it "Reads the label, so you can
+ *             tap instead of type." (Turn 38), gone with it. No sheet
  *   the lift  (38b) the confirmation, played once a photo is in:
  *     1 shot    0–200: the photo lands, 3 : 4, fading in and scaling from 0.96
  *     2 pull    200–900: a paper line with an ink top edge runs down the
@@ -52,21 +52,29 @@ const NOT_LIFTED = "Couldn't lift it out · kept the photo";
  *
  * Props
  *   width, barLine  the hero's (ScreenFrame ctx)
+ *   height    the visual's (first setup's is taller, 40a; default 384)
  *   photo     the pending photo (photos.ts PendingPhoto) or null
  *   lift      undefined while Vision works; then photos.ts Lift (uri null:
  *             not lifted)
  *   busy      a photo is being prepared: the footprint's buttons are off
  *   onTake, onChoose  the footprint's two ways in
  *   onSettled the motion is over (the camera button may show)
+ *   onDone    the note under the bag has faded too (the bag page swaps back
+ *             to its own visual then)
+ *   short     the bag page's retake (37m; Planner, 2026-11-27): no shot and
+ *             no halo, the photo is simply there, then the pull and the
+ *             settle (the haptic stays). A retake is usually because the
+ *             last lift failed or was poor: this shows whether this one took
  */
-export default function BagLift({ width, barLine, photo, lift, busy, onTake, onChoose, onSettled }) {
+export default function BagLift({ width, barLine, height = page.visualHeight, photo, lift, busy, onTake, onChoose, onSettled, onDone, short = false }) {
   const reduceMotion = useReduceMotion();
-  const height = page.visualHeight;
-  const { f, place } = pageGeometry(width, barLine);
+  const { f, place } = pageGeometry(width, barLine, height);
+  // A taller visual (first setup's) only adds room above: everything keeps its distance from the foot.
+  const extra = height - page.visualHeight;
   // The shot: 3 : 4 in the area under the bar's line, its top on the line.
-  const PH = (height - barLine) * cfg.photo.height;
+  const PH = (page.visualHeight - barLine) * cfg.photo.height;
   const PW = PH * cfg.photo.aspect;
-  const shot = { x: (width - PW) / 2, y: barLine, w: PW, h: PH };
+  const shot = { x: (width - PW) / 2, y: barLine + extra, w: PW, h: PH };
 
   // 'ghost' | 'shot' | 'wait' | 'pull' | 'done' | 'print'
   const [phase, setPhase] = useState(photo ? 'shot' : 'ghost');
@@ -74,6 +82,8 @@ export default function BagLift({ width, barLine, photo, lift, busy, onTake, onC
   const run = useRef(0);
   const settledRef = useRef(onSettled);
   settledRef.current = onSettled;
+  const doneRef = useRef(onDone);
+  doneRef.current = onDone;
 
   const v = useRef({
     photo: new Animated.Value(0), // the shot's opacity and scale (0 → 1)
@@ -104,7 +114,10 @@ export default function BagLift({ width, barLine, photo, lift, busy, onTake, onC
     setNote(text);
     AccessibilityInfo.announceForAccessibility(text);
     Animated.sequence([timing(v.note, 1, cfg.note.fade), Animated.delay(cfg.note.hold), timing(v.note, 0, cfg.note.fade)]).start(({ finished }) => {
-      if (finished && run.current === id) setNote(null);
+      if (finished && run.current === id) {
+        setNote(null);
+        doneRef.current?.();
+      }
     });
   };
 
@@ -121,7 +134,7 @@ export default function BagLift({ width, barLine, photo, lift, busy, onTake, onC
       return undefined;
     }
     setPhase('shot');
-    if (reduceMotion) {
+    if (reduceMotion || short) {
       v.photo.setValue(1);
       setPhase('wait');
       return undefined;
@@ -166,8 +179,7 @@ export default function BagLift({ width, barLine, photo, lift, busy, onTake, onC
     Animated.sequence([
       timing(v.wipe, 1, T.pull),
       timing(v.line, 0, 0),
-      timing(v.halo, 1, T.haloIn),
-      timing(v.halo, 0, T.haloOut),
+      ...(short ? [] : [timing(v.halo, 1, T.haloIn), timing(v.halo, 0, T.haloOut)]),
       timing(v.settle, 1, T.settle, ease),
     ]).start(({ finished }) => {
       if (finished) finish(LIFTED, id);
@@ -207,13 +219,8 @@ export default function BagLift({ width, barLine, photo, lift, busy, onTake, onC
       <View style={[StyleSheet.absoluteFill, styles.clip]}>
         {phase === 'ghost' || !photo ? (
           <View style={[styles.ghost, { left: f.x, top: f.top, width: f.w, height: f.h }]}>
-            <Glyph name="photo" token={icon.ghost} color={color.text.placeholder} />
-            <View style={styles.ghostButton}>
-              <Button variant="secondary" size="compact" raised label="Take a photo" onPress={onTake} disabled={busy} />
-            </View>
-            <View style={styles.ghostLink}>
-              <Button variant="text" small label="Choose from Photos" onPress={onChoose} disabled={busy} />
-            </View>
+            <Button variant="secondary" size="compact" raised label="Take a photo" onPress={onTake} disabled={busy} />
+            <Button variant="secondary" size="compact" raised label="Choose from Photos" onPress={onChoose} disabled={busy} />
           </View>
         ) : null}
         {phase === 'ghost' || !photo ? (
@@ -302,28 +309,25 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // The two ways in, placed by their shadow's edge (Turn 39): see tokens' bagLift.ghost.
   ghost: {
     position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
     gap: cfg.ghost.gap,
-    paddingHorizontal: cfg.ghost.padX,
+    paddingTop: cfg.ghost.pad.top,
+    paddingRight: cfg.ghost.pad.right,
+    paddingLeft: cfg.ghost.pad.left,
     borderWidth: dashed.addTile.width,
     borderStyle: dashed.addTile.style,
     borderColor: dashed.addTile.color,
     backgroundColor: cfg.ghost.fill,
-  },
-  ghostButton: {
-    alignSelf: 'stretch',
   },
   hint: {
     position: 'absolute',
     left: 0,
     right: 0,
     alignItems: 'center',
-  },
-  ghostLink: {
-    marginTop: cfg.ghost.linkGap - cfg.ghost.gap,
   },
   // The halo: the cutout's own alpha casts it (no background, so iOS shadows the image's shape).
   halo: {

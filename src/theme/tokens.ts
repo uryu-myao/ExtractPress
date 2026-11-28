@@ -225,6 +225,8 @@ export const texture = {
 export const textStyle = {
   displayLg:     { fontFamily: 'Instrument Serif', fontSize: 40, fontWeight: '400', lineHeight: 41 },
   displaySm:     { fontFamily: 'Instrument Serif', fontSize: 30, fontWeight: '400', lineHeight: 31 },
+  /** First setup's question on the bag step (Design Turn 39, 40a): serif 34 / 36, one line ("What's in your bag right now?" measures 343) */
+  displayQuestion: { fontFamily: 'Instrument Serif', fontSize: 34, fontWeight: '400', lineHeight: 36 },
   /** 3d's "Finished bags" entry (2026-10-14, from the mock). */
   displayXs:     { fontFamily: 'Instrument Serif', fontSize: 24, fontWeight: '400', lineHeight: 24 },
   numeralHero:   { fontFamily: 'Instrument Serif', fontSize: 96, fontWeight: '400', lineHeight: 79 },
@@ -276,6 +278,8 @@ export const textStyle = {
   countTabular:  { fontFamily: 'Archivo', fontSize: 14, fontWeight: '600', lineHeight: 21, fontVariant: ['tabular-nums'] },
   /** lineHeight UNDECLARED · 0.08em x 12 */
   labelCaps:     { fontFamily: 'Archivo', fontSize: 12, fontWeight: '700', letterSpacing: 0.96, textTransform: 'uppercase' },
+  /** lineHeight UNDECLARED · the compact button's label, as written (Design Turn 39, 38a / 40a: Take a photo, Choose from Photos) */
+  buttonSmall:   { fontFamily: 'Archivo', fontSize: 12, fontWeight: '700' },
   /** A pushed page's title in caps beside Back: 8f, 8g (21a, 21d) and Licences. 13 / 700 · 0.12em x 13. 2026-11-10. */
   titleCaps:     { fontFamily: 'Archivo', fontSize: 13, fontWeight: '700', letterSpacing: 1.56, textTransform: 'uppercase' },
   /**
@@ -580,8 +584,6 @@ export const icon = {
   lg: { size: 22, strokeWidth: 1.8 },
   /** The bag photo's glyphs (Design Round 31 v2, 37m): the bag page's photo button and the Bag photo sheet's rows, 20 at 2.2. */
   action: { size: 20, strokeWidth: 2.2 },
-  /** Add a bag's empty footprint (Design Turn 37, 38a): the camera over Take a photo, 22 at 2.2. */
-  ghost: { size: 22, strokeWidth: 2.2 },
   /** decorative large glyph — stroke widens back */
   xl: { size: 38, strokeWidth: 2.0 },
   /** 5b's ✕ on a 24 square (30b): 12 at 3, so the cross holds its weight that small */
@@ -948,11 +950,12 @@ export const component = {
    * components/BagLift.js). Its visual is the bag page's (bagPage); these
    * are what only Add a bag draws there.
    *   ghost   the empty footprint (152 × 213 at 402, the page's): dashed
-   *           (dashed.addTile), paper at 72 %, the camera (in
-   *           text.placeholder, Bean name's placeholder; Uryu, 2026-11-26),
-   *           Take a photo and Choose from Photos stacked `gap` apart, the
-   *           last two `linkGap` apart (Uryu, 2026-11-26: 10 was easy to
-   *           mis-tap), `padX` inside; under it, `hintGap` below, the
+   *           (dashed.addTile), paper at 72 %, holding Take a photo and
+   *           Choose from Photos as two equal compact buttons, no glyph,
+   *           `gap` apart (Design Turn 39, 2026-11-28: was a camera glyph,
+   *           a button and a text link). Placed by the shadow's edge: `pad`
+   *           (56 / 13 / 0 / 9) leaves 56 above and below and 9 each side
+   *           once the 4 / 4 shadow counts. Under it, `hintGap` below, the
    *           label line (Turn 38: "Reads the label, so you can tap instead
    *           of type.", bodySm, text.secondary, centred), gone with it
    *   photo   the shot as it lands: 3 : 4, its top on the floating
@@ -981,7 +984,20 @@ export const component = {
    * its `roasterHeight` value line `labelGap` apart. 38a draws 6 and 40;
    * closer on Uryu's ask (2026-11-26): the label read far from its value.
    */
-  addBag: { nameLine: space[8], roasterTop: space[16], labelGap: space[2], roasterHeight: 34 },
+  addBag: {
+    nameLine: space[8],
+    roasterTop: space[16],
+    labelGap: space[2],
+    roasterHeight: 34,
+    /**
+     * First setup's bag step (Design Turn 39, 40a–40c): the visual is
+     * `visualHeight` tall (38a's 384 plus room for the question; the
+     * footprint keeps its size and its baseline). Under ‹, `below` the bar's
+     * line: the step eyebrow (accent), then the question (displayQuestion)
+     * `gap` under it.
+     */
+    setup: { visualHeight: 446, below: space[12], gap: space[6] },
+  },
   /**
    * Add a bag's label candidates (Design Turn 38, 39a–39d; components/
    * LabelBar.js): the keyboard's accessory bar, shared by Bean name and
@@ -1005,7 +1021,7 @@ export const component = {
     cjk: { lead: 'HiraginoSans-W6', quiet: 'HiraginoSans-W3' },
   },
   bagLift: {
-    ghost: { fill: 'rgba(244, 237, 234, 0.72)', gap: 10, linkGap: space[20], padX: space[12], hintGap: 9 },
+    ghost: { fill: 'rgba(244, 237, 234, 0.72)', gap: space[14], pad: { top: 56, right: 13, left: 9 }, hintGap: 9 },
     photo: { height: 272 / 280, aspect: 3 / 4, scaleFrom: 0.96 },
     line: { height: 3, edge: 1, overhang: space[8], color: color.surface.raised, edgeColor: color.text.primary },
     halo: { color: color.surface.raised, radius: 4 },
@@ -1108,6 +1124,8 @@ export const component = {
    */
   archive: {
     row: { minHeight: 56, inset: space[6], gap: space[12] },
+    /** The cup's name to the lines under it (Uryu, 2026-11-27: the lines read as one group, apart from the name). */
+    titleGap: space[4],
     thumb: 48,
     ratingColumn: 44,
     corner: 20,

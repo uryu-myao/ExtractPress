@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { formatDay } from '../constants/dates';
 import { resolveTextStyle } from '../theme/fonts';
-import { color, icon, shape, size, space, spacing, state, textStyle } from '../theme/tokens';
+import { color, shape, size, spacing, state, textStyle } from '../theme/tokens';
 import ClearButton from './base/ClearButton';
-import Glyph from './base/Glyph';
 import Text from './base/Text';
 
 /**
@@ -12,7 +11,7 @@ import Text from './base/Text';
  * Two field sets, one component:
  *   minimal  Bean name (required), Roaster, the date on the bag (3c, Round
  *            27) or Roasted on / Best before (19a) — 8o's set; 3c (minimal)
- *   full     + Size, Photo — 3c / 3g; built so far: Photo (3c)
+ *   full     + Size — 3g (the photo is the bag page's visual since Turn 37)
  * The bag's facts (Roast level, Origin, Region, Process) come in as `facts`
  * and sit under Roaster: one Details (Uryu, 2026-11-15). useBagFacts builds
  * them, rows that open their sheets; they replace 3c / 3g's roast chips and
@@ -57,10 +56,6 @@ import Text from './base/Text';
  *   facts       the bag's facts rows (useBagFacts), drawn under Roaster
  *   children    3g: drawn last inside the card (the freshness block)
  *   autoFocusName  3c: the keyboard comes up on Bean name; 3g: off (it opens to correct, not to type)
- *   photo       first setup's bag step (36d): { uri, onPress } — the photo
- *               slot over the fields (PhotoField): uri, the photo chosen
- *               (null for none). 3c itself is the bag page's layout since
- *               Design Turn 37 (38a)
  *   nameMissing "Open this bag" was pressed with no name: Bean name takes 5d's
  *             error vocabulary — the label reads "Bean name · required" and
  *             it and the underline take the error colour (no mock draws an
@@ -80,11 +75,9 @@ export default function BagForm({
   facts,
   children,
   autoFocusName = true,
-  photo,
 }) {
   return (
     <View style={styles.card}>
-      {photo ? <PhotoField uri={photo.uri} onPress={photo.onPress} /> : null}
       <Field label="Bean name" value={value.name} placeholder="e.g. Ethiopia Guji" onChangeText={(name) => onChange({ ...value, name })} autoFocus={autoFocusName} error={nameMissing} />
       <Field label="Roaster" value={value.roaster} placeholder="Optional" onChangeText={(roaster) => onChange({ ...value, roaster })} />
       {facts ?? null}
@@ -143,45 +136,6 @@ export function Field({ label, value = '', placeholder, onChangeText, editable =
   );
 }
 
-/**
- * 3c's photo slot (2026-11-01): a 76 square and, beside it, what it is for
- * (3c's copy: "Shoot the bag" / "Optional. Becomes this bag's thumbnail
- * everywhere."). It is a button, so a solid 2px ink frame (§8: dashed never
- * says "press this"; 3c draws it dashed, drift D-63). Chosen, the square
- * shows the photo. Opens PhotoSheet.
- * PROVISIONAL: the title once a photo is in ("Bag photo") is ours.
- */
-function PhotoField({ uri, onPress }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={uri ? 'Bag photo, change or remove' : 'Shoot the bag, optional'}
-      style={({ pressed }) => [styles.photoField, pressed && styles.photoPressed]}>
-      <View style={styles.photoSlot}>
-        {uri ? (
-          <Image source={{ uri }} style={styles.photoImage} resizeMode="cover" accessible={false} />
-        ) : (
-          <>
-            <Glyph name="camera" token={icon.md} color={color.text.primary} />
-            <Text variant="labelEyebrow" color="primary">
-              Photo
-            </Text>
-          </>
-        )}
-      </View>
-      <View style={styles.photoText}>
-        <Text variant="label" color="primary">
-          {uri ? 'Bag photo' : 'Shoot the bag'}
-        </Text>
-        <Text variant="bodySm" color="secondary">
-          Optional. Becomes this bag's thumbnail everywhere.
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
 /** A field whose value is picked, not typed: the same line, as a button. */
 function DayField({ label, value, shown, placeholder, hint, onPress, focused }) {
   const filled = value != null;
@@ -219,34 +173,6 @@ const styles = StyleSheet.create({
     gap: spacing.gap.section,
   },
   field: {
-    gap: spacing.gap.tight,
-  },
-  photoField: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[14],
-  },
-  photoPressed: {
-    backgroundColor: state.pressed.row,
-  },
-  photoSlot: {
-    width: size.thumbnail.photoField,
-    height: size.thumbnail.photoField,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[4],
-    borderWidth: shape.borderWidth.box,
-    borderColor: color.border.strong,
-    backgroundColor: color.surface.ground,
-    overflow: 'hidden',
-  },
-  photoImage: {
-    width: size.thumbnail.photoField - 2 * shape.borderWidth.box,
-    height: size.thumbnail.photoField - 2 * shape.borderWidth.box,
-  },
-  photoText: {
-    flex: 1,
-    minWidth: 0,
     gap: spacing.gap.tight,
   },
   input: {

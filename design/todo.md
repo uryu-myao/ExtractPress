@@ -190,3 +190,9 @@ Design: "the café line shows the short address only, with no distance or visit 
   - **Local counters are not "collection" (2026-11-17)**: Apple's definition covers data transmitted off the device. A SQLite row on the user's own phone that never leaves it triggers no disclosure, so `gear_cap_pushes` (3a's count of taps past the 8-slot gear cap, `data-model.md` "The 8-slot gear cap") changes neither the label nor the policy. Nobody needs to revisit the label for it before submission. It would change only if the count were ever sent somewhere. The policy's "never sent anywhere" stays true.
 - **The support page**: a contact address on one line is enough. It can be the same site.
 - **Done when**: both pages open from a phone, both constants are filled, the Privacy policy row opens its page on device, and both URLs are on the App Store Connect record.
+
+## T-19. `InputAccessoryView` is deprecated in RN 0.88 (recorded 2026-11-27, planner)
+
+- **Now**: Add a bag's label candidates (`src/components/LabelBar.js`, Design Turn 38) use React Native's `InputAccessoryView`. RN 0.88 marks it deprecated: it still works, with a development warning. One bar per field, looking the same, because the new architecture attaches an accessory view to the first `TextInput` with its `nativeID` only (accepted, planner 2026-11-27).
+- **Trigger**: re-check at the next React Native upgrade. If it is removed, move the bar to its replacement (or a keyboard-tracking view) before upgrading.
+- **Re-check after**: the bar shows on both Bean name and Roaster, nothing when there are no candidates, and a tap fills the focused field.

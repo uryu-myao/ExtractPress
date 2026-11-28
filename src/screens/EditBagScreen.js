@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import { useBagFacts } from '../components/BagFacts';
+import BagLift from '../components/BagLift';
 import { BagVisual } from '../components/BagTile';
 import BagForm from '../components/BagForm';
 import BeanFreshness from '../components/BeanFreshness';
@@ -19,7 +20,7 @@ import Text from '../components/base/Text';
 import { formatDay, startOfDay } from '../constants/dates';
 import { bagFilter } from '../constants/search';
 import { useDatabase } from '../data/DatabaseProvider';
-import { deletePhoto, keepPhoto, makeCutouts } from '../data/photos';
+import { deletePhoto, dropPhoto, keepPhoto, liftPhoto, makeCutouts } from '../data/photos';
 import { deleteBag, finishBag, getBag, onShelfChanged, setBagPhoto, updateBag } from '../data/repository';
 import { requestPush, requestShell, requestNotice } from '../navigation';
 import { color, component, icon, layout, shape, space, spacing, state } from '../theme/tokens';
@@ -79,9 +80,13 @@ import ScreenFrame from './ScreenFrame';
  * applies at once, not through the Save bar, as Finish does. There is no
  * confirm step (Design Turn 37, 2026-11-25: the "Use this photo / Choose
  * another" sheet is gone); a wrong photo is retaken from the same button.
- * The replaced photo's files go with it; the new one's cutout is made in
- * the background. TODO(Design): Turn 37 plays the lift on Add a bag only;
- * whether a retake here plays it too isn't drawn.
+ * The replaced photo's files go with it.
+ * A new photo plays the lift here too, short (Planner, 2026-11-27: BagLift
+ * `short`, no shot and no halo): a retake is usually because the last lift
+ * failed or was poor, and this shows whether this one took. The photo is
+ * kept and set on the bag once it settles, with the cutout the lift made
+ * (the page shows its own visual again once the note has faded); leaving
+ * the page before that still keeps it (the choice was made).
  */
 const countFormat = new Intl.NumberFormat('en-US');
 
@@ -140,21 +145,64 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
   }, [guardLeave, dirty, busy]);
   const leave = () => onBack({ force: true });
 
-  // A new photo is kept, set on the bag, and the old one's files removed;
-  // null removes the photo.
-  const changePhoto = async (next) => {
-    setPhotoSheet(false);
+  // A retake in progress: { photo (pending), lift (undefined while Vision works) }.
+  const [retake, setRetake] = useState(null);
+  // The pending photo and its lift's promise, until committed (once).
+  const pendingRetake = useRef(null);
+
+  // Keep the retaken photo with its cutouts and set it on the bag; the old
+  // one's files go. Once per photo, from the settle or from leaving the page.
+  const commitRetake = async () => {
+    const pending = pendingRetake.current;
+    if (!pending) return;
+    pendingRetake.current = null;
     try {
-      if (next) await keepPhoto(next.id);
-      const before = await setBagPhoto(db, stored.id, next?.id ?? null);
+      const { code } = await pending.lifting;
+      await keepPhoto(pending.photo.id);
+      const before = await setBagPhoto(db, bag.id, pending.photo.id, code);
       deletePhoto(before);
-      setStored((s) => ({ ...s, photo_uri: next?.id ?? null, photo_cutout: null }));
-      // The new photo's cutout, in the background (photos.ts); not awaited.
-      if (next) makeCutouts(db);
+      setStored((s) => ({ ...s, photo_uri: pending.photo.id, photo_cutout: code }));
+      // Vision failed (not "no subject"): made again in the background.
+      if (code == null) makeCutouts(db);
     } catch (error) {
-      if (next) deletePhoto(next.id);
+      dropPhoto(pending.photo.id);
+      deletePhoto(pending.photo.id);
       console.error('[3g] could not change the photo', error);
       Alert.alert("The photo wasn't changed", String(error?.message ?? error));
+      setRetake(null);
+    }
+  };
+  // Leaving mid-lift still keeps the photo.
+  const commitRef = useRef(commitRetake);
+  commitRef.current = commitRetake;
+  useEffect(() => () => commitRef.current(), []);
+
+  // A new photo plays the short lift, then is kept (commitRetake); null
+  // removes the photo at once.
+  const changePhoto = async (next) => {
+    setPhotoSheet(false);
+    if (next) {
+      // A second retake before the first settled: the first is kept as it is.
+      if (pendingRetake.current) await commitRetake();
+      const lifting = liftPhoto(next).then(
+        (result) => result,
+        (error) => {
+          console.warn('[3g] lift failed', error);
+          return { code: null, uri: null };
+        }
+      );
+      pendingRetake.current = { photo: next, lifting };
+      setRetake({ photo: next, lift: undefined });
+      lifting.then((lift) => setRetake((r) => (r?.photo.id === next.id ? { ...r, lift } : r)));
+      return;
+    }
+    try {
+      const before = await setBagPhoto(db, stored.id, null);
+      deletePhoto(before);
+      setStored((s) => ({ ...s, photo_uri: null, photo_cutout: null }));
+    } catch (error) {
+      console.error('[3g] could not remove the photo', error);
+      Alert.alert("The photo wasn't removed", String(error?.message ?? error));
     }
   };
 
@@ -240,22 +288,31 @@ export default function EditBagScreen({ bag, onBack, onDeleted, guardLeave }) {
     <View style={styles.screen}>
       <View style={styles.page}>
         <ScreenFrame
-          hero={({ scrollY, barLine, width }) => <BagVisual bag={stored} width={width} barLine={barLine} scrollY={scrollY} />}
+          hero={({ scrollY, barLine, width }) =>
+            retake ? (
+              <BagLift short width={width} barLine={barLine} photo={retake.photo} lift={retake.lift} onSettled={commitRetake} onDone={() => setRetake(null)} />
+            ) : (
+              <BagVisual bag={stored} width={width} barLine={barLine} scrollY={scrollY} />
+            )
+          }
           heroHeight={component.bagPage.visualHeight}
           userTitle
           title={stored.name}
           meta={subLine || null}
           leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
           trailing={
-            <IconButton
-              icon="photo"
-              iconToken={icon.action}
-              accessibilityLabel={stored.photo_uri ? 'Bag photo: retake, choose or remove' : 'Bag photo: take or choose one'}
-              onPress={() => {
-                Keyboard.dismiss();
-                setPhotoSheet(true);
-              }}
-            />
+            // Back once the retake's lift and its note are done.
+            retake ? null : (
+              <IconButton
+                icon="photo"
+                iconToken={icon.action}
+                accessibilityLabel={stored.photo_uri ? 'Bag photo: retake, choose or remove' : 'Bag photo: take or choose one'}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setPhotoSheet(true);
+                }}
+              />
+            )
           }>
           <View style={styles.body}>
             <View style={styles.status}>

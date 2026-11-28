@@ -52,22 +52,26 @@ export default function ArchiveRow({ cup, lines, when, onPress, gutter = false }
           <Text variant="title" numberOfLines={1}>
             {title}
           </Text>
-          {source ? (
-            <Text variant="rowSource" color="secondary" numberOfLines={1}>
-              {source}
-            </Text>
-          ) : null}
-          {words ? (
-            <View style={styles.words}>
-              <Glyph name="pen" token={icon.mark} color={archive.pen.color} />
-              <Text variant="noteRow" color="secondary" numberOfLines={1} style={styles.wordsText}>
-                {words}
-              </Text>
+          {source || words || flavours ? (
+            <View style={styles.under}>
+              {source ? (
+                <Text variant="rowSource" color="secondary" numberOfLines={1}>
+                  {source}
+                </Text>
+              ) : null}
+              {words ? (
+                <View style={styles.words}>
+                  <Glyph name="pen" token={icon.mark} color={archive.pen.color} />
+                  <Text variant="noteRow" color="secondary" numberOfLines={1} style={styles.wordsText}>
+                    {words}
+                  </Text>
+                </View>
+              ) : flavours ? (
+                <Text variant="bodySm" color="muted" numberOfLines={1}>
+                  {flavours}
+                </Text>
+              ) : null}
             </View>
-          ) : flavours ? (
-            <Text variant="bodySm" color="muted" numberOfLines={1}>
-              {flavours}
-            </Text>
           ) : null}
         </View>
 
@@ -120,6 +124,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     alignSelf: 'center',
+  },
+  // The lines under the name, archive.titleGap below it.
+  under: {
+    marginTop: archive.titleGap,
   },
   words: {
     flexDirection: 'row',

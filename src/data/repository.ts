@@ -436,9 +436,10 @@ export async function updateBag(db: SQLiteDatabase, id: number, edit: BagEdit): 
  * Its cutout goes back to "not tried" (photo_cutout NULL): the caller then
  * runs photos.ts makeCutouts.
  */
-export async function setBagPhoto(db: SQLiteDatabase, id: number, photo: string | null): Promise<string | null> {
+/** cutout: the photo's photo_cutout when it was lifted already (photos.ts liftPhoto); NULL leaves it to makeCutouts. */
+export async function setBagPhoto(db: SQLiteDatabase, id: number, photo: string | null, cutout: number | null = null): Promise<string | null> {
   const before = await db.getFirstAsync<{ photo_uri: string | null }>('SELECT photo_uri FROM bags WHERE id = ?', [id]);
-  await db.runAsync('UPDATE bags SET photo_uri = ?, photo_cutout = NULL WHERE id = ?', [photo, id]);
+  await db.runAsync('UPDATE bags SET photo_uri = ?, photo_cutout = ? WHERE id = ?', [photo, photo ? cutout : null, id]);
   notifyShelfChanged();
   return before?.photo_uri ?? null;
 }

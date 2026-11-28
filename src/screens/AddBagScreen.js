@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Keyboard, StyleSheet, TextInput, View } from 'react-native';
 import { useBagFacts } from '../components/BagFacts';
-import BagForm from '../components/BagForm';
 import BagLift from '../components/BagLift';
 import DateSheet from '../components/DateSheet';
 import DiscardSheet from '../components/DiscardSheet';
@@ -20,7 +19,7 @@ import { deletePhoto, dropPhoto, keepPhoto, liftPhoto, makeCutouts } from '../da
 import { formatDay, startOfDay } from '../constants/dates';
 import { OPEN_BAG_LIMIT, countCups, countOpenBags, getBagDateKind, insertBag, setBagDateKind } from '../data/repository';
 import { resolveTextStyle } from '../theme/fonts';
-import { color, component, icon, shape, space, spacing, state, textStyle } from '../theme/tokens';
+import { color, component, icon, layout, shape, space, spacing, state, textStyle } from '../theme/tokens';
 import ScreenFrame from './ScreenFrame';
 
 /**
@@ -69,25 +68,26 @@ import ScreenFrame from './ScreenFrame';
  * confirm.
  */
 /**
- * First setup's first step (Design Round 30, 36d; built 2026-11-21): this
- * screen with `setup` = { step, onLater, onSkip } and onAdded. Beans come
- * first, then gear, as everywhere in the app (My beans before My gear;
- * Uryu, 2026-11-21: 36c / 36d draw gear first). 8o is 3c in a setup mode:
- *   header  the standard header: ‹ (to Welcome) and "Skip setup" at the
- *           top right; "SETUP · 1 OF 2" (eyebrow) over the question as the
- *           title. No "2 / 5" stat and no "N of 5 slots free": here they
- *           can only read 0 / 5, a number that never changes
- *   body    8o's line, then 3c's form as it was before 38a (the bag form
- *           with its photo slot, which opens the Bag photo sheet); Turn 37
- *           doesn't redraw this step
- *   footer  "Open this bag" and "Add without opening" (Uryu, 2026-11-21:
- *           a bag bought ahead goes on the shelf too; 36d drops it), both
- *           off until there is a name (36d), then "I'll add a bag later"
- *           space[8] under them, centred. All three go on to gear. Only the
- *           opened bag fills 5a's Bag.
- *   keyboard  not up on arrival (Uryu, 2026-11-21): Bean name isn't focused
- * 36d's question title is serif 34 / 36; ours is display.lg (40 / 41), the
- * token the standard header has.
+ * First setup's bag step (36d, redrawn on this page: Design Turn 39,
+ * 40a–40c, 2026-11-28): this screen with `setup` = { step, onLater } and
+ * onAdded. The Add a bag page with a setup flag:
+ *   visual  446 tall (component.addBag.setup): room above for the question;
+ *           the footprint keeps 38a's size and baseline. The two ways in and
+ *           the lift as everywhere (the label candidates too: a first bag
+ *           has no history, so they help most here)
+ *   header  ‹ only, then under it the step ("SETUP · 1 OF 2", eyebrow,
+ *           accent) and the question in serif 34 / 36 on one line, in place
+ *           of the "Add a bag" title. Top right: the camera button once a
+ *           photo is in, nothing before. No Skip setup on this step (40a)
+ *   footer  Open this bag and Add without opening, both off until there is
+ *           a name, then "I'll add a bag later" centred under them. 40a drops
+ *           Add without opening (only an opened bag fills 5a's Bag); Uryu
+ *           keeps it (2026-11-21, again 2026-11-28): starting the app isn't
+ *           always starting a bag, so a sealed one can go on the shelf. Both
+ *           go on to gear. No "N of 5 slots free"
+ *   keyboard  not up on arrival (Uryu, 2026-11-21)
+ * Dropped from 36d: "Your first cup gets logged against it. Only the name
+ * is needed." (the Optional tags and the line under the footprint say it).
  */
 /**
  * Leaving with something entered asks first (Uryu, 2026-11-26; Round 4's
@@ -100,6 +100,14 @@ import ScreenFrame from './ScreenFrame';
  * prefill: { name, roaster } from Try next's "Add it to my beans" (Design
  * Round 23, 25d: buying a bean again); the fields start filled, still editable.
  */
+/**
+ * Development only: from the shot to the candidates, and to the lift
+ * settling (Planner, 2026-11-27: measure "shot → candidates usable" against
+ * the ~1.5 s lift). As Profile's "Dev: run first setup again": __DEV__, or a
+ * Release built with EXPO_PUBLIC_SETUP_DEV=1; never for the store.
+ */
+const DEV_TIMING = __DEV__ || process.env.EXPO_PUBLIC_SETUP_DEV === '1';
+
 /**
  * The label candidates' accessory views (LabelBar): one per field, the same
  * content. RN's new architecture attaches an InputAccessoryView to only the
@@ -133,7 +141,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
   const about = useBagFacts({
     value: { roastLevel: form.roastLevel, origin: form.origin, region: form.region, process: form.process },
     onChange: (patch) => setForm((f) => ({ ...f, ...patch })),
-    framed: !setup,
+    framed: true,
   });
   // A prepared photo (data/photos.ts), not kept until the bag is added.
   const [photo, setPhoto] = useState(null);
@@ -147,6 +155,11 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
   const lifting = useRef(null);
   // The lift has settled: the camera button shows (38b, step 4).
   const [settled, setSettled] = useState(false);
+  const [settledAt, setSettledAt] = useState(null);
+  // The fields can't take focus while the lift plays (Planner, 2026-11-27):
+  // the candidates are in by the time it settles (text reading runs beside
+  // it), so the keyboard never comes up before its bar does.
+  const locked = photo != null && !settled;
   const cameraIn = useRef(new Animated.Value(0)).current;
 
   // A new photo, from the footprint or the sheet: the old one goes, the lift starts.
@@ -157,12 +170,8 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
     setPhotoSheet(false);
     setLift(undefined);
     setSettled(false);
+    setSettledAt(null);
     cameraIn.setValue(0);
-    // Setup's form has no visual: its cutout is made after Add (makeCutouts).
-    if (setup) {
-      lifting.current = null;
-      return;
-    }
     const run = liftPhoto(next).then(
       (result) => result,
       (error) => {
@@ -182,11 +191,12 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
     setPhoto(null);
     setLift(undefined);
     setSettled(false);
+    setSettledAt(null);
     cameraIn.setValue(0);
   };
   // The text on the bag, as candidates for Bean name and Roaster (2026-11-26;
   // the bar, Design Turn 38, 39a–39d). A tap replaces the focused field's text.
-  const labels = useLabelCandidates(setup ? null : photo);
+  const { candidates: labels, readAt: labelsAt } = useLabelCandidates(photo);
   const hasLabels = labels.length > 0;
   const { step: photoStep, pick, camera } = usePhotoPick({ guide: 'bag', onChosen: takePhoto });
 
@@ -252,7 +262,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
         photo: kept,
         photoCutout: cutout,
       });
-      // Not lifted yet (setup, or Vision failed): made in the background (photos.ts); not awaited.
+      // Not lifted (Vision failed): made in the background (photos.ts); not awaited.
       if (kept && cutout == null) makeCutouts(db);
       // Only an opened bag can be the cup's bag.
       if (opened) chooseBag?.(bag);
@@ -262,6 +272,11 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
         setForm({ name: '', roaster: '', process: null, roastLevel: null, origin: null, region: null });
         setBagDate((d) => ({ ...d, value: null }));
         setPhoto(null);
+        setLift(undefined);
+        setSettled(false);
+        setSettledAt(null);
+        cameraIn.setValue(0);
+        lifting.current = null;
       }
       guardLeave?.(false);
       if (onAdded) onAdded();
@@ -292,8 +307,10 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
         {/* Added, not opened (2026-10-12): it takes a slot and is opened
             later from 3d. Copy confirmed (Design's reply to brief 18).
             38a draws it on while Open this bag is off; pressed with no
-            name, the name says it's required (5d's way). In setup both are
-            off until there is a name (36d). */}
+            name, the name says it's required (5d's way). In setup too
+            (Uryu, 2026-11-28, over 40a): starting the app isn't always
+            starting a bag, so a sealed one goes on the shelf; there, off
+            until there's a name, as Open this bag. */}
         <Button
           variant="secondary"
           label="Add without opening"
@@ -303,6 +320,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
           onDisabledPress={setup ? showMissing : undefined}
         />
       </View>
+      {/* Setup (40a): "I'll add a bag later" centred under the buttons, space[8]; no Skip setup on this step. */}
       {setup ? <TextLink centered label="I'll add a bag later" onPress={setup.onLater} /> : null}
       {free != null && !setup ? (
         <Text variant="bodySm" color="secondary" style={styles.slots}>
@@ -335,11 +353,13 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
         onRemove={photo ? removePhoto : undefined}
         removeNote={setup ? undefined : null}
       />
-      {/* Copy ours (TODO: Design): Round 4's sheet, its body for a bag not added yet. */}
+      {/* Planner's copy, 2026-11-27. */}
       <DiscardSheet
         visible={discarding}
         onClose={() => setDiscarding(false)}
-        body="This bag won't be added. What you entered isn't kept."
+        title="Leave without adding this bag?"
+        body="Nothing you've entered will be kept."
+        discardLabel="Leave"
         onDiscard={() => {
           setDiscarding(false);
           guardLeave?.(false);
@@ -368,56 +388,17 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
     </>
   );
 
-  // First setup (36d) keeps its own page: the question as the title, and
-  // 3c's form with the photo slot. TODO(Design): 38a doesn't redraw setup's
-  // bag step; it keeps 36d until it does (its photo now has no confirm step).
-  if (setup) {
-    return (
-      <View style={styles.screen}>
-        <ScreenFrame
-          scroll
-          eyebrow={setup.step}
-          title="What's in your bag right now?"
-          leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={back} />}
-          leadingEnd={<TextLink label="Skip setup" onPress={setup.onSkip} />}
-          footer={footer}>
-          <Text variant="body" color="secondary" style={styles.intro}>
-            Your first cup gets logged against it. Only the name is needed.
-          </Text>
-          <BagForm
-            // Setup opens without the keyboard (Uryu, 2026-11-21): the step
-            // reads first, and the name isn't the only thing it asks.
-            autoFocusName={false}
-            value={form}
-            onChange={(next) => {
-              if (next.name.trim()) setNameMissing(false);
-              setForm(next);
-            }}
-            nameMissing={nameMissing}
-            bagDate={{ kind: bagDate.kind, value: bagDate.value, picking, onPick: pickDate }}
-            facts={about.rows}
-            photo={{
-              uri: photo?.uri ?? null,
-              onPress: () => {
-                Keyboard.dismiss();
-                setPhotoSheet(true);
-              },
-            }}
-          />
-        </ScreenFrame>
-        {sheets}
-      </View>
-    );
-  }
-
+  const visualHeight = setup ? component.addBag.setup.visualHeight : component.bagPage.visualHeight;
   const dateShown = bagDate.value != null ? `${bagDate.kind === 'bestBefore' ? 'Best before' : 'Roasted'} ${formatDay(bagDate.value)}` : null;
   return (
     <View style={styles.screen}>
       <ScreenFrame
         hero={({ width, barLine }) => (
+          <View>
           <BagLift
             width={width}
             barLine={barLine}
+            height={visualHeight}
             photo={photo}
             lift={lift}
             busy={photoStep === 'working'}
@@ -431,26 +412,41 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
             }}
             onSettled={() => {
               setSettled(true);
+              setSettledAt(Date.now());
               Animated.timing(cameraIn, { toValue: 1, duration: component.bagLift.time.ui, useNativeDriver: true }).start();
             }}
           />
+          {setup ? (
+            // 40a: the step and the question under ‹, on the dots (where "Add a bag" sits in 38a).
+            <View pointerEvents="none" style={[styles.question, { top: barLine + component.addBag.setup.below }]}>
+              <Text variant="labelEyebrow" color="accent">
+                {setup.step}
+              </Text>
+              <Text variant="displayQuestion" numberOfLines={1} adjustsFontSizeToFit accessibilityRole="header">
+                What's in your bag right now?
+              </Text>
+            </View>
+          ) : null}
+          </View>
         )}
-        heroHeight={component.bagPage.visualHeight}
+        heroHeight={visualHeight}
         // The bar's title, once scrolled past the visual.
         title={name || 'Add a bag'}
         titleSlot={
           <View>
-            <NameField value={form.name} onChangeText={changeName} missing={nameMissing} accessoryID={hasLabels ? LABEL_BAR.name : undefined} />
-            <RoasterField value={form.roaster} onChangeText={(roaster) => setForm((f) => ({ ...f, roaster }))} accessoryID={hasLabels ? LABEL_BAR.roaster : undefined} />
+            <NameField value={form.name} onChangeText={changeName} missing={nameMissing} editable={!locked} accessoryID={hasLabels ? LABEL_BAR.name : undefined} />
+            <RoasterField value={form.roaster} onChangeText={(roaster) => setForm((f) => ({ ...f, roaster }))} editable={!locked} accessoryID={hasLabels ? LABEL_BAR.roaster : undefined} />
           </View>
         }
         leading={
           <View style={styles.leading}>
             <IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={back} />
-            {/* titleCaps, as every pushed page's title beside ‹ (Uryu, 2026-11-26; 38a draws the eyebrow). */}
-            <Text variant="titleCaps" color="primary" accessibilityRole="header">
-              Add a bag
-            </Text>
+            {/* titleCaps, as every pushed page's title beside ‹ (Uryu, 2026-11-26; 38a draws the eyebrow). Not in setup (40a): the question is the title. */}
+            {setup ? null : (
+              <Text variant="titleCaps" color="primary" accessibilityRole="header">
+                Add a bag
+              </Text>
+            )}
           </View>
         }
         trailing={
@@ -487,6 +483,11 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
             <DetailRow label="Date on the bag" value={dateShown} framed onPress={pickDate} />
           </View>
         </View>
+        {DEV_TIMING && photo?.takenAt ? (
+          <Text variant="meta" color="muted" style={styles.devTiming}>
+            {`Dev · after the shot: candidates ${labelsAt ? `${((labelsAt - photo.takenAt) / 1000).toFixed(2)} s (${labels.length})` : '…'} · settled ${settledAt ? `${((settledAt - photo.takenAt) / 1000).toFixed(2)} s` : '…'}`}
+          </Text>
+        ) : null}
       </ScreenFrame>
       {sheets}
       {hasLabels
@@ -512,7 +513,7 @@ export default function AddBagScreen({ onBack, onAdded, prefill, setup, guardLea
  * 16 / 600, "e.g. Kurasu, Blue Bottle", a 1.5 border.muted line under it
  * (ink while focused).
  */
-function RoasterField({ value, onChangeText, accessoryID, onFocus }) {
+function RoasterField({ value, onChangeText, accessoryID, onFocus, editable = true }) {
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.roasterField}>
@@ -534,6 +535,7 @@ function RoasterField({ value, onChangeText, accessoryID, onFocus }) {
           onFocus?.();
         }}
         inputAccessoryViewID={accessoryID}
+        editable={editable}
         onBlur={() => setFocused(false)}
         accessibilityLabel="Roaster, optional"
         style={[styles.roaster, focused && styles.lineFocused]}
@@ -550,7 +552,7 @@ function RoasterField({ value, onChangeText, accessoryID, onFocus }) {
  * Not focused on arrival (Uryu, 2026-11-26): the page opens without the
  * keyboard, on the photo and the fields.
  */
-function NameField({ value, onChangeText, missing, accessoryID, onFocus }) {
+function NameField({ value, onChangeText, missing, accessoryID, onFocus, editable = true }) {
   const [focused, setFocused] = useState(false);
   return (
     <View>
@@ -569,6 +571,7 @@ function NameField({ value, onChangeText, missing, accessoryID, onFocus }) {
           onFocus?.();
         }}
         inputAccessoryViewID={accessoryID}
+        editable={editable}
         onBlur={() => setFocused(false)}
         accessibilityLabel={missing ? 'Bean name, required' : 'Bean name'}
         style={styles.name}
@@ -616,6 +619,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: shape.borderWidth.divider,
     borderBottomColor: color.border.muted,
   },
+  devTiming: {
+    marginTop: space[8],
+  },
+  question: {
+    position: 'absolute',
+    left: layout.gutter,
+    right: layout.gutter,
+    gap: component.addBag.setup.gap,
+  },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -641,9 +653,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   firstCup: {
-    marginBottom: spacing.gap.section,
-  },
-  intro: {
     marginBottom: spacing.gap.section,
   },
 });

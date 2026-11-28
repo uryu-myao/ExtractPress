@@ -21,7 +21,7 @@ import PushedScreen from './PushedScreen';
  *   Welcome  Set up my shelf → bag · Skip setup → Home ·
  *            New phone? Restore a backup (only while the app is empty)
  *   bag      Open this bag → gear · I'll add a bag later → gear ·
- *            Skip setup → Home · Back → Welcome
+ *            Back → Welcome (no Skip setup on this step since 40a)
  *   gear     Done → Home · Back → bag
  *
  * setup_done becomes 1 on every way out (36e "For Code"): Done, Skip setup,
@@ -145,13 +145,14 @@ export function FirstSetupHost() {
           <PushedScreen key={e.key} onLeave={() => leaving(e.key)} onBack={() => popKey(e.key)}>
             {(goBack, guardLeave) =>
               e.name === 'bag' ? (
-                <AddBagScreen onBack={goBack} guardLeave={guardLeave} onAdded={toGear} setup={{ step: stepLabel(1), onLater: toGear, onSkip: finish }} />
+                <AddBagScreen onBack={goBack} guardLeave={guardLeave} onAdded={toGear} setup={{ step: stepLabel(1), onLater: toGear }} />
               ) : (
                 <AddGearScreen
-                  onBack={() => {
+                  guardLeave={guardLeave}
+                  onBack={(options) => {
                     // Back to the bag step: a relaunch starts there too.
                     setSetupStep(db, null).catch(() => {});
-                    goBack();
+                    goBack(options);
                   }}
                   setup={{ step: stepLabel(2), onDone: finish }}
                 />

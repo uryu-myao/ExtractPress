@@ -1,8 +1,9 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Platform, StyleSheet, View } from 'react-native';
+import { Alert, Keyboard, Platform, StyleSheet, View } from 'react-native';
 import { Field } from '../components/BagForm';
 import CheckboxList from '../components/CheckboxList';
+import DiscardSheet from '../components/DiscardSheet';
 import { useRecordDraftIfAny } from '../components/RecordDraft';
 import AddButton from '../components/base/AddButton';
 import BottomSheet from '../components/base/BottomSheet';
@@ -98,7 +99,7 @@ const warn = () => {
   if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 };
 
-export default function AddGearScreen({ onBack, setup }) {
+export default function AddGearScreen({ onBack, setup, guardLeave }) {
   const db = useDatabase();
   // In the Record sheet the gear added goes on this cup; from Home it just joins the shelf.
   const chooseGear = useRecordDraftIfAny()?.chooseGear;
@@ -198,8 +199,9 @@ export default function AddGearScreen({ onBack, setup }) {
         }
         chooseGear(pick);
       }
+      guardLeave?.(false);
       if (setup) setup.onDone();
-      else onBack();
+      else onBack({ force: true });
     } catch (error) {
       console.error('[gear] could not add', error);
       Alert.alert("This gear wasn't added", `Your picks are still here. ${String(error?.message ?? error)}`);
@@ -207,6 +209,18 @@ export default function AddGearScreen({ onBack, setup }) {
   };
 
   const n = selected.length;
+  // Leaving with gear checked asks first (Planner, 2026-11-27: as Add a bag
+  // and Log a cup). ‹ asks here; the edge swipe through guardLeave. After a
+  // save the screen leaves with { force: true }.
+  const [discarding, setDiscarding] = useState(false);
+  const askDiscard = () => {
+    Keyboard.dismiss();
+    setDiscarding(true);
+  };
+  useEffect(() => {
+    guardLeave?.(n > 0, askDiscard);
+  }, [guardLeave, n]); // eslint-disable-line react-hooks/exhaustive-deps
+  const back = () => (n > 0 ? askDiscard() : onBack());
   const noMatch = Boolean(q) && shown.length === 0;
   const slotsLine = owned == null ? null : left === 1 ? '1 slot left' : `${Math.max(left, 0)} slots left`;
   // Full only: what frees a slot, at the top with the header's counter
@@ -222,7 +236,7 @@ export default function AddGearScreen({ onBack, setup }) {
         compact={!setup}
         eyebrow={setup?.step}
         title={setup ? 'How do you usually brew?' : 'Add gear'}
-        leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={onBack} />}
+        leading={<IconButton icon="chevronLeft" accessibilityLabel="Back" onPress={back} />}
         stat={owned != null && !setup ? { value: `${total} / ${GEAR_LIMIT}`, label: 'Selected' } : undefined}
         footer={
           <View style={styles.footer}>
@@ -281,6 +295,19 @@ export default function AddGearScreen({ onBack, setup }) {
         </View>
       </ScreenFrame>
       <NameSheet naming={naming} onClose={() => setNaming(null)} onAdd={addWritten} />
+      {/* The Planner's words for Add a bag (2026-11-27), said of gear. TODO: Planner to confirm. */}
+      <DiscardSheet
+        visible={discarding}
+        onClose={() => setDiscarding(false)}
+        title="Leave without adding this gear?"
+        body="Nothing you've entered will be kept."
+        discardLabel="Leave"
+        onDiscard={() => {
+          setDiscarding(false);
+          guardLeave?.(false);
+          onBack({ force: true });
+        }}
+      />
     </View>
   );
 }

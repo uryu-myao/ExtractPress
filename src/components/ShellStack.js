@@ -106,7 +106,7 @@ export default function ShellStack() {
       case 'finished':
         return <FinishedBagsScreen onBack={goBack} />;
       case 'addGear':
-        return <AddGearScreen onBack={goBack} />;
+        return <AddGearScreen onBack={goBack} guardLeave={guardLeave} />;
       case 'editGear':
         return (
           <EditGearScreen

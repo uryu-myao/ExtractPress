@@ -569,11 +569,13 @@ export default function RecordCoffeeScreen({ onClose, onAddNote, onAddBag, onAdd
         onAdd={addProduct}
       />
       <CafeSheet visible={picking === 'cafe'} onClose={() => setPicking(null)} selected={cafe} kept={kept.cafes} onPick={chooseCafe} />
-      {/* Copy ours (TODO: Design): Round 4's sheet, its body for a cup not saved yet. */}
+      {/* Planner's copy, 2026-11-27. */}
       <DiscardSheet
         visible={picking === 'discard'}
         onClose={() => setPicking(null)}
-        body="This cup won't be logged. What you entered isn't kept."
+        title="Leave without logging this cup?"
+        body="Nothing you've entered will be kept."
+        discardLabel="Leave"
         onDiscard={() => {
           setPicking(null);
           onClose();

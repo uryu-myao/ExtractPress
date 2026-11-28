@@ -39,8 +39,8 @@ const stepEasing = REasing.bezier(...motion.expand.controlPoints);
  * and fields survive; it is never swiped to step 2.
  *
  * Leave guard (as PushedScreen's): the second page can hold its leave with
- * guardLeave(active, onBlocked). 3c does, with something entered (Uryu,
- * 2026-11-26): a swipe past the threshold springs back and onBlocked runs
+ * guardLeave(active, onBlocked). 3c and 3a do, with something entered (Uryu,
+ * 2026-11-26; 3a, Planner 2026-11-27): a swipe past the threshold springs back and onBlocked runs
  * (its discard sheet). 3c's own ‹ asks before calling onBack.
  */
 /** preset: the bag or gear to log this cup with (RecordDraftProvider), or null. */
@@ -201,7 +201,7 @@ export default function AddCoffeeOverlay({ visible, preset, onClose, onNavigate 
                 ) : second === 'bag' ? (
                   <AddBagScreen key={pushes} onBack={backToRecord} guardLeave={guardLeave} />
                 ) : (
-                  <AddGearScreen key={pushes} onBack={backToRecord} />
+                  <AddGearScreen key={pushes} onBack={backToRecord} guardLeave={guardLeave} />
                 )}
               </SwipeBackHoldContext.Provider>
             </Reanimated.View>
